@@ -203,6 +203,8 @@ public:
    */
   virtual void calcHz(float dxinv, float dyinv, float dzinv, float dt,
 	int start = 0, int stride = 1);
+
+  int numRunlines() const;
 	/*
 protected:
   std::vector<Runline>& getRunlinesEx() { return mRunlinesEx; }

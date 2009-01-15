@@ -42,6 +42,5 @@ private:
 #define LOG (TrogLog::tee() << "[" << BOOST_CURRENT_FUNCTION << ", " << __LINE__ << "]: ")
 #define LOGMORE TrogLog::tee()
 
-
 #endif
 

@@ -51,6 +51,7 @@
 #include <boost/program_options.hpp>
 
 #include <iostream>
+#include <limits>
 
 
 using namespace std;
@@ -79,7 +80,8 @@ int main (int argc, char * const argv[])
 	// as necessary, handle parsing exceptions.
 	po::variables_map variablesMap = handleArguments(argc, argv);
 	
-	if (variablesMap.count("help") || variablesMap.count("version"))
+	if (variablesMap.count("help") || variablesMap.count("version") ||
+		variablesMap.count("numerics") )
 		return 0;
 		
 	if (!variablesMap.count("nodragon"))
@@ -130,6 +132,7 @@ handleArguments(int argc, char* const argv[])
 	generic.add_options()
 		("help", "produce help message")
 		("version,v", "print complete version information")
+		("numerics", "print numerical environment information")
 	;
 	
 	// Options allowed on the command line or in a config file
@@ -223,6 +226,59 @@ handleArguments(int argc, char* const argv[])
 		cout << "calc version: 4.7" << endl;
 		
 		return variablesMap;
+	}
+	
+	if (variablesMap.count("numerics"))
+	{
+		typedef numeric_limits<float> f;
+		cout << "Values from std::limits:\n";
+		cout << "digits = " << f::digits << endl;
+		cout << "digits10 = " << f::digits10 << endl;
+		cout << "epsilon = " << f::epsilon << endl;
+		cout << "min = " << f::min() << endl;
+		cout << "min_exponent = " << f::min_exponent << endl;
+		cout << "min_exponent10 = " << f::min_exponent10 << endl;
+		cout << "max = " << f::max() << endl;
+		cout << "max_exponent = " << f::max_exponent << endl;
+		cout << "max_exponent10 = " << f::max_exponent10 << endl;
+		if (f::has_denorm == denorm_present)
+		{
+			cout << "has_denorm = denorm_present\n";
+			cout << " denorm_min = " << f::denorm_min() << endl;
+			cout << " has_denorm_loss = " << f::has_denorm_loss << endl;
+		}
+		else if (f::has_denorm == denorm_absent)
+			cout << "has_denorm = denorm_absent\n";
+		else if (f::has_denorm == denorm_indeterminate)
+			cout << "has_denorm = denorm_indeterminate\n";
+		cout << "has_infinity = " << f::has_infinity << endl;
+		cout << "has_quiet_NaN = " << f::has_quiet_NaN << endl;
+		cout << "has_signaling_NaN = " << f::has_signaling_NaN << endl;
+		cout << "round_error = " << f::round_error() << endl;
+		cout << "round_style = ";
+		switch (f::round_style)
+		{
+			case round_indeterminate:
+				cout << "round_indeterminate\n";
+				break;
+			case round_toward_zero:
+				cout << "round_toward_zero\n";
+				break;
+			case round_to_nearest:
+				cout << "round_to_nearest\n";
+				break;
+			case round_toward_infinity:
+				cout << "round_toward_infinity\n";
+				break;
+			case round_toward_neg_infinity:
+				cout << "round_toward_neg_infinity\n";
+				break;
+			default:
+				cout << "unknown\n";
+				break;
+		}
+		cout << "tinyness_before = " << f::tinyness_before << endl;
+		cout << "traps = " << f::traps << endl;
 	}
 	
 	return variablesMap;

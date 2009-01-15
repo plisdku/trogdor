@@ -211,6 +211,8 @@ runAll(string parameterFile, int numThreads, bool runSim,
 				
 				runlog << pre << "material{" << nn+1 << "}.name = '"
 					<< materials[nn]->getMaterialName() << "';\n";
+				runlog << pre << "material{" << nn+1 << "}.numRunlines = "
+					<< materials[nn]->numRunlines() << ";\n";
 				runlog << pre << "material{" << nn+1 << "}.numHalfCells = "
 					<< materials[nn]->numCells() << ";\n";
 				runlog << pre << "material{" << nn+1 << "}.numYeeCells = "

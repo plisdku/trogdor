@@ -253,6 +253,7 @@ stepE_orig(const Runline & rl, float dxinv1, float dxinv2, float dxinv3, float d
 		assert(!isnan(*HkN));
 		assert(!isnan(*Ei));
 		*/
+		
         *Ei = *Ei + ce1j*(*HkP++ - *HkN++) - ce1k*(*HjP++ - *HjN++)
             - *Ji*ce2;
 		

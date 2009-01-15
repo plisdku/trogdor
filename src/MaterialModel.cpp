@@ -161,6 +161,13 @@ numCells() const
         + mNumCellsHz;
 }
 
+int MaterialModel::
+numRunlines() const
+{
+	return mRunlinesEx.size() + mRunlinesEy.size() + mRunlinesEz.size() +
+		mRunlinesHx.size() + mRunlinesHy.size() + mRunlinesHz.size();
+}
+
 string MaterialModel::
 getMaterialName() const
 {
