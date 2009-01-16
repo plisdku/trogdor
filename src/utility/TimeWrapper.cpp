@@ -1,9 +1,14 @@
 /*
  *  TimeWrapper.cpp
- *  version02
+ *  TROGDOR
  *
  *  Created by Paul Hansen on 7/12/05.
- *  Copyright 2005 __MyCompanyName__. All rights reserved.
+ *  Copyright 2005 Stanford University. All rights reserved.
+ *
+ *  $Rev::                               $:  Revision of last commit
+ *  $Author::                            $:  Author of last commit
+ *  $Date::                              $:  Date of last commit
+ *  $Id::                                $:  Id of last commit
  *
  */
 

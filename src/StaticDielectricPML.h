@@ -3,7 +3,12 @@
  *  TROGDOR
  *
  *  Created by Paul Hansen on 7/16/08.
- *  Copyright 2008 __MyCompanyName__. All rights reserved.
+ *  Copyright 2008 Stanford University. All rights reserved.
+ *
+ *  $Rev::                               $:  Revision of last commit
+ *  $Author::                            $:  Author of last commit
+ *  $Date::                              $:  Date of last commit
+ *  $Id::                                $:  Id of last commit
  *
  */
 
