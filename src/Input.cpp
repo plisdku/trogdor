@@ -7,8 +7,9 @@
  *
  *  $Rev::                               $:  Revision of last commit
  *  $Author::                            $:  Author of last commit
- *  $Date::                              $:  Date of last commit
- *  $Id::                                $:  Id of last commit
+ *
+ *  $Date$:
+ *  $Id$:
  *
  */
 
