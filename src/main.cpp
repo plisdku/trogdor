@@ -2,6 +2,12 @@
     Trogdor FDTD
     Paul Hansen
     
+ *  $Rev::                               $:  Revision of last commit
+ *  $Author::                            $:  Author of last commit
+ *
+ *  $Date$:
+ *  $Id$:
+
     Version History
 
     4.2 PLAN
@@ -66,7 +72,6 @@ void drawTrogdor();
 */
 int main (int argc, char * const argv[])
 {
-	
 	string paramFileName;
 	//string directory;
 	int numThreads;

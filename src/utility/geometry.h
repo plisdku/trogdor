@@ -21,6 +21,7 @@
 typedef vmlib::SVec<3,int> Vector3i;
 typedef vmlib::SVec<3,double> Vector3d;
 typedef vmlib::SVec<3,bool> Vector3b;
+typedef vmlib::SVec<3,float> Vector3f;
 
 namespace vmlib {
 
@@ -92,6 +93,7 @@ public:
 	Rect(const Rect<T> & copyMe);
 	
 	T size(unsigned int dim) const;
+	vmlib::SVec<3,T> size() const;
 	
 	bool
 	encloses(const Rect<T> & inRect) const;

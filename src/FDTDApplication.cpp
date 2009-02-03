@@ -32,7 +32,6 @@
 #include "InputFactory.h"
 #include "SourceFactory.h"
 
-
 #include "Pointer.h"
 #include "Map.h"
 #include "StreamFromString.h"

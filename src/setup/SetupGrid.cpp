@@ -1378,7 +1378,7 @@ readSetupLinks(const TiXmlElement* gridElem)
 	string errorMessage;
 
     //  read links
-        linkElem = gridElem->FirstChildElement("Link");
+	linkElem = gridElem->FirstChildElement("Link");
     while (linkElem)
     {
         attribs = getAttributes(linkElem);
@@ -1657,7 +1657,9 @@ readSetupInputs(const TiXmlElement* gridElem)
         inputElem = inputElem->NextSiblingElement("Input");
     }
 
-}void SetupGrid::
+}
+
+void SetupGrid::
 readSetupAssembly(const TiXmlElement* gridElem)
 {
     string errorMessage;

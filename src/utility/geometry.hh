@@ -236,6 +236,12 @@ T Rect<T>::size(unsigned int dim) const
 }
 
 template<typename T>
+vmlib::SVec<3,T> Rect<T>::size() const
+{
+	return p2 - p1;
+}
+
+template<typename T>
 bool Rect<T>::encloses(const Rect<T> & inRect) const
 {
     return (encloses(inRect.p1) && encloses(inRect.p2));
