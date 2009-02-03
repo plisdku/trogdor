@@ -33,6 +33,7 @@ include_directories( ${TROGDOR_SOURCE_DIR}/src/setup
 link_directories( ${TROGDOR_BINARY_DIR}/setup
 ${TROGDOR_BINARY_DIR}/utility
 ${TROGDOR_BINARY_DIR}/tinyxml
+${TROGDOR_BINARY_DIR}/trogdorsetup
 ${magLibDirs}
 /sw/lib)
 
@@ -72,6 +73,7 @@ target_link_libraries( trogdor
 setup
 tinyxml
 utility
+trogdorsetup
 boost_program_options
 boost_thread
 ${magDepLibs}
@@ -80,4 +82,5 @@ ${magDepLibs}
 add_subdirectory( utility )
 add_subdirectory( tinyxml )
 add_subdirectory( setup )
+add_subdirectory( trogdorsetup )
 
