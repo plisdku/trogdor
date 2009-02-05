@@ -53,6 +53,17 @@ bool operator== (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
 }
 
 template <unsigned DIM, typename T>
+bool operator!= (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
+{
+	for (unsigned int ii = 0; ii < DIM; ii++)
+	{
+		if (lhs[ii] != rhs[ii])
+			return 1;
+	}
+	return 0;
+}
+
+template <unsigned DIM, typename T>
 vmlib::SVec<DIM,T> operator% (const vmlib::SVec<DIM,T>& lhs, T rhs)
 {
 	vmlib::SVec<DIM,T> retval(lhs);

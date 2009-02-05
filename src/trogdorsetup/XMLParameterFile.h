@@ -21,7 +21,7 @@ class XMLParameterFile
 {
 	friend class SimulationDescription;
 public:
-	XMLParameterFile(const std::string & filename); 
+	XMLParameterFile(const std::string & filename) throw(Exception); 
 private:
 	void load(SimulationDescription & sim) const throw(Exception);
 	
@@ -35,6 +35,20 @@ private:
 	std::vector<LinkDescPtr> loadLinks(const TiXmlElement* parent) const;
 	std::vector<MaterialDescPtr> loadMaterials(const TiXmlElement* parent) const;
 	AssemblyDescPtr loadAssembly(const TiXmlElement* parent) const;
+	
+	AssemblyDescription::InstructionPtr loadABlock(
+		const TiXmlElement* elem) const;
+	AssemblyDescription::InstructionPtr loadAKeyImage(
+		const TiXmlElement* elem) const;
+	std::vector<AssemblyDescription::ColorKey> loadAColorKeys(
+		const TiXmlElement* elem) const;
+	AssemblyDescription::InstructionPtr loadAHeightMap(
+		const TiXmlElement* elem) const;
+	AssemblyDescription::InstructionPtr loadAEllipsoid(
+		const TiXmlElement* elem) const;
+	AssemblyDescription::InstructionPtr loadACopyFrom(
+		const TiXmlElement* elem) const;
+	
 	
 	TiXmlDocument mDocument;
 };

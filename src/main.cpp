@@ -68,8 +68,6 @@ po::variables_map handleArguments(int argc, char* const argv[]);
 void drawTrogdor();
 
 
-/*! \callgraph
-*/
 int main (int argc, char * const argv[])
 {
 	string paramFileName;
@@ -239,7 +237,7 @@ handleArguments(int argc, char* const argv[])
 		cout << "Values from std::limits:\n";
 		cout << "digits = " << f::digits << endl;
 		cout << "digits10 = " << f::digits10 << endl;
-		cout << "epsilon = " << f::epsilon << endl;
+		cout << "epsilon = " << f::epsilon() << endl;
 		cout << "min = " << f::min() << endl;
 		cout << "min_exponent = " << f::min_exponent << endl;
 		cout << "min_exponent10 = " << f::min_exponent10 << endl;

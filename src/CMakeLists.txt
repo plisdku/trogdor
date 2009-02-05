@@ -63,8 +63,6 @@ StaticLossyDielectricModel.cpp
 TFSFBufferSet.cpp
 ThreeFieldInput.cpp
 ThreeFieldOutput.cpp
-XMLParameterFile.cpp
-SimulationDescription.cpp
 main.cpp
 )
 

@@ -20,16 +20,41 @@
 
 using namespace std;
 
+#pragma mark *** Static Prototypes ***
+
 static Map<string, string> sGetAttributes(const TiXmlElement* elem);
+/*
+template <class T>
+static bool sGet(const Map<string, string> & inMap,
+	const string & key, T & val);
+
+template <class T, class T2>
+static bool sGetOptional(const Map<string, string> & inMap,
+	const string & key, T & val, const T2 & defaultVal);
+*/
+template <class T>
+static void sGetMandatoryAttribute(const TiXmlElement* elem,
+	const string & attribute, T & val) throw(Exception);
 
 template <class T>
-static bool sGet(const Map<string, string> & map,
-	const string & key, T & val);
+static bool sTryGetAttribute(const TiXmlElement* elem,
+	const string & attribute, T & val);
+
+template <class T, class T2>
+static void sGetOptionalAttribute(const TiXmlElement* elem,
+	const string & attribute, T & val, const T2 & defaultVal);
 
 static string sErr(const string & str, const TiXmlElement* elem);
 
+static FillStyle sFillStyleFromString(const string & str) throw(Exception);
+
+static Vector3i sUnitVectorFromString(const string & axisString)
+	throw(Exception);
+
+#pragma mark *** XMLParameterFile Implementation ***
+
 XMLParameterFile::
-XMLParameterFile(const string & filename) :
+XMLParameterFile(const string & filename) throw(Exception) :
 	mDocument(filename.c_str())
 {
 	string errorMessage;
@@ -38,11 +63,12 @@ XMLParameterFile(const string & filename) :
 	
 	if (!(mDocument.LoadFile()))
     {
-        cerr << "Could not load parameter file " << filename << endl;
-        cerr << "Reason: " << mDocument.ErrorDesc() << endl;
-        cerr << "(possible location: row " << mDocument.ErrorRow() << " column "
+		ostringstream err;
+        err << "Could not load parameter file " << filename << endl;
+        err << "Reason: " << mDocument.ErrorDesc() << endl;
+        err << "(possible location: row " << mDocument.ErrorRow() << " column "
              << mDocument.ErrorCol() << " .)" << endl;
-        exit(1);
+        throw(Exception(err.str()));
     }
 }
 
@@ -58,16 +84,18 @@ load(SimulationDescription & sim) const throw(Exception)
 	if (!elem)
 		throw Exception("XML file has no root element.");
 	
+	string versionString;
+	
 	Map<string, string> attributes = sGetAttributes(elem);
-	if (attributes.count("version") == 0)
+	if (!sTryGetAttribute(elem, "version", versionString))
 	{
 		loadTrogdor4(sim);
 	}
 	else
 	{
 		ostringstream err;
-		err << "Cannot read version " << attributes["version"] << " file.";
-		throw Exception(err.str());
+		err << "Cannot read version " << versionString << " file.";
+		throw Exception(sErr(err.str(), elem));
 	}
 }
 
@@ -77,13 +105,26 @@ loadTrogdor4(SimulationDescription & sim) const throw(Exception)
     const TiXmlElement* elem = mDocument.RootElement();
 	assert(elem);  // this condition was checked in load().
 	
-	Map<string, string> simulationParams;
+	float dx, dy, dz, dt;
+	int numTimesteps;
 	
+	Map<string, string> simulationParams;
     simulationParams = sGetAttributes(elem);
-    
-	sim.setGrids(loadGrids(elem));
+	
+	sGetMandatoryAttribute(elem, "dx", dx);
+	sGetMandatoryAttribute(elem, "dy", dy);
+	sGetMandatoryAttribute(elem, "dz", dz);
+	sGetMandatoryAttribute(elem, "dt", dt);
+	sGetMandatoryAttribute(elem, "numT", numTimesteps);
+	
+	try {
+		sim.setDiscretization(Vector3f(dx,dy,dz), dt);
+		sim.setDuration(numTimesteps);
+		sim.setGrids(loadGrids(elem));
+	} catch (Exception & e) {
+		throw(Exception(sErr(e.what(), elem)));
+	}
 }
-
 
 vector<GridDescPtr> XMLParameterFile::
 loadGrids(const TiXmlElement* parent) const
@@ -94,38 +135,37 @@ loadGrids(const TiXmlElement* parent) const
 	
     while (elem) // FOR EACH GRID: Load data
 	{
+		GridDescPtr gridDesc;
 		int nnx, nny, nnz;
 		Rect3i activeRegion, regionOfInterest;
 		string name;
-		Map<string, string> gridParams = sGetAttributes(elem);
 		
-		if (!sGet(gridParams, "name", name))
-			throw(Exception(sErr("Can't load name", elem)));
+		sGetMandatoryAttribute(elem, "name", name);
 		
-		if (sGet(gridParams, "nx", nnx))
+		if (sTryGetAttribute(elem, "nx", nnx))
 			nnx *= 2;
-		else if (!sGet(gridParams, "nnx", nnx))
+		else if (!sTryGetAttribute(elem, "nnx", nnx))
 			throw(Exception(sErr("Can't load nnx or nx", elem)));
 		
-		if (sGet(gridParams, "ny", nny))
+		if (sTryGetAttribute(elem, "ny", nny))
 			nny *= 2;
-		else if (!sGet(gridParams, "nny", nny))
+		else if (!sTryGetAttribute(elem, "nny", nny))
 			throw(Exception(sErr("Can't load nny or ny", elem)));
 		
-		if (sGet(gridParams, "nz", nnz))
+		if (sTryGetAttribute(elem, "nz", nnz))
 			nnz *= 2;
-		else if (!sGet(gridParams, "nnz", nnz))
+		else if (!sTryGetAttribute(elem, "nnz", nnz))
 			throw(Exception(sErr("Can't load nnz or nz", elem)));
 		
-		if (sGet(gridParams, "regionOfInterest", regionOfInterest))
+		if (sTryGetAttribute(elem, "regionOfInterest", regionOfInterest))
 		{
 			regionOfInterest *= 2;
 			regionOfInterest.p2 += Vector3i(1,1,1);
 		}
-		else if (!sGet(gridParams, "roi", regionOfInterest))
+		else if (!sTryGetAttribute(elem, "roi", regionOfInterest))
 			throw(Exception(sErr("Can't load region of interest", elem)));
 		
-		if (!sGet(gridParams, "activeRegion", activeRegion))
+		if (!sTryGetAttribute(elem, "activeRegion", activeRegion))
 		{
 			activeRegion = Rect3i(1, 1, 1, nnx-2, nny-2, nnz-2);
 			if (regionOfInterest.p1[0] == 0)
@@ -142,9 +182,19 @@ loadGrids(const TiXmlElement* parent) const
 				activeRegion.p2[2] = nnz-1;
 		}
 		
-		GridDescPtr gridDesc(new GridDescription(name, Vector3i(nnx,nny,nnz)/2,
-			Vector3i(nnx,nny,nnz), activeRegion, regionOfInterest));
+		// We need to wrap the constructor errors from GridDescription() to
+		// put XML row/column information in.
+		try {
+			gridDesc = GridDescPtr(new GridDescription(name,
+				Vector3i(nnx,nny,nnz)/2, Vector3i(nnx,nny,nnz), activeRegion,
+				regionOfInterest));
+		} catch (Exception & e) {
+			throw(Exception(sErr(e.what(), elem)));
+		}
 		
+		// However, these function calls all take care of their own XML file
+		// row/column information so we don't need to re-throw their
+		// exceptions.
 		gridDesc->setOutputs(loadOutputs(elem));
 		gridDesc->setInputs(loadInputEHs(elem));
 		gridDesc->setSources(loadSources(elem));
@@ -171,20 +221,21 @@ loadInputEHs(const TiXmlElement* parent) const
 		string filePrefix;
 		string inputClass;
 		Map<string,string> params;
-		Map<string,string> attribs = sGetAttributes(elem);
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
 		if (paramXML == 0L)
 			throw(Exception(sErr("Input needs Params element", elem)));
 		params = sGetAttributes(paramXML);
 		
-		if (!sGet(attribs, "filePrefix", filePrefix))
-			throw(Exception(sErr("Input needs filePrefix attribute", elem)));
-		if (!sGet(attribs, "class", inputClass))
-			throw(Exception(sErr("Input needs class attribute", elem)));
+		sGetMandatoryAttribute(elem, "filePrefix", filePrefix);
+		sGetMandatoryAttribute(elem, "class", inputClass);
 		
-		InputEHDescPtr input(new InputEHDescription(filePrefix, inputClass,
-			params));
-		inputs.push_back(input);
+		try {
+			InputEHDescPtr input(new InputEHDescription(filePrefix, inputClass,
+				params));
+			inputs.push_back(input);
+		} catch (Exception & e) {
+			throw(Exception(sErr(e.what(), elem)));
+		}
 		
 		elem = elem->NextSiblingElement("Input");
 	}
@@ -205,22 +256,22 @@ loadOutputs(const TiXmlElement* parent) const
 		string outputClass;
 		int period;
 		Map<string,string> params;
-		Map<string,string> attribs = sGetAttributes(elem);
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
 		if (paramXML == 0L)
 			throw(Exception(sErr("Output needs Params element", elem)));
 		params = sGetAttributes(paramXML);
 		
-		if (!sGet(attribs, "filePrefix", filePrefix))
-			throw(Exception(sErr("Output needs filePrefix attribute", elem)));
-		if (!sGet(attribs, "class", outputClass))
-			throw(Exception(sErr("Output needs class attribute", elem)));
-		if (!sGet(attribs, "period", period))
-			period = 1;
+		sGetMandatoryAttribute(elem, "filePrefix", filePrefix);
+		sGetMandatoryAttribute(elem, "class", outputClass);
+		sGetOptionalAttribute(elem, "period", period, 1);
 		
-		OutputDescPtr output(new OutputDescription(filePrefix, outputClass,
-			period, params));
-		outputs.push_back(output);
+		try {
+			OutputDescPtr output(new OutputDescription(filePrefix, outputClass,
+				period, params));
+			outputs.push_back(output);
+		} catch (Exception & e) {
+			throw(Exception(sErr(e.what(), elem)));
+		}
 		
 		elem = elem->NextSiblingElement("Output");
 	}
@@ -243,26 +294,27 @@ loadSources(const TiXmlElement* parent) const
 		Vector3f polarization;
 		Rect3i region;
 		Map<string,string> params;
-		Map<string,string> attribs = sGetAttributes(elem);
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
 		if (paramXML == 0L)
 			throw(Exception(sErr("Source needs Params element", elem)));
 		params = sGetAttributes(paramXML);
 		
-		if (!sGet(attribs, "formula", formula) &&
-			!sGet(attribs, "file", filename))
+		if (!sTryGetAttribute(elem, "formula", formula) &&
+			!sTryGetAttribute(elem, "file", filename))
 			throw(Exception(sErr("Source needs formula or file attribute",
 				elem)));
-		if (!sGet(attribs, "field", field))
-			throw(Exception(sErr("Source needs field attribute", elem)));
-		if (!sGet(attribs, "polarization", polarization))
-			throw(Exception(sErr("Source needs polarization attribute", elem)));
-		if (!sGet(attribs, "region", region))
-			throw(Exception(sErr("Source needs region attribute", elem)));
 		
-		SourceDescPtr source(new SourceDescription(formula, filename,
-			polarization, region, field, params));
-		sources.push_back(source);
+		sGetMandatoryAttribute(elem, "field", field);
+		sGetMandatoryAttribute(elem, "polarization", polarization);
+		sGetMandatoryAttribute(elem, "region", region);
+		
+		try {
+			SourceDescPtr source(new SourceDescription(formula, filename,
+				polarization, region, field, params));
+			sources.push_back(source);
+		} catch (Exception & e) {
+			throw(Exception(sErr(e.what(), elem)));
+		}
 		
 		elem = elem->NextSiblingElement("Source");
 	}
@@ -283,31 +335,41 @@ loadTFSFSources(const TiXmlElement* parent) const
 		Vector3f direction;
 		Rect3i region;
 		Map<string,string> params;
-		Map<string,string> attribs = sGetAttributes(elem);
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
 		if (paramXML == 0L)
 			throw(Exception(sErr("TFSFSource needs Params element", elem)));
 		params = sGetAttributes(paramXML);
 		
-		if (!sGet(attribs, "class", inClass))
-			throw(Exception(sErr("TFSFSource needs class attribute", elem)));
-		if (sGet(attribs, "TFRect", region))
+		sGetMandatoryAttribute(elem, "class", inClass);
+		if (sTryGetAttribute(elem, "TFRect", region))
 		{
 			region *= 2;
 			region.p2 += Vector3i(1,1,1);
 		}
-		else if (!sGet(attribs, "fineTFRect", region))
+		else if (!sTryGetAttribute(elem, "fineTFRect", region))
 			throw(Exception(sErr("TFSFSource needs TFRect or fineTFRect "
 				"attribute", elem)));
-		if (!sGet(attribs, "direction", direction))
-			throw(Exception(sErr("TFSFSource needs direction attribute",
-				elem)));
-		if (!sGet(attribs, "type", tfsfType))
-			tfsfType = "TF";
-		
-		TFSFSourceDescPtr source(new TFSFSourceDescription(inClass, region,
-			direction, tfsfType, params));
-		tfsfSources.push_back(source);
+		sGetMandatoryAttribute(elem, "direction", direction);
+		sGetOptionalAttribute(elem, "type", tfsfType, "TF");
+			
+		try {
+			TFSFSourceDescPtr source(new TFSFSourceDescription(inClass, region,
+				direction, tfsfType, params));
+			
+			const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
+			while (omitElem)
+			{
+				Vector3i omitSide;
+				omitElem->GetText() >> omitSide;
+				cerr << "Warning: no error checking on omit side input.\n";
+				source->omitSide(omitSide);
+				omitElem = omitElem->NextSiblingElement("OmitSide");
+			}
+
+			tfsfSources.push_back(source);
+		} catch (Exception & e) {
+			throw(Exception(sErr(e.what(), elem)));
+		}
 		
 		elem = elem->NextSiblingElement("Source");
 	}
@@ -329,48 +391,48 @@ loadLinks(const TiXmlElement* parent) const
 		Rect3i sourceHalfRect;
 		Rect3i destHalfRect;
 		Map<string,string> params;
-		Map<string,string> attribs = sGetAttributes(elem);
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
 		if (paramXML == 0L)
 			throw(Exception(sErr("Link needs Params element", elem)));
 		params = sGetAttributes(paramXML);
 		
-		if (!sGet(attribs, "type", linkTypeStr))
-			throw(Exception(sErr("Link needs type attribute", elem)));
-		if (!sGet(attribs, "sourceGrid", sourceGridName))
-			throw(Exception(sErr("Link needs sourceGrid attribute", elem)));
-		if (sGet(attribs, "sourceRect", sourceHalfRect))
+		sGetMandatoryAttribute(elem, "type", linkTypeStr);
+		sGetMandatoryAttribute(elem, "sourceGrid", sourceGridName);
+		
+		if (sTryGetAttribute(elem, "sourceRect", sourceHalfRect))
 		{
 			sourceHalfRect.p1 *= 2;
 			sourceHalfRect.p2 = 2*sourceHalfRect.p2 + Vector3i(1,1,1);
 		}
-		else if (!sGet(attribs, "fineSourceRect", sourceHalfRect))
+		else if (!sTryGetAttribute(elem, "fineSourceRect", sourceHalfRect))
 			throw(Exception(sErr("Link needs sourceRect or fineSourceRect "
 				"attribute", elem)));
-		if (sGet(attribs, "destRect", destHalfRect))
+		if (sTryGetAttribute(elem, "destRect", destHalfRect))
 		{
 			destHalfRect.p1 *= 2;
 			destHalfRect.p2 = 2*destHalfRect.p2 + Vector3i(1,1,1);
 		}
-		else if (!sGet(attribs, "fineDestRect", destHalfRect))
+		else if (!sTryGetAttribute(elem, "fineDestRect", destHalfRect))
 			throw(Exception(sErr("Link needs destRect or fineDestRect "
 				"attribute", elem)));
 		
-		LinkDescPtr link(new LinkDescription(linkTypeStr, sourceGridName,
-			sourceHalfRect, destHalfRect));
-		
-		set<Vector3i> omitSides;
-        const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
-        while (omitElem)
-        {
-            Vector3i omitSide;
-            omitElem->GetText() >> omitSide;
-            link->omitSide(omitSide);
-			omitSides.insert(omitSide);
-            omitElem = omitElem->NextSiblingElement("OmitSide");
-        }
-		
-		links.push_back(link);
+		try {
+			LinkDescPtr link(new LinkDescription(linkTypeStr, sourceGridName,
+				sourceHalfRect, destHalfRect));
+			
+			const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
+			while (omitElem)
+			{
+				Vector3i omitSide;
+				omitElem->GetText() >> omitSide;
+				link->omitSide(omitSide);
+				omitElem = omitElem->NextSiblingElement("OmitSide");
+			}
+			
+			links.push_back(link);
+		} catch (Exception & e) {
+			throw(Exception(sErr(e.what(), elem)));
+		}
 		
 		elem = elem->NextSiblingElement("Link");
 	}
@@ -390,16 +452,13 @@ loadMaterials(const TiXmlElement* parent) const
 		string name;
 		string inClass;
 		Map<string,string> params;
-		Map<string,string> attribs = sGetAttributes(elem);
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
 		if (paramXML == 0L)
 			throw(Exception(sErr("Material needs Params element", elem)));
 		params = sGetAttributes(paramXML);
 		
-		if (!sGet(attribs, "name", name))
-			throw(Exception(sErr("Material needs name attribute", elem)));
-		if (!sGet(attribs, "class", inClass))
-			throw(Exception(sErr("Material needs class attribute", elem)));
+		sGetMandatoryAttribute(elem, "name", name);
+		sGetMandatoryAttribute(elem, "class", inClass);
 		
 		MaterialDescPtr material(new MaterialDescription(name, inClass,
 			params));
@@ -416,6 +475,7 @@ loadAssembly(const TiXmlElement* parent) const
 {
 	assert(parent);
 	AssemblyDescPtr assembly;
+	vector<AssemblyDescription::InstructionPtr> recipe;
 	
 	const TiXmlElement* elem = parent->FirstChildElement("Assembly");
 	
@@ -423,8 +483,268 @@ loadAssembly(const TiXmlElement* parent) const
 		throw(Exception(sErr("Only one Assembly element allowed per Grid",
 			elem->NextSiblingElement("Assembly"))));
 	
+	const TiXmlElement* instruction = elem->FirstChildElement();
+	
+	while (instruction)
+	{
+		string instructionType = instruction->Value();
+		
+		if (instructionType == "Block")
+			recipe.push_back(loadABlock(instruction));
+		else if (instructionType == "KeyImage")
+			recipe.push_back(loadAKeyImage(instruction));
+		else if (instructionType == "HeightMap")
+			recipe.push_back(loadAHeightMap(instruction));
+		else if (instructionType == "Ellipsoid")
+			recipe.push_back(loadAEllipsoid(instruction));
+		else if (instructionType == "CopyFrom")
+			recipe.push_back(loadACopyFrom(instruction));
+		
+		instruction = instruction->NextSiblingElement();
+	}
+	
+	assembly = AssemblyDescPtr(new AssemblyDescription(recipe));
 	return assembly;
 }
+
+
+AssemblyDescription::InstructionPtr XMLParameterFile::
+loadABlock(const TiXmlElement* elem) const
+{
+	assert(elem);
+	assert(elem->Value() == "Block");
+	
+	AssemblyDescription::InstructionPtr blockPtr;
+	Rect3i rect;
+	string material;
+	string fillStyleStr;
+	FillStyle style;
+	
+	sGetMandatoryAttribute(elem, "material", material);
+	
+	
+	// Does the Block have a Yee region, called "fillRect"?
+	if (sTryGetAttribute(elem, "fillRect", rect))
+	{
+		sGetOptionalAttribute(elem, "fillStyle", fillStyleStr, "PECStyle");
+		try {
+			style = sFillStyleFromString(fillStyleStr); // may fail
+		} catch (const Exception & e) {
+			throw(Exception(sErr(e.what(), elem))); // rethrow with XML row/col
+		}
+		try {
+			blockPtr = AssemblyDescription::InstructionPtr(
+				(AssemblyDescription::Block*)new AssemblyDescription::Block(
+					rect, style, material)
+				);
+		} catch (Exception & e) {
+			throw(Exception(sErr(e.what(), elem)));
+		}
+		// Yee rect
+	}
+	else if (sTryGetAttribute(elem, "fineFillRect", rect))
+	{
+		if (elem->Attribute("fillStyle"))
+			throw(Exception(sErr("Block with fineFillRect does not need "
+				"fillStyle attribute", elem)));
+		
+		try {
+			blockPtr = AssemblyDescription::InstructionPtr(
+				new AssemblyDescription::Block(rect, material));
+		} catch (Exception & e) {
+			throw(Exception(sErr(e.what(), elem)));
+		}
+		// half-cell rect
+	}
+	else
+	{
+		throw(Exception(sErr("Block needs fillRect or fineFillRect "
+			"attribute", elem)));
+	}
+	
+	return blockPtr;
+}
+
+AssemblyDescription::InstructionPtr XMLParameterFile::
+loadAKeyImage(const TiXmlElement* elem) const
+{
+	assert(elem);
+	assert(elem->Value() == "KeyImage");
+	
+	AssemblyDescription::InstructionPtr keyImage;
+	Rect3i yeeRect;
+	string imageFileName;
+	string rowDirStr;
+	string colDirStr;
+	Vector3i rowDir;
+	Vector3i colDir;
+	vector<AssemblyDescription::ColorKey> keys;
+	
+	// Step 1 of 2: load all the attributes (and not the tag elements)
+	sGetMandatoryAttribute(elem, "fillRect", yeeRect);
+	sGetMandatoryAttribute(elem, "file", imageFileName);
+	sGetMandatoryAttribute(elem, "row", rowDirStr);
+	sGetMandatoryAttribute(elem, "column", colDirStr);
+	
+	try {
+		rowDir = sUnitVectorFromString(rowDirStr);
+		colDir = sUnitVectorFromString(colDirStr);
+	} catch (const Exception & e) {
+		throw(Exception(sErr(e.what(), elem))); // rethrow with XML row/col
+	}
+	
+	// Step 2 of 2: load all the tag elements (and not the attributes)
+	keys = loadAColorKeys(elem);
+	
+	// Package it up and ship.
+	
+	try {
+		keyImage = AssemblyDescription::InstructionPtr(
+			new AssemblyDescription::KeyImage(yeeRect, imageFileName, rowDir,
+				colDir, keys));
+	} catch (Exception & e) {
+		throw(Exception(sErr(e.what(), elem)));
+	}
+	
+	return keyImage;
+}
+
+vector<AssemblyDescription::ColorKey> XMLParameterFile::
+loadAColorKeys(const TiXmlElement* parent) const
+{
+	assert(parent);
+	vector<AssemblyDescription::ColorKey> keys;
+
+	const TiXmlElement* elem = parent->FirstChildElement("Tag");
+	if (elem == 0L)
+		throw(Exception(sErr("KeyImage needs at least one Tag element",
+			parent)));
+	
+	while (elem)
+	{
+		string colorStr;
+		string material;
+		string fillStyleStr;
+		FillStyle style;
+		
+		sGetMandatoryAttribute(elem, "color", colorStr);
+		sGetOptionalAttribute(elem, "fillStyle", fillStyleStr, "PECStyle");
+		
+		try {
+			style = sFillStyleFromString(fillStyleStr);
+			AssemblyDescription::ColorKey key(colorStr, material, style);
+			keys.push_back(key);
+		} catch (const Exception & e) {
+			throw(Exception(sErr(e.what(), elem))); // rethrow w/ row/col
+		}
+		
+		elem = elem->NextSiblingElement("Tag");
+	}
+	
+	return keys;
+}
+
+AssemblyDescription::InstructionPtr XMLParameterFile::
+loadAHeightMap(const TiXmlElement* elem) const
+{
+	assert(elem);
+	assert(elem->Value() == "HeightMap");
+	
+	AssemblyDescription::InstructionPtr heightMap;
+	
+	Rect3i yeeRect;
+	string styleStr;
+	FillStyle style;
+	string material;
+	string imageFileName;
+	string rowDirStr, colDirStr, upDirStr;
+	Vector3i rowDir, colDir, upDir;
+	
+	sGetMandatoryAttribute(elem, "fillRect", yeeRect);
+	sGetMandatoryAttribute(elem, "material", material);
+	sGetMandatoryAttribute(elem, "file", imageFileName);
+	sGetMandatoryAttribute(elem, "row", rowDirStr);
+	sGetMandatoryAttribute(elem, "column", colDirStr);
+	sGetMandatoryAttribute(elem, "up", upDirStr);
+	sGetOptionalAttribute(elem, "fillStyle", styleStr, "PECStyle");
+	
+	try {
+		style = sFillStyleFromString(styleStr);
+		rowDir = sUnitVectorFromString(rowDirStr);
+		colDir = sUnitVectorFromString(colDirStr);
+		upDir = sUnitVectorFromString(upDirStr);
+		
+		heightMap = AssemblyDescription::InstructionPtr(
+			new AssemblyDescription::HeightMap(yeeRect, style, material,
+				imageFileName, rowDir, colDir, upDir));
+	} catch (Exception & e) {
+		throw(Exception(sErr(e.what(), elem))); // append XML row/col info
+	}
+	
+	return heightMap;
+}
+AssemblyDescription::InstructionPtr XMLParameterFile::
+loadAEllipsoid(const TiXmlElement* elem) const
+{
+	assert(elem);
+	assert(elem->Value() == "Ellipsoid");
+	
+	AssemblyDescription::InstructionPtr ellipsoid;
+	Rect3i rect;
+	string material;
+	string styleStr;
+	FillStyle style;
+	
+	sGetMandatoryAttribute(elem, "material", material);
+	
+	if (sTryGetAttribute(elem, "fillRect", rect))
+	{
+		sGetOptionalAttribute(elem, "fillStyle", styleStr, "PECStyle");
+		
+		try {
+			style = sFillStyleFromString(styleStr);
+			ellipsoid = AssemblyDescription::InstructionPtr(
+				new AssemblyDescription::Ellipsoid(rect, style, material));
+		} catch (Exception & e) {
+			throw(Exception(sErr(e.what(), elem)));
+		}
+	}
+	else
+	{
+		if (!sTryGetAttribute(elem, "fineFillRect", rect))
+			throw(Exception(sErr("Ellipsoid needs fillRect or fineFillRect "
+				"attribute", elem)));
+		
+		ellipsoid = AssemblyDescription::InstructionPtr(
+			new AssemblyDescription::Ellipsoid(rect, material));
+	}
+	return ellipsoid;
+}
+AssemblyDescription::InstructionPtr XMLParameterFile::
+loadACopyFrom(const TiXmlElement* elem) const
+{
+	assert(elem);
+	assert(elem->Value() == "CopyFrom");
+	
+	AssemblyDescription::InstructionPtr copyFrom;
+	Rect3i sourceRect, destRect;
+	string sourceGridName;
+	
+	sGetMandatoryAttribute(elem, "sourceRect", sourceRect);
+	sGetMandatoryAttribute(elem, "destRect", destRect);
+	sGetMandatoryAttribute(elem, "sourceGrid", sourceGridName);
+	
+	try {
+		copyFrom = AssemblyDescription::InstructionPtr(
+			new AssemblyDescription::CopyFrom(
+				sourceRect, destRect, sourceGridName));
+	} catch (Exception & e) {
+		throw(Exception(sErr(e.what(), elem)));
+	}
+	
+	return copyFrom;
+}
+
 
 
 #pragma mark *** Static Method Implementations ***
@@ -444,10 +764,10 @@ Map<string, string> sGetAttributes(const TiXmlElement* elem)
     return attribs;
 }
 
-
+/*
 template <class T>
-static bool sGet(const Map<std::string, std::string> & inMap,
-	const std::string & key, T & val)
+static bool sGet(const Map<string, std::string> & inMap,
+	const string & key, T & val)
 {
 	if (inMap.count(key) == 0)
 		return 0;
@@ -460,11 +780,131 @@ static bool sGet(const Map<std::string, std::string> & inMap,
 	return 1;
 }
 
+template <class T, class T2>
+static bool sGetOptional(const Map<string, string> & inMap,
+	const string & key, T & val, const T2 & defaultVal)
+{
+	if (inMap.count(key) == 0)
+	{
+		val = defaultVal;
+		return 1;
+	}
+	
+	istringstream istr(inMap[key]);
+	
+	if (!(istr >> val))
+		return 0;
+	
+	return 1;
+}
+*/
+
+template <class T>
+static void sGetMandatoryAttribute(const TiXmlElement* elem,
+	const string & attribute, T & val) throw(Exception)
+{
+	assert(elem);
+	ostringstream err;
+	
+	if (elem->Attribute(attribute.c_str()) == 0L)
+	{
+		err << elem->Value() << " needs attribute " << attribute;
+		throw(Exception(sErr(err.str(), elem)));
+	}
+	
+	istringstream istr(elem->Attribute(attribute.c_str()));
+	
+	if (!(istr >> val))
+	{
+		err << elem->Value() << " has invalid " << attribute << " attribute";
+		throw(Exception(sErr(err.str(), elem)));
+	}
+}
+
+template <class T>
+static bool sTryGetAttribute(const TiXmlElement* elem,
+	const string & attribute, T & val)
+{
+	assert(elem);
+	ostringstream err;
+	
+	if (elem->Attribute(attribute.c_str()) == 0L)
+		return 0;
+	else
+	{
+		istringstream istr(elem->Attribute(attribute.c_str()));
+		
+		if (!(istr >> val))
+		{
+			err << elem->Value() << " has invalid " << attribute
+				<< " attribute";
+			throw(Exception(sErr(err.str(), elem)));
+		}
+	}
+	return 1;
+}
+
+template <class T, class T2>
+static void sGetOptionalAttribute(const TiXmlElement* elem,
+	const string & attribute, T & val, const T2 & defaultVal)
+{
+	assert(elem);
+	ostringstream err;
+	
+	if (elem->Attribute(attribute.c_str()) == 0L)
+	{
+		val = defaultVal;
+	}
+	else
+	{
+		istringstream istr(elem->Attribute(attribute.c_str()));
+		
+		if (!(istr >> val))
+		{
+			err << elem->Value() << " has invalid " << attribute
+				<< " attribute";
+			throw(Exception(sErr(err.str(), elem)));
+		}
+	}
+}
+
 static string sErr(const string & str, const TiXmlElement* elem)
 {
 	ostringstream outStr;
 	outStr << str << " (row " << elem->Row() << ", col " << elem->Column()
 		<< ")";
 	return outStr.str();
+}
+
+static FillStyle sFillStyleFromString(const string & str) throw(Exception)
+{
+	if (str == "PMCStyle")
+		return kPMCStyle;
+	else if (str == "PECStyle")
+		return kPECStyle;
+	throw(Exception("Invalid fill style"));
+}
+
+static Vector3i sUnitVectorFromString(const string & axisString)
+	throw(Exception)
+{
+    Vector3i out(0,0,0);
+    
+    if (axisString == "x")
+        out = Vector3i(1,0,0);
+    else if (axisString == "-x")
+        out = Vector3i(-1,0,0);
+    else if (axisString == "y")
+        out = Vector3i(0,1,0);
+    else if (axisString == "-y")
+        out = Vector3i(0, -1 ,0);
+    else if (axisString == "z")
+        out = Vector3i(0,0,1);
+    else if (axisString == "-z")
+        out = Vector3i(0,0,-1);
+    else
+        throw(Exception("Unit vector string must be x, -x, y, -y, z, or -z"));
+	
+    return out;
 }
 

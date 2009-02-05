@@ -33,6 +33,10 @@ public:
     Pointer(const Pointer<T>& src);
     Pointer<T>& operator=(const Pointer<T>& rhs);
     Pointer<T>& operator=(int nullShouldBeZero);
+	
+	// not sure this is a good idea
+	//template <typename T2>
+	//Pointer<T>& operator=(T2* rhs);
     
     T& operator*();
     const T& operator*() const;
@@ -141,7 +145,23 @@ operator=(int nullShouldBeZero)
     *this = Pointer<T>(0L);
     return *this;
 }
-
+/*
+template <typename T>
+template <typename T2>
+Pointer<T>& Pointer<T>::
+operator=(T2* rhs)
+{
+	if (mPtr == rhs)
+	{
+		return *this;
+	}
+	decrementPointer();
+	mPtr = rhs;
+	if (mPtr != 0L)
+		mReferenceCounts[mPtr]++;
+	return *this;
+}
+*/
 template <typename T>
 T& Pointer<T>::operator*()
 {

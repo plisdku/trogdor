@@ -35,6 +35,9 @@ template <unsigned DIM, typename T>
 bool operator== (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs);
 
 template <unsigned DIM, typename T>
+bool operator!= (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs);
+
+template <unsigned DIM, typename T>
 vmlib::SVec<DIM,T> operator% (const vmlib::SVec<DIM,T>& lhs, T rhs);
 
 } // namespace vmlib

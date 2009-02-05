@@ -16,7 +16,7 @@
 #ifndef _SETUPCONSTANTS_
 #define _SETUPCONSTANTS_
 
-enum FillStyle { kPECStyle, kPMCStyle };
+enum FillStyle { kPECStyle, kPMCStyle, kHalfCellStyle };
 enum Field { kElectric, kMagnetic };
 enum TFSFType { kNoType, kTFType, kSFType };
 enum TFSFBufferType { kLinkType, kFileType };		
