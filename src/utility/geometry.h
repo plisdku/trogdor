@@ -22,6 +22,8 @@ typedef vmlib::SVec<3,int> Vector3i;
 typedef vmlib::SVec<3,double> Vector3d;
 typedef vmlib::SVec<3,bool> Vector3b;
 typedef vmlib::SVec<3,float> Vector3f;
+//typedef vmlib::SMat<3,float> Mat3f;
+typedef vmlib::SMat<3,int> Mat3i;
 
 namespace vmlib {
 
@@ -140,6 +142,10 @@ template<typename T>
 Rect<T> &
 operator /= (Rect<T> & lhs, const T scalar);
 
+template<typename T>
+Rect<T>
+operator * (const vmlib::SMat<3,T> & lhs, const Rect<T> & rhs);
+
 
 template<typename T>
 Rect<T>
@@ -154,6 +160,7 @@ bool operator<(const Rect<T> & lhs, const Rect<T> & rhs);
 
 template<typename T>
 bool operator>(const Rect<T> & lhs, const Rect<T> & rhs);
+
 
 template<typename T, typename S>
 void mapPoint(const Rect<T> & fromRect, const vmlib::SVec<3,T> & fromPoint,

@@ -9,11 +9,11 @@
 #ifndef _VERSION_H_
 #define _VERSION_H_
 
-const int TROGDOR_MAJOR_VERSION = 4;
-const int TROGDOR_MINOR_VERSION = 5;
-const int TROGDOR_PATCH_VERSION = 3;
+const int TROGDOR_MAJOR_VERSION = 5;
+const int TROGDOR_MINOR_VERSION = 0;
+const int TROGDOR_PATCH_VERSION = 0;
 
-#define TROGDOR_VERSION_TEXT "4.5.3"
+#define TROGDOR_VERSION_TEXT "5.0.0 beta"
 
 #ifdef __MINGW32__
 #define TROGDOR_OS "MinGW 32"

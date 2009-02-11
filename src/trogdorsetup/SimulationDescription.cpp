@@ -70,7 +70,7 @@ GridDescription(string name, Vector3i numYeeCells, Vector3i numHalfCells,
 	mCalcRegionHalf(calcRegionHalf),
 	mNonPMLHalf(nonPMLHalf)
 {
-	assert(mNumYeeCells == Vector3i(2*mNumHalfCells)); // caller's job...
+	assert(Vector3i(2*mNumYeeCells) == mNumHalfCells); // caller's job...
 	
 	if (!vec_ge(mCalcRegionHalf.size(), 0))
 		throw(Exception("Calc region has some negative dimensions"));

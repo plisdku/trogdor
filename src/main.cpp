@@ -119,8 +119,9 @@ int main (int argc, char * const argv[])
 	runSim = (variablesMap.count("nosim") == 0);
 	
     FDTDApplication& app = FDTDApplication::getInstance();
-    app.runAll(paramFileName, numThreads, runSim, output3D, dumpGrid,
-		output2D, numTimestepsOverride);
+	app.runNew(paramFileName);
+    //app.runAll(paramFileName, numThreads, runSim, output3D, dumpGrid,
+	//	output2D, numTimestepsOverride);
     
     return 0;
 }

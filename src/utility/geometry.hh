@@ -349,6 +349,14 @@ operator /= (Rect<T> & lhs, const T scalar)
     return lhs;
 }
 
+
+template<typename T>
+Rect<T>
+operator * (const vmlib::SMat<3,T> & lhs, const Rect<T> & rhs)
+{
+    return Rect<T>(lhs*rhs.p1, lhs*rhs.p2);
+}
+
 template<typename T>
 Rect<T>
 inset( const Rect<T> & inRect, T dx0, T dx1, T dy0, T dy1, T dz0, T dz1 )

@@ -13,6 +13,10 @@
  *
  */
 
+#include "XMLParameterFile.h"
+#include "SimulationDescription.h"
+#include "NewSetupGrid.h"
+
 #include "FDTDApplication.h"
 #include "SetupGrid.h"
 #include "SetupMaterialModel.h"
@@ -279,24 +283,7 @@ runAll(string parameterFile, int numThreads, bool runSim,
 			<< ";\n";
 		runlog << "trogdor.loopsBufferHTime = " << mBufferHTime*1e-6
 			<< ";\n";
-		/*
-		runlog << "\n\nCumulative timing:\n\n";
-		runlog << "\tCalculation:\t " << totalTotalMat_us*1e-6 << " seconds\n";
-		runlog << "\tInput:\t " << totalTotalIn_us*1e-6 << " seconds\n";
-		runlog << "\tSource:\t " << totalTotalSrc_us*1e-6 << " seconds\n";
-		runlog << "\t\tCalc, input, source sum:\t " << 
-			(totalTotalMat_us+totalTotalIn_us+totalTotalSrc_us)*1e-6 << "\n";
-		runlog << "\t\tE loops:\t " << mUpdateETime*1e-6 << "\n";
-		runlog << "\t\tH loops:\t " << mUpdateHTime*1e-6 << "\n";
-		runlog << "\t\tE&H loops:\t " << (mUpdateETime+mUpdateHTime)*1e-6 << "\n";
-		runlog << "\tOutput:\t " << totalTotalOut_us*1e-6 << " seconds\n";
-		runlog << "\t\tOutput loops:\t " << mOutputTime*1e-6 << "\n";
-		runlog << "\tBuffer:\t " << totalTotalBuf_us*1e-6 << " seconds\n";
-		runlog << "\t\tBuffer E loops:\t " << mBufferETime*1e-6 << "\n";
-		runlog << "\t\tBuffer H loops:\t " << mBufferHTime*1e-6 << "\n";
-		runlog << "\t\tBuffer E&H loops:\t " << 
-			(mBufferETime+mBufferHTime)*1e-6 << "\n";
-		*/
+		
 		//runlog << "\n\nTimestep trace (s):\n";
 		
 		runlog << "% Timestep trace\n";
@@ -316,6 +303,98 @@ runAll(string parameterFile, int numThreads, bool runSim,
 
 	}
 }
+
+void FDTDApplication::
+runNew(string parameterFile)
+{
+	// Tasks:
+	//		load parameter file
+	//		init simulation description
+	//		for each grid:
+	//			paint grid
+	//			create child grids from TFSF sources as 
+	
+	Map<string, GridDescPtr> gridDescriptions;
+	Map<string, VoxelizedGridPtr> voxelizedGrids;
+	Map<string, int> simulationGrids;
+	
+	SimulationDescPtr sim = loadSimulation(parameterFile);
+	Mat3i orientation = guessFastestOrientation(*sim);
+	voxelizeGrids(sim, gridDescriptions, voxelizedGrids, orientation);
+	
+	// make runlines
+	voxelizedGrids.clear();
+	// set up calculation stuff
+	
+}
+
+SimulationDescPtr FDTDApplication::
+loadSimulation(string parameterFile)
+{
+	Pointer<XMLParameterFile> file;
+	SimulationDescPtr sim;
+	try {
+		file = Pointer<XMLParameterFile>(new XMLParameterFile(parameterFile));
+		sim = SimulationDescPtr(new SimulationDescription(*file));
+	} catch (Exception & e) {
+		cerr << "Error trying to read " << parameterFile << ".  Reason:\n";
+		cerr << e.what() << endl;
+		exit(1);
+	}
+	
+	return sim;
+}
+
+Mat3i FDTDApplication::
+guessFastestOrientation(const SimulationDescription & grid) const
+{
+	LOG << "Defaulting to standard orientation.\n";
+	return Mat3i(1); // identity matrix
+}
+
+void FDTDApplication::
+voxelizeGrids(const SimulationDescPtr sim,
+	Map<string, GridDescriptionPtr> gridDescriptions,
+	Map<string, VoxelizedGridPtr> voxelizedGrids,
+	Mat3i orientation)
+{
+	// Make a copy of the grid descriptions.  We need the ability to modify
+	// them, because TFSFSources may require the creation of additional grids.
+	
+	LOG << "Voxelizing the grids.\n";
+	for (unsigned int ii = 0; ii < sim->getGrids().size(); ii++)
+	{
+		GridDescPtr g = sim->getGrids()[ii];
+		gridDescriptions[g->getName()] = g;
+		
+		// the recursor paints the setup grid and creates new grids as needed
+		// to implement all TFSF sources.
+		voxelizeGridRecursor(gridDescriptions, voxelizedGrids, g, orientation);
+	}
+}
+
+void FDTDApplication::
+voxelizeGridRecursor(Map<string, GridDescriptionPtr> & gridDescriptions,
+	Map<string, VoxelizedGridPtr> & voxelizedGrids,
+	GridDescriptionPtr currentGrid,
+	Mat3i orientation)
+{
+	LOG << "Recursing for grid " << currentGrid->getName() << ".\n";
+	
+	VoxelizedGrid setupGrid(*currentGrid, voxelizedGrids, orientation);
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 #pragma mark *** Setup phase ***
 
@@ -663,8 +742,6 @@ makeAndLinkAuxiliaryGrid(SetupGridPtr parentGrid, string auxName,
 	// 3.  Create the link and add it to the parent grid
 	
 	const int PML_HALF_CELLS = 20;
-	Vector3i unitVectors[3] = { Vector3i(1,0,0), Vector3i(0,1,0),
-		Vector3i(0,0,1) };
 	
 	LOGF << "Making and linking!\n";
 	
@@ -1014,7 +1091,6 @@ setupAFPRequests(Map<std::string, SetupGridPtr> & setupGrids)
 		LOGF << "Handling AFP requests for " << nom << endl;
 		
 		grid->writeAFPRequests(m_dx, m_dy, m_dz, m_dt, mNumT);
-		
 	}
 }
 

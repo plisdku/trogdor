@@ -120,10 +120,10 @@ loadTrogdor4(SimulationDescription & sim) const throw(Exception)
 	try {
 		sim.setDiscretization(Vector3f(dx,dy,dz), dt);
 		sim.setDuration(numTimesteps);
-		sim.setGrids(loadGrids(elem));
 	} catch (Exception & e) {
 		throw(Exception(sErr(e.what(), elem)));
 	}
+	sim.setGrids(loadGrids(elem));
 }
 
 vector<GridDescPtr> XMLParameterFile::
@@ -198,6 +198,7 @@ loadGrids(const TiXmlElement* parent) const
 		gridDesc->setOutputs(loadOutputs(elem));
 		gridDesc->setInputs(loadInputEHs(elem));
 		gridDesc->setSources(loadSources(elem));
+		gridDesc->setTFSFSources(loadTFSFSources(elem));
 		gridDesc->setMaterials(loadMaterials(elem));
 		gridDesc->setAssembly(loadAssembly(elem));
 		gridDesc->setLinks(loadLinks(elem));
@@ -453,9 +454,11 @@ loadMaterials(const TiXmlElement* parent) const
 		string inClass;
 		Map<string,string> params;
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
-		if (paramXML == 0L)
-			throw(Exception(sErr("Material needs Params element", elem)));
-		params = sGetAttributes(paramXML);
+		// not every material needs params, e.g. PEC/PMC
+		//if (paramXML == 0L)
+		//	throw(Exception(sErr("Material needs Params element", elem)));
+		if (paramXML != 0L)
+			params = sGetAttributes(paramXML);
 		
 		sGetMandatoryAttribute(elem, "name", name);
 		sGetMandatoryAttribute(elem, "class", inClass);
@@ -512,7 +515,7 @@ AssemblyDescription::InstructionPtr XMLParameterFile::
 loadABlock(const TiXmlElement* elem) const
 {
 	assert(elem);
-	assert(elem->Value() == "Block");
+	assert(elem->Value() == string("Block"));
 	
 	AssemblyDescription::InstructionPtr blockPtr;
 	Rect3i rect;
@@ -569,7 +572,7 @@ AssemblyDescription::InstructionPtr XMLParameterFile::
 loadAKeyImage(const TiXmlElement* elem) const
 {
 	assert(elem);
-	assert(elem->Value() == "KeyImage");
+	assert(elem->Value() == string("KeyImage"));
 	
 	AssemblyDescription::InstructionPtr keyImage;
 	Rect3i yeeRect;
@@ -648,7 +651,7 @@ AssemblyDescription::InstructionPtr XMLParameterFile::
 loadAHeightMap(const TiXmlElement* elem) const
 {
 	assert(elem);
-	assert(elem->Value() == "HeightMap");
+	assert(elem->Value() == string("HeightMap"));
 	
 	AssemblyDescription::InstructionPtr heightMap;
 	
@@ -687,7 +690,7 @@ AssemblyDescription::InstructionPtr XMLParameterFile::
 loadAEllipsoid(const TiXmlElement* elem) const
 {
 	assert(elem);
-	assert(elem->Value() == "Ellipsoid");
+	assert(elem->Value() == string("Ellipsoid"));
 	
 	AssemblyDescription::InstructionPtr ellipsoid;
 	Rect3i rect;
@@ -724,7 +727,7 @@ AssemblyDescription::InstructionPtr XMLParameterFile::
 loadACopyFrom(const TiXmlElement* elem) const
 {
 	assert(elem);
-	assert(elem->Value() == "CopyFrom");
+	assert(elem->Value() == string("CopyFrom"));
 	
 	AssemblyDescription::InstructionPtr copyFrom;
 	Rect3i sourceRect, destRect;
@@ -808,7 +811,7 @@ static void sGetMandatoryAttribute(const TiXmlElement* elem,
 	
 	if (elem->Attribute(attribute.c_str()) == 0L)
 	{
-		err << elem->Value() << " needs attribute " << attribute;
+		err << elem->Value() << " needs attribute \"" << attribute << "\"";
 		throw(Exception(sErr(err.str(), elem)));
 	}
 	
@@ -816,7 +819,8 @@ static void sGetMandatoryAttribute(const TiXmlElement* elem,
 	
 	if (!(istr >> val))
 	{
-		err << elem->Value() << " has invalid " << attribute << " attribute";
+		err << elem->Value() << " has invalid \"" << attribute
+			<<"\" attribute";
 		throw(Exception(sErr(err.str(), elem)));
 	}
 }
@@ -836,8 +840,8 @@ static bool sTryGetAttribute(const TiXmlElement* elem,
 		
 		if (!(istr >> val))
 		{
-			err << elem->Value() << " has invalid " << attribute
-				<< " attribute";
+			err << elem->Value() << " has invalid \"" << attribute
+				<< "\" attribute";
 			throw(Exception(sErr(err.str(), elem)));
 		}
 	}
@@ -861,8 +865,8 @@ static void sGetOptionalAttribute(const TiXmlElement* elem,
 		
 		if (!(istr >> val))
 		{
-			err << elem->Value() << " has invalid " << attribute
-				<< " attribute";
+			err << elem->Value() << " has invalid \"" << attribute
+				<< "\" attribute";
 			throw(Exception(sErr(err.str(), elem)));
 		}
 	}

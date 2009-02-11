@@ -30,6 +30,14 @@
 class Fields;
 typedef Pointer<Fields> FieldsPtr;
 
+class SimulationDescription;
+typedef Pointer<SimulationDescription> SimulationDescPtr;
+
+class GridDescription;
+typedef Pointer<GridDescription> GridDescriptionPtr;
+
+class VoxelizedGrid;
+typedef Pointer<VoxelizedGrid> VoxelizedGridPtr;
 
 /**
  *  Core application singleton
@@ -55,6 +63,24 @@ public:
 		bool output3D, bool dumpGrid, bool output2D,
 		int numTimestepsOverride = -1);
 	
+	void runNew(std::string parameterFile);
+
+private: // heh, "new private" stuff
+	
+	SimulationDescPtr loadSimulation(std::string parameterFile);
+	
+	Mat3i guessFastestOrientation(const SimulationDescription & sim) const;
+	
+	void voxelizeGrids(const SimulationDescPtr sim,
+		Map<std::string, GridDescriptionPtr> gridDescriptions,
+		Map<std::string, VoxelizedGridPtr> voxelizedGrids,
+		Mat3i orientation);
+	
+	void voxelizeGridRecursor(
+		Map<std::string, GridDescriptionPtr> & gridDescriptions,
+		Map<std::string, VoxelizedGridPtr> & voxelizedGrids,
+		GridDescriptionPtr currentGrid,
+		Mat3i orientation);
 	
 private:
     /**

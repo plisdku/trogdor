@@ -56,8 +56,14 @@ public:
 	
 	void setDiscretization(Vector3f dxyz, float dt);
 	void setDuration(int numT);
-private:
 	
+	const std::vector<GridDescPtr> & getGrids() const { return mGrids; }
+	//std::vector<GridDescPtr> & getGrids() { return mGrids; }
+	
+	float getDt() const { return m_dt; }
+	Vector3f getDxyz() const { return m_dxyz; }
+	int getDuration() const { return mNumTimesteps; }
+private:
 	
 	std::vector<GridDescPtr> mGrids;
 	float m_dt;
@@ -79,12 +85,31 @@ public:
 		mInputs = inputs; }
 	void setSources(const std::vector<SourceDescPtr> & sources) {
 		mSources = sources; }
+	void setTFSFSources(const std::vector<TFSFSourceDescPtr> & tfsfSources) {
+		mTFSFSources = tfsfSources; }
 	void setLinks(const std::vector<LinkDescPtr> & links) {
 		mLinks = links; }
 	void setMaterials(const std::vector<MaterialDescPtr> & materials) {
 		mMaterials = materials; }
 	void setAssembly(AssemblyDescPtr assembly) {
 		mAssembly = assembly; }
+	
+	const std::string & getName() const { return mName; }
+	Vector3i getNumYeeCells() const { return mNumYeeCells; }
+	Vector3i getNumHalfCells() const { return mNumHalfCells; }
+	const Rect3i & getCalcRegion() const { return mCalcRegionHalf; }
+	const Rect3i & getNonPMLRegion() const { return mNonPMLHalf; }
+	
+	const std::vector<OutputDescPtr> & getOutputs() const { return mOutputs; }
+	const std::vector<InputEHDescPtr> & getInputs() const { return mInputs; }
+	const std::vector<SourceDescPtr> & getSources() const { return mSources; }
+	const std::vector<TFSFSourceDescPtr> & getTFSFSources() const
+		{ return mTFSFSources; }
+	const std::vector<LinkDescPtr> & getLinks() const { return mLinks; }
+	const std::vector<MaterialDescPtr> & getMaterials() const
+		{ return mMaterials; }
+	const AssemblyDescPtr getAssembly() const { return mAssembly; }
+	
 private:
 	std::string mName;
 	
@@ -96,6 +121,7 @@ private:
 	std::vector<OutputDescPtr> mOutputs;
 	std::vector<InputEHDescPtr> mInputs;
 	std::vector<SourceDescPtr> mSources;
+	std::vector<TFSFSourceDescPtr> mTFSFSources;
 	std::vector<LinkDescPtr> mLinks;
 	std::vector<MaterialDescPtr> mMaterials;
 	AssemblyDescPtr mAssembly;
@@ -106,6 +132,10 @@ class InputEHDescription
 public:
 	InputEHDescription(std::string fileName, std::string inClass, 
 		const Map<std::string, std::string> & inParameters) throw(Exception);
+	
+	std::string getFileName() const { return mFileName; }
+	std::string getClass() const { return mClass; }
+	const Map<std::string, std::string> & getParams() const { return mParams; }
 private:
 	std::string mFileName;
 	std::string mClass;
@@ -118,6 +148,11 @@ public:
 	OutputDescription(std::string fileName, std::string inClass,
 		int inPeriod, const Map<std::string, std::string> & inParameters)
 		throw(Exception);
+	
+	std::string getFileName() const { return mFileName; }
+	std::string getClass() const { return mClass; }
+	int getPeriod() const { return mPeriod; }
+	const Map<std::string, std::string> & getParams() const { return mParams; }
 private:
 	std::string mFileName;
 	std::string mClass;
@@ -131,6 +166,13 @@ public:
 	SourceDescription(std::string formula, std::string inFileName,
 		Vector3f polarization, Rect3i region, std::string field,
 		const Map<std::string, std::string> & inParameters) throw(Exception);
+	
+	std::string getFormula() const { return mFormula; }
+	std::string getFileName() const { return mInputFileName; }
+	Vector3f getPolarization() const { return mPolarization; }
+	const Rect3i & getYeeRegion() const { return mRegion; }
+	std::string getField() const { return mField; }
+	const Map<std::string, std::string> & getParams() const { return mParams; }
 private:
 	std::string mFormula;
 	std::string mInputFileName;
@@ -149,6 +191,13 @@ public:
 	
 	void omitSide(Vector3i side);
 	
+	std::string getClass() const { return mClass; }
+	std::string getTypeStr() const { return mTypeStr; }
+	Vector3f getDirection() const { return mDirection; }
+	const Rect3i & getYeeRegion() const { return mRegion; }
+	const std::set<Vector3i> & getOmittedSides() const { return mOmittedSides; }
+	const Map<std::string, std::string> & getParams() const { return mParams; }
+	
 private:
 	std::string mClass;
 	std::string mTypeStr;
@@ -165,6 +214,13 @@ public:
 	LinkDescription(std::string typeString, std::string sourceGridName, 
 		Rect3i sourceRect, Rect3i destRect)
 		throw(Exception);
+	
+	std::string getTypeString() const { return mTypeString; }
+	TFSFType getType() const { return mLinkType; }
+	std::string getSourceGridName() const { return mSourceGridName; }
+	Rect3i getSourceHalfRect() const { return mSourceHalfRect; }
+	Rect3i getDestHalfRect() const { return mDestHalfRect; }
+	const std::set<Vector3i> & getOmittedSides() const { return mOmittedSides; }
 	
 	void omitSide(Vector3i side);
 
@@ -183,6 +239,10 @@ class MaterialDescription
 public:
 	MaterialDescription(std::string name, std::string inClass,
 		const Map<std::string, std::string> & inParams) throw(Exception);
+	
+	std::string getName() const { return mName; }
+	std::string getClass() const { return mClass; }
+	const Map<std::string, std::string> & getParams() const { return mParams; }
 private:
 	std::string mName;
 	std::string mClass;
@@ -331,6 +391,9 @@ public:
 		throw(Exception);
 	
 	void setInstructions(const std::vector<InstructionPtr> & instructions);
+	
+	const std::vector<InstructionPtr> & getInstructions() const
+		{ return mInstructions; }
 private:
 	std::vector<InstructionPtr> mInstructions;
 };

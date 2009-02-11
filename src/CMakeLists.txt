@@ -24,6 +24,7 @@ include_directories( ${TROGDOR_SOURCE_DIR}/src/setup
 	${TROGDOR_SOURCE_DIR}/src/utility
 	${TROGDOR_SOURCE_DIR}/src/tinyxml
 	${TROGDOR_SOURCE_DIR}/src
+	${TROGDOR_SOURCE_DIR}/src/trogdorsetup
 	${magIncDirs}
 	/sw/include)
 
@@ -64,6 +65,7 @@ TFSFBufferSet.cpp
 ThreeFieldInput.cpp
 ThreeFieldOutput.cpp
 main.cpp
+VoxelizedGrid.cpp
 )
 
 
