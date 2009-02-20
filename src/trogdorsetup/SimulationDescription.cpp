@@ -15,6 +15,9 @@
 // This is included for the function that converts hex colors to RGB.
 #include <Magick++.h>
 
+#include "YeeUtilities.h"
+using namespace YeeUtilities;
+
 static Vector3i sConvertColor(const Magick::Color & inColor);
 
 using namespace std;
@@ -37,6 +40,46 @@ SimulationDescription(const XMLParameterFile & file) throw(Exception) :
 		throw(Exception("Nonpositive cell dimensions"));
 	if (mNumTimesteps < 0)
 		throw(Exception("Negative number of iterations"));
+}
+
+void SimulationDescription::
+setAllPointers()
+{
+	unsigned int nGrid, nMaterial;
+	
+	// 1.  Make maps of names to pointers
+	Map<string, GridDescPtr> gridMap;
+	Map<string, MaterialDescPtr> materialMap;
+	
+	for (nGrid = 0; nGrid < mGrids.size(); nGrid++)
+		gridMap[mGrids[nGrid]->getName()] = mGrids[nGrid];
+	for (nMaterial = 0; nMaterial < mMaterials.size(); nMaterial++)
+		materialMap[mMaterials[nMaterial]->getName()] = mMaterials[nMaterial];
+	
+	
+	// 2.  Point Huygens surfaces to appropriate grids
+	for (nGrid = 0; nGrid < mGrids.size(); nGrid++)
+	{
+		mGrids[nGrid]->setPointers(materialMap, gridMap);
+		/*
+		std::vector<HuygensSurfaceDescPtr> & huygens = mGrids[nGrid]->
+			getHuygensSurfaces();
+		
+		for (nHuygens = 0; nHuygens < huygens.size(); nHuygens++)
+		if (huygens[nHuygens]->getType() == kLink)
+			huygens[nHuygens]->setLinkSourceGrid(gridMap[huygens[nHuygens]->
+				getLinkSourceGridName()]);
+		*/
+	}
+	/*
+	// 3.  Point various instructions to appropriate materials
+	for (nGrid = 0; nGrid < mGrids.size(); nGrid++)
+	{
+		AssemblyDescPtr assem = mGrids[nGrid]->getAssembly();
+		assert(assem != 0L);
+		assem->setPointers(materialMap, gridMap);
+	}
+	*/
 }
 
 void SimulationDescription::
@@ -77,6 +120,19 @@ GridDescription(string name, Vector3i numYeeCells, Vector3i numHalfCells,
 	if (!vec_ge(mNonPMLHalf.size(), 0))
 		throw(Exception("Non-PML region has some negative dimensions"));
 }
+
+void GridDescription::
+setPointers(const Map<string, MaterialDescPtr> & materialMap,
+	const Map<string, GridDescPtr> & gridMap)
+{
+	for (unsigned int nn = 0; nn < mHuygensSurfaces.size(); nn++)
+	if (mHuygensSurfaces[nn]->getType() == kLink)
+		mHuygensSurfaces[nn]->setPointers(gridMap);
+	
+	if (mAssembly != 0L)
+		mAssembly->setPointers(materialMap, gridMap);
+}
+
 
 #pragma mark *** InputEH ***
 
@@ -121,6 +177,7 @@ SourceDescription(string formula, string inFileName,
 		throw(Exception("Source region has some negative dimensions"));
 }
 
+/*
 #pragma mark *** TFSFSource ***
 
 TFSFSourceDescription::
@@ -146,20 +203,6 @@ omitSide(Vector3i inOmitSide)
 		norm1(inOmitSide) != 1)
 		throw(Exception("Omitted sides must be axis-oriented unit vectors"));
 	mOmittedSides.insert(inOmitSide);
-	/*
-	if (inOmitSide == Vector3i(-1,0,0))
-		mOmitSideFlags[0] = 1;
-	else if (inOmitSide == Vector3i(1,0,0))
-		mOmitSideFlags[1] = 1;
-	else if (inOmitSide == Vector3i(0,-1,0))
-		mOmitSideFlags[2] = 1;
-	else if (inOmitSide == Vector3i(0,1,0))
-		mOmitSideFlags[3] = 1;
-	else if (inOmitSide == Vector3i(0,0,-1))
-		mOmitSideFlags[4] = 1;
-	else if (inOmitSide == Vector3i(0,0,1))
-		mOmitSideFlags[5] = 1;
-	*/
 }
 
 #pragma mark *** Link ***
@@ -188,20 +231,192 @@ omitSide(Vector3i inOmitSide)
 		norm1(inOmitSide) != 1)
 		throw(Exception("Omitted sides must be axis-oriented unit vectors"));
 	mOmittedSides.insert(inOmitSide);
-	/*
-	if (inOmitSide == Vector3i(-1,0,0))
-		mOmitSideFlags[0] = 1;
-	else if (inOmitSide == Vector3i(1,0,0))
-		mOmitSideFlags[1] = 1;
-	else if (inOmitSide == Vector3i(0,-1,0))
-		mOmitSideFlags[2] = 1;
-	else if (inOmitSide == Vector3i(0,1,0))
-		mOmitSideFlags[3] = 1;
-	else if (inOmitSide == Vector3i(0,0,-1))
-		mOmitSideFlags[4] = 1;
-	else if (inOmitSide == Vector3i(0,0,1))
-		mOmitSideFlags[5] = 1;
-	*/
+}
+*/
+#pragma mark *** HuygensSurface ***
+
+// constructor for LINKS
+HuygensSurfaceDescription::
+HuygensSurfaceDescription(string typeString, string sourceGridName, 
+	Rect3i sourceHalfRect, Rect3i destHalfRect,
+	const std::set<Vector3i> & omittedSides)
+	throw(Exception) :
+	mType(kLink),
+	mDestHalfRect(destHalfRect),
+	mOmittedSides(omittedSides),
+	mBuffers(),
+	mLinkSourceHalfRect(sourceHalfRect),
+	mLinkSourceGridName(sourceGridName),
+	mTFSFSourceClass(),
+	mTFSFSourceParams(),
+	mTFSFSourceSymmetries()
+{
+	if (!vec_ge(mDestHalfRect.size(), 0))
+		throw(Exception("Link dest rect has some negative dimensions"));
+	if (!vec_ge(mLinkSourceHalfRect.size(), 0))
+		throw(Exception("Link source rect has some negative dimensions"));
+	
+	for (set<Vector3i>::iterator ii = mOmittedSides.begin();
+		ii != mOmittedSides.end(); ii++)
+	{
+		if (*ii != dominantComponent(*ii) ||
+			norm1(*ii) != 1)
+			throw(Exception("Omitted sides must be axis-oriented unit "
+				"vectors"));
+	}
+	
+	if (typeString == "TF")
+		initTFSFBuffers(1.0);
+	else if (typeString == "SF")
+		initTFSFBuffers(-1.0);
+	else
+		throw(Exception("Link type must be 'TF' or 'SF'"));
+}
+
+// constructor for TFSFSOURCES
+HuygensSurfaceDescription::
+HuygensSurfaceDescription(string inClass, Rect3i inTFRect, Vector3i symmetries,
+	string inTFSFType, const Map<string,string> & inParameters,
+	const std::set<Vector3i> & omittedSides)
+	throw(Exception) :
+	mType(kTFSFSource),
+	mDestHalfRect(inTFRect),
+	mOmittedSides(omittedSides),
+	mBuffers(),
+	mLinkSourceHalfRect(),
+	mLinkSourceGridName(),
+	mTFSFSourceClass(inClass),
+	mTFSFSourceParams(inParameters),
+	mTFSFSourceSymmetries(symmetries)
+{
+	cerr << "Warning: HuygensSurfaceDescription does not validate class.\n";
+	if (!vec_ge(mDestHalfRect.size(), 0))
+		throw(Exception("TFSFSource TF rect has some negative dimensions"));
+	for (unsigned int nn = 0; nn < 3; nn++)
+	if (mTFSFSourceSymmetries[nn] != 1 && mTFSFSourceSymmetries[nn] != 0)
+		throw(Exception("TFSFSource symmetry vector must have "
+			"1s and 0s only"));
+	
+	for (set<Vector3i>::iterator ii = mOmittedSides.begin();
+		ii != mOmittedSides.end(); ii++)
+	{
+		if (*ii != dominantComponent(*ii) ||
+			norm1(*ii) != 1)
+			throw(Exception("Omitted sides must be axis-oriented unit "
+				"vectors"));
+	}
+	if (inTFSFType == "TF")
+		initTFSFBuffers(1.0);
+	else if (inTFSFType == "SF")
+		initTFSFBuffers(-1.0);
+	else
+		throw(Exception("Link type must be 'TF' or 'SF'"));
+}
+
+HuygensSurfaceDescription::
+HuygensSurfaceDescription(string requestyArgs) throw(Exception)
+{
+	throw(Exception("Data request constructor not implemented yet."));
+}
+
+HuygensSurfaceDescription* HuygensSurfaceDescription::
+newLink(string typeString, string sourceGridName, Rect3i sourceHalfRect,
+	Rect3i destHalfRect, const set<Vector3i> & omittedSides)
+	throw(Exception)
+{
+	return new HuygensSurfaceDescription(typeString, sourceGridName,
+		sourceHalfRect, destHalfRect, omittedSides);
+}
+HuygensSurfaceDescription* HuygensSurfaceDescription::
+newTFSFSource(string inClass, Rect3i inHalfRect, Vector3i symmetries,
+	string inTFSFType, const Map<string, string> & inParameters,
+	const set<Vector3i> & omittedSides) throw(Exception)
+{
+	return new HuygensSurfaceDescription(inClass, inHalfRect, symmetries,
+		inTFSFType, inParameters, omittedSides);
+}
+
+HuygensSurfaceDescription* HuygensSurfaceDescription::
+newDataRequest() throw(Exception)
+{
+	return new HuygensSurfaceDescription("this is a data request");
+}
+
+/*
+void HuygensSurfaceDescription::
+omitSide(Vector3i inOmitSide)
+{
+	if (inOmitSide != dominantComponent(inOmitSide) ||
+		norm1(inOmitSide) != 1)
+		throw(Exception("Omitted sides must be axis-oriented unit vectors"));
+	mOmittedSides.insert(inOmitSide);
+}
+*/
+
+void HuygensSurfaceDescription::
+initTFSFBuffers(float srcFactor)
+{
+	// The function works as:
+	//		for each side of each link
+	//			for each field (Ex, Ey, Hz, Ez, Hy, Hx)
+	//				add a TF or SF buffer appropriately
+	
+	// For all sides not "omitted" explicitly...
+	for (unsigned int nDir = 0; nDir < 6; nDir++)
+	if (mOmittedSides.count(cardinalDirection(nDir)) == 0)
+	{
+		Rect3i outerTotalField = edgeOfRect(mDestHalfRect, nDir);
+		
+		for (unsigned int fieldNum = 0; fieldNum < 6; fieldNum++) // on E, H
+		if ( outerTotalField.encloses( outerTotalField.p1 +
+			 halfCellFieldOffset(fieldNum) ) )
+		{
+			// total-field buffer
+			Rect3i destYeeRect = rectHalfToYee(outerTotalField,
+				halfCellFieldIndex(fieldNum));
+			NeighborBufferDescPtr nb(new NeighborBufferDescription(
+				destYeeRect, cardinalDirection(nDir),
+				halfCellFieldOffset(fieldNum), 1.0, 1.0*srcFactor));
+			mBuffers[halfCellFieldOffset(fieldNum)].push_back(nb);
+		}
+		else
+		{
+			// scattered-field buffer
+			Rect3i destYeeRect = rectHalfToYee(outerTotalField +
+				cardinalDirection(nDir), halfCellFieldIndex(fieldNum));
+			NeighborBufferDescPtr nb(new NeighborBufferDescription(
+				destYeeRect, -1*cardinalDirection(nDir),
+				halfCellFieldOffset(fieldNum), 1.0, -1.0*srcFactor));
+			mBuffers[halfCellFieldOffset(fieldNum)].push_back(nb);
+		}
+	}
+}
+
+void HuygensSurfaceDescription::
+initFloquetBuffers()
+{
+	LOG << "Not doing anything for Floquet buffers.\n";
+}
+
+void HuygensSurfaceDescription::
+setPointers(const Map<string, GridDescPtr> & gridMap)
+{
+	assert(mType == kLink);
+	mLinkSourceGrid = gridMap[mLinkSourceGridName];
+}
+
+#pragma mark *** NeighborBuffer ***
+
+NeighborBufferDescription::
+NeighborBufferDescription(const Rect3i & applicationYeeRect,
+	Vector3i neighborDirection, Vector3i yeeOctant, float applicationFactor,
+	float addendFactor) :
+	mDestYeeRect(applicationYeeRect),
+	mNeighborDirection(neighborDirection),
+	mFieldOffset(yeeOctant),
+	mDestFactor(applicationFactor),
+	mSrcFactor(addendFactor)
+{
 }
 
 #pragma mark *** Material ***
@@ -220,17 +435,45 @@ MaterialDescription(string name, string inClass,
 #pragma mark *** Assembly ***
 
 AssemblyDescription::
-AssemblyDescription(const vector<AssemblyDescription::InstructionPtr> & recipe)
+AssemblyDescription(const vector<InstructionPtr> & recipe)
 	throw(Exception) :
 	mInstructions(recipe)
 {
 	
 }
 
-AssemblyDescription::ColorKey::
+void AssemblyDescription::
+setPointers(const Map<string, MaterialDescPtr> & materialMap,
+	const Map<string, GridDescPtr> & gridMap)
+{
+	for (unsigned int nn = 0; nn < mInstructions.size(); nn++)
+	{
+		InstructionPtr ii = mInstructions[nn];
+		switch (ii->getType())
+		{
+			case kBlockType:
+				((Block &)*ii).setPointers(materialMap);
+				break;
+			case kKeyImageType:
+				((KeyImage&)*ii).setPointers(materialMap);
+				break;
+			case kHeightMapType:
+				((HeightMap&)*ii).setPointers(materialMap);
+				break;
+			case kEllipsoidType:
+				((Ellipsoid&)*ii).setPointers(materialMap);
+				break;
+			case kCopyFromType:
+				((CopyFrom&)*ii).setPointers(gridMap);
+				break;
+		}
+	}
+}
+
+ColorKey::
 ColorKey(string hexColor, string materialName, FillStyle style)
 	throw(Exception) :
-	mMaterial(materialName),
+	mMaterialName(materialName),
 	mFillStyle(style)
 {
 	try {
@@ -242,29 +485,34 @@ ColorKey(string hexColor, string materialName, FillStyle style)
 }
 
 
-AssemblyDescription::ColorKey::
+ColorKey::
 ColorKey(Vector3i rgbColor, string materialName, FillStyle style)
 	throw(Exception) :
 	mColor(rgbColor),
-	mMaterial(materialName),
+	mMaterialName(materialName),
 	mFillStyle(style)
 {
 	assert(mFillStyle != kHalfCellStyle); // KeyImage uses one pixel per cell
 }
 
+void ColorKey::
+setPointers(const Map<string, MaterialDescPtr> & materialMap)
+{
+	mMaterial = materialMap[mMaterialName];
+}
 
 
-AssemblyDescription::Instruction::
-Instruction(AssemblyDescription::InstructionType inType) :
+Instruction::
+Instruction(InstructionType inType) :
 	mType(inType)
 {
 }
 
-AssemblyDescription::Block::
+Block::
 Block(Rect3i halfCellRect, string material) throw(Exception) :
-	AssemblyDescription::Instruction(kBlockType),
+	Instruction(kBlockType),
 	mFillRect(halfCellRect),
-	mMaterial(material),
+	mMaterialName(material),
 	mStyle(kHalfCellStyle)
 {
 	cerr << "Warning: minimal validation done for Block().\n";
@@ -272,11 +520,11 @@ Block(Rect3i halfCellRect, string material) throw(Exception) :
 		throw(Exception("Some fill rect dimensions are negative."));
 }
 
-AssemblyDescription::Block::
+Block::
 Block(Rect3i yeeCellRect, FillStyle style, string material) throw(Exception) :
-	AssemblyDescription::Instruction(kBlockType),
+	Instruction(kBlockType),
 	mFillRect(yeeCellRect),
-	mMaterial(material),
+	mMaterialName(material),
 	mStyle(style)
 {
 	cerr << "Warning: minimal validation done for Block().\n";
@@ -286,24 +534,30 @@ Block(Rect3i yeeCellRect, FillStyle style, string material) throw(Exception) :
 		throw(Exception("Some fill rect dimensions are negative."));
 }
 
-const Rect3i & AssemblyDescription::Block::
+const Rect3i & Block::
 getYeeRect() const
 {
 	assert(mStyle != kHalfCellStyle);
 	return mFillRect;
 }
 
-const Rect3i & AssemblyDescription::Block::
+const Rect3i & Block::
 getHalfRect() const
 {
 	assert(mStyle == kHalfCellStyle);
 	return mFillRect;
 }
 
-AssemblyDescription::KeyImage::
+void Block::
+setPointers(const Map<string, MaterialDescPtr> & materialMap)
+{
+	mMaterial = materialMap[mMaterialName];
+}
+
+KeyImage::
 KeyImage(Rect3i yeeCellRect, string imageFileName, Vector3i rowDirection,
 	Vector3i colDirection, vector<ColorKey> keys) throw(Exception) :
-	AssemblyDescription::Instruction(kKeyImageType),
+	Instruction(kKeyImageType),
 	mYeeRect(yeeCellRect),
 	mRow(rowDirection),
 	mCol(colDirection),
@@ -325,14 +579,21 @@ KeyImage(Rect3i yeeCellRect, string imageFileName, Vector3i rowDirection,
 		throw(Exception("Image row and column must be orthogonal"));
 }
 
-AssemblyDescription::HeightMap::
+void KeyImage::
+setPointers(const Map<string, MaterialDescPtr> & materialMap)
+{
+	for (unsigned int nn = 0; nn < mKeys.size(); nn++)
+		mKeys[nn].setPointers(materialMap);
+}
+
+HeightMap::
 HeightMap(Rect3i yeeCellRect, FillStyle style, string material,
 	string imageFileName, Vector3i rowDirection, Vector3i colDirection,
 	Vector3i upDirection) throw(Exception) :
-	AssemblyDescription::Instruction(kHeightMapType),
+	Instruction(kHeightMapType),
 	mYeeRect(yeeCellRect),
 	mStyle(style),
-	mMaterial(material),
+	mMaterialName(material),
 	mImageFileName(imageFileName),
 	mRow(rowDirection),
 	mCol(colDirection),
@@ -358,25 +619,31 @@ HeightMap(Rect3i yeeCellRect, FillStyle style, string material,
 		throw(Exception("Image row, column and up vector must be orthogonal"));
 }
 
-AssemblyDescription::Ellipsoid::
+void HeightMap::
+setPointers(const Map<string, MaterialDescPtr> & materialMap)
+{
+	mMaterial = materialMap[mMaterialName];
+}
+
+Ellipsoid::
 Ellipsoid(Rect3i halfCellRect, string material) throw(Exception) :
-	AssemblyDescription::Instruction(kEllipsoidType),
+	Instruction(kEllipsoidType),
 	mFillRect(halfCellRect),
 	mStyle(kHalfCellStyle),
-	mMaterial(material)
+	mMaterialName(material)
 {
 	cerr << "Warning: minimal validation done for Ellipsoid().\n";
 	if (!vec_ge(mFillRect.size(), 0))
 		throw(Exception("Some fill rect dimensions are negative"));
 }
 
-AssemblyDescription::Ellipsoid::
+Ellipsoid::
 Ellipsoid(Rect3i yeeCellRect, FillStyle style, string material)
 	throw(Exception) :
-	AssemblyDescription::Instruction(kEllipsoidType),
+	Instruction(kEllipsoidType),
 	mFillRect(yeeCellRect),
 	mStyle(style),
-	mMaterial(material)
+	mMaterialName(material)
 {
 	cerr << "Warning: minimal validation done for Ellipsoid().\n";
 	assert(mStyle != kHalfCellStyle);
@@ -384,24 +651,30 @@ Ellipsoid(Rect3i yeeCellRect, FillStyle style, string material)
 		throw(Exception("Some fill rect dimensions are negative"));
 }
 
-const Rect3i & AssemblyDescription::Ellipsoid::
+void Ellipsoid::
+setPointers(const Map<string, MaterialDescPtr> & materialMap)
+{
+	mMaterial = materialMap[mMaterialName];
+}
+
+const Rect3i & Ellipsoid::
 getYeeRect() const
 {
 	assert(mStyle != kHalfCellStyle);
 	return mFillRect;
 }
 
-const Rect3i & AssemblyDescription::Ellipsoid::
+const Rect3i & Ellipsoid::
 getHalfRect() const
 {
 	assert(mStyle == kHalfCellStyle);
 	return mFillRect;
 }
 
-AssemblyDescription::CopyFrom::
+CopyFrom::
 CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
 	string gridName) throw(Exception) :
-	AssemblyDescription::Instruction(kCopyFromType),
+	Instruction(kCopyFromType),
 	mSourceRect(halfCellSourceRegion),
 	mDestRect(halfCellDestRegion),
 	mGridName(gridName)
@@ -411,6 +684,12 @@ CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
 		throw(Exception("Some source rect dimensions are negative"));
 	if (!vec_ge(mDestRect.size(), 0))
 		throw(Exception("Some dest rect dimensions are negative"));
+}
+
+void CopyFrom::
+setPointers(const Map<string, GridDescPtr> & gridMap)
+{
+	mGrid = gridMap[mGridName];
 }
 
 

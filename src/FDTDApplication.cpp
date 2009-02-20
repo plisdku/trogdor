@@ -15,7 +15,7 @@
 
 #include "XMLParameterFile.h"
 #include "SimulationDescription.h"
-#include "NewSetupGrid.h"
+#include "VoxelizedGrid.h"
 
 #include "FDTDApplication.h"
 #include "SetupGrid.h"
@@ -382,6 +382,13 @@ voxelizeGridRecursor(Map<string, GridDescriptionPtr> & gridDescriptions,
 	LOG << "Recursing for grid " << currentGrid->getName() << ".\n";
 	
 	VoxelizedGrid setupGrid(*currentGrid, voxelizedGrids, orientation);
+	
+	// create new grids as needed to implement TFSF sources
+	// if a TFSF source can be implemented in Trogdor, do so using aux grids
+	// as necessary.
+	// 
+	// if a TFSF source cannot be reduced further from symmetry considerations,
+	// leave it in the grid description as a request for outside data.
 }
 
 

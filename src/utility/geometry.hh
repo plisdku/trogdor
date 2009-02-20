@@ -72,6 +72,16 @@ vmlib::SVec<DIM,T> operator% (const vmlib::SVec<DIM,T>& lhs, T rhs)
 	return retval;
 }
 
+template <unsigned DIM, typename T>
+vmlib::SVec<DIM,T>
+operator% (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T> & rhs)
+{
+	vmlib::SVec<DIM,T> retval(lhs);
+	for (unsigned int ii = 0; ii < DIM; ii++)
+		retval[ii] %= rhs[ii];
+	return retval;
+}
+
 } // namespace vmlib
 
 /*
@@ -356,6 +366,37 @@ operator * (const vmlib::SMat<3,T> & lhs, const Rect<T> & rhs)
 {
     return Rect<T>(lhs*rhs.p1, lhs*rhs.p2);
 }
+
+
+template<typename T>
+Rect<T>
+operator + (const Rect<T> & lhs, const vmlib::SVec<3,T> & rhs)
+{
+	return Rect<T>(lhs.p1 + rhs, lhs.p2 + rhs);
+}
+
+template<typename T>
+Rect<T>
+operator - (const Rect<T> & lhs, const vmlib::SVec<3,T> & rhs)
+{
+	return Rect<T>(lhs.p1 - rhs, lhs.p2 - rhs);
+}
+
+template<typename T>
+Rect<T>
+operator + (const vmlib::SVec<3,T> & lhs, const Rect<T> & rhs)
+{
+	return Rect<T>(rhs.p1 + lhs, rhs.p2 + lhs);
+}
+
+template<typename T>
+Rect<T>
+operator - (const vmlib::SVec<3,T> & lhs, const Rect<T> & rhs)
+{
+	return Rect<T>(lhs - rhs.p1, lhs - rhs.p2);
+}
+
+
 
 template<typename T>
 Rect<T>

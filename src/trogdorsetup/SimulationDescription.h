@@ -30,8 +30,10 @@ class GridDescription;
 class InputEHDescription;
 class OutputDescription;
 class SourceDescription;
-class TFSFSourceDescription;
-class LinkDescription;
+//class TFSFSourceDescription;
+//class LinkDescription;
+class HuygensSurfaceDescription;
+class NeighborBufferDescription;
 class MaterialDescription;
 class AssemblyDescription;
 
@@ -40,8 +42,10 @@ typedef Pointer<GridDescription> GridDescPtr;
 typedef Pointer<InputEHDescription> InputEHDescPtr;
 typedef Pointer<OutputDescription> OutputDescPtr;
 typedef Pointer<SourceDescription> SourceDescPtr;
-typedef Pointer<TFSFSourceDescription> TFSFSourceDescPtr;
-typedef Pointer<LinkDescription> LinkDescPtr;
+//typedef Pointer<TFSFSourceDescription> TFSFSourceDescPtr;
+//typedef Pointer<LinkDescription> LinkDescPtr;
+typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
+typedef Pointer<NeighborBufferDescription> NeighborBufferDescPtr;
 typedef Pointer<MaterialDescription> MaterialDescPtr;
 typedef Pointer<AssemblyDescription> AssemblyDescPtr;
 
@@ -53,19 +57,25 @@ public:
 	
 	void setGrids(const std::vector<GridDescPtr> & grids) {
 		mGrids = grids; }
+	void setMaterials(const std::vector<MaterialDescPtr> & materials) {
+		mMaterials = materials; }
+	void setAllPointers();
 	
 	void setDiscretization(Vector3f dxyz, float dt);
 	void setDuration(int numT);
 	
 	const std::vector<GridDescPtr> & getGrids() const { return mGrids; }
-	//std::vector<GridDescPtr> & getGrids() { return mGrids; }
+	const std::vector<MaterialDescPtr> & getMaterials() const {
+		return mMaterials; }
 	
 	float getDt() const { return m_dt; }
 	Vector3f getDxyz() const { return m_dxyz; }
 	int getDuration() const { return mNumTimesteps; }
-private:
 	
+private:
 	std::vector<GridDescPtr> mGrids;
+	std::vector<MaterialDescPtr> mMaterials;
+	
 	float m_dt;
 	Vector3f m_dxyz;
 	int mNumTimesteps;
@@ -85,12 +95,16 @@ public:
 		mInputs = inputs; }
 	void setSources(const std::vector<SourceDescPtr> & sources) {
 		mSources = sources; }
-	void setTFSFSources(const std::vector<TFSFSourceDescPtr> & tfsfSources) {
-		mTFSFSources = tfsfSources; }
-	void setLinks(const std::vector<LinkDescPtr> & links) {
-		mLinks = links; }
-	void setMaterials(const std::vector<MaterialDescPtr> & materials) {
-		mMaterials = materials; }
+	void setHuygensSurfaces(
+		const std::vector<HuygensSurfaceDescPtr> & surfaces) {
+			mHuygensSurfaces = surfaces; }
+	//void setTFSFSources(const std::vector<TFSFSourceDescPtr> & tfsfSources) {
+	//	mTFSFSources = tfsfSources; }
+	//void setLinks(const std::vector<LinkDescPtr> & links) {
+	//	mLinks = links; }
+	//void implementLinksAsBuffers(const std::vector<LinkDescPtr> & links);
+	//void setMaterials(const std::vector<MaterialDescPtr> & materials) {
+	//	mMaterials = materials; }
 	void setAssembly(AssemblyDescPtr assembly) {
 		mAssembly = assembly; }
 	
@@ -103,13 +117,21 @@ public:
 	const std::vector<OutputDescPtr> & getOutputs() const { return mOutputs; }
 	const std::vector<InputEHDescPtr> & getInputs() const { return mInputs; }
 	const std::vector<SourceDescPtr> & getSources() const { return mSources; }
-	const std::vector<TFSFSourceDescPtr> & getTFSFSources() const
-		{ return mTFSFSources; }
-	const std::vector<LinkDescPtr> & getLinks() const { return mLinks; }
-	const std::vector<MaterialDescPtr> & getMaterials() const
-		{ return mMaterials; }
+	const std::vector<HuygensSurfaceDescPtr> & getHuygensSurfaces() const
+		{ return mHuygensSurfaces; }
+	std::vector<HuygensSurfaceDescPtr> & getHuygensSurfaces()
+		{ return mHuygensSurfaces; }
+	//const std::vector<TFSFSourceDescPtr> & getTFSFSources() const
+	//	{ return mTFSFSources; }
+	//const std::vector<LinkDescPtr> & getLinks() const { return mLinks; }
+	//const std::vector<NeighborBufferDescPtr> & getBuffers() const
+	//	{ return mBuffers; }
+	//const std::vector<MaterialDescPtr> & getMaterials() const
+	//	{ return mMaterials; }
 	const AssemblyDescPtr getAssembly() const { return mAssembly; }
 	
+	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap,
+		const Map<std::string, GridDescPtr> & gridMap);
 private:
 	std::string mName;
 	
@@ -121,9 +143,11 @@ private:
 	std::vector<OutputDescPtr> mOutputs;
 	std::vector<InputEHDescPtr> mInputs;
 	std::vector<SourceDescPtr> mSources;
-	std::vector<TFSFSourceDescPtr> mTFSFSources;
-	std::vector<LinkDescPtr> mLinks;
-	std::vector<MaterialDescPtr> mMaterials;
+	std::vector<HuygensSurfaceDescPtr> mHuygensSurfaces;
+	//std::vector<TFSFSourceDescPtr> mTFSFSources;
+	//std::vector<LinkDescPtr> mLinks;
+	//std::vector<NeighborBufferDescPtr> mBuffers;
+	//std::vector<MaterialDescPtr> mMaterials;
 	AssemblyDescPtr mAssembly;
 };
 
@@ -182,6 +206,7 @@ private:
 	Map<std::string, std::string> mParams;
 };
 
+/*
 class TFSFSourceDescription
 {
 public:
@@ -207,7 +232,14 @@ private:
 	std::set<Vector3i> mOmittedSides;
 	Map<std::string, std::string> mParams;
 };
+*/
 
+/* 
+	HEY, the LinkDescription is useful for validating user input but does not
+	persist into the simulation, or even get included in the GridDescription.
+*/
+
+/*
 class LinkDescription
 {
 public:
@@ -233,6 +265,111 @@ private:
 	//std::bitset<6> mOmitSideFlags;  // bad: can't be rotated easily
 	std::set<Vector3i> mOmittedSides;
 };
+*/
+
+enum HuygensSurfaceSourceType
+{
+	kLink,
+	kTFSFSource,
+	kDataRequest
+};
+
+class HuygensSurfaceDescription
+{
+private:
+	// link constructor
+	HuygensSurfaceDescription(std::string typeString,
+		std::string sourceGridName, Rect3i sourceHalfRect, Rect3i destHalfRect,
+		const std::set<Vector3i> & omittedSides)
+		throw(Exception);
+	
+	// tfsf source constructor
+	HuygensSurfaceDescription(std::string inClass, Rect3i inTFRect,
+	Vector3i symmetries, std::string inTFSFType,
+	const Map<std::string,std::string> & inParameters,
+		const std::set<Vector3i> & omittedSides) throw(Exception);
+
+	// data request constructor
+	HuygensSurfaceDescription(std::string requestyArgs) throw(Exception);
+	
+	
+public: // user-accessible constructors
+	static HuygensSurfaceDescription* newLink(std::string typeString,
+		std::string sourceGridName, Rect3i sourceHalfRect, Rect3i destHalfRect,
+		const std::set<Vector3i> & omittedSides)
+		throw(Exception);
+	static HuygensSurfaceDescription* newTFSFSource(std::string inClass,
+		Rect3i inHalfRect, Vector3i symmetries, std::string inTFSFType,
+		const Map<std::string, std::string> & inParameters,
+		const std::set<Vector3i> & omittedSides)
+		throw(Exception);
+	static HuygensSurfaceDescription* newDataRequest() throw(Exception);
+	
+	// modifiers
+	void setPointers(const Map<std::string, GridDescPtr> & gridMap);
+	//void omitSide(Vector3i side);
+	
+	HuygensSurfaceSourceType getType() const { return mType; }
+	const Rect3i & getDestHalfRect() const {
+		return mDestHalfRect; }
+	const std::set<Vector3i> & getOmittedSides() const {
+		return mOmittedSides; }
+	const Map<Vector3i, std::vector<NeighborBufferDescPtr> > & getBuffers()
+		const { return mBuffers; }
+	
+	// links only
+	const Rect3i & getLinkSourceHalfRect() const {
+		assert(mType == kLink); return mLinkSourceHalfRect; }
+	const std::string & getLinkSourceGridName() const {
+		assert(mType == kLink); return mLinkSourceGridName; }
+	
+	// tfsf sources only
+	const std::string & getTFSFSourceClass() const {
+		assert(mType == kTFSFSource); return mTFSFSourceClass; }
+	const Map<std::string, std::string> & getTFSFSourceParameters() const {
+		assert(mType == kTFSFSource); return mTFSFSourceParams; }
+	Vector3i getTFSFSourceSymmetries() const {
+		assert(mType == kTFSFSource); return mTFSFSourceSymmetries; }
+	
+private:
+	
+	// buffer maker
+	void initTFSFBuffers(float srcFactor); // 1 adds, -1 subtracts
+	void initFloquetBuffers();
+	
+private:
+	HuygensSurfaceSourceType mType;
+	
+	Rect3i mDestHalfRect;
+	std::set<Vector3i> mOmittedSides;
+	// this map goes from Yee octant/offset to buffer list
+	Map<Vector3i, std::vector<NeighborBufferDescPtr> > mBuffers;
+	
+	// These members are only applicable for mType = kLink
+	Rect3i mLinkSourceHalfRect;
+	std::string mLinkSourceGridName;
+	GridDescPtr mLinkSourceGrid;
+	
+	// These members are only applicable for mType = kTFSFSource or kDataRequest
+	std::string mTFSFSourceClass;
+	Map<std::string, std::string> mTFSFSourceParams;
+	Vector3i mTFSFSourceSymmetries;
+};
+
+class NeighborBufferDescription
+{
+public:
+	NeighborBufferDescription(const Rect3i & yeeRect,
+		Vector3i neighborDirection, Vector3i yeeOctant, float applicationFactor,
+		float addendFactor);
+	
+private:
+	Rect3i mDestYeeRect;
+	Vector3i mNeighborDirection;
+	Vector3i mFieldOffset;  // offset in Yee cell of the field to operate on
+	float mDestFactor;
+	float mSrcFactor;
+};
 
 class MaterialDescription
 {
@@ -249,155 +386,183 @@ private:
 	Map<std::string, std::string> mParams;
 };
 
+#pragma mark *** Assembly things ***
+
+class Instruction;
+typedef Pointer<Instruction> InstructionPtr;
+
 class AssemblyDescription
 {
 public:
-	enum InstructionType
-	{
-		kBlockType,
-		kKeyImageType,
-		kHeightMapType,
-		kEllipsoidType,
-		kCopyFromType
-	};
-	
-	class ColorKey
-	{
-	public:
-		ColorKey(std::string hexColor, std::string materialName,
-			FillStyle style) throw(Exception);
-		ColorKey(Vector3i rgbColor, std::string materialName, FillStyle style)
-			throw(Exception);
-		
-		Vector3i getColor() const { return mColor; }
-		const std::string & getMaterial() const { return mMaterial; }
-		FillStyle getFillStyle() const { return mFillStyle; } 
-	private:
-		Vector3i mColor;
-		std::string mMaterial;
-		FillStyle mFillStyle;
-	};
-	
-	// The purpose of the Instruction base class is to provide some by-hand
-	// runtime type information without having to turn on RTTI, which I think
-	// is kind of evil.  (Well, C++ is evil.)
-	//
-	// A little RTTI will permit outside methods to determine which Instruction
-	// we are dealing with and handle each differently, while still receiving
-	// the Instructions in one vector or list.
-	class Instruction
-	{
-	public:
-		Instruction(InstructionType inType);
-		InstructionType getType() const { return mType; }
-	protected:
-		InstructionType mType;
-	};
-	typedef Pointer<Instruction> InstructionPtr;
-	
-	class Block : public Instruction
-	{
-	public:
-		Block(Rect3i halfCellRect, std::string material) throw(Exception);
-		Block(Rect3i yeeCellRect, FillStyle style, std::string material)
-			throw(Exception);
-		//const Rect3i & getFillRect() const { return mFillRect };
-		const Rect3i & getYeeRect() const;
-		const Rect3i & getHalfRect() const;
-		FillStyle getFillStyle() const { return mStyle; }
-		const std::string & getMaterial() const { return mMaterial; }
-	private:
-		Rect3i mFillRect;
-		FillStyle mStyle;
-		std::string mMaterial;
-	};
-	
-	class KeyImage : public Instruction
-	{
-	public:
-		KeyImage(Rect3i yeeCellRect, std::string imageFileName,
-			Vector3i rowDirection, Vector3i colDirection,
-			std::vector<ColorKey> keys) throw(Exception);
-		const Rect3i & getYeeRect() const { return mYeeRect; }
-		Vector3i getRowDirection() const { return mRow; }
-		Vector3i getColDirection() const { return mCol; }
-		const std::string & getImageFileName() const { return mImageFileName; }
-		const std::vector<ColorKey> & getKeys() const { return mKeys; }
-	private:
-		Rect3i mYeeRect;
-		Vector3i mRow;
-		Vector3i mCol;
-		std::string mImageFileName;
-		std::vector<ColorKey> mKeys;
-	};
-	
-	class HeightMap : public Instruction
-	{
-	public:
-		HeightMap(Rect3i yeeCellRect, FillStyle style, std::string material,
-			std::string imageFileName, Vector3i rowDirection,
-			Vector3i colDirection, Vector3i upDirection) throw(Exception);
-		const Rect3i & getYeeRect() const { return mYeeRect; }
-		FillStyle getFillStyle() const { return mStyle; }
-		const std::string & getMaterial() const { return mMaterial; }
-		const std::string & getImageFileName() const { return mImageFileName; }
-		Vector3i getRowDirection() const { return mRow; }
-		Vector3i getColDirection() const { return mCol; }
-		Vector3i getUpDirection() const { return mUp; }
-	private:
-		Rect3i mYeeRect;
-		FillStyle mStyle;
-		std::string mMaterial;
-		std::string mImageFileName;
-		Vector3i mRow;
-		Vector3i mCol;
-		Vector3i mUp;
-	};
-	
-	class Ellipsoid : public Instruction
-	{
-	public:
-		Ellipsoid(Rect3i halfCellRect, std::string material) throw(Exception);
-		Ellipsoid(Rect3i yeeCellRect, FillStyle style, std::string material)
-			throw(Exception);
-		//const Rect3i & getFillRect() const { return mFillRect; }
-		const Rect3i & getYeeRect() const;
-		const Rect3i & getHalfRect() const;
-		FillStyle getFillStyle() const { return mStyle; }
-		const std::string & getMaterial() const { return mMaterial; }
-	private:
-		Rect3i mFillRect;
-		FillStyle mStyle;
-		std::string mMaterial;
-	};
-	
-	class CopyFrom : public Instruction
-	{
-	public:
-		CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
-			std::string gridName)
-			throw(Exception);
-		const Rect3i & getSourceHalfRect() const { return mSourceRect; }
-		const Rect3i & getDestHalfRect() const { return mDestRect; }
-		const std::string & getGridName() const { return mGridName; }
-	private:
-		Rect3i mSourceRect;
-		Rect3i mDestRect;
-		std::string mGridName;
-	};
-	
-	
 	AssemblyDescription(const std::vector<InstructionPtr> & recipe)
 		throw(Exception);
 	
 	void setInstructions(const std::vector<InstructionPtr> & instructions);
+	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap,
+		const Map<std::string, GridDescPtr> & gridMap);
 	
 	const std::vector<InstructionPtr> & getInstructions() const
 		{ return mInstructions; }
+	
 private:
 	std::vector<InstructionPtr> mInstructions;
 };
 
+enum InstructionType
+{
+	kBlockType,
+	kKeyImageType,
+	kHeightMapType,
+	kEllipsoidType,
+	kCopyFromType
+};
+	
+class ColorKey
+{
+public:
+	ColorKey(std::string hexColor, std::string materialName,
+		FillStyle style) throw(Exception);
+	ColorKey(Vector3i rgbColor, std::string materialName, FillStyle style)
+		throw(Exception);
+	
+	Vector3i getColor() const { return mColor; }
+	const std::string & getMaterialName() const { return mMaterialName; }
+	const MaterialDescPtr & getMaterial() const { return mMaterial; }
+	FillStyle getFillStyle() const { return mFillStyle; }
+	
+	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
+private:
+	Vector3i mColor;
+	std::string mMaterialName;
+	MaterialDescPtr mMaterial;
+	FillStyle mFillStyle;
+};
+
+// The purpose of the Instruction base class is to provide some by-hand
+// runtime type information without having to turn on RTTI, which I think
+// is kind of evil.  (Well, C++ is evil.)
+//
+// A little RTTI will permit outside methods to determine which Instruction
+// we are dealing with and handle each differently, while still receiving
+// the Instructions in one vector or list.
+class Instruction
+{
+public:
+	Instruction(InstructionType inType);
+	InstructionType getType() const { return mType; }
+protected:
+	InstructionType mType;
+};
+typedef Pointer<Instruction> InstructionPtr;
+
+class Block : public Instruction
+{
+public:
+	Block(Rect3i halfCellRect, std::string material) throw(Exception);
+	Block(Rect3i yeeCellRect, FillStyle style, std::string material)
+		throw(Exception);
+	//const Rect3i & getFillRect() const { return mFillRect };
+	const Rect3i & getYeeRect() const;
+	const Rect3i & getHalfRect() const;
+	FillStyle getFillStyle() const { return mStyle; }
+	const std::string & getMaterialName() const { return mMaterialName; }
+	const MaterialDescPtr & getMaterial() const { return mMaterial; }
+	
+	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
+private:
+	Rect3i mFillRect;
+	FillStyle mStyle;
+	std::string mMaterialName;
+	MaterialDescPtr mMaterial;
+};
+
+class KeyImage : public Instruction
+{
+public:
+	KeyImage(Rect3i yeeCellRect, std::string imageFileName,
+		Vector3i rowDirection, Vector3i colDirection,
+		std::vector<ColorKey> keys) throw(Exception);
+	const Rect3i & getYeeRect() const { return mYeeRect; }
+	Vector3i getRowDirection() const { return mRow; }
+	Vector3i getColDirection() const { return mCol; }
+	const std::string & getImageFileName() const { return mImageFileName; }
+	const std::vector<ColorKey> & getKeys() const { return mKeys; }
+	
+	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
+private:
+	Rect3i mYeeRect;
+	Vector3i mRow;
+	Vector3i mCol;
+	std::string mImageFileName;
+	std::vector<ColorKey> mKeys;
+};
+
+class HeightMap : public Instruction
+{
+public:
+	HeightMap(Rect3i yeeCellRect, FillStyle style, std::string material,
+		std::string imageFileName, Vector3i rowDirection,
+		Vector3i colDirection, Vector3i upDirection) throw(Exception);
+	const Rect3i & getYeeRect() const { return mYeeRect; }
+	FillStyle getFillStyle() const { return mStyle; }
+	const std::string & getMaterialName() const { return mMaterialName; }
+	const MaterialDescPtr & getMaterial() const { return mMaterial; }
+	const std::string & getImageFileName() const { return mImageFileName; }
+	Vector3i getRowDirection() const { return mRow; }
+	Vector3i getColDirection() const { return mCol; }
+	Vector3i getUpDirection() const { return mUp; }
+	
+	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
+private:
+	Rect3i mYeeRect;
+	FillStyle mStyle;
+	std::string mMaterialName;
+	MaterialDescPtr mMaterial;
+	std::string mImageFileName;
+	Vector3i mRow;
+	Vector3i mCol;
+	Vector3i mUp;
+};
+
+class Ellipsoid : public Instruction
+{
+public:
+	Ellipsoid(Rect3i halfCellRect, std::string material) throw(Exception);
+	Ellipsoid(Rect3i yeeCellRect, FillStyle style, std::string material)
+		throw(Exception);
+	//const Rect3i & getFillRect() const { return mFillRect; }
+	const Rect3i & getYeeRect() const;
+	const Rect3i & getHalfRect() const;
+	FillStyle getFillStyle() const { return mStyle; }
+	const std::string & getMaterialName() const { return mMaterialName; }
+	const MaterialDescPtr & getMaterial() const { return mMaterial; }
+	
+	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
+private:
+	Rect3i mFillRect;
+	FillStyle mStyle;
+	std::string mMaterialName;
+	MaterialDescPtr mMaterial;
+};
+
+class CopyFrom : public Instruction
+{
+public:
+	CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
+		std::string gridName)
+		throw(Exception);
+	const Rect3i & getSourceHalfRect() const { return mSourceRect; }
+	const Rect3i & getDestHalfRect() const { return mDestRect; }
+	const std::string & getGridName() const { return mGridName; }
+	const GridDescPtr & getGrid() const { return mGrid; }
+	
+	void setPointers(const Map<std::string, GridDescPtr> & gridMap);
+private:
+	Rect3i mSourceRect;
+	Rect3i mDestRect;
+	std::string mGridName;
+	GridDescPtr mGrid;
+};
 
 
 

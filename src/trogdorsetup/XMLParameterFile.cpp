@@ -23,15 +23,7 @@ using namespace std;
 #pragma mark *** Static Prototypes ***
 
 static Map<string, string> sGetAttributes(const TiXmlElement* elem);
-/*
-template <class T>
-static bool sGet(const Map<string, string> & inMap,
-	const string & key, T & val);
 
-template <class T, class T2>
-static bool sGetOptional(const Map<string, string> & inMap,
-	const string & key, T & val, const T2 & defaultVal);
-*/
 template <class T>
 static void sGetMandatoryAttribute(const TiXmlElement* elem,
 	const string & attribute, T & val) throw(Exception);
@@ -123,6 +115,7 @@ loadTrogdor4(SimulationDescription & sim) const throw(Exception)
 	} catch (Exception & e) {
 		throw(Exception(sErr(e.what(), elem)));
 	}
+	sim.setMaterials(loadMaterials(elem));
 	sim.setGrids(loadGrids(elem));
 }
 
@@ -132,6 +125,9 @@ loadGrids(const TiXmlElement* parent) const
 	assert(parent);
 	vector<GridDescPtr> gridVector;
 	const TiXmlElement* elem = parent->FirstChildElement("Grid");
+	
+	set<string> allGridNames = collectGridNames(parent);
+	set<string> allMaterialNames = collectMaterialNames(parent);
 	
     while (elem) // FOR EACH GRID: Load data
 	{
@@ -198,10 +194,21 @@ loadGrids(const TiXmlElement* parent) const
 		gridDesc->setOutputs(loadOutputs(elem));
 		gridDesc->setInputs(loadInputEHs(elem));
 		gridDesc->setSources(loadSources(elem));
-		gridDesc->setTFSFSources(loadTFSFSources(elem));
-		gridDesc->setMaterials(loadMaterials(elem));
-		gridDesc->setAssembly(loadAssembly(elem));
-		gridDesc->setLinks(loadLinks(elem));
+		//gridDesc->setMaterials(loadMaterials(elem));
+		gridDesc->setAssembly(loadAssembly(elem, allGridNames,
+			allMaterialNames));
+		
+		// half the huygens surfaces come from links, and half from TFSF
+		// sources.
+		vector<HuygensSurfaceDescPtr> huygensSurfaces =
+			loadTFSFSources(elem, allGridNames);
+		vector<HuygensSurfaceDescPtr> huygensLinks =
+			loadLinks(elem, allGridNames);
+		huygensSurfaces.insert(huygensSurfaces.begin(), huygensLinks.begin(),
+			huygensLinks.end());
+		
+		gridDesc->setHuygensSurfaces(huygensSurfaces);
+		//gridDesc->implementLinksAsBuffers(loadLinks(elem));
 		
 		gridVector.push_back(gridDesc);
         elem = elem->NextSiblingElement("Grid");
@@ -210,6 +217,91 @@ loadGrids(const TiXmlElement* parent) const
 	return gridVector;
 }
 
+set<string> XMLParameterFile::
+collectGridNames(const TiXmlElement* parent) const
+{
+	assert(parent);
+	set<string> names;
+	
+	const TiXmlElement* gridElem = parent->FirstChildElement("Grid");
+	
+	while (gridElem)
+	{
+		string gridName;
+		sGetMandatoryAttribute(gridElem, "name", gridName);
+		
+		if (names.count(gridName) > 0)
+		{
+			throw(Exception(sErr("Multiple grids with the same name!",
+				gridElem)));
+		}
+		
+		names.insert(gridName);
+		gridElem = gridElem->NextSiblingElement("Grid");
+	}
+	return names;
+}
+
+set<string> XMLParameterFile::
+collectMaterialNames(const TiXmlElement* parent) const
+{
+	assert(parent);
+	set<string> names;
+	
+	const TiXmlElement* gridElem = parent->FirstChildElement("Grid");
+	
+	while (gridElem)
+	{
+		const TiXmlElement* matElem = gridElem->FirstChildElement("Material");
+		
+		while (matElem)
+		{
+			string matName;
+			sGetMandatoryAttribute(matElem, "name", matName);
+			names.insert(matName);
+			matElem = matElem->NextSiblingElement("Material");
+		}
+		
+		gridElem = gridElem->NextSiblingElement("Grid");
+	}
+	return names;
+}
+
+vector<MaterialDescPtr> XMLParameterFile::
+loadMaterials(const TiXmlElement* parent) const
+{
+	assert(parent);
+	vector<MaterialDescPtr> materials;
+	
+	const TiXmlElement* gridElem = parent->FirstChildElement("Grid");
+	while (gridElem)
+	{
+		const TiXmlElement* elem = gridElem->FirstChildElement("Material");
+		while (elem)
+		{
+			string name;
+			string inClass;
+			Map<string,string> params;
+			const TiXmlElement* paramXML = elem->FirstChildElement("Params");
+			// not every material needs params, e.g. PEC/PMC
+			if (paramXML != 0L)
+				params = sGetAttributes(paramXML);
+			
+			sGetMandatoryAttribute(elem, "name", name);
+			sGetMandatoryAttribute(elem, "class", inClass);
+			
+			MaterialDescPtr material(new MaterialDescription(name, inClass,
+				params));
+			materials.push_back(material);
+			
+			elem = elem->NextSiblingElement("Material");
+		}
+		gridElem = gridElem->NextSiblingElement("Grid");
+	}
+	
+	return materials;	
+}
+		
 vector<InputEHDescPtr> XMLParameterFile::
 loadInputEHs(const TiXmlElement* parent) const
 {
@@ -322,11 +414,12 @@ loadSources(const TiXmlElement* parent) const
 	return sources;
 }
 
-vector<TFSFSourceDescPtr> XMLParameterFile::
-loadTFSFSources(const TiXmlElement* parent) const
+vector<HuygensSurfaceDescPtr> XMLParameterFile::
+loadTFSFSources(const TiXmlElement* parent, const set<string> & allGridNames)
+	const
 {
 	assert(parent);
-	vector<TFSFSourceDescPtr> tfsfSources;
+	vector<HuygensSurfaceDescPtr> tfsfSources;
 	
 	const TiXmlElement* elem = parent->FirstChildElement("TFSFSource");
     while (elem)
@@ -334,6 +427,7 @@ loadTFSFSources(const TiXmlElement* parent) const
 		string inClass;
 		string tfsfType;
 		Vector3f direction;
+		Vector3i symmetries;
 		Rect3i region;
 		Map<string,string> params;
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
@@ -351,22 +445,27 @@ loadTFSFSources(const TiXmlElement* parent) const
 			throw(Exception(sErr("TFSFSource needs TFRect or fineTFRect "
 				"attribute", elem)));
 		sGetMandatoryAttribute(elem, "direction", direction);
+		sGetOptionalAttribute(elem, "symmetries", symmetries, Vector3i(0,0,0));
 		sGetOptionalAttribute(elem, "type", tfsfType, "TF");
 			
 		try {
-			TFSFSourceDescPtr source(new TFSFSourceDescription(inClass, region,
-				direction, tfsfType, params));
-			
+			set<Vector3i> omittedSides;
 			const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
 			while (omitElem)
 			{
 				Vector3i omitSide;
 				omitElem->GetText() >> omitSide;
 				cerr << "Warning: no error checking on omit side input.\n";
-				source->omitSide(omitSide);
+				omittedSides.insert(omitSide);
+				//source->omitSide(omitSide);
 				omitElem = omitElem->NextSiblingElement("OmitSide");
 			}
-
+			LOG << "Warning: direction ignored.";
+			Vector3i symmetries(0,0,0);
+			HuygensSurfaceDescPtr source(
+				HuygensSurfaceDescription::newTFSFSource(inClass, region,
+				symmetries, tfsfType, params, omittedSides));
+			
 			tfsfSources.push_back(source);
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
@@ -377,11 +476,11 @@ loadTFSFSources(const TiXmlElement* parent) const
 	return tfsfSources;
 }
 
-vector<LinkDescPtr> XMLParameterFile::
-loadLinks(const TiXmlElement* parent) const
+vector<HuygensSurfaceDescPtr> XMLParameterFile::
+loadLinks(const TiXmlElement* parent, const set<string> & allGridNames) const
 {
 	assert(parent);
-	vector<LinkDescPtr> links;
+	vector<HuygensSurfaceDescPtr> links;
 	cerr << "Warning: links are not validated.\n";
 	
 	const TiXmlElement* elem = parent->FirstChildElement("Link");
@@ -392,11 +491,13 @@ loadLinks(const TiXmlElement* parent) const
 		Rect3i sourceHalfRect;
 		Rect3i destHalfRect;
 		Map<string,string> params;
+		// I don't think Links have parameters.  this is erroneous...?
+		/*
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
 		if (paramXML == 0L)
 			throw(Exception(sErr("Link needs Params element", elem)));
 		params = sGetAttributes(paramXML);
-		
+		*/
 		sGetMandatoryAttribute(elem, "type", linkTypeStr);
 		sGetMandatoryAttribute(elem, "sourceGrid", sourceGridName);
 		
@@ -418,18 +519,20 @@ loadLinks(const TiXmlElement* parent) const
 				"attribute", elem)));
 		
 		try {
-			LinkDescPtr link(new LinkDescription(linkTypeStr, sourceGridName,
-				sourceHalfRect, destHalfRect));
-			
+			set<Vector3i> omittedSides;
 			const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
 			while (omitElem)
 			{
 				Vector3i omitSide;
 				omitElem->GetText() >> omitSide;
-				link->omitSide(omitSide);
+				//link->omitSide(omitSide);
+				omittedSides.insert(omitSide);
 				omitElem = omitElem->NextSiblingElement("OmitSide");
 			}
 			
+			HuygensSurfaceDescPtr link(
+				HuygensSurfaceDescription::newLink(linkTypeStr, sourceGridName,
+				sourceHalfRect, destHalfRect, omittedSides));
 			links.push_back(link);
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
@@ -441,6 +544,7 @@ loadLinks(const TiXmlElement* parent) const
 	return links;
 }
 
+/*
 vector<MaterialDescPtr> XMLParameterFile::
 loadMaterials(const TiXmlElement* parent) const
 {
@@ -472,13 +576,15 @@ loadMaterials(const TiXmlElement* parent) const
 	
 	return materials;
 }
+*/
 
 AssemblyDescPtr XMLParameterFile::
-loadAssembly(const TiXmlElement* parent) const
+loadAssembly(const TiXmlElement* parent, const set<string> & allGridNames,
+	const set<string> & allMaterialNames) const
 {
 	assert(parent);
 	AssemblyDescPtr assembly;
-	vector<AssemblyDescription::InstructionPtr> recipe;
+	vector<InstructionPtr> recipe;
 	
 	const TiXmlElement* elem = parent->FirstChildElement("Assembly");
 	
@@ -493,15 +599,15 @@ loadAssembly(const TiXmlElement* parent) const
 		string instructionType = instruction->Value();
 		
 		if (instructionType == "Block")
-			recipe.push_back(loadABlock(instruction));
+			recipe.push_back(loadABlock(instruction, allMaterialNames));
 		else if (instructionType == "KeyImage")
-			recipe.push_back(loadAKeyImage(instruction));
+			recipe.push_back(loadAKeyImage(instruction, allMaterialNames));
 		else if (instructionType == "HeightMap")
-			recipe.push_back(loadAHeightMap(instruction));
+			recipe.push_back(loadAHeightMap(instruction, allMaterialNames));
 		else if (instructionType == "Ellipsoid")
-			recipe.push_back(loadAEllipsoid(instruction));
+			recipe.push_back(loadAEllipsoid(instruction, allMaterialNames));
 		else if (instructionType == "CopyFrom")
-			recipe.push_back(loadACopyFrom(instruction));
+			recipe.push_back(loadACopyFrom(instruction, allGridNames));
 		
 		instruction = instruction->NextSiblingElement();
 	}
@@ -511,20 +617,21 @@ loadAssembly(const TiXmlElement* parent) const
 }
 
 
-AssemblyDescription::InstructionPtr XMLParameterFile::
-loadABlock(const TiXmlElement* elem) const
+InstructionPtr XMLParameterFile::
+loadABlock(const TiXmlElement* elem, const set<string> & allMaterialNames) const
 {
 	assert(elem);
 	assert(elem->Value() == string("Block"));
 	
-	AssemblyDescription::InstructionPtr blockPtr;
+	InstructionPtr blockPtr;
 	Rect3i rect;
 	string material;
 	string fillStyleStr;
 	FillStyle style;
 	
 	sGetMandatoryAttribute(elem, "material", material);
-	
+	if (allMaterialNames.count(material) == 0)
+		throw(Exception(sErr("Unknown material for Block", elem)));
 	
 	// Does the Block have a Yee region, called "fillRect"?
 	if (sTryGetAttribute(elem, "fillRect", rect))
@@ -536,8 +643,8 @@ loadABlock(const TiXmlElement* elem) const
 			throw(Exception(sErr(e.what(), elem))); // rethrow with XML row/col
 		}
 		try {
-			blockPtr = AssemblyDescription::InstructionPtr(
-				(AssemblyDescription::Block*)new AssemblyDescription::Block(
+			blockPtr = InstructionPtr(
+				(Block*)new Block(
 					rect, style, material)
 				);
 		} catch (Exception & e) {
@@ -552,8 +659,8 @@ loadABlock(const TiXmlElement* elem) const
 				"fillStyle attribute", elem)));
 		
 		try {
-			blockPtr = AssemblyDescription::InstructionPtr(
-				new AssemblyDescription::Block(rect, material));
+			blockPtr = InstructionPtr(
+				new Block(rect, material));
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
 		}
@@ -568,20 +675,21 @@ loadABlock(const TiXmlElement* elem) const
 	return blockPtr;
 }
 
-AssemblyDescription::InstructionPtr XMLParameterFile::
-loadAKeyImage(const TiXmlElement* elem) const
+InstructionPtr XMLParameterFile::
+loadAKeyImage(const TiXmlElement* elem, const set<string> & allMaterialNames)
+	const
 {
 	assert(elem);
 	assert(elem->Value() == string("KeyImage"));
 	
-	AssemblyDescription::InstructionPtr keyImage;
+	InstructionPtr keyImage;
 	Rect3i yeeRect;
 	string imageFileName;
 	string rowDirStr;
 	string colDirStr;
 	Vector3i rowDir;
 	Vector3i colDir;
-	vector<AssemblyDescription::ColorKey> keys;
+	vector<ColorKey> keys;
 	
 	// Step 1 of 2: load all the attributes (and not the tag elements)
 	sGetMandatoryAttribute(elem, "fillRect", yeeRect);
@@ -597,13 +705,13 @@ loadAKeyImage(const TiXmlElement* elem) const
 	}
 	
 	// Step 2 of 2: load all the tag elements (and not the attributes)
-	keys = loadAColorKeys(elem);
+	keys = loadAColorKeys(elem, allMaterialNames);
 	
 	// Package it up and ship.
 	
 	try {
-		keyImage = AssemblyDescription::InstructionPtr(
-			new AssemblyDescription::KeyImage(yeeRect, imageFileName, rowDir,
+		keyImage = InstructionPtr(
+			new KeyImage(yeeRect, imageFileName, rowDir,
 				colDir, keys));
 	} catch (Exception & e) {
 		throw(Exception(sErr(e.what(), elem)));
@@ -612,11 +720,12 @@ loadAKeyImage(const TiXmlElement* elem) const
 	return keyImage;
 }
 
-vector<AssemblyDescription::ColorKey> XMLParameterFile::
-loadAColorKeys(const TiXmlElement* parent) const
+vector<ColorKey> XMLParameterFile::
+loadAColorKeys(const TiXmlElement* parent, const set<string> & allMaterialNames)
+	const
 {
 	assert(parent);
-	vector<AssemblyDescription::ColorKey> keys;
+	vector<ColorKey> keys;
 
 	const TiXmlElement* elem = parent->FirstChildElement("Tag");
 	if (elem == 0L)
@@ -630,12 +739,15 @@ loadAColorKeys(const TiXmlElement* parent) const
 		string fillStyleStr;
 		FillStyle style;
 		
+		sGetMandatoryAttribute(elem, "material", material);
+		if (allMaterialNames.count(material) == 0)
+			throw(Exception(sErr("Unknown material for Tag", elem)));
 		sGetMandatoryAttribute(elem, "color", colorStr);
 		sGetOptionalAttribute(elem, "fillStyle", fillStyleStr, "PECStyle");
 		
 		try {
 			style = sFillStyleFromString(fillStyleStr);
-			AssemblyDescription::ColorKey key(colorStr, material, style);
+			ColorKey key(colorStr, material, style);
 			keys.push_back(key);
 		} catch (const Exception & e) {
 			throw(Exception(sErr(e.what(), elem))); // rethrow w/ row/col
@@ -647,13 +759,14 @@ loadAColorKeys(const TiXmlElement* parent) const
 	return keys;
 }
 
-AssemblyDescription::InstructionPtr XMLParameterFile::
-loadAHeightMap(const TiXmlElement* elem) const
+InstructionPtr XMLParameterFile::
+loadAHeightMap(const TiXmlElement* elem, const set<string> & allMaterialNames)
+	const
 {
 	assert(elem);
 	assert(elem->Value() == string("HeightMap"));
 	
-	AssemblyDescription::InstructionPtr heightMap;
+	InstructionPtr heightMap;
 	
 	Rect3i yeeRect;
 	string styleStr;
@@ -665,6 +778,8 @@ loadAHeightMap(const TiXmlElement* elem) const
 	
 	sGetMandatoryAttribute(elem, "fillRect", yeeRect);
 	sGetMandatoryAttribute(elem, "material", material);
+	if (allMaterialNames.count(material) == 0)
+		throw(Exception(sErr("Unknown material for HeightMap", elem)));
 	sGetMandatoryAttribute(elem, "file", imageFileName);
 	sGetMandatoryAttribute(elem, "row", rowDirStr);
 	sGetMandatoryAttribute(elem, "column", colDirStr);
@@ -677,8 +792,8 @@ loadAHeightMap(const TiXmlElement* elem) const
 		colDir = sUnitVectorFromString(colDirStr);
 		upDir = sUnitVectorFromString(upDirStr);
 		
-		heightMap = AssemblyDescription::InstructionPtr(
-			new AssemblyDescription::HeightMap(yeeRect, style, material,
+		heightMap = InstructionPtr(
+			new HeightMap(yeeRect, style, material,
 				imageFileName, rowDir, colDir, upDir));
 	} catch (Exception & e) {
 		throw(Exception(sErr(e.what(), elem))); // append XML row/col info
@@ -686,19 +801,23 @@ loadAHeightMap(const TiXmlElement* elem) const
 	
 	return heightMap;
 }
-AssemblyDescription::InstructionPtr XMLParameterFile::
-loadAEllipsoid(const TiXmlElement* elem) const
+
+InstructionPtr XMLParameterFile::
+loadAEllipsoid(const TiXmlElement* elem, const set<string> & allMaterialNames)
+	const
 {
 	assert(elem);
 	assert(elem->Value() == string("Ellipsoid"));
 	
-	AssemblyDescription::InstructionPtr ellipsoid;
+	InstructionPtr ellipsoid;
 	Rect3i rect;
 	string material;
 	string styleStr;
 	FillStyle style;
 	
 	sGetMandatoryAttribute(elem, "material", material);
+	if (allMaterialNames.count(material) == 0)
+		throw(Exception(sErr("Unknown material for Ellipsoid", elem)));
 	
 	if (sTryGetAttribute(elem, "fillRect", rect))
 	{
@@ -706,8 +825,8 @@ loadAEllipsoid(const TiXmlElement* elem) const
 		
 		try {
 			style = sFillStyleFromString(styleStr);
-			ellipsoid = AssemblyDescription::InstructionPtr(
-				new AssemblyDescription::Ellipsoid(rect, style, material));
+			ellipsoid = InstructionPtr(
+				new Ellipsoid(rect, style, material));
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
 		}
@@ -718,28 +837,31 @@ loadAEllipsoid(const TiXmlElement* elem) const
 			throw(Exception(sErr("Ellipsoid needs fillRect or fineFillRect "
 				"attribute", elem)));
 		
-		ellipsoid = AssemblyDescription::InstructionPtr(
-			new AssemblyDescription::Ellipsoid(rect, material));
+		ellipsoid = InstructionPtr(
+			new Ellipsoid(rect, material));
 	}
 	return ellipsoid;
 }
-AssemblyDescription::InstructionPtr XMLParameterFile::
-loadACopyFrom(const TiXmlElement* elem) const
+
+InstructionPtr XMLParameterFile::
+loadACopyFrom(const TiXmlElement* elem, const set<string> & allGridNames) const
 {
 	assert(elem);
 	assert(elem->Value() == string("CopyFrom"));
 	
-	AssemblyDescription::InstructionPtr copyFrom;
+	InstructionPtr copyFrom;
 	Rect3i sourceRect, destRect;
 	string sourceGridName;
 	
 	sGetMandatoryAttribute(elem, "sourceRect", sourceRect);
 	sGetMandatoryAttribute(elem, "destRect", destRect);
 	sGetMandatoryAttribute(elem, "sourceGrid", sourceGridName);
+	if (allGridNames.count(sourceGridName) == 0)
+		throw(Exception(sErr("Unknown source grid name for CopyFrom", elem)));
 	
 	try {
-		copyFrom = AssemblyDescription::InstructionPtr(
-			new AssemblyDescription::CopyFrom(
+		copyFrom = InstructionPtr(
+			new CopyFrom(
 				sourceRect, destRect, sourceGridName));
 	} catch (Exception & e) {
 		throw(Exception(sErr(e.what(), elem)));
@@ -767,40 +889,6 @@ Map<string, string> sGetAttributes(const TiXmlElement* elem)
     return attribs;
 }
 
-/*
-template <class T>
-static bool sGet(const Map<string, std::string> & inMap,
-	const string & key, T & val)
-{
-	if (inMap.count(key) == 0)
-		return 0;
-	
-	istringstream istr(inMap[key]);
-	
-	if (!(istr >> val))
-		return 0;
-	
-	return 1;
-}
-
-template <class T, class T2>
-static bool sGetOptional(const Map<string, string> & inMap,
-	const string & key, T & val, const T2 & defaultVal)
-{
-	if (inMap.count(key) == 0)
-	{
-		val = defaultVal;
-		return 1;
-	}
-	
-	istringstream istr(inMap[key]);
-	
-	if (!(istr >> val))
-		return 0;
-	
-	return 1;
-}
-*/
 
 template <class T>
 static void sGetMandatoryAttribute(const TiXmlElement* elem,

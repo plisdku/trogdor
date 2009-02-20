@@ -42,6 +42,10 @@ bool operator!= (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs);
 template <unsigned DIM, typename T>
 vmlib::SVec<DIM,T> operator% (const vmlib::SVec<DIM,T>& lhs, T rhs);
 
+template <unsigned DIM, typename T>
+vmlib::SVec<DIM,T>
+operator% (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T> & rhs);
+
 } // namespace vmlib
 
 
@@ -146,6 +150,21 @@ template<typename T>
 Rect<T>
 operator * (const vmlib::SMat<3,T> & lhs, const Rect<T> & rhs);
 
+template<typename T>
+Rect<T>
+operator + (const Rect<T> & lhs, const vmlib::SVec<3,T> & rhs);
+
+template<typename T>
+Rect<T>
+operator - (const Rect<T> & lhs, const vmlib::SVec<3,T> & rhs);
+
+template<typename T>
+Rect<T>
+operator + (const vmlib::SVec<3,T> & lhs, const Rect<T> & rhs);
+
+template<typename T>
+Rect<T>
+operator - (const vmlib::SVec<3,T> & lhs, const Rect<T> & rhs);
 
 template<typename T>
 Rect<T>

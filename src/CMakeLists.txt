@@ -66,6 +66,7 @@ ThreeFieldInput.cpp
 ThreeFieldOutput.cpp
 main.cpp
 VoxelizedGrid.cpp
+YeeUtilities.cpp
 )
 
 
