@@ -34,10 +34,13 @@ class SimulationDescription;
 typedef Pointer<SimulationDescription> SimulationDescPtr;
 
 class GridDescription;
-typedef Pointer<GridDescription> GridDescriptionPtr;
+typedef Pointer<GridDescription> GridDescPtr;
 
 class VoxelizedGrid;
 typedef Pointer<VoxelizedGrid> VoxelizedGridPtr;
+
+class HuygensSurfaceDescription;
+typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
 
 /**
  *  Core application singleton
@@ -72,15 +75,22 @@ private: // heh, "new private" stuff
 	Mat3i guessFastestOrientation(const SimulationDescription & sim) const;
 	
 	void voxelizeGrids(const SimulationDescPtr sim,
-		Map<std::string, GridDescriptionPtr> gridDescriptions,
-		Map<std::string, VoxelizedGridPtr> voxelizedGrids,
-		Mat3i orientation);
+		//Map<std::string, GridDescriptionPtr> gridDescriptions,
+		Map<GridDescPtr, VoxelizedGridPtr> voxelizedGrids);
 	
 	void voxelizeGridRecursor(
-		Map<std::string, GridDescriptionPtr> & gridDescriptions,
-		Map<std::string, VoxelizedGridPtr> & voxelizedGrids,
-		GridDescriptionPtr currentGrid,
-		Mat3i orientation);
+		Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids,
+		GridDescPtr currentGrid);
+	
+	GridDescPtr makeAuxGridDescription(Vector3i collapsableDimensions,
+		GridDescPtr parentGrid, HuygensSurfaceDescPtr huygensSurface,
+		std::string auxGridName);
+	
+	GridDescPtr makeAux1DGridDescription(GridDescPtr parentGrid,
+		HuygensSurfaceDescPtr huygensSurface, std::string auxGridName);
+	
+	GridDescPtr makeSourceGridDescription(GridDescPtr parentGrid,
+		HuygensSurfaceDescPtr huygensSurface, std::string srcGridName);
 	
 private:
     /**

@@ -32,9 +32,21 @@ template <class T>
 static bool sTryGetAttribute(const TiXmlElement* elem,
 	const string & attribute, T & val);
 
-template <class T, class T2>
+template <class T>
 static void sGetOptionalAttribute(const TiXmlElement* elem,
-	const string & attribute, T & val, const T2 & defaultVal);
+	const string & attribute, T & val, const T & defaultVal);
+
+template <>
+static void sGetMandatoryAttribute<string>(const TiXmlElement* elem,
+	const string & attribute, string & val) throw(Exception);
+
+template <>
+static bool sTryGetAttribute<string>(const TiXmlElement* elem,
+	const string & attribute, string & val);
+
+template <>
+static void sGetOptionalAttribute<string>(const TiXmlElement* elem,
+	const string & attribute, string & val, const string & defaultVal);
 
 static string sErr(const string & str, const TiXmlElement* elem);
 
@@ -109,14 +121,17 @@ loadTrogdor4(SimulationDescription & sim) const throw(Exception)
 	sGetMandatoryAttribute(elem, "dt", dt);
 	sGetMandatoryAttribute(elem, "numT", numTimesteps);
 	
+	// Only the calls that may throw exceptions are in the try-catch block.
 	try {
 		sim.setDiscretization(Vector3f(dx,dy,dz), dt);
 		sim.setDuration(numTimesteps);
 	} catch (Exception & e) {
 		throw(Exception(sErr(e.what(), elem)));
 	}
+	// (i.e. these three calls don't throw exceptions.)
 	sim.setMaterials(loadMaterials(elem));
 	sim.setGrids(loadGrids(elem));
+	sim.setAllPointers();
 }
 
 vector<GridDescPtr> XMLParameterFile::
@@ -135,8 +150,10 @@ loadGrids(const TiXmlElement* parent) const
 		int nnx, nny, nnz;
 		Rect3i activeRegion, regionOfInterest;
 		string name;
+		Vector3i origin;
 		
 		sGetMandatoryAttribute(elem, "name", name);
+		sGetOptionalAttribute(elem, "origin", origin, Vector3i(0,0,0));
 		
 		if (sTryGetAttribute(elem, "nx", nnx))
 			nnx *= 2;
@@ -183,7 +200,7 @@ loadGrids(const TiXmlElement* parent) const
 		try {
 			gridDesc = GridDescPtr(new GridDescription(name,
 				Vector3i(nnx,nny,nnz)/2, Vector3i(nnx,nny,nnz), activeRegion,
-				regionOfInterest));
+				regionOfInterest, origin));
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
 		}
@@ -204,8 +221,12 @@ loadGrids(const TiXmlElement* parent) const
 			loadTFSFSources(elem, allGridNames);
 		vector<HuygensSurfaceDescPtr> huygensLinks =
 			loadLinks(elem, allGridNames);
+		vector<HuygensSurfaceDescPtr> customSources =
+			loadCustomSources(elem);
 		huygensSurfaces.insert(huygensSurfaces.begin(), huygensLinks.begin(),
 			huygensLinks.end());
+		huygensSurfaces.insert(huygensSurfaces.begin(), customSources.begin(),
+			customSources.end());
 		
 		gridDesc->setHuygensSurfaces(huygensSurfaces);
 		//gridDesc->implementLinksAsBuffers(loadLinks(elem));
@@ -388,9 +409,10 @@ loadSources(const TiXmlElement* parent) const
 		Rect3i region;
 		Map<string,string> params;
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
-		if (paramXML == 0L)
-			throw(Exception(sErr("Source needs Params element", elem)));
-		params = sGetAttributes(paramXML);
+		//if (paramXML == 0L)
+		//	throw(Exception(sErr("Source needs Params element", elem)));
+		if (paramXML != 0L)
+			params = sGetAttributes(paramXML);
 		
 		if (!sTryGetAttribute(elem, "formula", formula) &&
 			!sTryGetAttribute(elem, "file", filename))
@@ -424,10 +446,12 @@ loadTFSFSources(const TiXmlElement* parent, const set<string> & allGridNames)
 	const TiXmlElement* elem = parent->FirstChildElement("TFSFSource");
     while (elem)
 	{
-		string inClass;
 		string tfsfType;
-		Vector3f direction;
-		Vector3i symmetries;
+		Vector3i direction;
+		Vector3f polarization;
+		string formula;
+		string filename;
+		string field;
 		Rect3i region;
 		Map<string,string> params;
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
@@ -435,7 +459,6 @@ loadTFSFSources(const TiXmlElement* parent, const set<string> & allGridNames)
 			throw(Exception(sErr("TFSFSource needs Params element", elem)));
 		params = sGetAttributes(paramXML);
 		
-		sGetMandatoryAttribute(elem, "class", inClass);
 		if (sTryGetAttribute(elem, "TFRect", region))
 		{
 			region *= 2;
@@ -445,8 +468,11 @@ loadTFSFSources(const TiXmlElement* parent, const set<string> & allGridNames)
 			throw(Exception(sErr("TFSFSource needs TFRect or fineTFRect "
 				"attribute", elem)));
 		sGetMandatoryAttribute(elem, "direction", direction);
-		sGetOptionalAttribute(elem, "symmetries", symmetries, Vector3i(0,0,0));
-		sGetOptionalAttribute(elem, "type", tfsfType, "TF");
+		sGetMandatoryAttribute(elem, "polarization", polarization);
+		sGetOptionalAttribute(elem, "type", tfsfType, string("TF"));
+		sGetOptionalAttribute(elem, "formula", formula, string(""));
+		sGetOptionalAttribute(elem, "filename", filename, string(""));
+		sGetOptionalAttribute(elem, "field", field, string("electric"));
 			
 		try {
 			set<Vector3i> omittedSides;
@@ -457,23 +483,80 @@ loadTFSFSources(const TiXmlElement* parent, const set<string> & allGridNames)
 				omitElem->GetText() >> omitSide;
 				cerr << "Warning: no error checking on omit side input.\n";
 				omittedSides.insert(omitSide);
-				//source->omitSide(omitSide);
 				omitElem = omitElem->NextSiblingElement("OmitSide");
 			}
-			LOG << "Warning: direction ignored.";
-			Vector3i symmetries(0,0,0);
 			HuygensSurfaceDescPtr source(
-				HuygensSurfaceDescription::newTFSFSource(inClass, region,
-				symmetries, tfsfType, params, omittedSides));
+				HuygensSurfaceDescription::newTFSFSource(region,
+				direction, formula, filename, polarization, field,
+				tfsfType, params, omittedSides));
 			
 			tfsfSources.push_back(source);
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
 		}
 		
-		elem = elem->NextSiblingElement("Source");
+		elem = elem->NextSiblingElement("TFSFSource");
 	}
 	return tfsfSources;
+}
+
+vector<HuygensSurfaceDescPtr> XMLParameterFile::
+loadCustomSources(const TiXmlElement* parent) const
+{
+	assert(parent);
+	vector<HuygensSurfaceDescPtr> customSources;
+	
+	const TiXmlElement* elem = parent->FirstChildElement("CustomSource");
+    while (elem)
+	{
+		string tfsfType;
+		Vector3i symmetries;
+		Rect3i region;
+		string name;
+		Map<string,string> params;
+		/*
+		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
+		if (paramXML == 0L)
+			throw(Exception(sErr("TFSFSource needs Params element", elem)));
+		params = sGetAttributes(paramXML);
+		*/
+		
+		sGetMandatoryAttribute(elem, "name", name);
+		
+		if (sTryGetAttribute(elem, "TFRect", region))
+		{
+			region *= 2;
+			region.p2 += Vector3i(1,1,1);
+		}
+		else if (!sTryGetAttribute(elem, "fineTFRect", region))
+			throw(Exception(sErr("CustomSource needs TFRect or fineTFRect "
+				"attribute", elem)));
+		sGetOptionalAttribute(elem, "symmetries", symmetries, Vector3i(0,0,0));
+		sGetOptionalAttribute(elem, "type", tfsfType, string("TF"));
+			
+		try {
+			set<Vector3i> omittedSides;
+			const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
+			while (omitElem)
+			{
+				Vector3i omitSide;
+				omitElem->GetText() >> omitSide;
+				cerr << "Warning: no error checking on omit side input.\n";
+				omittedSides.insert(omitSide);
+				omitElem = omitElem->NextSiblingElement("OmitSide");
+			}
+			HuygensSurfaceDescPtr source(
+				HuygensSurfaceDescription::newCustomSource(region, name,
+				symmetries, tfsfType, params, omittedSides));
+			
+			customSources.push_back(source);
+		} catch (Exception & e) {
+			throw(Exception(sErr(e.what(), elem)));
+		}
+		
+		elem = elem->NextSiblingElement("TFSFSource");
+	}
+	return customSources;
 }
 
 vector<HuygensSurfaceDescPtr> XMLParameterFile::
@@ -544,40 +627,6 @@ loadLinks(const TiXmlElement* parent, const set<string> & allGridNames) const
 	return links;
 }
 
-/*
-vector<MaterialDescPtr> XMLParameterFile::
-loadMaterials(const TiXmlElement* parent) const
-{
-	assert(parent);
-	vector<MaterialDescPtr> materials;
-	
-	const TiXmlElement* elem = parent->FirstChildElement("Material");
-    while (elem)
-	{
-		string name;
-		string inClass;
-		Map<string,string> params;
-		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
-		// not every material needs params, e.g. PEC/PMC
-		//if (paramXML == 0L)
-		//	throw(Exception(sErr("Material needs Params element", elem)));
-		if (paramXML != 0L)
-			params = sGetAttributes(paramXML);
-		
-		sGetMandatoryAttribute(elem, "name", name);
-		sGetMandatoryAttribute(elem, "class", inClass);
-		
-		MaterialDescPtr material(new MaterialDescription(name, inClass,
-			params));
-		materials.push_back(material);
-		
-		elem = elem->NextSiblingElement("Material");
-	}
-	
-	return materials;
-}
-*/
-
 AssemblyDescPtr XMLParameterFile::
 loadAssembly(const TiXmlElement* parent, const set<string> & allGridNames,
 	const set<string> & allMaterialNames) const
@@ -636,7 +685,8 @@ loadABlock(const TiXmlElement* elem, const set<string> & allMaterialNames) const
 	// Does the Block have a Yee region, called "fillRect"?
 	if (sTryGetAttribute(elem, "fillRect", rect))
 	{
-		sGetOptionalAttribute(elem, "fillStyle", fillStyleStr, "PECStyle");
+		sGetOptionalAttribute(elem, "fillStyle", fillStyleStr,
+			string("PECStyle"));
 		try {
 			style = sFillStyleFromString(fillStyleStr); // may fail
 		} catch (const Exception & e) {
@@ -743,7 +793,8 @@ loadAColorKeys(const TiXmlElement* parent, const set<string> & allMaterialNames)
 		if (allMaterialNames.count(material) == 0)
 			throw(Exception(sErr("Unknown material for Tag", elem)));
 		sGetMandatoryAttribute(elem, "color", colorStr);
-		sGetOptionalAttribute(elem, "fillStyle", fillStyleStr, "PECStyle");
+		sGetOptionalAttribute(elem, "fillStyle", fillStyleStr,
+			string("PECStyle"));
 		
 		try {
 			style = sFillStyleFromString(fillStyleStr);
@@ -784,7 +835,7 @@ loadAHeightMap(const TiXmlElement* elem, const set<string> & allMaterialNames)
 	sGetMandatoryAttribute(elem, "row", rowDirStr);
 	sGetMandatoryAttribute(elem, "column", colDirStr);
 	sGetMandatoryAttribute(elem, "up", upDirStr);
-	sGetOptionalAttribute(elem, "fillStyle", styleStr, "PECStyle");
+	sGetOptionalAttribute(elem, "fillStyle", styleStr, string("PECStyle"));
 	
 	try {
 		style = sFillStyleFromString(styleStr);
@@ -821,7 +872,7 @@ loadAEllipsoid(const TiXmlElement* elem, const set<string> & allMaterialNames)
 	
 	if (sTryGetAttribute(elem, "fillRect", rect))
 	{
-		sGetOptionalAttribute(elem, "fillStyle", styleStr, "PECStyle");
+		sGetOptionalAttribute(elem, "fillStyle", styleStr, string("PECStyle"));
 		
 		try {
 			style = sFillStyleFromString(styleStr);
@@ -874,6 +925,7 @@ loadACopyFrom(const TiXmlElement* elem, const set<string> & allGridNames) const
 
 #pragma mark *** Static Method Implementations ***
 
+
 Map<string, string> sGetAttributes(const TiXmlElement* elem)
 {
     Map<string, string> attribs;
@@ -889,6 +941,82 @@ Map<string, string> sGetAttributes(const TiXmlElement* elem)
     return attribs;
 }
 
+
+
+template <>
+static void sGetMandatoryAttribute<string>(const TiXmlElement* elem,
+	const string & attribute, string & val) throw(Exception)
+{
+	assert(elem);
+	ostringstream err;
+	
+	if (elem->Attribute(attribute.c_str()) == 0L)
+	{
+		err << elem->Value() << " needs attribute \"" << attribute << "\"";
+		throw(Exception(sErr(err.str(), elem)));
+	}
+	/*
+	istringstream istr(elem->Attribute(attribute.c_str()));
+	
+	if (!(istr >> val))
+	{
+		err << elem->Value() << " has invalid \"" << attribute
+			<<"\" attribute";
+		throw(Exception(sErr(err.str(), elem)));
+	}*/
+	val = elem->Attribute(attribute.c_str());
+}
+
+template <>
+static bool sTryGetAttribute<string>(const TiXmlElement* elem,
+	const string & attribute, string & val)
+{
+	assert(elem);
+	ostringstream err;
+	
+	if (elem->Attribute(attribute.c_str()) == 0L)
+		return 0;
+	else
+	{
+		/*
+		istringstream istr(elem->Attribute(attribute.c_str()));
+		
+		if (!(istr >> val))
+		{
+			err << elem->Value() << " has invalid \"" << attribute
+				<< "\" attribute";
+			throw(Exception(sErr(err.str(), elem)));
+		}*/
+		val = elem->Attribute(attribute.c_str());
+	}
+	return 1;
+}
+
+template <>
+static void sGetOptionalAttribute<string>(const TiXmlElement* elem,
+	const string & attribute, string & val, const string & defaultVal)
+{
+	assert(elem);
+	ostringstream err;
+	
+	if (elem->Attribute(attribute.c_str()) == 0L)
+	{
+		val = defaultVal;
+	}
+	else
+	{
+		/*
+		istringstream istr(elem->Attribute(attribute.c_str()));
+		
+		if (!(istr >> val))
+		{
+			err << elem->Value() << " has invalid \"" << attribute
+				<< "\" attribute";
+			throw(Exception(sErr(err.str(), elem)));
+		}*/
+		val = elem->Attribute(attribute.c_str());
+	}
+}
 
 template <class T>
 static void sGetMandatoryAttribute(const TiXmlElement* elem,
@@ -936,9 +1064,9 @@ static bool sTryGetAttribute(const TiXmlElement* elem,
 	return 1;
 }
 
-template <class T, class T2>
+template <class T>
 static void sGetOptionalAttribute(const TiXmlElement* elem,
-	const string & attribute, T & val, const T2 & defaultVal)
+	const string & attribute, T & val, const T & defaultVal)
 {
 	assert(elem);
 	ostringstream err;
@@ -959,6 +1087,7 @@ static void sGetOptionalAttribute(const TiXmlElement* elem,
 		}
 	}
 }
+
 
 static string sErr(const string & str, const TiXmlElement* elem)
 {

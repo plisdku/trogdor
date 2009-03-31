@@ -40,6 +40,8 @@ private:
 	std::vector<HuygensSurfaceDescPtr> loadTFSFSources(
 		const TiXmlElement* parent, const std::set<std::string> & allGridNames)
 		const;
+	std::vector<HuygensSurfaceDescPtr> loadCustomSources(
+		const TiXmlElement* parent) const;
 	std::vector<HuygensSurfaceDescPtr> loadLinks(
 		const TiXmlElement* parent, const std::set<std::string> & allGridNames)
 		const;

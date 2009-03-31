@@ -16,6 +16,7 @@
 #include "XMLParameterFile.h"
 #include "SimulationDescription.h"
 #include "VoxelizedGrid.h"
+#include "YeeUtilities.h"
 
 #include "FDTDApplication.h"
 #include "SetupGrid.h"
@@ -314,18 +315,24 @@ runNew(string parameterFile)
 	//			paint grid
 	//			create child grids from TFSF sources as 
 	
-	Map<string, GridDescPtr> gridDescriptions;
-	Map<string, VoxelizedGridPtr> voxelizedGrids;
+	//vector<GridDescPtr> gridDescriptions;
+	Map<GridDescPtr, VoxelizedGridPtr> voxelizedGrids;
 	Map<string, int> simulationGrids;
 	
 	SimulationDescPtr sim = loadSimulation(parameterFile);
-	Mat3i orientation = guessFastestOrientation(*sim);
-	voxelizeGrids(sim, gridDescriptions, voxelizedGrids, orientation);
+	//Mat3i orientation = guessFastestOrientation(*sim);
 	
-	// make runlines
+	//sim->cycleCoordinates();
+	//sim->cycleCoordinates();
+	voxelizeGrids(sim, voxelizedGrids); // includes setup runlines
+	
+	// in here: do any setup that requires the voxelized grids
+	
 	voxelizedGrids.clear();
-	// set up calculation stuff
 	
+	// allocate memory that can be postponed
+	
+	Paint::clearPalette(); // avert static destruction hell )-:
 }
 
 SimulationDescPtr FDTDApplication::
@@ -354,9 +361,7 @@ guessFastestOrientation(const SimulationDescription & grid) const
 
 void FDTDApplication::
 voxelizeGrids(const SimulationDescPtr sim,
-	Map<string, GridDescriptionPtr> gridDescriptions,
-	Map<string, VoxelizedGridPtr> voxelizedGrids,
-	Mat3i orientation)
+	Map<GridDescPtr, VoxelizedGridPtr> voxelizedGrids)
 {
 	// Make a copy of the grid descriptions.  We need the ability to modify
 	// them, because TFSFSources may require the creation of additional grids.
@@ -365,40 +370,360 @@ voxelizeGrids(const SimulationDescPtr sim,
 	for (unsigned int ii = 0; ii < sim->getGrids().size(); ii++)
 	{
 		GridDescPtr g = sim->getGrids()[ii];
-		gridDescriptions[g->getName()] = g;
 		
 		// the recursor paints the setup grid and creates new grids as needed
 		// to implement all TFSF sources.
-		voxelizeGridRecursor(gridDescriptions, voxelizedGrids, g, orientation);
+		voxelizeGridRecursor(voxelizedGrids, g);
 	}
 }
 
 void FDTDApplication::
-voxelizeGridRecursor(Map<string, GridDescriptionPtr> & gridDescriptions,
-	Map<string, VoxelizedGridPtr> & voxelizedGrids,
-	GridDescriptionPtr currentGrid,
-	Mat3i orientation)
+voxelizeGridRecursor(Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids,
+	GridDescPtr currentGrid)
 {
 	LOG << "Recursing for grid " << currentGrid->getName() << ".\n";
 	
-	VoxelizedGrid setupGrid(*currentGrid, voxelizedGrids, orientation);
+	VoxelizedGridPtr setupGrid(new VoxelizedGrid(
+		*currentGrid, voxelizedGrids));
+	voxelizedGrids[currentGrid] = setupGrid;
 	
-	// create new grids as needed to implement TFSF sources
-	// if a TFSF source can be implemented in Trogdor, do so using aux grids
-	// as necessary.
-	// 
+	LOG << "Origin: " << currentGrid->getOriginYee() << "\n";
+	cout << *setupGrid << endl;
+	
+	// Handle TFSF sources.
+	const std::vector<HuygensSurfaceDescPtr> surfs = currentGrid->
+		getHuygensSurfaces();
+	const std::vector<Vector3i> & gridSymmetries = setupGrid->
+		getHuygensRegionSymmetries();
+	assert(surfs.size() == gridSymmetries.size());
+	
+	for (unsigned int nn = 0; nn < surfs.size(); nn++)
+	if (surfs[nn]->getType() == kTFSFSource) // only TFSFSources turn into links
+	{
+		Vector3i sourceSymm = surfs[nn]->getTFSFSourceSymmetries();
+		Vector3i gridSymm = gridSymmetries[nn];
+		Vector3i gridSize = currentGrid->getNumYeeCells();
+		Vector3i collapsable(
+			sourceSymm[0]*gridSymm[0] != 0 && gridSize[0] > 1,
+			sourceSymm[1]*gridSymm[1] != 0 && gridSize[1] > 1,
+			sourceSymm[2]*gridSymm[2] != 0 && gridSize[2] > 1);
+		
+		LOG << "collapsibleDimensions = " << collapsable << endl;
+		
+		if (norm2(collapsable) > 0)
+		{
+			LOG << "Collapsing the grid.\n";
+			
+			ostringstream auxGridName;
+			auxGridName << currentGrid->getName() << "_autoaux_" << nn;
+			GridDescPtr gPtr = makeAuxGridDescription(collapsable,
+				currentGrid, surfs[nn], auxGridName.str());
+			
+			voxelizeGridRecursor(voxelizedGrids, gPtr);
+		}
+		else
+		{
+			if (surfs[nn]->getType() == kTFSFSource)
+			{
+				Rect3i yeeBounds(Vector3i(0,0,0),
+					currentGrid->getNumYeeCells() - Vector3i(1,1,1));
+				if (yeeBounds.numNonSingularDims() == 1) // 1D grid
+				{
+					LOG << "Need to create last aux grid.\n";
+					
+					ostringstream srcGridName;
+					srcGridName << currentGrid->getName() << "_autosrc";
+					
+					// makeSourceGridDescription will decide based on the
+					// number of omitted sides whether to again make a TFSF
+					// source or to use a hard source.
+					GridDescPtr gPtr = makeSourceGridDescription(
+						currentGrid, surfs[nn], srcGridName.str());
+					
+					voxelizeGridRecursor(voxelizedGrids, gPtr);
+				}
+				else
+				{
+					assert(yeeBounds.numNonSingularDims() == 1); // hee hee.
+				}
+				
+				// 1D grid: omit the opposite side if needed and go.
+				// Higher-D grids: can't do anything.
+			}
+			else if (surfs[nn]->getType() == kDataRequest)
+			{
+				// Write data request
+				LOG << "Need to write data request.\n";
+			}
+		}
+	}
+	
 	// if a TFSF source cannot be reduced further from symmetry considerations,
 	// leave it in the grid description as a request for outside data.
 }
 
 
+GridDescPtr FDTDApplication::
+makeAuxGridDescription(Vector3i collapsable, GridDescPtr parentGrid,
+	HuygensSurfaceDescPtr huygensSurface, string auxGridName)
+{
+	int nn;
+	Mat3i collapser(1);
+	collapser(0,0) = !collapsable[0];
+	collapser(1,1) = !collapsable[1];
+	collapser(2,2) = !collapsable[2];
+	Vector3i origin(collapser*parentGrid->getOriginYee());
+	
+	const set<Vector3i> & omittedSides = huygensSurface->getOmittedSides();
+	
+	// What does the aux grid look like?
+	// It's the size of the original total field region, collapsed, and all
+	// non-1D dimensions get 10 cells of PML.
+	
+	Rect3i tfRect(collapser*huygensSurface->getDestHalfRect());
+	tfRect.p2 = maxval(tfRect.p2, Vector3i(1,1,1));
+	
+	Vector3i bigDimensions = Vector3i(1,1,1) - collapsable; // == !collapsable
+	for (nn = 0; nn < 3; nn++)
+	if (tfRect.size(nn) == 1)
+		bigDimensions[nn] = 0;
+	
+	Rect3i copyTo(tfRect); // needs to be the same size as original TF rect
+	tfRect.p1 -= bigDimensions*2; // expand TF rect by one cell
+	tfRect.p2 += bigDimensions*2;
+	
+	Rect3i nonPMLRect(YeeUtilities::rectYeeToHalf(
+		YeeUtilities::rectHalfToYee(tfRect)));   // now it lies on Yee bounds
+	nonPMLRect.p1 -= bigDimensions*4;
+	nonPMLRect.p2 += bigDimensions*4; // two yee cells of spacing
+	
+	Rect3i gridBounds(nonPMLRect);
+	gridBounds.p1 -= bigDimensions*20; // 10 cells of PML
+	gridBounds.p2 += bigDimensions*20; // 10 cells of PML
+	
+	// We need to copy the structure from the parent grid to the child grid.
+	// Determine the copyFrom rect; the copyTo rect is tfRect.
+	// In directions which do NOT collapse, the copyFrom rect is the same size
+	// as the copyTo rect.  However, if one side was omitted deliberately from
+	// the Huygens surface, we are required to match only the other side.
+	// If both sides are omitted, then the behavior is really quite arbitrary.
+	// This is probably a rare case; still, for this reason, I'll print a
+	// warning to the user here...
+	for (nn = 0; nn < 3; nn++)
+	if (bigDimensions[nn] == 0) // only applicable to nontrivial dimensions
+	if (omittedSides.count(YeeUtilities::cardinalDirection(nn*2)) &&
+		omittedSides.count(YeeUtilities::cardinalDirection(nn*2+1)))
+		cerr << "Warning: Huygens surface facing sides (e.g. +x and -x) are "
+			"both omitted.  This results in arbitrary and possibly incorrect "
+			"behavior.\n";
+	
+	Rect3i copyFrom(huygensSurface->getDestHalfRect());
+	for (nn = 0; nn < 3; nn++)
+	if (omittedSides.count(YeeUtilities::cardinalDirection(nn*2)))
+		copyFrom.p1[nn] = copyFrom.p2[nn];
+	else if (omittedSides.count(YeeUtilities::cardinalDirection(nn*2+1)))
+		copyFrom.p2[nn] = copyFrom.p1[nn];
+	else if (collapsable[nn] != 0)
+		copyFrom.p1[nn] = copyFrom.p2[nn]; // symmetry: either side is ok here!
+	
+	// Now let's shift all the rects to have the same origin (namely, zero).
+	// copyFrom is not shifted because it is in the parent grid.
+	nonPMLRect = nonPMLRect - gridBounds.p1;
+	tfRect = tfRect - gridBounds.p1;
+	copyTo = copyTo - gridBounds.p1;
+	origin = origin - YeeUtilities::vecHalfToYee(gridBounds.p1);
+	gridBounds = gridBounds - gridBounds.p1;
 
+	
+	GridDescPtr gPtr(new GridDescription(auxGridName,
+		(gridBounds.size() + Vector3i(1,1,1))/2, // num Yee cells
+		gridBounds.size() + Vector3i(1,1,1), // num half cells
+		gridBounds, // calc region
+		nonPMLRect,
+		origin));
+	
+	HuygensSurfaceDescPtr hPtr;
+	if (huygensSurface->getType() == kTFSFSource)
+	{
+		//	Omitting the "back side" is harmless in aux grids, and desirable
+		//  for 1D aux grids in the terminal recursion.
+		set<Vector3i> newSourceOmittedSides(omittedSides);
+		newSourceOmittedSides.insert(huygensSurface->getTFSFSourceDirection());
+		hPtr = HuygensSurfaceDescPtr(HuygensSurfaceDescription::newTFSFSource(
+			tfRect,
+			huygensSurface->getTFSFSourceDirection(),
+			huygensSurface->getTFSFSourceFormula(),
+			huygensSurface->getTFSFSourceFileName(),
+			huygensSurface->getTFSFSourcePolarization(),
+			huygensSurface->getTFSFSourceField(),
+			huygensSurface->getTFSFType(),
+			huygensSurface->getTFSFSourceParameters(),
+			newSourceOmittedSides));
+	}
+	else if (huygensSurface->getType() == kDataRequest)
+	{
+		hPtr = HuygensSurfaceDescPtr(HuygensSurfaceDescription::newCustomSource(
+			tfRect,
+			huygensSurface->getName(),
+			huygensSurface->getTFSFSourceSymmetries(),
+			huygensSurface->getTFSFType(),
+			huygensSurface->getTFSFSourceParameters(),
+			huygensSurface->getOmittedSides()));
+	}
+	
+	InstructionPtr copyThisRegion(new CopyFrom(copyFrom, copyTo, parentGrid));
+	InstructionPtr extendThisRegion(new Extrude(copyTo, gridBounds));
+	vector<InstructionPtr> assemblyStuff;
+	assemblyStuff.push_back(copyThisRegion);
+	assemblyStuff.push_back(extendThisRegion);
+	AssemblyDescPtr assembly(new AssemblyDescription(assemblyStuff));
+	
+	gPtr->setHuygensSurfaces(vector<HuygensSurfaceDescPtr>(1,hPtr));
+	gPtr->setAssembly(assembly);
+	
+	return gPtr;
+}
 
+GridDescPtr FDTDApplication::
+makeSourceGridDescription(GridDescPtr parentGrid,
+	HuygensSurfaceDescPtr huygensSurface, string srcGridName)
+{
+	assert(huygensSurface->getType() == kTFSFSource);
+	int nn;
+	
+	const set<Vector3i> & omittedSides = huygensSurface->getOmittedSides();
+	Vector3i srcDir = huygensSurface->getTFSFSourceDirection();
+	Vector3i origin = parentGrid->getOriginYee();
+	
+	// What does the source grid look like?
+	// Two cases:
+	//   1.  Back side of source region is omitted.  Then the source is tiny,
+	//   just large enough to provide the fields to handle the front boundary.
+	//   2.  Back side of source region is not omitted.  Then we clone the
+	//   whole space and make a source with omitted back side.
+	
+	Rect3i tfRect(huygensSurface->getDestHalfRect());
+	tfRect.p2 = maxval(tfRect.p2, Vector3i(1,1,1));
+	
+	Vector3i bigDimensions(1,1,1);
+	for (nn = 0; nn < 3; nn++)
+	if (tfRect.size(nn) == 1)
+		bigDimensions[nn] = 0;
+	
+	// Collapse the total-field rect if the TFSF boundary has an omitted side
+	// along the direction of propagation.
+	if (omittedSides.count(srcDir))
+	{
+		// Figure out which side this is... there should be a better way than
+		// a crummy for-loop, huh.  Another opaque lookup table maybe?  (-:
+		for (nn = 0; nn < 3; nn++)
+		if (srcDir[nn] > 0)
+			tfRect.p2[nn] = tfRect.p1[nn];
+		else if (srcDir[nn] < 0)
+			tfRect.p1[nn] = tfRect.p2[nn];
+	}
+	tfRect.p1 -= bigDimensions*2; // expand TF rect by one cell
+	tfRect.p2 += bigDimensions*2;
+	
+	Rect3i nonPMLRect(YeeUtilities::rectYeeToHalf(
+		YeeUtilities::rectHalfToYee(tfRect)));   // now it lies on Yee bounds
+	nonPMLRect.p1 -= bigDimensions*4;
+	nonPMLRect.p2 += bigDimensions*4; // two yee cells of spacing
+	
+	Rect3i gridBounds(nonPMLRect);
+	gridBounds.p1 -= bigDimensions*20; // 10 cells of PML
+	gridBounds.p2 += bigDimensions*20; // 10 cells of PML
+	
+	// We need to copy the structure from the parent grid to the child grid.
+	// Determine the copyFrom rect; the copyTo rect is done above.
+	// In directions which do NOT collapse, the copyFrom rect is the same size
+	// as the copyTo rect.  However, if one side was omitted deliberately from
+	// the Huygens surface, we are required to match only the other side.
+	// If both sides are omitted, then the behavior is really quite arbitrary.
+	// This is probably a rare case; still, for this reason, I'll print a
+	// warning to the user here...
+	for (nn = 0; nn < 3; nn++)
+	if (bigDimensions[nn] == 0) // only applicable to nontrivial dimensions
+	if (omittedSides.count(YeeUtilities::cardinalDirection(nn*2)) &&
+		omittedSides.count(YeeUtilities::cardinalDirection(nn*2+1)))
+		cerr << "Warning: Huygens surface facing sides (e.g. +x and -x) are "
+			"both omitted.  This results in arbitrary and possibly incorrect "
+			"behavior.\n";
+	
+	Rect3i copyFrom(huygensSurface->getDestHalfRect());
+	for (nn = 0; nn < 3; nn++)
+	if (omittedSides.count(YeeUtilities::cardinalDirection(nn*2)))
+		copyFrom.p1[nn] = copyFrom.p2[nn];
+	else if (omittedSides.count(YeeUtilities::cardinalDirection(nn*2+1)))
+		copyFrom.p2[nn] = copyFrom.p1[nn];
+	Rect3i copyTo(copyFrom);
+	
+	// Now let's shift all the rects to have the same origin (namely, zero).
+	// copyFrom is not shifted because it is in the parent grid.
+	nonPMLRect = nonPMLRect - gridBounds.p1;
+	tfRect = tfRect - gridBounds.p1;
+	copyTo = copyTo - gridBounds.p1;
+	origin = origin - YeeUtilities::vecHalfToYee(gridBounds.p1);
+	gridBounds = gridBounds - gridBounds.p1;
 
-
-
-
-
+	GridDescPtr gPtr(new GridDescription(srcGridName,
+		(gridBounds.size() + Vector3i(1,1,1))/2, // num Yee cells
+		gridBounds.size() + Vector3i(1,1,1), // num half cells
+		gridBounds, // calc region
+		nonPMLRect,
+		origin));
+	
+	vector<HuygensSurfaceDescPtr> huygensSurfaces; // might end up empty!
+	vector<SourceDescPtr> hardSources; // or this will be empty.
+	if (omittedSides.count(srcDir))
+	{
+		// use a hard source
+		LOG << "Using a hard source.\n";
+				
+		Rect3i yeeTFRect = YeeUtilities::rectHalfToYee(tfRect);
+		Vector3i srcYeeCell = clip(yeeTFRect, Vector3i(1000000*srcDir));
+		srcYeeCell -= srcDir;
+		
+		LOG << "To-do: ditch TFSFSource Params.\n";
+		SourceDescPtr sPtr(new SourceDescription(
+			huygensSurface->getTFSFSourceFormula(),
+			huygensSurface->getTFSFSourceFileName(),
+			huygensSurface->getTFSFSourcePolarization(),
+			Rect3i(srcYeeCell, srcYeeCell),
+			huygensSurface->getTFSFSourceField(),
+			huygensSurface->getTFSFSourceParameters()));
+		hardSources.push_back(sPtr);
+	}
+	else
+	{
+		// use a soft source
+		LOG << "Using a soft source.\n";
+		HuygensSurfaceDescPtr hPtr(HuygensSurfaceDescription::newTFSFSource(
+			tfRect,
+			huygensSurface->getTFSFSourceDirection(),
+			huygensSurface->getTFSFSourceFormula(),
+			huygensSurface->getTFSFSourceFileName(),
+			huygensSurface->getTFSFSourcePolarization(),
+			huygensSurface->getTFSFSourceField(),
+			huygensSurface->getTFSFType(),
+			huygensSurface->getTFSFSourceParameters(),
+			huygensSurface->getOmittedSides()));
+		huygensSurfaces.push_back(hPtr);
+	}
+	
+	InstructionPtr copyThisRegion(new CopyFrom(copyFrom, copyTo, parentGrid));
+	InstructionPtr extendThisRegion(new Extrude(copyTo, gridBounds));
+	vector<InstructionPtr> assemblyStuff;
+	assemblyStuff.push_back(copyThisRegion);
+	assemblyStuff.push_back(extendThisRegion);
+	AssemblyDescPtr assembly(new AssemblyDescription(assemblyStuff));
+	
+	gPtr->setSources(hardSources);
+	gPtr->setHuygensSurfaces(huygensSurfaces);
+	gPtr->setAssembly(assembly);
+	
+	return gPtr;
+}
 
 
 

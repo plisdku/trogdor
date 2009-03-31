@@ -59,27 +59,7 @@ setAllPointers()
 	
 	// 2.  Point Huygens surfaces to appropriate grids
 	for (nGrid = 0; nGrid < mGrids.size(); nGrid++)
-	{
 		mGrids[nGrid]->setPointers(materialMap, gridMap);
-		/*
-		std::vector<HuygensSurfaceDescPtr> & huygens = mGrids[nGrid]->
-			getHuygensSurfaces();
-		
-		for (nHuygens = 0; nHuygens < huygens.size(); nHuygens++)
-		if (huygens[nHuygens]->getType() == kLink)
-			huygens[nHuygens]->setLinkSourceGrid(gridMap[huygens[nHuygens]->
-				getLinkSourceGridName()]);
-		*/
-	}
-	/*
-	// 3.  Point various instructions to appropriate materials
-	for (nGrid = 0; nGrid < mGrids.size(); nGrid++)
-	{
-		AssemblyDescPtr assem = mGrids[nGrid]->getAssembly();
-		assert(assem != 0L);
-		assem->setPointers(materialMap, gridMap);
-	}
-	*/
 }
 
 void SimulationDescription::
@@ -102,16 +82,29 @@ setDuration(int numT)
 	mNumTimesteps = numT;
 }
 
+void SimulationDescription::
+cycleCoordinates()
+{
+	m_dxyz = Vector3f(m_dxyz[2], m_dxyz[0], m_dxyz[1]);
+	int nn;
+	for (nn = 0; nn < mGrids.size(); nn++)
+		mGrids[nn]->cycleCoordinates();
+	for (nn = 0; nn < mMaterials.size(); nn++)
+		mMaterials[nn]->cycleCoordinates();
+}
+
 #pragma mark *** Grid ***
 
 GridDescription::
 GridDescription(string name, Vector3i numYeeCells, Vector3i numHalfCells,
-	Rect3i calcRegionHalf, Rect3i nonPMLHalf) throw(Exception) :
+	Rect3i calcRegionHalf, Rect3i nonPMLHalf, Vector3i originYee)
+	throw(Exception) :
 	mName(name),
 	mNumYeeCells(numYeeCells),
 	mNumHalfCells(numHalfCells),
 	mCalcRegionHalf(calcRegionHalf),
-	mNonPMLHalf(nonPMLHalf)
+	mNonPMLHalf(nonPMLHalf),
+	mOriginYee(originYee)
 {
 	assert(Vector3i(2*mNumYeeCells) == mNumHalfCells); // caller's job...
 	
@@ -120,6 +113,32 @@ GridDescription(string name, Vector3i numYeeCells, Vector3i numHalfCells,
 	if (!vec_ge(mNonPMLHalf.size(), 0))
 		throw(Exception("Non-PML region has some negative dimensions"));
 }
+
+
+void GridDescription::
+setHuygensSurfaces(const vector<HuygensSurfaceDescPtr> & surfaces)
+{
+	mHuygensSurfaces = surfaces;
+	// We need to make sure that Huygens surfaces in repeating grids will
+	// omit any sides that are adjacent due to periodicity.  That means, if the
+	// Huygens surface extends the full dimension of the grid, don't make a
+	// correction.
+	for (unsigned int nn = 0; nn < mHuygensSurfaces.size(); nn++)
+	{
+		Rect3i destHalfRect = mHuygensSurfaces[nn]->getDestHalfRect();
+		
+		for (int xyz = 0; xyz < 3; xyz++)
+		{
+			if (destHalfRect.p1[xyz] <= 0 &&
+				destHalfRect.p2[xyz] >= mNumHalfCells[xyz]-1)
+			{
+				mHuygensSurfaces[nn]->omitSide(2*xyz); // the -x, -y or -z side
+				mHuygensSurfaces[nn]->omitSide(2*xyz+1); // the +x, +y or +z side
+			}
+		}
+	}
+}
+
 
 void GridDescription::
 setPointers(const Map<string, MaterialDescPtr> & materialMap,
@@ -131,6 +150,44 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap,
 	
 	if (mAssembly != 0L)
 		mAssembly->setPointers(materialMap, gridMap);
+}
+
+void GridDescription::
+cycleCoordinates()
+{
+	Mat3i permuteForward, permuteBackward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	
+	mNumYeeCells = permuteForward*mNumYeeCells;
+	mNumHalfCells = permuteForward*mNumHalfCells;
+	mCalcRegionHalf = permuteForward*mCalcRegionHalf;
+	mNonPMLHalf = permuteForward*mNonPMLHalf;
+	mOriginYee = permuteForward*mOriginYee;
+	
+	unsigned int nn;
+	
+	for (nn = 0; nn < mOutputs.size(); nn++)
+		mOutputs[nn]->cycleCoordinates();
+	for (nn = 0; nn < mInputs.size(); nn++)
+		mInputs[nn]->cycleCoordinates();
+	for (nn = 0; nn < mSources.size(); nn++)
+		mSources[nn]->cycleCoordinates();
+	for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
+		mHuygensSurfaces[nn]->cycleCoordinates();
+	mAssembly->cycleCoordinates();
+}
+
+Rect3i GridDescription::
+getYeeBounds() const
+{
+	return Rect3i(Vector3i(0,0,0), mNumYeeCells-Vector3i(1,1,1));
+}
+
+Rect3i GridDescription::
+getHalfCellBounds() const
+{
+	return Rect3i(Vector3i(0,0,0), mNumHalfCells-Vector3i(1,1,1));
 }
 
 
@@ -145,6 +202,14 @@ InputEHDescription(string fileName, string inClass,
 {
 }
 
+
+void InputEHDescription::
+cycleCoordinates()
+{
+	mCoordinatePermutationNumber += 1;
+	mCoordinatePermutationNumber %= 3;
+}
+
 #pragma mark *** Output ***
 
 OutputDescription::
@@ -156,6 +221,13 @@ OutputDescription(string fileName, string inClass, int inPeriod,
 	mParams(inParameters)
 {
 	cerr << "Warning: OutputDescription does not validate inClass.\n";
+}
+
+void OutputDescription::
+cycleCoordinates()
+{
+	mCoordinatePermutationNumber += 1;
+	mCoordinatePermutationNumber %= 3;
 }
 
 #pragma mark *** Source ***
@@ -177,65 +249,28 @@ SourceDescription(string formula, string inFileName,
 		throw(Exception("Source region has some negative dimensions"));
 }
 
-/*
-#pragma mark *** TFSFSource ***
-
-TFSFSourceDescription::
-TFSFSourceDescription(string inClass, Rect3i inTFRect, Vector3f direction,
-	string inTFSFType, const Map<string,string> & inParameters)
-	throw(Exception) :
-	mClass(inClass),
-	mTypeStr(inTFSFType),
-	mDirection(direction),
-	mRegion(inTFRect),
-	mParams(inParameters)
+void SourceDescription::
+cycleCoordinates()
 {
-	cerr << "Warning: TFSFSourceDescription does not validate class.\n";
-	cerr << "Warning: TFSFSourceDescription does not validate TFSF type.\n";
-	if (!vec_ge(mRegion.size(), 0))
-		throw(Exception("TFSFSource TF rect has some negative dimensions"));
+	Mat3i permuteForward, permuteBackward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	
+	mCoordinatePermutationNumber += 1;
+	mCoordinatePermutationNumber %= 3;
+	
+	mPolarization = Vector3f(
+		mPolarization[2], mPolarization[0], mPolarization[1]);
+	
+	mRegion = permuteForward*mRegion;
+	
+	LOG << "Not rotating SourceDescription::mField.\n";
 }
 
-void TFSFSourceDescription::
-omitSide(Vector3i inOmitSide)
-{
-	if (inOmitSide != dominantComponent(inOmitSide) ||
-		norm1(inOmitSide) != 1)
-		throw(Exception("Omitted sides must be axis-oriented unit vectors"));
-	mOmittedSides.insert(inOmitSide);
-}
 
-#pragma mark *** Link ***
-
-LinkDescription::
-LinkDescription(string typeString, string sourceGridName,  Rect3i sourceRect,
-	Rect3i destRect)
-	throw(Exception) :
-	mTypeString(typeString),
-	mSourceGridName(sourceGridName),
-	mSourceHalfRect(sourceRect),
-	mDestHalfRect(destRect)
-{
-	cerr << "Warning: LinkDescription does not validate source grid name.\n";
-	cerr << "Warning: LinkDescription does not validate link type string.\n";
-	if (!vec_ge(mSourceHalfRect.size(), 0))
-		throw(Exception("Link source rect has some negative dimensions"));
-	if (!vec_ge(mDestHalfRect.size(), 0))
-		throw(Exception("Link dest rect has some negative dimensions"));
-}
-
-void LinkDescription::
-omitSide(Vector3i inOmitSide)
-{
-	if (inOmitSide != dominantComponent(inOmitSide) ||
-		norm1(inOmitSide) != 1)
-		throw(Exception("Omitted sides must be axis-oriented unit vectors"));
-	mOmittedSides.insert(inOmitSide);
-}
-*/
 #pragma mark *** HuygensSurface ***
 
-// constructor for LINKS
+// constructor for LINKS, using source grid name
 HuygensSurfaceDescription::
 HuygensSurfaceDescription(string typeString, string sourceGridName, 
 	Rect3i sourceHalfRect, Rect3i destHalfRect,
@@ -244,12 +279,18 @@ HuygensSurfaceDescription(string typeString, string sourceGridName,
 	mType(kLink),
 	mDestHalfRect(destHalfRect),
 	mOmittedSides(omittedSides),
-	mBuffers(),
+	mBuffers(6),
 	mLinkSourceHalfRect(sourceHalfRect),
 	mLinkSourceGridName(sourceGridName),
-	mTFSFSourceClass(),
+	mLinkSourceGrid(),
+	mTFSFSourceSymmetries(0,0,0),
+	mTFSFType(),
 	mTFSFSourceParams(),
-	mTFSFSourceSymmetries()
+	mTFSFSourceDirection(0,0,0),
+	mTFSFFormula(),
+	mTFSFPolarization(0,0,0),
+	mTFSFField(),
+	mDataRequestName()
 {
 	if (!vec_ge(mDestHalfRect.size(), 0))
 		throw(Exception("Link dest rect has some negative dimensions"));
@@ -273,28 +314,133 @@ HuygensSurfaceDescription(string typeString, string sourceGridName,
 		throw(Exception("Link type must be 'TF' or 'SF'"));
 }
 
+
+// constructor for LINKS, using source grid pointer
+HuygensSurfaceDescription::
+HuygensSurfaceDescription(string typeString, const GridDescPtr sourceGrid, 
+	Rect3i sourceHalfRect, Rect3i destHalfRect,
+	const std::set<Vector3i> & omittedSides)
+	throw(Exception) :
+	mType(kLink),
+	mDestHalfRect(destHalfRect),
+	mOmittedSides(omittedSides),
+	mBuffers(6),
+	mLinkSourceHalfRect(sourceHalfRect),
+	mLinkSourceGridName(sourceGrid->getName()),
+	mLinkSourceGrid(sourceGrid),
+	mTFSFSourceSymmetries(0,0,0),
+	mTFSFType(),
+	mTFSFSourceParams(),
+	mTFSFSourceDirection(0,0,0),
+	mTFSFFormula(),
+	mTFSFFileName(),
+	mTFSFPolarization(0,0,0),
+	mTFSFField(),
+	mDataRequestName()
+{
+	if (!vec_ge(mDestHalfRect.size(), 0))
+		throw(Exception("Link dest rect has some negative dimensions"));
+	if (!vec_ge(mLinkSourceHalfRect.size(), 0))
+		throw(Exception("Link source rect has some negative dimensions"));
+	
+	for (set<Vector3i>::iterator ii = mOmittedSides.begin();
+		ii != mOmittedSides.end(); ii++)
+	{
+		if (*ii != dominantComponent(*ii) ||
+			norm1(*ii) != 1)
+			throw(Exception("Omitted sides must be axis-oriented unit "
+				"vectors"));
+	}
+	
+	if (typeString == "TF")
+		initTFSFBuffers(1.0);
+	else if (typeString == "SF")
+		initTFSFBuffers(-1.0);
+	else
+		throw(Exception("Link type must be 'TF' or 'SF'"));
+}
+
+
 // constructor for TFSFSOURCES
 HuygensSurfaceDescription::
-HuygensSurfaceDescription(string inClass, Rect3i inTFRect, Vector3i symmetries,
-	string inTFSFType, const Map<string,string> & inParameters,
-	const std::set<Vector3i> & omittedSides)
+HuygensSurfaceDescription(Rect3i inTFRect, Vector3i direction,
+	string formula, string fileName, Vector3f polarization,
+	string field, string inTFSFType, const Map<string,string> & inParameters,
+	const set<Vector3i> & omittedSides)
 	throw(Exception) :
 	mType(kTFSFSource),
 	mDestHalfRect(inTFRect),
 	mOmittedSides(omittedSides),
-	mBuffers(),
+	mBuffers(6),
 	mLinkSourceHalfRect(),
 	mLinkSourceGridName(),
-	mTFSFSourceClass(inClass),
+	mLinkSourceGrid(),
+	mTFSFSourceSymmetries(0,0,0),
+	mTFSFType(inTFSFType),
 	mTFSFSourceParams(inParameters),
-	mTFSFSourceSymmetries(symmetries)
+	mTFSFSourceDirection(direction),
+	mTFSFFormula(),
+	mTFSFFileName(),
+	mTFSFPolarization(),
+	mTFSFField(),
+	mDataRequestName()
 {
-	cerr << "Warning: HuygensSurfaceDescription does not validate class.\n";
 	if (!vec_ge(mDestHalfRect.size(), 0))
 		throw(Exception("TFSFSource TF rect has some negative dimensions"));
+	
+	if (mTFSFSourceDirection != dominantComponent(mTFSFSourceDirection) ||
+		norm1(mTFSFSourceDirection) != 1)
+		throw(Exception("Source direction must be axis-oriented unit vector"));
+	
+	for (unsigned int nn = 0; nn < 3; nn++)
+	if (mTFSFSourceDirection[nn] == 0)
+		mTFSFSourceSymmetries[nn] = 1;
+	
+	for (set<Vector3i>::iterator ii = mOmittedSides.begin();
+		ii != mOmittedSides.end(); ii++)
+	{
+		if (*ii != dominantComponent(*ii) ||
+			norm1(*ii) != 1)
+			throw(Exception("Omitted sides must be axis-oriented unit "
+				"vectors"));
+	}
+	if (inTFSFType == "TF")
+		initTFSFBuffers(1.0);
+	else if (inTFSFType == "SF")
+		initTFSFBuffers(-1.0);
+	else
+		throw(Exception("TFSFSource type must be 'TF' or 'SF'"));
+}
+
+// constructor for CustomSources
+HuygensSurfaceDescription::
+HuygensSurfaceDescription(Rect3i inTFRect, const string & inName,
+	Vector3i symmetries, string inTFSFType,
+	const Map<string,string> & inParameters,
+	const std::set<Vector3i> & omittedSides)
+	throw(Exception) :
+	mType(kDataRequest),
+	mDestHalfRect(inTFRect),
+	mOmittedSides(omittedSides),
+	mBuffers(6),
+	mLinkSourceHalfRect(),
+	mLinkSourceGridName(),
+	mLinkSourceGrid(),
+	mTFSFSourceSymmetries(symmetries),
+	mTFSFType(inTFSFType),
+	mTFSFSourceParams(inParameters),
+	mTFSFSourceDirection(0,0,0),
+	mTFSFFormula(),
+	mTFSFFileName(),
+	mTFSFPolarization(0,0,0),
+	mTFSFField(),
+	mDataRequestName(inName)
+{
+	if (!vec_ge(mDestHalfRect.size(), 0))
+		throw(Exception("CustomSource TF rect has some negative dimensions"));
 	for (unsigned int nn = 0; nn < 3; nn++)
 	if (mTFSFSourceSymmetries[nn] != 1 && mTFSFSourceSymmetries[nn] != 0)
-		throw(Exception("TFSFSource symmetry vector must have "
+		throw(Exception("CustomSource symmetry vector must have "
 			"1s and 0s only"));
 	
 	for (set<Vector3i>::iterator ii = mOmittedSides.begin();
@@ -310,13 +456,44 @@ HuygensSurfaceDescription(string inClass, Rect3i inTFRect, Vector3i symmetries,
 	else if (inTFSFType == "SF")
 		initTFSFBuffers(-1.0);
 	else
-		throw(Exception("Link type must be 'TF' or 'SF'"));
+		throw(Exception("CustomSource type must be 'TF' or 'SF'"));
 }
 
-HuygensSurfaceDescription::
-HuygensSurfaceDescription(string requestyArgs) throw(Exception)
+void HuygensSurfaceDescription::
+cycleCoordinates()
 {
-	throw(Exception("Data request constructor not implemented yet."));
+	Mat3i permuteForward, permuteBackward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	
+	vmlib::SMat<3,float> permuteForwardf;
+	permuteForwardf = 0.0f,0.0f,1.0f,1.0f,0.f,0.f,0.f,1.f,0.f;
+	
+	// Rotate the rects and vectors
+	mDestHalfRect = permuteForward*mDestHalfRect;
+	mLinkSourceHalfRect = permuteForward*mLinkSourceHalfRect;
+	mTFSFSourceSymmetries = permuteForward*mTFSFSourceSymmetries;
+	mTFSFPolarization = permuteForwardf*mTFSFPolarization;
+	mTFSFSourceDirection = permuteForward*mTFSFSourceDirection;
+	
+	// Rotate the omitted sides
+	set<Vector3i> newOmittedSides;
+	for (set<Vector3i>::iterator itr = mOmittedSides.begin();
+		itr != mOmittedSides.end(); itr++)
+	{
+		newOmittedSides.insert(permuteForward * (*itr));
+	}
+	mOmittedSides = newOmittedSides;
+	
+	// Permute and rotate the buffers (the permutation is "backwards")
+	vector<NeighborBufferDescPtr> newBuffers(6);
+	for (int ii = 0; ii < 6; ii++)
+	{
+		newBuffers[ii] = mBuffers[ (ii+4)%6 ];
+		if (newBuffers[ii] != 0L)
+			newBuffers[ii]->cycleCoordinates();
+	}
+	mBuffers = newBuffers;
 }
 
 HuygensSurfaceDescription* HuygensSurfaceDescription::
@@ -328,30 +505,33 @@ newLink(string typeString, string sourceGridName, Rect3i sourceHalfRect,
 		sourceHalfRect, destHalfRect, omittedSides);
 }
 HuygensSurfaceDescription* HuygensSurfaceDescription::
-newTFSFSource(string inClass, Rect3i inHalfRect, Vector3i symmetries,
+newLink(string typeString, GridDescPtr sourceGrid, Rect3i sourceHalfRect,
+	Rect3i destHalfRect, const set<Vector3i> & omittedSides)
+	throw(Exception)
+{
+	return new HuygensSurfaceDescription(typeString, sourceGrid,
+		sourceHalfRect, destHalfRect, omittedSides);
+}
+HuygensSurfaceDescription* HuygensSurfaceDescription::
+newTFSFSource(Rect3i inHalfRect, Vector3i direction, string formula,
+	string fileName, Vector3f polarization, string field,
 	string inTFSFType, const Map<string, string> & inParameters,
 	const set<Vector3i> & omittedSides) throw(Exception)
 {
-	return new HuygensSurfaceDescription(inClass, inHalfRect, symmetries,
-		inTFSFType, inParameters, omittedSides);
+	return new HuygensSurfaceDescription(inHalfRect, direction, formula,
+		fileName, polarization, field, inTFSFType, inParameters, omittedSides);
 }
 
 HuygensSurfaceDescription* HuygensSurfaceDescription::
-newDataRequest() throw(Exception)
+newCustomSource(Rect3i inHalfRect, const std::string & inName,
+	Vector3i symmetries, std::string inTFSFType,
+	const Map<std::string, std::string> & inParameters,
+	const std::set<Vector3i> & omittedSides) throw(Exception)
 {
-	return new HuygensSurfaceDescription("this is a data request");
+	return new HuygensSurfaceDescription(inHalfRect, inName, symmetries,
+		inTFSFType, inParameters, omittedSides);
 }
 
-/*
-void HuygensSurfaceDescription::
-omitSide(Vector3i inOmitSide)
-{
-	if (inOmitSide != dominantComponent(inOmitSide) ||
-		norm1(inOmitSide) != 1)
-		throw(Exception("Omitted sides must be axis-oriented unit vectors"));
-	mOmittedSides.insert(inOmitSide);
-}
-*/
 
 void HuygensSurfaceDescription::
 initTFSFBuffers(float srcFactor)
@@ -365,30 +545,9 @@ initTFSFBuffers(float srcFactor)
 	for (unsigned int nDir = 0; nDir < 6; nDir++)
 	if (mOmittedSides.count(cardinalDirection(nDir)) == 0)
 	{
-		Rect3i outerTotalField = edgeOfRect(mDestHalfRect, nDir);
-		
-		for (unsigned int fieldNum = 0; fieldNum < 6; fieldNum++) // on E, H
-		if ( outerTotalField.encloses( outerTotalField.p1 +
-			 halfCellFieldOffset(fieldNum) ) )
-		{
-			// total-field buffer
-			Rect3i destYeeRect = rectHalfToYee(outerTotalField,
-				halfCellFieldIndex(fieldNum));
-			NeighborBufferDescPtr nb(new NeighborBufferDescription(
-				destYeeRect, cardinalDirection(nDir),
-				halfCellFieldOffset(fieldNum), 1.0, 1.0*srcFactor));
-			mBuffers[halfCellFieldOffset(fieldNum)].push_back(nb);
-		}
-		else
-		{
-			// scattered-field buffer
-			Rect3i destYeeRect = rectHalfToYee(outerTotalField +
-				cardinalDirection(nDir), halfCellFieldIndex(fieldNum));
-			NeighborBufferDescPtr nb(new NeighborBufferDescription(
-				destYeeRect, -1*cardinalDirection(nDir),
-				halfCellFieldOffset(fieldNum), 1.0, -1.0*srcFactor));
-			mBuffers[halfCellFieldOffset(fieldNum)].push_back(nb);
-		}
+		NeighborBufferDescPtr nb(new NeighborBufferDescription(
+			mDestHalfRect, nDir, srcFactor));
+		mBuffers[nDir] = nb;
 	}
 }
 
@@ -405,18 +564,87 @@ setPointers(const Map<string, GridDescPtr> & gridMap)
 	mLinkSourceGrid = gridMap[mLinkSourceGridName];
 }
 
+void HuygensSurfaceDescription::
+omitSide(int sideNum)
+{
+	Vector3i side = cardinalDirection(sideNum);
+	mOmittedSides.insert(side);
+}
+
 #pragma mark *** NeighborBuffer ***
 
 NeighborBufferDescription::
-NeighborBufferDescription(const Rect3i & applicationYeeRect,
-	Vector3i neighborDirection, Vector3i yeeOctant, float applicationFactor,
-	float addendFactor) :
-	mDestYeeRect(applicationYeeRect),
-	mNeighborDirection(neighborDirection),
-	mFieldOffset(yeeOctant),
-	mDestFactor(applicationFactor),
-	mSrcFactor(addendFactor)
+NeighborBufferDescription(const Rect3i & destHalfRect, int nSide, 
+	float incidentFieldFactor) :
+	mDestHalfRect(destHalfRect),
+	mDestFactors(6),
+	mSrcFactors(6)
 {
+	Rect3i outerTotalField = edgeOfRect(mDestHalfRect, nSide);
+	
+	// the fat boundary contains the cells on BOTH sides of the TFSF boundary
+	// in the destination grid
+	Rect3i fatBoundary = outerTotalField;
+	if (nSide % 2 == 0) // if this is a low-x, low-y or low-z side
+		fatBoundary.p1 += cardinalDirection(nSide);
+	else
+		fatBoundary.p2 += cardinalDirection(nSide);
+	
+	// the buffer half rect is the rect in the buffer that maps to the
+	// fat boundary
+	Rect3i bufferHalfRect = fatBoundary - Vector3i(2*(fatBoundary.p1/2));
+	bufferHalfRect.p1[nSide/2] = 0;
+	bufferHalfRect.p2[nSide/2] = 1;
+	
+	mBufferHalfRect = bufferHalfRect;
+	mBufferYeeBounds = rectHalfToYee(bufferHalfRect);
+	
+	for (unsigned int fieldNum = 0; fieldNum < 6; fieldNum++) // on E, H
+	{
+		Vector3i fieldOffset = halfCellFieldOffset(fieldNum);
+		Vector3i p1Offset = outerTotalField.p1 % 2;
+		
+		// Figure out if the given yee octant lies in the TF region or SF region
+		if (fieldOffset[nSide/2] == p1Offset[nSide/2])
+		{
+			// total-field buffer
+			mDestFactors[fieldNum] = 1.0f;
+			mSrcFactors[fieldNum] = 1.0f * incidentFieldFactor;
+		}
+		else
+		{
+			// scattered-field buffer
+			mDestFactors[fieldNum] = 1.0f;
+			mSrcFactors[fieldNum] = -1.0f * incidentFieldFactor;
+		}
+	}
+}
+
+void NeighborBufferDescription::
+cycleCoordinates()
+{
+	Mat3i permuteForward, permuteBackward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	
+	// Rotate the rects
+	mDestHalfRect = permuteForward * mDestHalfRect;
+	mBufferHalfRect = permuteForward * mBufferHalfRect;
+	mBufferYeeBounds = permuteForward * mBufferYeeBounds;
+	
+	// Permute the source and destination factors.
+	// This is tricky since the order is (Ex, Ey, Hz, Ez, Hy, Hx).
+	// Might as well do it by hand (should I revisit this design later?)
+	int permuteOrder[] = {3,0,4,1,5,2}; // Ex was Ez, Ey was Ex, etc.
+	vector<float> newDestFactors(6);
+	vector<float> newSrcFactors(6);
+	for (int ii = 0; ii < 6; ii++)
+	{
+		newDestFactors[ii] = mDestFactors[ permuteOrder[ii] ];
+		newSrcFactors[ii] = mSrcFactors[ permuteOrder[ii] ];
+	}
+	mDestFactors = newDestFactors;
+	mSrcFactors = newSrcFactors;
 }
 
 #pragma mark *** Material ***
@@ -429,6 +657,19 @@ MaterialDescription(string name, string inClass,
 	mParams(inParams)
 {
 	cerr << "Warning: MaterialDescription does not validate class.\n";
+}
+
+void MaterialDescription::
+cycleCoordinates()
+{
+	mCoordinatePermutationNumber = (mCoordinatePermutationNumber+1)%3;
+}
+
+ostream &
+operator<<(ostream & out, const MaterialDescription & mat)
+{
+	out << mat.getName();
+	return out;
 }
 
 
@@ -466,8 +707,19 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap,
 			case kCopyFromType:
 				((CopyFrom&)*ii).setPointers(gridMap);
 				break;
+			case kExtrudeType:
+				// don't need to do anything here since there are no pointers
+				//((Extrude&)*ii).setPointers(gridMap);
+				break;
 		}
 	}
+}
+
+void AssemblyDescription::
+cycleCoordinates()
+{
+	for (unsigned int nn = 0; nn < mInstructions.size(); nn++)
+		mInstructions[nn]->cycleCoordinates();
 }
 
 ColorKey::
@@ -508,6 +760,12 @@ Instruction(InstructionType inType) :
 {
 }
 
+void Instruction::
+cycleCoordinates()
+{
+	LOG << "Warning: base cycleCoordinates() shouldn't have been called!\n";
+}
+
 Block::
 Block(Rect3i halfCellRect, string material) throw(Exception) :
 	Instruction(kBlockType),
@@ -532,6 +790,16 @@ Block(Rect3i yeeCellRect, FillStyle style, string material) throw(Exception) :
 	
 	if (!vec_ge(mFillRect.size(), 0))
 		throw(Exception("Some fill rect dimensions are negative."));
+}
+
+void Block::
+cycleCoordinates()
+{
+	Mat3i permuteForward, permuteBackward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	
+	mFillRect = permuteForward*mFillRect;
 }
 
 const Rect3i & Block::
@@ -586,6 +854,18 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap)
 		mKeys[nn].setPointers(materialMap);
 }
 
+void KeyImage::
+cycleCoordinates()
+{
+	Mat3i permuteForward, permuteBackward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	
+	mYeeRect = permuteForward*mYeeRect;
+	mRow = permuteForward*mRow;
+	mCol = permuteForward*mCol;
+}
+
 HeightMap::
 HeightMap(Rect3i yeeCellRect, FillStyle style, string material,
 	string imageFileName, Vector3i rowDirection, Vector3i colDirection,
@@ -625,6 +905,20 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap)
 	mMaterial = materialMap[mMaterialName];
 }
 
+void HeightMap::
+cycleCoordinates()
+{
+	Mat3i permuteForward, permuteBackward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	
+	mYeeRect = permuteForward*mYeeRect;
+	mRow = permuteForward*mRow;
+	mCol = permuteForward*mCol;
+	mUp = permuteForward*mUp;
+}
+
+
 Ellipsoid::
 Ellipsoid(Rect3i halfCellRect, string material) throw(Exception) :
 	Instruction(kEllipsoidType),
@@ -657,6 +951,18 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap)
 	mMaterial = materialMap[mMaterialName];
 }
 
+
+void Ellipsoid::
+cycleCoordinates()
+{
+	Mat3i permuteForward, permuteBackward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	
+	mFillRect = permuteForward*mFillRect;
+}
+
+
 const Rect3i & Ellipsoid::
 getYeeRect() const
 {
@@ -680,10 +986,59 @@ CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
 	mGridName(gridName)
 {
 	cerr << "Warning: minimal validation done for CopyFrom().\n";
+	// Easy validation: no inside-out rects
 	if (!vec_ge(mSourceRect.size(), 0))
 		throw(Exception("Some source rect dimensions are negative"));
 	if (!vec_ge(mDestRect.size(), 0))
 		throw(Exception("Some dest rect dimensions are negative"));
+	
+	// All copyFrom dimensions must equal copyTo or be 0.
+	
+	for (int nn = 0; nn < 3; nn++)
+	if (mSourceRect.size(nn) != 0)
+	{
+		if (mSourceRect.size(nn) != mDestRect.size(nn))
+		throw(Exception("Error: copy from region must be same size as "
+			"copy to region or have size 0"));
+		if (mSourceRect.p1[nn]%2 != mDestRect.p1[nn]%2)
+		throw(Exception("Error: copy from region must start on same half-cell"
+			" octant as copy to region or have size 0 (both should start on"
+			" even indices or on odd indices)"));
+		// it's sufficient to check p1 and not p2 because we already know
+		// that the dimensions are equal.
+	}
+}
+
+CopyFrom::
+CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
+	const GridDescPtr grid) throw(Exception) :
+	Instruction(kCopyFromType),
+	mSourceRect(halfCellSourceRegion),
+	mDestRect(halfCellDestRegion),
+	mGridName(grid->getName()),
+	mGrid(grid)
+{
+	// Easy validation: no inside-out rects
+	if (!vec_ge(mSourceRect.size(), 0))
+		throw(Exception("Some source rect dimensions are negative"));
+	if (!vec_ge(mDestRect.size(), 0))
+		throw(Exception("Some dest rect dimensions are negative"));
+	
+	// All copyFrom dimensions must equal copyTo or be 0.
+	
+	for (int nn = 0; nn < 3; nn++)
+	if (mSourceRect.size(nn) != 0)
+	{
+		if (mSourceRect.size(nn) != mDestRect.size(nn))
+		throw(Exception("Error: copy from region must be same size as "
+			"copy to region or have size 0"));
+		if (mSourceRect.p1[nn]%2 != mDestRect.p1[nn]%2)
+		throw(Exception("Error: copy from region must start on same half-cell"
+			" octant as copy to region or have size 0 (both should start on"
+			" even indices or on odd indices)"));
+		// it's sufficient to check p1 and not p2 because we already know
+		// that the dimensions are equal.
+	}
 }
 
 void CopyFrom::
@@ -692,6 +1047,42 @@ setPointers(const Map<string, GridDescPtr> & gridMap)
 	mGrid = gridMap[mGridName];
 }
 
+void CopyFrom::
+cycleCoordinates()
+{
+	Mat3i permuteForward, permuteBackward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	
+	mSourceRect = permuteForward*mSourceRect;
+	mDestRect = permuteForward*mDestRect;
+}
+
+Extrude::
+Extrude(Rect3i halfCellExtrudeFrom, Rect3i halfCellExtrudeTo) throw(Exception) :
+	Instruction(kExtrudeType),
+	mExtrudeFrom(halfCellExtrudeFrom),
+	mExtrudeTo(halfCellExtrudeTo)
+{
+	// Easy validation: no inside-out rects
+	if (!vec_ge(mExtrudeFrom.size(), 0))
+		throw(Exception("ExtrudeFrom dimensions are negative"));
+	if (!vec_ge(mExtrudeTo.size(), 0))
+		throw(Exception("ExtrudeTo dimensions are negative"));
+	if (!mExtrudeTo.encloses(mExtrudeFrom))
+		throw(Exception("ExtrudeTo does not enclose ExtrudeFrom"));
+}
+
+void Extrude::
+cycleCoordinates()
+{
+	Mat3i permuteForward, permuteBackward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	
+	mExtrudeFrom = permuteForward*mExtrudeFrom;
+	mExtrudeTo = permuteForward*mExtrudeTo;
+}
 
 #pragma mark *** Static methods ***
 

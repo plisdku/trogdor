@@ -23,9 +23,15 @@
 #include "Map.h"
 
 class GridDescription;
+typedef Pointer<GridDescription> GridDescPtr;
 class VoxelizedGrid;
 typedef Pointer<VoxelizedGrid> VoxelizedGridPtr;
 class MaterialDescription;
+typedef Pointer<MaterialDescription> MaterialDescPtr;
+class HuygensSurfaceDescription;
+typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
+class NeighborBufferDescription;
+typedef Pointer<NeighborBufferDescription> NeighborBufferDescPtr;
 
 class AssemblyDescription;
 class Block;
@@ -33,6 +39,7 @@ class KeyImage;
 class HeightMap;
 class Ellipsoid;
 class CopyFrom;
+class Extrude;
 
 // Basic paint types: bulk materials, boundaries, PMLs.  These correspond to
 // actually different update equations.
@@ -62,34 +69,54 @@ enum PaintType
 	kBoundaryPaintType
 };
 
+class Paint;
+typedef Pointer<Paint> PaintPtr;
+
 class Paint
 {
-private:
-	Paint(PaintType inType);
-	
 public:
-	PaintType getType() { return mType; }
+	Paint(PaintType inType);
+	~Paint();
 	
-	static Paint bulkPaint( const MaterialDescription & material );
-	static Paint boundaryPaint( int probablyLotsOfThings );
+	friend std::ostream & operator<<(std::ostream & out, const Paint & p);
+private:
+	Paint(const MaterialDescPtr & material); // bulk constructor
+	Paint(const Paint & parent, int sideNum, // curl buffer constructor
+		NeighborBufferDescPtr & curlBuffer);
+	Paint(const Paint & parent, Vector3i pmlDir); // pml constructor
+	Paint(const Paint & parent, int donothing); // parent paint constructor (no modification)
+public:
+	static Paint* getPaint(const MaterialDescPtr & material);
+	static Paint* getCurlBufferedPaint(Paint* basePaint, int sideNum,
+		NeighborBufferDescPtr & curlBuffer);
+	static Paint* getPMLPaint(Paint* basePaint, Vector3i pmlDir);
+	static Paint* getParentPaint(Paint* basePaint);
 	
-	static Paint pml( const Paint & baseMaterial, Vector3i direction );
-	static Paint currentSource( const Paint & baseMaterial, 
-		int currentSourceShouldHaveDescriptionTypeTooEventually );
-	static Paint huygensSurface( const Paint & baseMaterial,
-		int bufferSide, int bufferNumberOrSomeOtherID );
+	static const Map<Paint, PaintPtr> & getPalette() {
+		return mPalette; }
+	
+	static void clearPalette() { mPalette.clear(); }
+	
+	PaintType getType() const { return mType; }
+private:
+	
+	PaintType mType;
+	Vector3i mPMLDirections;
+	std::vector<NeighborBufferDescPtr> mCurlBuffers;
+	int mCurrentBufferIndex;
+	
+	// for BulkPaint
+	MaterialDescPtr mBulkMaterial;
+	
+	// for BoundaryPaint
+	// . . . nothing here yet
+	
+	static Map<Paint, PaintPtr> mPalette;
 	
 	friend bool operator<(const Paint & lhs, const Paint & rhs);
-private:
-	
-	std::vector<int> mCurlBufferIndices; // any material can have this for free
-	int mCurrentBufferIndex; // any material can have this with modified eqns
-	Vector3i mPMLDirection; // if 0, this is not PML
-	PaintType mType;
 };
 bool operator<(const Paint & lhs, const Paint & rhs);
-
-
+std::ostream & operator<<(std::ostream & out, const Paint & p);
 
 
 
@@ -97,18 +124,23 @@ class VoxelizedGrid
 {
 public:
 	VoxelizedGrid(const GridDescription & gridDesc, 
-		const Map<std::string, VoxelizedGridPtr> & voxelizedGrids, 
-		Mat3i orientation);
+		const Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids);
+	
+	const std::vector<Vector3i> & getHuygensRegionSymmetries() const {
+		return mHuygensRegionSymmetries; }
+	
+	friend std::ostream & operator<< (std::ostream & out,
+		const VoxelizedGrid & grid);
 private:
 	void paintFromAssembly(const GridDescription & gridDesc,
-		const Map<std::string, VoxelizedGridPtr> & voxelizedGrids,
-		Mat3i orientation);
-	void paintFromHuygensSurfaces(const GridDescription & gridDesc,
-		Mat3i orientation);
-	void paintFromCurrentSources(const GridDescription & gridDesc,
-		Mat3i orientation);
+		const Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids);
+	void paintFromHuygensSurfaces(const GridDescription & gridDesc);
+	void paintFromCurrentSources(const GridDescription & gridDesc);
 	void paintPML();
 	
+	void calculateMaterialIndices();
+	void calculateHuygensSymmetries(const GridDescription & gridDesc);
+	Vector3i huygensSymmetry(const HuygensSurfaceDescription & surf);
 	
 	void paintBlock(const GridDescription & gridDesc,
 		const Block & instruction);
@@ -120,16 +152,25 @@ private:
 		const Ellipsoid & instruction);
 	void paintCopyFrom(const GridDescription & gridDesc,
 		const CopyFrom & instruction,
-		const Map<std::string, VoxelizedGridPtr> & voxelizedGrids);
+		const Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids);
+	void paintExtrude(const GridDescription & gridDesc,
+		const Extrude & instruction);
 	
+	void paintHuygensSurface(const HuygensSurfaceDescription & surf);
 	
-	std::vector<Paint> mIndexToPaint;
-	Map<Paint, unsigned short> mPaintToIndex;
+	Paint* & operator() (int ii, int jj, int kk);
+	Paint* operator() (int ii, int jj, int kk) const;
+	Paint* & operator() (const Vector3i & pp);
+	Paint* operator() (const Vector3i & pp) const;
 	
-	std::vector<unsigned short> mMaterialHalfCells;
-	std::vector<unsigned short> mMaterialIndexHalfCells;
+	void paintPEC(Paint* paint, int iYee, int jYee, int kYee);
+	void paintPMC(Paint* paint, int iYee, int jYee, int kYee);
+	
+	std::vector<Paint*> mMaterialHalfCells;
+	std::vector<long> mMaterialIndexHalfCells;
 	Rect3i mNonPMLRegion;
 	Rect3i mCalcRegion;
+	Vector3i mOriginYee;
 	int m_nnx;
 	int m_nny;
 	int m_nnz;
@@ -137,9 +178,10 @@ private:
 	int m_ny;
 	int m_nz;
 	
-	std::vector<Mat3i> mHuygensRegionSymmetries;
+	std::vector<Vector3i> mHuygensRegionSymmetries;
 };
 
+std::ostream & operator<< (std::ostream & out, const VoxelizedGrid & grid);
 
 
 

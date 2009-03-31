@@ -49,6 +49,7 @@ Input.cpp
 InputFactory.cpp
 MaterialFactory.cpp
 MaterialModel.cpp
+MemoryUtilities.cpp
 OneFieldInput.cpp
 OneFieldOutput.cpp
 Output.cpp

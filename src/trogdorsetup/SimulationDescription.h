@@ -30,8 +30,6 @@ class GridDescription;
 class InputEHDescription;
 class OutputDescription;
 class SourceDescription;
-//class TFSFSourceDescription;
-//class LinkDescription;
 class HuygensSurfaceDescription;
 class NeighborBufferDescription;
 class MaterialDescription;
@@ -42,8 +40,6 @@ typedef Pointer<GridDescription> GridDescPtr;
 typedef Pointer<InputEHDescription> InputEHDescPtr;
 typedef Pointer<OutputDescription> OutputDescPtr;
 typedef Pointer<SourceDescription> SourceDescPtr;
-//typedef Pointer<TFSFSourceDescription> TFSFSourceDescPtr;
-//typedef Pointer<LinkDescription> LinkDescPtr;
 typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
 typedef Pointer<NeighborBufferDescription> NeighborBufferDescPtr;
 typedef Pointer<MaterialDescription> MaterialDescPtr;
@@ -63,6 +59,8 @@ public:
 	
 	void setDiscretization(Vector3f dxyz, float dt);
 	void setDuration(int numT);
+	
+	void cycleCoordinates();
 	
 	const std::vector<GridDescPtr> & getGrids() const { return mGrids; }
 	const std::vector<MaterialDescPtr> & getMaterials() const {
@@ -86,9 +84,11 @@ class GridDescription
 {
 public:
 	GridDescription(std::string name, Vector3i numYeeCells,
-		Vector3i numHalfCells, Rect3i calcRegionHalf, Rect3i nonPMLHalf)
+		Vector3i numHalfCells, Rect3i calcRegionHalf, Rect3i nonPMLHalf,
+		Vector3i originYee)
 		throw(Exception);
 	
+	// Mutators
 	void setOutputs(const std::vector<OutputDescPtr> & outputs) {
 		mOutputs = outputs; }
 	void setInputs(const std::vector<InputEHDescPtr> & inputs) {
@@ -96,23 +96,24 @@ public:
 	void setSources(const std::vector<SourceDescPtr> & sources) {
 		mSources = sources; }
 	void setHuygensSurfaces(
-		const std::vector<HuygensSurfaceDescPtr> & surfaces) {
-			mHuygensSurfaces = surfaces; }
-	//void setTFSFSources(const std::vector<TFSFSourceDescPtr> & tfsfSources) {
-	//	mTFSFSources = tfsfSources; }
-	//void setLinks(const std::vector<LinkDescPtr> & links) {
-	//	mLinks = links; }
-	//void implementLinksAsBuffers(const std::vector<LinkDescPtr> & links);
-	//void setMaterials(const std::vector<MaterialDescPtr> & materials) {
-	//	mMaterials = materials; }
+		const std::vector<HuygensSurfaceDescPtr> & surfaces);
 	void setAssembly(AssemblyDescPtr assembly) {
 		mAssembly = assembly; }
 	
+	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap,
+		const Map<std::string, GridDescPtr> & gridMap);
+	
+	void cycleCoordinates();  // rotate entire sim, x->y, y->z, z->x
+	
+	// Accessors
 	const std::string & getName() const { return mName; }
 	Vector3i getNumYeeCells() const { return mNumYeeCells; }
 	Vector3i getNumHalfCells() const { return mNumHalfCells; }
+	Rect3i getYeeBounds() const;
+	Rect3i getHalfCellBounds() const;
 	const Rect3i & getCalcRegion() const { return mCalcRegionHalf; }
 	const Rect3i & getNonPMLRegion() const { return mNonPMLHalf; }
+	Vector3i getOriginYee() const { return mOriginYee; }
 	
 	const std::vector<OutputDescPtr> & getOutputs() const { return mOutputs; }
 	const std::vector<InputEHDescPtr> & getInputs() const { return mInputs; }
@@ -121,17 +122,8 @@ public:
 		{ return mHuygensSurfaces; }
 	std::vector<HuygensSurfaceDescPtr> & getHuygensSurfaces()
 		{ return mHuygensSurfaces; }
-	//const std::vector<TFSFSourceDescPtr> & getTFSFSources() const
-	//	{ return mTFSFSources; }
-	//const std::vector<LinkDescPtr> & getLinks() const { return mLinks; }
-	//const std::vector<NeighborBufferDescPtr> & getBuffers() const
-	//	{ return mBuffers; }
-	//const std::vector<MaterialDescPtr> & getMaterials() const
-	//	{ return mMaterials; }
 	const AssemblyDescPtr getAssembly() const { return mAssembly; }
 	
-	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap,
-		const Map<std::string, GridDescPtr> & gridMap);
 private:
 	std::string mName;
 	
@@ -140,14 +132,12 @@ private:
 	Rect3i mCalcRegionHalf;
 	Rect3i mNonPMLHalf;
 	
+	Vector3i mOriginYee;
+	
 	std::vector<OutputDescPtr> mOutputs;
 	std::vector<InputEHDescPtr> mInputs;
 	std::vector<SourceDescPtr> mSources;
 	std::vector<HuygensSurfaceDescPtr> mHuygensSurfaces;
-	//std::vector<TFSFSourceDescPtr> mTFSFSources;
-	//std::vector<LinkDescPtr> mLinks;
-	//std::vector<NeighborBufferDescPtr> mBuffers;
-	//std::vector<MaterialDescPtr> mMaterials;
 	AssemblyDescPtr mAssembly;
 };
 
@@ -157,10 +147,13 @@ public:
 	InputEHDescription(std::string fileName, std::string inClass, 
 		const Map<std::string, std::string> & inParameters) throw(Exception);
 	
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
+	
 	std::string getFileName() const { return mFileName; }
 	std::string getClass() const { return mClass; }
 	const Map<std::string, std::string> & getParams() const { return mParams; }
 private:
+	int mCoordinatePermutationNumber; // 0,1 or 2
 	std::string mFileName;
 	std::string mClass;
 	Map<std::string, std::string> mParams;
@@ -173,11 +166,14 @@ public:
 		int inPeriod, const Map<std::string, std::string> & inParameters)
 		throw(Exception);
 	
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
+	
 	std::string getFileName() const { return mFileName; }
 	std::string getClass() const { return mClass; }
 	int getPeriod() const { return mPeriod; }
 	const Map<std::string, std::string> & getParams() const { return mParams; }
 private:
+	int mCoordinatePermutationNumber; // 0,1 or 2
 	std::string mFileName;
 	std::string mClass;
 	int mPeriod;
@@ -191,6 +187,8 @@ public:
 		Vector3f polarization, Rect3i region, std::string field,
 		const Map<std::string, std::string> & inParameters) throw(Exception);
 	
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
+	
 	std::string getFormula() const { return mFormula; }
 	std::string getFileName() const { return mInputFileName; }
 	Vector3f getPolarization() const { return mPolarization; }
@@ -198,6 +196,7 @@ public:
 	std::string getField() const { return mField; }
 	const Map<std::string, std::string> & getParams() const { return mParams; }
 private:
+	int mCoordinatePermutationNumber; // 0,1 or 2
 	std::string mFormula;
 	std::string mInputFileName;
 	Vector3f mPolarization;
@@ -205,67 +204,6 @@ private:
 	std::string mField;
 	Map<std::string, std::string> mParams;
 };
-
-/*
-class TFSFSourceDescription
-{
-public:
-	TFSFSourceDescription(std::string inClass, Rect3i inTFRect,
-		Vector3f direction, std::string inTFSFType,
-		const Map<std::string, std::string> & inParameters) throw(Exception);
-	
-	void omitSide(Vector3i side);
-	
-	std::string getClass() const { return mClass; }
-	std::string getTypeStr() const { return mTypeStr; }
-	Vector3f getDirection() const { return mDirection; }
-	const Rect3i & getYeeRegion() const { return mRegion; }
-	const std::set<Vector3i> & getOmittedSides() const { return mOmittedSides; }
-	const Map<std::string, std::string> & getParams() const { return mParams; }
-	
-private:
-	std::string mClass;
-	std::string mTypeStr;
-	Vector3f mDirection;
-	Rect3i mRegion;
-	//std::bitset<6> mOmitSideFlags;  // bad: can't be rotated easily
-	std::set<Vector3i> mOmittedSides;
-	Map<std::string, std::string> mParams;
-};
-*/
-
-/* 
-	HEY, the LinkDescription is useful for validating user input but does not
-	persist into the simulation, or even get included in the GridDescription.
-*/
-
-/*
-class LinkDescription
-{
-public:
-	LinkDescription(std::string typeString, std::string sourceGridName, 
-		Rect3i sourceRect, Rect3i destRect)
-		throw(Exception);
-	
-	std::string getTypeString() const { return mTypeString; }
-	TFSFType getType() const { return mLinkType; }
-	std::string getSourceGridName() const { return mSourceGridName; }
-	Rect3i getSourceHalfRect() const { return mSourceHalfRect; }
-	Rect3i getDestHalfRect() const { return mDestHalfRect; }
-	const std::set<Vector3i> & getOmittedSides() const { return mOmittedSides; }
-	
-	void omitSide(Vector3i side);
-
-private:
-	std::string mTypeString;
-	TFSFType mLinkType;
-	std::string mSourceGridName;
-	Rect3i mSourceHalfRect;
-	Rect3i mDestHalfRect;
-	//std::bitset<6> mOmitSideFlags;  // bad: can't be rotated easily
-	std::set<Vector3i> mOmittedSides;
-};
-*/
 
 enum HuygensSurfaceSourceType
 {
@@ -282,11 +220,22 @@ private:
 		std::string sourceGridName, Rect3i sourceHalfRect, Rect3i destHalfRect,
 		const std::set<Vector3i> & omittedSides)
 		throw(Exception);
+	HuygensSurfaceDescription(std::string typeString,
+		const GridDescPtr sourceGrid, Rect3i sourceHalfRect, Rect3i destHalfRect,
+		const std::set<Vector3i> & omittedSides)
+		throw(Exception);
 	
 	// tfsf source constructor
-	HuygensSurfaceDescription(std::string inClass, Rect3i inTFRect,
-	Vector3i symmetries, std::string inTFSFType,
-	const Map<std::string,std::string> & inParameters,
+	HuygensSurfaceDescription(Rect3i inTFRect,
+		Vector3i direction, std::string formula, std::string fileName,
+		Vector3f polarization, std::string field, std::string inTFSFType,
+		const Map<std::string,std::string> & inParameters,
+		const std::set<Vector3i> & omittedSides) throw(Exception);
+	
+	// custom TFSF source constructor
+	HuygensSurfaceDescription(Rect3i inHalfRect,
+		const std::string & inName, Vector3i symmetries, std::string inTFSFType,
+		const Map<std::string, std::string> & inParameters,
 		const std::set<Vector3i> & omittedSides) throw(Exception);
 
 	// data request constructor
@@ -298,23 +247,34 @@ public: // user-accessible constructors
 		std::string sourceGridName, Rect3i sourceHalfRect, Rect3i destHalfRect,
 		const std::set<Vector3i> & omittedSides)
 		throw(Exception);
-	static HuygensSurfaceDescription* newTFSFSource(std::string inClass,
-		Rect3i inHalfRect, Vector3i symmetries, std::string inTFSFType,
+	static HuygensSurfaceDescription* newLink(std::string typeString,
+		const GridDescPtr sourceGrid, Rect3i sourceHalfRect, Rect3i destHalfRect,
+		const std::set<Vector3i> & omittedSides)
+		throw(Exception);
+	
+	static HuygensSurfaceDescription* newTFSFSource(Rect3i inHalfRect,
+		Vector3i direction, std::string formula, std::string fileName,
+		Vector3f polarization, std::string field, std::string inTFSFType,
 		const Map<std::string, std::string> & inParameters,
 		const std::set<Vector3i> & omittedSides)
 		throw(Exception);
-	static HuygensSurfaceDescription* newDataRequest() throw(Exception);
+	static HuygensSurfaceDescription* newCustomSource(Rect3i inHalfRect,
+		const std::string & inName, Vector3i symmetries, std::string inTFSFType,
+		const Map<std::string, std::string> & inParameters,
+		const std::set<Vector3i> & omittedSides) throw(Exception);
 	
 	// modifiers
 	void setPointers(const Map<std::string, GridDescPtr> & gridMap);
-	//void omitSide(Vector3i side);
+	void omitSide(int nSide);
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
 	
+	// accessors
 	HuygensSurfaceSourceType getType() const { return mType; }
 	const Rect3i & getDestHalfRect() const {
 		return mDestHalfRect; }
 	const std::set<Vector3i> & getOmittedSides() const {
 		return mOmittedSides; }
-	const Map<Vector3i, std::vector<NeighborBufferDescPtr> > & getBuffers()
+	const std::vector<NeighborBufferDescPtr> & getBuffers()
 		const { return mBuffers; }
 	
 	// links only
@@ -323,13 +283,31 @@ public: // user-accessible constructors
 	const std::string & getLinkSourceGridName() const {
 		assert(mType == kLink); return mLinkSourceGridName; }
 	
-	// tfsf sources only
-	const std::string & getTFSFSourceClass() const {
-		assert(mType == kTFSFSource); return mTFSFSourceClass; }
+	// kTFSFSource or kDataRequest
+	Vector3i getTFSFSourceSymmetries() const {
+		assert(mType == kTFSFSource || mType == kDataRequest);
+		return mTFSFSourceSymmetries; }
+	const std::string & getTFSFType() const { 
+		assert(mType == kTFSFSource || mType == kDataRequest);
+		return mTFSFType; }
+	
+	// kTFSFSource
 	const Map<std::string, std::string> & getTFSFSourceParameters() const {
 		assert(mType == kTFSFSource); return mTFSFSourceParams; }
-	Vector3i getTFSFSourceSymmetries() const {
-		assert(mType == kTFSFSource); return mTFSFSourceSymmetries; }
+	Vector3i getTFSFSourceDirection() const {
+		assert(mType == kTFSFSource); return mTFSFSourceDirection; }
+	const std::string & getTFSFSourceFormula() const {
+		assert(mType == kTFSFSource); return mTFSFFormula; }
+	const std::string & getTFSFSourceFileName() const {
+		assert(mType == kTFSFSource); return mTFSFFileName; }
+	Vector3f getTFSFSourcePolarization() const {
+		assert(mType == kTFSFSource); return mTFSFPolarization; }
+	const std::string & getTFSFSourceField() const {
+		assert(mType == kTFSFSource); return mTFSFField; }
+	
+	// kDataRequest only
+	const std::string & getName() const {
+		assert(mType == kDataRequest); return mDataRequestName; }
 	
 private:
 	
@@ -342,33 +320,44 @@ private:
 	
 	Rect3i mDestHalfRect;
 	std::set<Vector3i> mOmittedSides;
-	// this map goes from Yee octant/offset to buffer list
-	Map<Vector3i, std::vector<NeighborBufferDescPtr> > mBuffers;
 	
+	std::vector<NeighborBufferDescPtr> mBuffers; // one per side, 0-5	
 	// These members are only applicable for mType = kLink
 	Rect3i mLinkSourceHalfRect;
 	std::string mLinkSourceGridName;
 	GridDescPtr mLinkSourceGrid;
 	
 	// These members are only applicable for mType = kTFSFSource or kDataRequest
-	std::string mTFSFSourceClass;
-	Map<std::string, std::string> mTFSFSourceParams;
 	Vector3i mTFSFSourceSymmetries;
+	std::string mTFSFType;
+	
+	// These members are only applicable for mType = kTFSFSource
+	Map<std::string, std::string> mTFSFSourceParams;
+	Vector3i mTFSFSourceDirection;
+	std::string mTFSFFormula;
+	std::string mTFSFFileName;
+	Vector3f mTFSFPolarization;
+	std::string mTFSFField;
+	
+	// Only applicable for data request
+	std::string mDataRequestName;
 };
 
 class NeighborBufferDescription
 {
 public:
-	NeighborBufferDescription(const Rect3i & yeeRect,
-		Vector3i neighborDirection, Vector3i yeeOctant, float applicationFactor,
-		float addendFactor);
+	// add constructors for things like Floquet boundaries
+	NeighborBufferDescription(const Rect3i & destHalfRect, int nSide,
+		float incidentFieldFactor);
+	
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
 	
 private:
-	Rect3i mDestYeeRect;
-	Vector3i mNeighborDirection;
-	Vector3i mFieldOffset;  // offset in Yee cell of the field to operate on
-	float mDestFactor;
-	float mSrcFactor;
+	Rect3i mDestHalfRect;
+	Rect3i mBufferHalfRect;
+	Rect3i mBufferYeeBounds;
+	std::vector<float> mDestFactors; // per field # 0-5
+	std::vector<float> mSrcFactors;  // per field # 0-5
 };
 
 class MaterialDescription
@@ -380,11 +369,18 @@ public:
 	std::string getName() const { return mName; }
 	std::string getClass() const { return mClass; }
 	const Map<std::string, std::string> & getParams() const { return mParams; }
+	
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
+	
+	friend std::ostream & operator<<(std::ostream & out,
+		const MaterialDescription & mat);
 private:
+	int mCoordinatePermutationNumber; // 0,1 or 2
 	std::string mName;
 	std::string mClass;
 	Map<std::string, std::string> mParams;
 };
+std::ostream & operator<<(std::ostream & out, const MaterialDescription & mat);
 
 #pragma mark *** Assembly things ***
 
@@ -401,8 +397,11 @@ public:
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap,
 		const Map<std::string, GridDescPtr> & gridMap);
 	
+	void cycleCoordinates();
+	
 	const std::vector<InstructionPtr> & getInstructions() const
 		{ return mInstructions; }
+	
 	
 private:
 	std::vector<InstructionPtr> mInstructions;
@@ -414,7 +413,8 @@ enum InstructionType
 	kKeyImageType,
 	kHeightMapType,
 	kEllipsoidType,
-	kCopyFromType
+	kCopyFromType,
+	kExtrudeType
 };
 	
 class ColorKey
@@ -424,6 +424,12 @@ public:
 		FillStyle style) throw(Exception);
 	ColorKey(Vector3i rgbColor, std::string materialName, FillStyle style)
 		throw(Exception);
+	/*
+	ColorKey(std::string hexColor, MaterialDescPtr materialName,
+		FillStyle style) throw(Exception);
+	ColorKey(Vector3i rgbColor, MaterialDescPtr materialName, FillStyle style)
+		throw(Exception);
+	*/
 	
 	Vector3i getColor() const { return mColor; }
 	const std::string & getMaterialName() const { return mMaterialName; }
@@ -450,6 +456,8 @@ class Instruction
 public:
 	Instruction(InstructionType inType);
 	InstructionType getType() const { return mType; }
+	
+	virtual void cycleCoordinates();  // rotate x->y, y->z, z->x
 protected:
 	InstructionType mType;
 };
@@ -461,7 +469,13 @@ public:
 	Block(Rect3i halfCellRect, std::string material) throw(Exception);
 	Block(Rect3i yeeCellRect, FillStyle style, std::string material)
 		throw(Exception);
-	//const Rect3i & getFillRect() const { return mFillRect };
+	/*
+	Block(Rect3i halfCellRect, MaterialDescPtr material) throw(Exception);
+	Block(Rect3i yeeCellRect, FillStyle style, MaterialDescPtr material)
+		throw(Exception);
+	*/
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
+	
 	const Rect3i & getYeeRect() const;
 	const Rect3i & getHalfRect() const;
 	FillStyle getFillStyle() const { return mStyle; }
@@ -482,13 +496,17 @@ public:
 	KeyImage(Rect3i yeeCellRect, std::string imageFileName,
 		Vector3i rowDirection, Vector3i colDirection,
 		std::vector<ColorKey> keys) throw(Exception);
+		
+	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
+	
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
+	
 	const Rect3i & getYeeRect() const { return mYeeRect; }
 	Vector3i getRowDirection() const { return mRow; }
 	Vector3i getColDirection() const { return mCol; }
 	const std::string & getImageFileName() const { return mImageFileName; }
 	const std::vector<ColorKey> & getKeys() const { return mKeys; }
 	
-	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 private:
 	Rect3i mYeeRect;
 	Vector3i mRow;
@@ -503,6 +521,14 @@ public:
 	HeightMap(Rect3i yeeCellRect, FillStyle style, std::string material,
 		std::string imageFileName, Vector3i rowDirection,
 		Vector3i colDirection, Vector3i upDirection) throw(Exception);
+	/*
+	HeightMap(Rect3i yeeCellRect, FillStyle style, MaterialDescPtr material,
+		std::string imageFileName, Vector3i rowDirection,
+		Vector3i colDirection, Vector3i upDirection) throw(Exception);
+	*/
+	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
+	
 	const Rect3i & getYeeRect() const { return mYeeRect; }
 	FillStyle getFillStyle() const { return mStyle; }
 	const std::string & getMaterialName() const { return mMaterialName; }
@@ -512,7 +538,6 @@ public:
 	Vector3i getColDirection() const { return mCol; }
 	Vector3i getUpDirection() const { return mUp; }
 	
-	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 private:
 	Rect3i mYeeRect;
 	FillStyle mStyle;
@@ -530,6 +555,15 @@ public:
 	Ellipsoid(Rect3i halfCellRect, std::string material) throw(Exception);
 	Ellipsoid(Rect3i yeeCellRect, FillStyle style, std::string material)
 		throw(Exception);
+	/*
+	Ellipsoid(Rect3i halfCellRect, MaterialDescPtr material) throw(Exception);
+	Ellipsoid(Rect3i yeeCellRect, FillStyle style, MaterialDescPtr material)
+		throw(Exception);
+	*/
+	
+	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
+	
 	//const Rect3i & getFillRect() const { return mFillRect; }
 	const Rect3i & getYeeRect() const;
 	const Rect3i & getHalfRect() const;
@@ -537,7 +571,6 @@ public:
 	const std::string & getMaterialName() const { return mMaterialName; }
 	const MaterialDescPtr & getMaterial() const { return mMaterial; }
 	
-	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 private:
 	Rect3i mFillRect;
 	FillStyle mStyle;
@@ -551,17 +584,38 @@ public:
 	CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
 		std::string gridName)
 		throw(Exception);
+	CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
+		const GridDescPtr grid)
+		throw(Exception);
+	
+	void setPointers(const Map<std::string, GridDescPtr> & gridMap);
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
+	
 	const Rect3i & getSourceHalfRect() const { return mSourceRect; }
 	const Rect3i & getDestHalfRect() const { return mDestRect; }
 	const std::string & getGridName() const { return mGridName; }
 	const GridDescPtr & getGrid() const { return mGrid; }
 	
-	void setPointers(const Map<std::string, GridDescPtr> & gridMap);
 private:
 	Rect3i mSourceRect;
 	Rect3i mDestRect;
 	std::string mGridName;
 	GridDescPtr mGrid;
+};
+
+class Extrude : public Instruction
+{
+public:
+	Extrude(Rect3i halfCellExtrudeFrom, Rect3i halfCellExtrudeTo)
+		throw(Exception);
+	
+	void cycleCoordinates();
+	
+	const Rect3i & getExtrudeFrom() const { return mExtrudeFrom; }
+	const Rect3i & getExtrudeTo() const { return mExtrudeTo; }
+private:
+	Rect3i mExtrudeFrom;
+	Rect3i mExtrudeTo;
 };
 
 

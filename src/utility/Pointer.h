@@ -42,9 +42,11 @@ public:
     const T& operator*() const;
     T* operator->();
     const T* operator->() const;
-    operator void*() const { return mPtr; } // to test for nullness
-    
+    //operator long() const { return long(mPtr); } // to test for nullness
+	operator T*() const { return mPtr; } // for the odd desmartinization need
+	
     int refcount() const;
+	static const Map<T*,int> & getMap() { return mReferenceCounts; }
     
     template<typename T1, typename T2>
     friend bool operator<(const Pointer<T1> & lhs, const Pointer<T2> & rhs);
@@ -204,6 +206,7 @@ int Pointer<T>::refcount() const
 {
     return mReferenceCounts[mPtr];
 }
+
 
 template <typename T>
 const T* Pointer<T>::operator->() const

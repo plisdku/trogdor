@@ -148,6 +148,12 @@ Rect3i rectYeeToHalf(const Rect3i & yeeRect, const Vector3i & halfCellOffset)
 	return Rect3i(2*yeeRect + halfCellOffset);
 }
 
+// returns smallest Yee rect containing all points in given Yee rect
+Rect3i rectYeeToHalf(const Rect3i & yeeRect)
+{
+	return Rect3i(2*yeeRect.p1, 2*yeeRect.p2 + Vector3i(1,1,1));
+}
+
 // returns the last layer of the rect on the side with normal along sideIndex
 Rect3i edgeOfRect(const Rect3i & rect, int sideIndex)
 {

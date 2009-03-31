@@ -92,6 +92,8 @@ template <typename T>
 int
 parity(const vmlib::SVec<3,T> & arg);
 
+
+
 template<typename T>
 class Rect
 {

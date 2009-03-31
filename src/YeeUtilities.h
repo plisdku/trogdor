@@ -56,6 +56,9 @@ Rect3i rectYeeToHalf(const Rect3i & yeeRect, int halfCellIndex);
 // at given half cell offset
 Rect3i rectYeeToHalf(const Rect3i & yeeRect, const Vector3i & halfCellOffset);
 
+// returns smallest Yee rect containing all points in given Yee rect
+Rect3i rectYeeToHalf(const Rect3i & yeeRect);
+
 // returns the last layer of the rect on the side with normal along sideIndex
 Rect3i edgeOfRect(const Rect3i & rect, int sideIndex);
 
