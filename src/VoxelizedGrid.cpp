@@ -212,8 +212,11 @@ VoxelizedGrid(const GridDescription & gridDesc,
 	
 	mMaterialHalfCells.resize(m_nnx*m_nny*m_nnz);
 	mMaterialIndexHalfCells.resize(m_nnx*m_nny*m_nnz);
+	mPMLFaceIndices.resize(6);
+	mPMLFaces.resize(6);
 	
 	paintFromAssembly(gridDesc, voxelizedGrids);
+	// paint
 	
 	//cout << *this << endl;
 	
@@ -326,11 +329,45 @@ paintPML()
 	}
 }
 
+
+
 void VoxelizedGrid::
 calculateMaterialIndices()
 {
 	// This must be done separately for each octant.
 	
+	Rect3i cheesyEverywhereRect(0,0,0,m_nnx-1, m_nny-1, m_nnz-1);
+	calcMatIndHelp(cheesyEverywhereRect, mMaterialIndexHalfCells);
+	
+	LOG << "Calculating material indices for PML faces.\n";
+	
+	for (int nFace = 0; nFace < 6; nFace++)
+	{
+		LOG << "Face number " << nFace << " of 6...\n";
+		
+		Rect3i face = YU::edgeOfRect(mNonPMLRegion, nFace);
+		if (nFace % 2 == 0) // low-side face
+			face.p2 -= YU::cardinalDirection(nFace);
+		else // high-side face
+			face.p1 -= YU::cardinalDirection(nFace);
+		
+		assert(mNonPMLRegion.encloses(face));
+		mPMLFaces[nFace] = face;
+		
+		LOG << "PML face is " << face << endl;
+		
+		int theSize = (face.size(0)+1)*(face.size(1)+1)*(face.size(2)+1);
+		mPMLFaceIndices[nFace].resize(theSize);
+		
+		calcMatIndHelp(face, mPMLFaceIndices[nFace]);
+		printMatInd(face, mPMLFaceIndices[nFace]);
+	}
+}
+
+
+void VoxelizedGrid::
+calcMatIndHelp(Rect3i inRegion, std::vector<long> & indexVector)
+{
 	for (int nn = 0; nn < 8; nn++)
 	{
 		//LOG << "Starting side " << nn << "\n";
@@ -338,42 +375,58 @@ calculateMaterialIndices()
 		Vector3i offset = YU::halfCellOffset(nn);
 		//LOG << "Offset is " << offset << "\n";
 		//LOG << "Size is " << m_nnx << " " << m_nny << " " << m_nnz << "\n";
-		for (int kk = offset[2]; kk < m_nnz; kk += 2)
-		for (int jj = offset[1]; jj < m_nny; jj += 2)
-		for (int ii = offset[0]; ii < m_nnx; ii += 2)
+		
+		Vector3i rSize = inRegion.size() + Vector3i(1,1,1); // e.g. m_nnx etc.
+		Vector3i o = inRegion.p1;
+		
+		for (int kk = offset[2]; kk < rSize[2]; kk += 2)
+		for (int jj = offset[1]; jj < rSize[1]; jj += 2)
+		for (int ii = offset[0]; ii < rSize[0]; ii += 2)
 		{
-			Paint* p = (*this)(ii,jj,kk);
+			int linearIndex = (ii) + (jj)*rSize[0] +
+				(kk)*rSize[0]*rSize[1];
+			
+			assert(linearIndex >= 0 && linearIndex < indexVector.size());
+			
+			Paint* p = (*this)(ii+o[0],jj+o[1],kk+o[2]);
 			if (materialIndices.count(p) == 0)
 			{
 				materialIndices[p] = 1;
-				mMaterialIndexHalfCells[ii+m_nnx*jj+m_nnx*m_nny*kk] = 0;
+				indexVector[linearIndex] = 0;
 				//LOG << "Starting material " << hex << p << dec << "\n";
 			}
 			else
 			{
-				mMaterialIndexHalfCells[ii+m_nnx*jj+m_nnx*m_nny*kk] =
-					materialIndices[p];
+				indexVector[linearIndex] = materialIndices[p];
 				materialIndices[p]++;
 			}
 		}
 	}
-	/*
-	for (int kk = 0; kk < m_nnz; kk++)
+}
+
+
+void VoxelizedGrid::
+printMatInd(Rect3i inRegion, const std::vector<long> & indexVector)
+{
+	int nni = inRegion.size(0)+1;
+	int nnj = inRegion.size(1)+1;
+	int nnk = inRegion.size(2)+1;
+	
+	for (int kk = inRegion.p1[2]; kk < inRegion.p2[2]; kk++)
 	{
 		cout << "z = " << kk << "\n";
-		for (int jj = m_nny-1; jj >= 0; jj--)
+		for (int jj = inRegion.p2[1]; jj >= inRegion.p1[1]; jj--)
 		{
-			for (int ii = 0; ii < m_nnx; ii++)
+			for (int ii = inRegion.p1[0]; ii <= inRegion.p2[0]; ii++)
 			{
-				cout << setw(6) <<
-					mMaterialIndexHalfCells[ii + m_nnx*jj + m_nnx*m_nny*kk];
+				int linearIndex = (ii-inRegion.p1[0]) + (jj-inRegion.p1[1])*
+					nni + (kk-inRegion.p1[2])*nni*nnj;
+				cout << setw(6) << indexVector[linearIndex];
 			}
 			cout << "\n";
 		}
 	}
-	*/
 }
-
 
 void VoxelizedGrid::
 calculateHuygensSymmetries(const GridDescription & gridDesc)

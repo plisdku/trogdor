@@ -139,8 +139,12 @@ private:
 	void paintPML();
 	
 	void calculateMaterialIndices();
+	void calcMatIndHelp(Rect3i inRegion, std::vector<long> & indexVector);
+	void printMatInd(Rect3i inRegion, const std::vector<long> & indexVector);
+	
 	void calculateHuygensSymmetries(const GridDescription & gridDesc);
 	Vector3i huygensSymmetry(const HuygensSurfaceDescription & surf);
+	
 	
 	void paintBlock(const GridDescription & gridDesc,
 		const Block & instruction);
@@ -168,6 +172,12 @@ private:
 	
 	std::vector<Paint*> mMaterialHalfCells;
 	std::vector<long> mMaterialIndexHalfCells;
+	
+	// There are also PML material indices for each of the six faces of the
+	// grid.  These are the size of the faces of mMaterialIndexHalfCells.
+	std::vector< std::vector<long> > mPMLFaceIndices;
+	std::vector<Rect3i> mPMLFaces;
+	
 	Rect3i mNonPMLRegion;
 	Rect3i mCalcRegion;
 	Vector3i mOriginYee;
