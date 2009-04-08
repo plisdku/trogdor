@@ -39,6 +39,7 @@ ${magLibDirs}
 /sw/lib)
 
 add_executable( trogdor 
+CellCountGrid.cpp
 ColocatedOutput.cpp
 DrudeMetalModel.cpp
 FDTDApplication.cpp
@@ -55,6 +56,7 @@ OneFieldInput.cpp
 OneFieldOutput.cpp
 Output.cpp
 OutputFactory.cpp
+Paint.cpp
 PECModel.cpp
 PhysicalConstants.cpp
 Runline.cpp
@@ -68,6 +70,7 @@ ThreeFieldInput.cpp
 ThreeFieldOutput.cpp
 main.cpp
 VoxelizedGrid.cpp
+VoxelGrid.cpp
 YeeUtilities.cpp
 )
 

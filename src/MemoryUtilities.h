@@ -10,6 +10,8 @@
 #ifndef _MEMORYUTILITIES_
 #define _MEMORYUTILITIES_
 
+#include <string>
+
 //class MemoryBuffer;
 class BufferPointer;
 
@@ -17,15 +19,19 @@ class MemoryBuffer
 {
 public:
 	MemoryBuffer(unsigned long length, unsigned long stride = 1);
+	MemoryBuffer(const std::string & inDescription, 
+		unsigned long length, unsigned long stride = 1);
 	MemoryBuffer(const MemoryBuffer & copyMe);
 	
 	unsigned long getLength() const { return mLength; }
 	unsigned long getStride() const { return mStride; }
+	const std::string & getDescription() const { return mDescription; }
+	void setDescription(const std::string & inDesc) { mDescription = inDesc; }
 	
 private:
 	unsigned long mLength;
 	unsigned long mStride;
-	
+	std::string mDescription;
 	friend class BufferPointer;
 };
 

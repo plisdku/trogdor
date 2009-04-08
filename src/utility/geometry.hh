@@ -460,6 +460,21 @@ bool operator>(const Rect<T> & lhs, const Rect<T> & rhs)
     return 0;
 }
 
+
+template<typename T>
+vmlib::SMat<3,T> matWithCols(const vmlib::SVec<3,T> & v1,
+	const vmlib::SVec<3,T> & v2, const vmlib::SVec<3,T> & v3)
+{
+	vmlib::SMat<3,T> m;
+	for (int row = 0; row < 3; row++)
+	{
+		m(row,0) = v1[row];
+		m(row,1) = v2[row];
+		m(row,2) = v3[row];
+	}
+	return m;
+}
+
 template<typename T, typename S>
 void mapPoint(const Rect<T> & fromRect, const vmlib::SVec<3,T> & fromPoint,
     const Rect<T> & toRect, vmlib::SVec<3,T> & toPoint)

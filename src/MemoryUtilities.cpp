@@ -10,17 +10,30 @@
 #include "MemoryUtilities.h"
 #include <cassert>
 
+using namespace std;
+
 MemoryBuffer::
 MemoryBuffer(unsigned long length, unsigned long stride) :
 	mLength(length),
-	mStride(stride)
+	mStride(stride),
+	mDescription("")
+{
+}
+
+MemoryBuffer::
+MemoryBuffer(const string & inDescription, unsigned long length,
+	unsigned long stride) :
+	mLength(length),
+	mStride(stride),
+	mDescription(inDescription)
 {
 }
 
 MemoryBuffer::
 MemoryBuffer(const MemoryBuffer & copyMe) :
 	mLength(copyMe.mLength),
-	mStride(copyMe.mStride)
+	mStride(copyMe.mStride),
+	mDescription(copyMe.mDescription)
 {
 }
 

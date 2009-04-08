@@ -28,6 +28,13 @@ class Pointer
 public:
     Pointer() : mPtr(0L) { }
     explicit Pointer(T* inPtr);
+	
+	// this is a bad idea!  (see explanation below in implementation.)
+	/*
+	template <typename S>
+	explicit Pointer(const Pointer<S> & rhs);
+	*/
+	
     ~Pointer();
     
     Pointer(const Pointer<T>& src);
@@ -83,6 +90,21 @@ Pointer(T* inPtr) :
     //    << mReferenceCounts[inPtr] << "\n";
     //LOG << "total pointers: " << mReferenceCounts.size() << std::endl;
 }
+// this is a bad idea because the new pointer maintains its own ref count, 
+// and so on casts, you can end up deallocating things twice
+/*
+template<typename T>
+template<typename S>
+Pointer<T>::
+Pointer(const Pointer<S> & rhs) :
+	mPtr((T*)&(*rhs))
+{
+	if (mPtr != 0L)
+	{
+		mReferenceCounts[mPtr]++;
+	}
+}*/
+
 
 template <typename T>
 Pointer<T>::
