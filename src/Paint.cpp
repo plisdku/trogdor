@@ -124,6 +124,9 @@ Paint* Paint::
 getParentPaint(Paint* basePaint)
 {
 	assert(basePaint != 0L);
+	if (!basePaint->hasCurlBuffer())
+		return basePaint;
+	
 	PaintPtr p(new Paint(*basePaint, 0));
 	if (mPalette.count(*p) != 0)
 		return mPalette[*p];
@@ -155,6 +158,16 @@ equivalentUpdateTo(const Paint & rhs) const
 	if (mCurrentBufferIndex != rhs.mCurrentBufferIndex)
 		return 0;
 	return 1;
+}
+
+bool Paint::
+hasCurlBuffer() const
+{
+	assert(mCurlBuffers.size() == 6);
+	for (unsigned int nn = 0; nn < 6; nn++)
+		if (mCurlBuffers[nn] != 0L)
+			return 1;
+	return 0;
 }
 
 bool

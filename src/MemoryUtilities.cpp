@@ -13,6 +13,14 @@
 using namespace std;
 
 MemoryBuffer::
+MemoryBuffer() :
+	mLength(0),
+	mStride(1),
+	mDescription("Empty buffer")
+{
+}
+
+MemoryBuffer::
 MemoryBuffer(unsigned long length, unsigned long stride) :
 	mLength(length),
 	mStride(stride),

@@ -23,6 +23,7 @@
 #include "Map.h"
 #include "VoxelGrid.h"
 #include "CellCountGrid.h"
+#include "MemoryUtilities.h"
 
 #include "SimulationDescriptionPredeclarations.h"
 
@@ -35,11 +36,10 @@ public:
 		const Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids);  // !
 	
 	const std::vector<Vector3i> & getHuygensRegionSymmetries() const {
-		return mHuygensRegionSymmetries; } // !
+		return mHuygensRegionSymmetries; }
 	
 	bool hasPML(int faceNum) const;
 private:
-	//! ?
 	void paintFromAssembly(const GridDescription & gridDesc,
 		const Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids);
 	void paintFromHuygensSurfaces(const GridDescription & gridDesc);
@@ -48,19 +48,27 @@ private:
 	
 	void calculateMaterialIndices();
 	
-	//!
 	void calculateHuygensSymmetries(const GridDescription & gridDesc);
 	Vector3i huygensSymmetry(const HuygensSurfaceDescription & surf);
 	
 	void loadSpaceVaryingData();
 	
-	//!
 	void generateRunlines();
 	void genRunlinesInOctant(int octant);
 	
 	VoxelGrid mVoxels;
 	CellCountGridPtr mCentralIndices;
 	std::vector<CellCountGridPtr> mPMLFaceIndices;
+	
+	class EHBufferSet
+	{
+	public:
+		EHBufferSet() : buffers(6) {}
+		std::vector<MemoryBuffer> buffers;
+	};
+	
+	EHBufferSet mEHBuffers;
+	Map<NeighborBufferDescPtr, EHBufferSet> mNBBuffers;
 	
 	Rect3i mNonPMLRegion;
 	Rect3i mCalcRegion;

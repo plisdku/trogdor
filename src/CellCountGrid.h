@@ -28,11 +28,14 @@ public:
 	long operator() (int ii, int jj, int kk) const;
 	long operator() (const Vector3i & pp) const;
 	
+	long getNumCells(Paint* paint, int octant) const;
+	const Map<Paint*, long> getAllNumCells(int octant) const;
+	
 private:
 	void calcMaterialIndices(const VoxelGrid & grid);
 	void allocateAuxiliaryDataSpace(const VoxelGrid & grid);
 	
-	//Map<Paint, long> mNumCells;
+	std::vector<Map<Paint*, long> > mNumCells;
 	std::vector<long> mMaterialIndexHalfCells;
 	Rect3i mHalfCellBounds;
 	int m_nnx;

@@ -18,7 +18,7 @@ using namespace YeeUtilities;
 
 CellCountGrid::
 CellCountGrid(const VoxelGrid & grid, Rect3i halfCellBounds) :
-	//mNumCells(),
+	mNumCells(8),
 	mHalfCellBounds(halfCellBounds),
 	m_nnx(halfCellBounds.size(0)+1),
 	m_nny(halfCellBounds.size(1)+1),
@@ -46,18 +46,30 @@ operator() (const Vector3i & pp) const
 		((pp[2]+m_nnz)%m_nnz)*m_nnx*m_nny];
 }
 
+long CellCountGrid::
+getNumCells(Paint* paint, int octant) const
+{
+	assert(octant >= 0 && octant < 8);
+	
+	if (mNumCells[octant].count(paint) != 0)
+		return mNumCells[octant].count(paint);
+	return 0;
+}
+
+const Map<Paint*, long> CellCountGrid::
+getAllNumCells(int octant) const
+{
+	assert(octant >= 0 && octant < 8);
+	return mNumCells[octant];
+}
+
 
 void CellCountGrid::
 calcMaterialIndices(const VoxelGrid & grid)
 {
 	for (int nn = 0; nn < 8; nn++)
 	{
-		//LOG << "Starting side " << nn << "\n";
-		Map<Paint*, long> materialIndices;
 		Vector3i offset = halfCellOffset(nn);
-		//LOG << "Offset is " << offset << "\n";
-		//LOG << "Size is " << m_nnx << " " << m_nny << " " << m_nnz << "\n";
-		
 		Vector3i rSize = mHalfCellBounds.size() + Vector3i(1,1,1);
 		Vector3i o = mHalfCellBounds.p1;
 		
@@ -70,17 +82,17 @@ calcMaterialIndices(const VoxelGrid & grid)
 			assert(linearIndex >= 0 &&
 				linearIndex < mMaterialIndexHalfCells.size());
 			
-			Paint* p = grid(ii+o[0],jj+o[1],kk+o[2]);
-			if (materialIndices.count(p) == 0)
+			Paint* p = Paint::getParentPaint(grid(ii+o[0],jj+o[1],kk+o[2]));
+			if (mNumCells[nn].count(p) == 0)
 			{
-				materialIndices[p] = 1;
+				mNumCells[nn][p] = 1;
 				mMaterialIndexHalfCells[linearIndex] = 0;
 				//LOG << "Starting material " << hex << p << dec << "\n";
 			}
 			else
 			{
-				mMaterialIndexHalfCells[linearIndex] = materialIndices[p];
-				materialIndices[p]++;
+				mMaterialIndexHalfCells[linearIndex] = mNumCells[nn][p];
+				mNumCells[nn][p]++;
 			}
 		}
 	}
@@ -91,6 +103,20 @@ void CellCountGrid::
 allocateAuxiliaryDataSpace(const VoxelGrid & grid)
 {
 	LOG << "Allocating auxiliary space.\n";
+	// So what functionality goes here?
+	// Well, my current thought is that the *material model* is what is aware
+	// of any space-varying data.  This baokuo both the boundary-type materials
+	// (which need to know about local surface normals and such) and the simple
+	// graded-index type materials.
+	//
+	// So based on the Paints in the VoxelGrid, and I imagine also on the basis
+	// of the internal material count here, and lastly on the basis of the
+	// material delegate (whatever it is that informs us here of how much space
+	// will be needed for a material), we can allocate data arrays.  This is not
+	// the same as setting up MemoryBuffers, which is the job of the parent
+	// VoxelizedGrid (or whatever it will be called).
+	// 
+	// It's a little weird of me to include the auxiliary data allocation here. 
 }
 
 

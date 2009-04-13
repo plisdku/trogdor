@@ -48,6 +48,7 @@ FileSource.cpp
 FormulaSource.cpp
 Input.cpp
 InputFactory.cpp
+MaterialBoss.cpp
 MaterialFactory.cpp
 MaterialModel.cpp
 MaterialModelNew.cpp
@@ -63,6 +64,7 @@ Runline.cpp
 SimulationGrid.cpp
 Source.cpp
 SourceFactory.cpp
+StaticDielectric.cpp
 StaticDielectricModel.cpp
 StaticLossyDielectricModel.cpp
 TFSFBufferSet.cpp

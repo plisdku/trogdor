@@ -18,6 +18,7 @@ class BufferPointer;
 class MemoryBuffer
 {
 public:
+	MemoryBuffer();
 	MemoryBuffer(unsigned long length, unsigned long stride = 1);
 	MemoryBuffer(const std::string & inDescription, 
 		unsigned long length, unsigned long stride = 1);
@@ -32,6 +33,7 @@ private:
 	unsigned long mLength;
 	unsigned long mStride;
 	std::string mDescription;
+	
 	friend class BufferPointer;
 };
 

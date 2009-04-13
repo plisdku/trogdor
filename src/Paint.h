@@ -74,8 +74,10 @@ public:
 	static void clearPalette() { mPalette.clear(); }
 	
 	PaintType getType() const { return mType; }
+	const MaterialDescPtr getBulkMaterial const { return mBulkMaterial; }
 	
 	bool equivalentUpdateTo(const Paint & rhs) const;
+	bool hasCurlBuffer() const;
 	
 private:
 	
