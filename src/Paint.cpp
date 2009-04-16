@@ -124,7 +124,8 @@ Paint* Paint::
 getParentPaint(Paint* basePaint)
 {
 	assert(basePaint != 0L);
-	if (!basePaint->hasCurlBuffer())
+	if (!basePaint->hasCurlBuffer() && !basePaint->isPML() &&
+		basePaint->mCurrentBufferIndex == -1)
 		return basePaint;
 	
 	PaintPtr p(new Paint(*basePaint, 0));
@@ -133,6 +134,7 @@ getParentPaint(Paint* basePaint)
 	mPalette[*p] = p;
 	return p;
 }
+
 
 Paint* Paint::
 retrieveCurlBufferParentPaint(Paint* basePaint)
@@ -168,6 +170,31 @@ hasCurlBuffer() const
 		if (mCurlBuffers[nn] != 0L)
 			return 1;
 	return 0;
+}
+
+bool Paint::
+hasCurlBuffer(int side) const
+{
+	assert(mCurlBuffers.size() == 6);
+	assert(side >= 0);
+	assert(side < 6);
+	return (mCurlBuffers[side] != 0L);
+}
+
+const NeighborBufferDescPtr & Paint::
+getCurlBuffer(int side) const
+{
+	assert(side >= 0);
+	assert(side < 6);
+	return mCurlBuffers[side];
+}
+	
+bool Paint::
+isPML() const
+{
+	return (mPMLDirections[0] != 0 ||
+		mPMLDirections[1] != 0 ||
+		mPMLDirections[2] != 0);
 }
 
 bool

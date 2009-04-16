@@ -39,12 +39,14 @@ public:
 	void overlayHuygensSurface(const HuygensSurfaceDescription & surf);
 	void overlayCurrentSource(const int & currentSource);
 	void overlayPML();
-
 	
 	Paint* & operator() (int ii, int jj, int kk);
 	Paint* operator() (int ii, int jj, int kk) const;
 	Paint* & operator() (const Vector3i & pp);
 	Paint* operator() (const Vector3i & pp) const;
+	
+	long linearYeeIndex(int ii, int jj, int kk) const;
+	long linearYeeIndex(const Vector3i & halfCell) const;
 	
 	void paintPEC(Paint* paint, int iYee, int jYee, int kYee);
 	void paintPMC(Paint* paint, int iYee, int jYee, int kYee);

@@ -9,3 +9,12 @@
 
 #include "StaticDielectric.h"
 
+StaticDielectricDelegate::
+StaticDielectricDelegate() :
+	SimpleBulkMaterialDelegate()
+{
+}
+
+
+
+

@@ -56,11 +56,27 @@ getNumCells(Paint* paint, int octant) const
 	return 0;
 }
 
-const Map<Paint*, long> CellCountGrid::
+Map<Paint*, long> CellCountGrid::
 getAllNumCells(int octant) const
 {
 	assert(octant >= 0 && octant < 8);
 	return mNumCells[octant];
+}
+
+set<Paint*> CellCountGrid::
+getCurlBufferParentPaints() const
+{
+	std::set<Paint*> paints;
+	for (int octant = 0; octant < 8; octant++)
+	{
+		const Map<Paint*, long> & m = mNumCells[octant];
+		for (map<Paint*,long>::const_iterator ii = m.begin(); ii != m.end();
+			ii++)
+		{
+			paints.insert(ii->first);
+		}
+	}
+	return paints;
 }
 
 
@@ -82,7 +98,8 @@ calcMaterialIndices(const VoxelGrid & grid)
 			assert(linearIndex >= 0 &&
 				linearIndex < mMaterialIndexHalfCells.size());
 			
-			Paint* p = Paint::getParentPaint(grid(ii+o[0],jj+o[1],kk+o[2]));
+			Paint* p = Paint::retrieveCurlBufferParentPaint(
+				grid(ii+o[0],jj+o[1],kk+o[2]));
 			if (mNumCells[nn].count(p) == 0)
 			{
 				mNumCells[nn][p] = 1;
@@ -125,6 +142,14 @@ std::ostream & operator<< (std::ostream & out, const CellCountGrid & grid)
 	int nni = grid.mHalfCellBounds.size(0)+1;
 	int nnj = grid.mHalfCellBounds.size(1)+1;
 	int nnk = grid.mHalfCellBounds.size(2)+1;
+	
+	set<Paint*> parentPaints = grid.getCurlBufferParentPaints();
+	for (set<Paint*>::iterator itr = parentPaints.begin();
+		itr != parentPaints.end(); itr++)
+	{
+		out << hex << *itr << dec << ":\n" << *(*itr) << "\n";
+	}
+	
 	
 	for (int kk = grid.mHalfCellBounds.p1[2];
 		kk < grid.mHalfCellBounds.p2[2]; kk++)

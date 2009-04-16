@@ -43,6 +43,18 @@ static Vector3i sFieldOffsets[6] =
 static int sHalfCellFieldIndices[6] =
 	{ 1, 2, 3, 4, 5, 6 }; // indices of the field offsets (above) for E, H.
 
+static int sOctantFieldIndices[8] =
+	{ -1, 0, 1, 2, 3, 4, 5, -1 }; // indices of field offsets
+
+static int sOctantEIndices[8] =
+	{ -1, 0, 1, -1, 2, -1, -1, -1 }; // Ex = 0, etc.
+
+static int sOctantHIndices[8] =
+	{ -1, -1, -1, 2, -1, 1, 0, -1 }; // Hx = 0, etc.
+
+static int sOctantFieldDirections[8] =
+	{ -1, 0, 1, 2, 2, 1, 0, -1 }; // x = 0, y = 1, z = 2
+
 int halfCellIndex(const Vector3i & v)
 {
 	return v[0]%2 + 2*(v[1]%2) + 4*(v[2]%2);
@@ -74,6 +86,35 @@ const Vector3i & halfCellFieldOffset(int fieldIndex)
 	assert(fieldIndex >= 0);
 	assert(fieldIndex < 6);
 	return sFieldOffsets[fieldIndex];
+}
+
+
+int octantFieldNumber(int octant)
+{
+	assert(octant >= 0);
+	assert(octant < 8);
+	return sOctantFieldIndices[octant];
+}
+
+int octantENumber(int octant)
+{
+	assert(octant >= 0);
+	assert(octant < 8);
+	return sOctantEIndices[octant];
+}
+
+int octantHNumber(int octant)
+{
+	assert(octant >= 0);
+	assert(octant < 8);
+	return sOctantHIndices[octant];
+}
+
+int octantFieldDirection(int octant)
+{
+	assert(octant >= 0);
+	assert(octant < 8);
+	return sOctantFieldDirections[octant];
 }
 
 

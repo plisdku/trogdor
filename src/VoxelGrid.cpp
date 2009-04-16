@@ -452,7 +452,23 @@ paintPMC(Paint* paint, int iYee, int jYee, int kYee)
 		(*this)(2*iYee-ii, 2*jYee-jj, 2*kYee-kk) = paint;
 }
 
+long VoxelGrid::
+linearYeeIndex(int ii, int jj, int kk) const
+{
+	int i = ii/2, j = jj/2, k = kk/2;
+	return ( (i+m_nx)%m_nx +
+		m_nx*( (j+m_ny)%m_ny) +
+		m_nx*m_ny*( (k+m_nz)%m_nz));
+}
 
+long VoxelGrid::
+linearYeeIndex(const Vector3i & halfCell) const
+{
+	int i = halfCell[0]/2, j = halfCell[1]/2, k = halfCell[2]/2;
+	return ( (i+m_nx)%m_nx +
+		m_nx*( (j+m_ny)%m_ny) +
+		m_nx*m_ny*( (k+m_nz)%m_nz));
+}
 
 std::ostream &
 operator<< (std::ostream & out, const VoxelGrid & grid)

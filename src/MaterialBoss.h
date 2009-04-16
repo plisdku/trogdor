@@ -12,11 +12,13 @@
 
 #include "Pointer.h"
 #include "geometry.h"
+#include "MemoryUtilities.h"
 #include <vector>
 
 class Paint;
 class VoxelGrid;
 class CellCountGrid;
+typedef Pointer<CellCountGrid> CellCountGridPtr;
 
 class MaterialDelegate;
 typedef Pointer<MaterialDelegate> MaterialDelegatePtr;
@@ -45,7 +47,7 @@ public:
 class MaterialDelegate
 {
 public:
-	MaterialDelegate(const VoxelGrid & vg, const CellCountGrid & cg);
+	MaterialDelegate();
 	virtual ~MaterialDelegate();
 	
 	// Auxiliary variables
@@ -54,14 +56,66 @@ public:
 	virtual void setPMLDepth(int octant, int faceNum, int depthCells);
 	
 	// Runline handling
-	virtual void startRunline(const Vector3i & startPos, Paint* newPaint) = 0;
-	virtual bool canContinueRunline(const Vector3i & oldPos,
+	virtual void startRunline(const VoxelGrid & voxelGrid,
+		const CellCountGrid & cellCountGrid,
+		const std::vector<CellCountGridPtr> & pmlCellCountGrids,
+		const Vector3i & startPos) = 0;
+	virtual bool canContinueRunline(const VoxelGrid & voxelGrid,
+		const CellCountGrid & cellCountGrid,
+		const std::vector<CellCountGridPtr> & pmlCellCountGrids,
+		const Vector3i & oldPos,
 		const Vector3i & newPos, Paint* newPaint) const = 0;
 	virtual void continueRunline(const Vector3i & newPos) = 0;
 	virtual void endRunline() = 0;
 };
+typedef Pointer<MaterialDelegate> MaterialDelegatePtr;
 
 
+class SimpleBulkMaterialDelegate : public MaterialDelegate
+{
+public:
+	SimpleBulkMaterialDelegate();
+	
+	// Runline handling
+	virtual void startRunline(const VoxelGrid & voxelGrid,
+		const CellCountGrid & cellCountGrid,
+		const std::vector<CellCountGridPtr> & pmlCellCountGrids,
+		const Vector3i & startPos);
+	virtual bool canContinueRunline(const VoxelGrid & voxelGrid,
+		const CellCountGrid & cellCountGrid,
+		const std::vector<CellCountGridPtr> & pmlCellCountGrids,
+		const Vector3i & oldPos,
+		const Vector3i & newPos, Paint* newPaint) const;
+	virtual void continueRunline(const Vector3i & newPos);
+	virtual void endRunline();
+	
+protected:
+	class SBMRunline
+	{
+	public:
+		SBMRunline();
+		long length;
+		long auxIndex;
+		//BufferPointer f_i;
+		//BufferPointer f_j[2];
+		//BufferPointer f_k[2];
+	};
+	typedef Pointer<SBMRunline> SBMRunlinePtr;
+	
+	std::vector<SBMRunlinePtr> mRunlines[6];
+	
+	// Runline generation storage
+	SBMRunline mCurrentRunline;
+	Paint* mStartPaint;
+	Vector3i mStartPoint;
+	int mStartOctant;
+	int mCurLength;
+	long mStartNeighborIndices[6];
+	bool mUsedNeighborIndices[6];
+	
+};
+
+/*
 class DefaultMaterialDelegate : public MaterialDelegate
 {
 public:
@@ -83,7 +137,7 @@ private:
 	Vector3i mStart;
 	Vector3i mEnd;
 };
-
+*/
 
 
 #endif

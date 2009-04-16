@@ -24,8 +24,14 @@ int halfCellIndex(const Vector3i & v);
 const Vector3i & halfCellOffset(int halfCellIndex);
 
 const Vector3i & cardinalDirection(int directionIndex);
+
 int halfCellFieldIndex(int fieldIndex);  // returns halfCellIndices of EM fields
 const Vector3i & halfCellFieldOffset(int fieldIndex); // offsets of EM fields
+
+int octantFieldNumber(int octant); // returns field indices or -1
+int octantENumber(int octant); // returns 0,1,2 for Ex,y,z or -1
+int octantHNumber(int octant); // returns 0,1,2 for Hx,y,z or -1
+int octantFieldDirection(int octant); // returns 0 for Ex or Hx, 1 for y, etc.
 
 // returns halfCell/2
 Vector3i vecHalfToYee(const Vector3i & halfCell);

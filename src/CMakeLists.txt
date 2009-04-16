@@ -42,6 +42,7 @@ add_executable( trogdor
 CellCountGrid.cpp
 ColocatedOutput.cpp
 DrudeMetalModel.cpp
+DrudeModel1.cpp
 FDTDApplication.cpp
 Fields.cpp
 FileSource.cpp

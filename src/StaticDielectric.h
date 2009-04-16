@@ -7,3 +7,17 @@
  *
  */
 
+#ifndef _STATICDIELECTRIC_
+#define _STATICDIELECTRIC_
+
+#include "MaterialBoss.h"
+
+class StaticDielectricDelegate : public SimpleBulkMaterialDelegate
+{
+public:
+	StaticDielectricDelegate();
+private:
+};
+
+
+#endif

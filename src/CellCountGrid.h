@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
 #include "Paint.h"
 #include "geometry.h"
 #include "Map.h"
@@ -29,7 +30,8 @@ public:
 	long operator() (const Vector3i & pp) const;
 	
 	long getNumCells(Paint* paint, int octant) const;
-	const Map<Paint*, long> getAllNumCells(int octant) const;
+	Map<Paint*, long> getAllNumCells(int octant) const;
+	std::set<Paint*> getCurlBufferParentPaints() const;
 	
 private:
 	void calcMaterialIndices(const VoxelGrid & grid);

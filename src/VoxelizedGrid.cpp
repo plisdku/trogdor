@@ -61,6 +61,8 @@ VoxelizedGrid(const GridDescription & gridDesc,
 	
 	calculateMaterialIndices();
 	
+	createMaterialDelegates();
+	
 	loadSpaceVaryingData();
 	
 	generateRunlines();
@@ -69,7 +71,7 @@ VoxelizedGrid(const GridDescription & gridDesc,
 bool VoxelizedGrid::
 hasPML(int faceNum) const
 {
-	LOG << "Using non-parallel-friendly method.\n";
+	//LOG << "Using non-parallel-friendly method.\n";
 	assert(faceNum >= 0);
 	assert(faceNum < 6);
 	
@@ -84,6 +86,27 @@ hasPML(int faceNum) const
 			return 0;
 	}
 	return 1;
+}
+
+Rect3i VoxelizedGrid::
+getPMLRegionOnFace(int faceNum) const
+{
+	//LOG << "Using non-parallel-friendly method.\n";
+	assert(faceNum >= 0);
+	assert(faceNum < 6);
+	
+	Rect3i everywhere(0,0,0,m_nnx-1, m_nny-1, m_nnz-1);
+	Rect3i pmlRegion(everywhere);
+	
+	if (faceNum%2 == 0) // low side
+	{
+		pmlRegion.p2[faceNum/2] = mNonPMLRegion.p1[faceNum/2]-1;
+	}
+	else
+	{
+		pmlRegion.p1[faceNum/2] = mNonPMLRegion.p2[faceNum/2]+1;
+	}
+	return pmlRegion;
 }
 
 
@@ -166,7 +189,7 @@ calculateMaterialIndices()
 	for (int nFace = 0; nFace < 6; nFace++)
 	if (hasPML(nFace))
 	{
-		LOG << "Face number " << nFace << " of 6...\n";
+		//LOG << "Face number " << nFace << " of 6...\n";
 		Rect3i face = edgeOfRect(mNonPMLRegion, nFace);
 		if (nFace % 2 == 0) // low-side face
 			face.p2 -= cardinalDirection(nFace);
@@ -176,7 +199,7 @@ calculateMaterialIndices()
 		assert(mNonPMLRegion.encloses(face));
 		//mPMLFaces[nFace] = face;
 		
-		LOG << "PML face is " << face << endl;
+		//LOG << "PML face is " << face << endl;
 		
 		mPMLFaceIndices[nFace] = CellCountGridPtr(new CellCountGrid(mVoxels,
 			face));
@@ -305,9 +328,59 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 }
 
 void VoxelizedGrid::
+createMaterialDelegates()
+{
+	set<Paint*> allPaints = mCentralIndices->getCurlBufferParentPaints();
+	
+	// Cache PML rects
+	vector<Rect3i> pmlRects;
+	for (int nn = 0; nn < 6; nn++)
+		pmlRects.push_back(getPMLRegionOnFace(nn));
+	
+	LOG << "Iterating over paints...\n";
+	for (set<Paint*>::iterator itr = allPaints.begin(); itr != allPaints.end();
+		itr++)
+	{
+		Paint* p = *itr;
+		if (mDelegates.count(p) == 0)
+		{
+			mDelegates[p] = NewMaterialFactory::getDelegate(
+				mVoxels, mCentralIndices, mPMLFaceIndices, p);
+		}
+		MaterialDelegate & mat = *mDelegates[p];
+		
+		LOGMORE << hex << p << dec << ":\n";
+		LOGMORE << *p << "\n";
+		
+		for (int octant = 0; octant < 8; octant++)
+		{
+			long numCellsInOctant = mCentralIndices->getNumCells(p, octant);
+			
+			// This count suffices for bulk materials
+			mat.setNumCells(octant, numCellsInOctant);
+			
+			// This fills in information for PMLs
+			if (p->isPML()) // this condition just speeds things up
+			{
+				Paint* nonPML = Paint::getParentPaint(p);
+				for (int faceNum = 0; faceNum < 6; faceNum++)
+				if (hasPML(faceNum))
+				{
+					mat.setPMLDepth(octant, faceNum,
+						rectHalfToYee(pmlRects[faceNum], octant).size(faceNum/2)+1);
+					mat.setNumCellsOnPMLFace(octant, faceNum,
+						mPMLFaceIndices[faceNum]->getNumCells(nonPML, octant));
+				}
+			}
+		}
+	}
+}
+
+void VoxelizedGrid::
 loadSpaceVaryingData()
 {
-	LOG << "Not loading anything yet.\n";
+	LOG << "Material delegates need to provide temporary space!\n";
+	LOGMORE << "Not loading anything yet.\n";
 }
 
 void VoxelizedGrid::
@@ -320,9 +393,10 @@ generateRunlines()
 	
 	LOG << "Check it out, we're sticking to the calc region.  I'm not sure "
 		"yet precisely how to use this in the MPI context—work it out later.\n";
-	
+		
 	for (int fieldNum = 0; fieldNum < 6; fieldNum++)
 	{
+		// Remember to set up the buffers here!
 		LOG << "Runlines for offset " << halfCellFieldOffset(fieldNum) << "\n";
 		genRunlinesInOctant(halfCellIndex(halfCellFieldOffset(fieldNum)));
 	} 
@@ -342,15 +416,6 @@ genRunlinesInOctant(int octant)
 	LOG << "Calc region " << mCalcRegion << endl;
 	LOG << "Runlines in octant " << octant << " at start " << p1 << endl;
 	
-	Map<Paint*,long> allNumCells = mCentralIndices->getAllNumCells(octant);
-	Map<Paint*, MaterialDelegatePtr> delegates;
-	
-	for (map<Paint*, long>::const_iterator itr = allNumCells.begin();
-		itr != allNumCells.end(); itr++)
-	{
-		delegates[itr->first] = NewMaterialFactory::getDelegate(mVoxels,
-			*mCentralIndices, mPMLFaceIndices, itr->first);
-	}
 	MaterialDelegate* material; // unsafe pointer for speed in this case.
 	
 	// If there is a current runline
@@ -369,11 +434,12 @@ genRunlinesInOctant(int octant)
 	for (x[0] = p1[0]; x[0] <= mCalcRegion.p2[0]; x[0] += 2)
 	{
 		xPaint = mVoxels(x);
-		xParentPaint = Paint::getParentPaint(xPaint);
+		xParentPaint = Paint::retrieveCurlBufferParentPaint(xPaint);
 		if (!needNewRunline)
 		{
 			if (xParentPaint == lastXParentPaint &&
-				material->canContinueRunline(lastX, x, xPaint)) // kludge
+				material->canContinueRunline(mVoxels, *mCentralIndices,
+					mPMLFaceIndices, lastX, x, xPaint)) // kludge
 				material->continueRunline(x);
 			else
 			{
@@ -383,8 +449,9 @@ genRunlinesInOctant(int octant)
 		}
 		if (needNewRunline)
 		{
-			material = delegates[xParentPaint];
-			material->startRunline(x, xPaint);
+			material = mDelegates[xParentPaint];
+			material->startRunline(mVoxels, *mCentralIndices,
+				mPMLFaceIndices, x);
 			needNewRunline = 0;
 		}
 		lastX = x;

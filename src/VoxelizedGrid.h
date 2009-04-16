@@ -23,6 +23,7 @@
 #include "Map.h"
 #include "VoxelGrid.h"
 #include "CellCountGrid.h"
+#include "MaterialBoss.h"
 #include "MemoryUtilities.h"
 
 #include "SimulationDescriptionPredeclarations.h"
@@ -39,6 +40,7 @@ public:
 		return mHuygensRegionSymmetries; }
 	
 	bool hasPML(int faceNum) const;
+	Rect3i getPMLRegionOnFace(int faceNum) const;
 private:
 	void paintFromAssembly(const GridDescription & gridDesc,
 		const Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids);
@@ -51,8 +53,8 @@ private:
 	void calculateHuygensSymmetries(const GridDescription & gridDesc);
 	Vector3i huygensSymmetry(const HuygensSurfaceDescription & surf);
 	
+	void createMaterialDelegates();
 	void loadSpaceVaryingData();
-	
 	void generateRunlines();
 	void genRunlinesInOctant(int octant);
 	
@@ -69,6 +71,7 @@ private:
 	
 	EHBufferSet mEHBuffers;
 	Map<NeighborBufferDescPtr, EHBufferSet> mNBBuffers;
+	Map<Paint*, MaterialDelegatePtr> mDelegates;
 	
 	Rect3i mNonPMLRegion;
 	Rect3i mCalcRegion;

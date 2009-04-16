@@ -11,7 +11,7 @@
 #define _MEMORYUTILITIES_
 
 #include <string>
-
+#include "Pointer.h"
 //class MemoryBuffer;
 class BufferPointer;
 
@@ -36,6 +36,7 @@ private:
 	
 	friend class BufferPointer;
 };
+typedef Pointer<MemoryBuffer> MemoryBufferPtr;
 
 class BufferPointer
 {
