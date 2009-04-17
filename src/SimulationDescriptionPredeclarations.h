@@ -14,8 +14,8 @@
 
 class GridDescription;
 typedef Pointer<GridDescription> GridDescPtr;
-class VoxelizedGrid;
-typedef Pointer<VoxelizedGrid> VoxelizedGridPtr;
+class VoxelizedPartition;
+typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
 class MaterialDescription;
 typedef Pointer<MaterialDescription> MaterialDescPtr;
 class HuygensSurfaceDescription;

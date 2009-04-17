@@ -1,5 +1,5 @@
 /*
- *  VoxelizedGrid.cpp
+ *  VoxelizedPartition.cpp
  *  TROGDOR
  *
  *  Created by Paul Hansen on 2/9/09.
@@ -7,7 +7,7 @@
  *
  */
 
-#include "VoxelizedGrid.h"
+#include "VoxelizedPartition.h"
 
 #include "SimulationDescription.h"
 #include "Log.h"
@@ -17,26 +17,20 @@
 using namespace std;
 using namespace YeeUtilities;
 
-#pragma mark *** VoxelizedGrid ***
+#pragma mark *** VoxelizedPartition ***
 
-VoxelizedGrid::
-VoxelizedGrid(const GridDescription & gridDesc, 
-	const Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids) :
-	mVoxels(gridDesc.getNumYeeCells(), gridDesc.getNonPMLRegion()),
-	mPMLFaceIndices(6)
+VoxelizedPartition::
+VoxelizedPartition(const GridDescription & gridDesc, 
+	const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
+	Rect3i partitionBounds, Rect3i calcRegion) :
+	mVoxels(partitionBounds, gridDesc.getNonPMLRegion()),
+	//mPMLFaceIndices(6),
+	mPartitionBounds(partitionBounds),
+	mCalcRegion(calcRegion)
 {
-	LOG << "VoxelizedGrid()\n";
+	LOG << "VoxelizedPartition()\n";
 	
-	mNumYeeCells = gridDesc.getNumYeeCells();
-	mNumHalfCells = gridDesc.getNumHalfCells();
-	m_nx = mNumYeeCells[0];
-	m_ny = mNumYeeCells[1];
-	m_nz = mNumYeeCells[2];
-	m_nnx = mNumHalfCells[0];
-	m_nny = mNumHalfCells[1];
-	m_nnz = mNumHalfCells[2];
 	mNonPMLRegion = gridDesc.getNonPMLRegion();
-	mCalcRegion = gridDesc.getCalcRegion();
 	mOriginYee = gridDesc.getOriginYee();
 	
 	LOG << "nonPML " << mNonPMLRegion << "\n";
@@ -68,8 +62,8 @@ VoxelizedGrid(const GridDescription & gridDesc,
 	generateRunlines();
 }
 
-bool VoxelizedGrid::
-hasPML(int faceNum) const
+bool VoxelizedPartition::
+partitionHasPML(int faceNum) const
 {
 	//LOG << "Using non-parallel-friendly method.\n";
 	assert(faceNum >= 0);
@@ -77,26 +71,25 @@ hasPML(int faceNum) const
 	
 	if (faceNum%2 == 0) // low side
 	{
-		if (mNonPMLRegion.p1[faceNum/2] <= 0)
+		if (mNonPMLRegion.p1[faceNum/2] <= mPartitionBounds.p1[faceNum/2])
 			return 0;
 	}
 	else
 	{
-		if (mNonPMLRegion.p2[faceNum/2] >= mNumHalfCells[faceNum/2]-1)
+		if (mNonPMLRegion.p2[faceNum/2] >= mPartitionBounds.p2[faceNum/2])
 			return 0;
 	}
 	return 1;
 }
 
-Rect3i VoxelizedGrid::
+Rect3i VoxelizedPartition::
 getPMLRegionOnFace(int faceNum) const
 {
 	//LOG << "Using non-parallel-friendly method.\n";
 	assert(faceNum >= 0);
 	assert(faceNum < 6);
 	
-	Rect3i everywhere(0,0,0,m_nnx-1, m_nny-1, m_nnz-1);
-	Rect3i pmlRegion(everywhere);
+	Rect3i pmlRegion(mPartitionBounds);
 	
 	if (faceNum%2 == 0) // low side
 	{
@@ -110,9 +103,9 @@ getPMLRegionOnFace(int faceNum) const
 }
 
 
-void VoxelizedGrid::
+void VoxelizedPartition::
 paintFromAssembly(const GridDescription & gridDesc,
-	const Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids)
+	const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids)
 {
 	LOG << "Painting from assembly.\n";
 	
@@ -156,7 +149,7 @@ paintFromAssembly(const GridDescription & gridDesc,
 	}
 }
 
-void VoxelizedGrid::
+void VoxelizedPartition::
 paintFromHuygensSurfaces(const GridDescription & gridDesc)
 {
 	LOG << "Painting from Huygens surfaces.\n";
@@ -168,26 +161,26 @@ paintFromHuygensSurfaces(const GridDescription & gridDesc)
 		mVoxels.overlayHuygensSurface(*surfaces[nn]);
 }
 
-void VoxelizedGrid::
+void VoxelizedPartition::
 paintFromCurrentSources(const GridDescription & gridDesc)
 {
 	LOG << "Painting from current sources.  (Doing nothing.)\n";
 }
 
 
-void VoxelizedGrid::
+void VoxelizedPartition::
 calculateMaterialIndices()
 {
 	// This must be done separately for each octant.
 	
-	Rect3i cheesyEverywhereRect(0,0,0,m_nnx-1, m_nny-1, m_nnz-1);
 	mCentralIndices = CellCountGridPtr(new CellCountGrid(mVoxels,
-		cheesyEverywhereRect));
+		mPartitionBounds));
 	
 	cout << *mCentralIndices << endl;
 	
+	/*
 	for (int nFace = 0; nFace < 6; nFace++)
-	if (hasPML(nFace))
+	if (partitionHasPML(nFace))
 	{
 		//LOG << "Face number " << nFace << " of 6...\n";
 		Rect3i face = edgeOfRect(mNonPMLRegion, nFace);
@@ -201,8 +194,10 @@ calculateMaterialIndices()
 		
 		//LOG << "PML face is " << face << endl;
 		
+		
 		mPMLFaceIndices[nFace] = CellCountGridPtr(new CellCountGrid(mVoxels,
 			face));
+		
 		
 		//cout << *mPMLFaceIndices[nFace] << endl;
 	}
@@ -210,10 +205,11 @@ calculateMaterialIndices()
 	{
 		LOG << "Face number " << nFace << " of 6 has no PML.\n";
 	}
+	*/
 	
 }
 
-void VoxelizedGrid::
+void VoxelizedPartition::
 calculateHuygensSymmetries(const GridDescription & gridDesc)
 {
 	LOG << "Calculating Huygens surface symmetries.\n";
@@ -234,7 +230,7 @@ calculateHuygensSymmetries(const GridDescription & gridDesc)
 	}
 }
 
-Vector3i VoxelizedGrid::
+Vector3i VoxelizedPartition::
 huygensSymmetry(const HuygensSurfaceDescription & surf)
 {
 	int ii, jj, kk;
@@ -327,7 +323,7 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 	return symmetries;
 }
 
-void VoxelizedGrid::
+void VoxelizedPartition::
 createMaterialDelegates()
 {
 	set<Paint*> allPaints = mCentralIndices->getCurlBufferParentPaints();
@@ -345,7 +341,7 @@ createMaterialDelegates()
 		if (mDelegates.count(p) == 0)
 		{
 			mDelegates[p] = NewMaterialFactory::getDelegate(
-				mVoxels, mCentralIndices, mPMLFaceIndices, p);
+				mVoxels, mCentralIndices, /*mPMLFaceIndices,*/ p);
 		}
 		MaterialDelegate & mat = *mDelegates[p];
 		
@@ -364,26 +360,26 @@ createMaterialDelegates()
 			{
 				Paint* nonPML = Paint::getParentPaint(p);
 				for (int faceNum = 0; faceNum < 6; faceNum++)
-				if (hasPML(faceNum))
+				if (partitionHasPML(faceNum))
 				{
 					mat.setPMLDepth(octant, faceNum,
 						rectHalfToYee(pmlRects[faceNum], octant).size(faceNum/2)+1);
-					mat.setNumCellsOnPMLFace(octant, faceNum,
-						mPMLFaceIndices[faceNum]->getNumCells(nonPML, octant));
+					//mat.setNumCellsOnPMLFace(octant, faceNum,
+					//	mPMLFaceIndices[faceNum]->getNumCells(nonPML, octant));
 				}
 			}
 		}
 	}
 }
 
-void VoxelizedGrid::
+void VoxelizedPartition::
 loadSpaceVaryingData()
 {
 	LOG << "Material delegates need to provide temporary space!\n";
 	LOGMORE << "Not loading anything yet.\n";
 }
 
-void VoxelizedGrid::
+void VoxelizedPartition::
 generateRunlines()
 {
 	// Provide a RunlineEncoder for each uniquely-updating Paint
@@ -403,7 +399,7 @@ generateRunlines()
 	
 }
 
-void VoxelizedGrid::
+void VoxelizedPartition::
 genRunlinesInOctant(int octant)
 {
 	//	 First task: generate a starting half-cell in the correct octant.
@@ -439,7 +435,7 @@ genRunlinesInOctant(int octant)
 		{
 			if (xParentPaint == lastXParentPaint &&
 				material->canContinueRunline(mVoxels, *mCentralIndices,
-					mPMLFaceIndices, lastX, x, xPaint)) // kludge
+					/*mPMLFaceIndices,*/ lastX, x, xPaint)) // kludge
 				material->continueRunline(x);
 			else
 			{
@@ -451,7 +447,7 @@ genRunlinesInOctant(int octant)
 		{
 			material = mDelegates[xParentPaint];
 			material->startRunline(mVoxels, *mCentralIndices,
-				mPMLFaceIndices, x);
+				/*mPMLFaceIndices,*/ x);
 			needNewRunline = 0;
 		}
 		lastX = x;
@@ -462,7 +458,7 @@ genRunlinesInOctant(int octant)
 
 
 std::ostream &
-operator<< (std::ostream & out, const VoxelizedGrid & grid)
+operator<< (std::ostream & out, const VoxelizedPartition & grid)
 {
 	out << grid.mVoxels;
 	return out;

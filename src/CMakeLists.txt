@@ -39,7 +39,7 @@ ${magLibDirs}
 /sw/lib)
 
 add_executable( trogdor 
-CellCountGrid.cpp
+PartitionCellCount.cpp
 ColocatedOutput.cpp
 DrudeMetalModel.cpp
 DrudeModel1.cpp
@@ -72,7 +72,7 @@ TFSFBufferSet.cpp
 ThreeFieldInput.cpp
 ThreeFieldOutput.cpp
 main.cpp
-VoxelizedGrid.cpp
+VoxelizedPartition.cpp
 VoxelGrid.cpp
 YeeUtilities.cpp
 )

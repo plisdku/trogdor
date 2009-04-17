@@ -28,7 +28,7 @@ class NewMaterialFactory
 public:
 	static MaterialDelegatePtr getDelegate(const VoxelGrid & vg,
 		const CellCountGridPtr cg,
-		const std::vector<CellCountGridPtr> & pmlFaces,
+		/*const std::vector<CellCountGridPtr> & pmlFaces,*/
 		Paint* parentPaint);
 };
 
@@ -58,11 +58,11 @@ public:
 	// Runline handling
 	virtual void startRunline(const VoxelGrid & voxelGrid,
 		const CellCountGrid & cellCountGrid,
-		const std::vector<CellCountGridPtr> & pmlCellCountGrids,
+		/*const std::vector<CellCountGridPtr> & pmlCellCountGrids,*/
 		const Vector3i & startPos) = 0;
 	virtual bool canContinueRunline(const VoxelGrid & voxelGrid,
 		const CellCountGrid & cellCountGrid,
-		const std::vector<CellCountGridPtr> & pmlCellCountGrids,
+		/*const std::vector<CellCountGridPtr> & pmlCellCountGrids,*/
 		const Vector3i & oldPos,
 		const Vector3i & newPos, Paint* newPaint) const = 0;
 	virtual void continueRunline(const Vector3i & newPos) = 0;
@@ -79,11 +79,11 @@ public:
 	// Runline handling
 	virtual void startRunline(const VoxelGrid & voxelGrid,
 		const CellCountGrid & cellCountGrid,
-		const std::vector<CellCountGridPtr> & pmlCellCountGrids,
+		/*const std::vector<CellCountGridPtr> & pmlCellCountGrids,*/
 		const Vector3i & startPos);
 	virtual bool canContinueRunline(const VoxelGrid & voxelGrid,
 		const CellCountGrid & cellCountGrid,
-		const std::vector<CellCountGridPtr> & pmlCellCountGrids,
+		/*const std::vector<CellCountGridPtr> & pmlCellCountGrids,*/
 		const Vector3i & oldPos,
 		const Vector3i & newPos, Paint* newPaint) const;
 	virtual void continueRunline(const Vector3i & newPos);

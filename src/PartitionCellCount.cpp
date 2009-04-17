@@ -33,6 +33,9 @@ CellCountGrid(const VoxelGrid & grid, Rect3i halfCellBounds) :
 long CellCountGrid::
 operator() (int ii, int jj, int kk) const
 {
+	ii = ii - mHalfCellBounds.p1[0];
+	jj = jj - mHalfCellBounds.p1[1];
+	kk = kk - mHalfCellBounds.p1[2];
 	return mMaterialIndexHalfCells[(ii+m_nnx)%m_nnx + 
 		((jj+m_nny)%m_nny)*m_nnx +
 		((kk+m_nnz)%m_nnz)*m_nnx*m_nny];
@@ -41,9 +44,10 @@ operator() (int ii, int jj, int kk) const
 long CellCountGrid::
 operator() (const Vector3i & pp) const
 {
-	return mMaterialIndexHalfCells[(pp[0]+m_nnx)%m_nnx + 
-		((pp[1]+m_nny)%m_nny)*m_nnx +
-		((pp[2]+m_nnz)%m_nnz)*m_nnx*m_nny];
+	Vector3i qq(pp - mHalfCellBounds.p1);
+	return mMaterialIndexHalfCells[(qq[0]+m_nnx)%m_nnx + 
+		((qq[1]+m_nny)%m_nny)*m_nnx +
+		((qq[2]+m_nnz)%m_nnz)*m_nnx*m_nny];
 }
 
 long CellCountGrid::
@@ -89,22 +93,32 @@ calcMaterialIndices(const VoxelGrid & grid)
 		Vector3i rSize = mHalfCellBounds.size() + Vector3i(1,1,1);
 		Vector3i o = mHalfCellBounds.p1;
 		
-		for (int kk = offset[2]; kk < rSize[2]; kk += 2)
-		for (int jj = offset[1]; jj < rSize[1]; jj += 2)
-		for (int ii = offset[0]; ii < rSize[0]; ii += 2)
+		Vector3i start = mHalfCellBounds.p1;
+		for (int ss = 0; ss < 3; ss++)
+		if (start[ss]%2 != offset[ss]%2)
+			start[ss] += 1;
+		
+		LOG << "Calculating from " << start << "\n";
+		
+		for (int kk = start[2]; kk <= mHalfCellBounds.p2[2]; kk += 2)
+		for (int jj = start[1]; jj <= mHalfCellBounds.p2[1]; jj += 2)
+		for (int ii = start[0]; ii <= mHalfCellBounds.p2[0]; ii += 2)
 		{
-			int linearIndex = (ii) + (jj)*rSize[0] +
-				(kk)*rSize[0]*rSize[1];
+			int linearIndex = (ii-o[0]) + (jj-o[1])*rSize[0] +
+				(kk-o[2])*rSize[0]*rSize[1];
+			
 			assert(linearIndex >= 0 &&
 				linearIndex < mMaterialIndexHalfCells.size());
 			
 			Paint* p = Paint::retrieveCurlBufferParentPaint(
-				grid(ii+o[0],jj+o[1],kk+o[2]));
+				grid(ii,jj,kk));
 			if (mNumCells[nn].count(p) == 0)
 			{
 				mNumCells[nn][p] = 1;
 				mMaterialIndexHalfCells[linearIndex] = 0;
-				//LOG << "Starting material " << hex << p << dec << "\n";
+				LOG << "Starting material " << hex << p << dec << "\n";
+				LOGMORE << "at " << ii << " " << jj << " " << kk << ", "
+					<< "linear index " << linearIndex << "\n";
 			}
 			else
 			{
@@ -131,7 +145,7 @@ allocateAuxiliaryDataSpace(const VoxelGrid & grid)
 	// material delegate (whatever it is that informs us here of how much space
 	// will be needed for a material), we can allocate data arrays.  This is not
 	// the same as setting up MemoryBuffers, which is the job of the parent
-	// VoxelizedGrid (or whatever it will be called).
+	// VoxelizedPartition (or whatever it will be called).
 	// 
 	// It's a little weird of me to include the auxiliary data allocation here. 
 }
@@ -149,7 +163,6 @@ std::ostream & operator<< (std::ostream & out, const CellCountGrid & grid)
 	{
 		out << hex << *itr << dec << ":\n" << *(*itr) << "\n";
 	}
-	
 	
 	for (int kk = grid.mHalfCellBounds.p1[2];
 		kk < grid.mHalfCellBounds.p2[2]; kk++)

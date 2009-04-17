@@ -36,8 +36,8 @@ typedef Pointer<SimulationDescription> SimulationDescPtr;
 class GridDescription;
 typedef Pointer<GridDescription> GridDescPtr;
 
-class VoxelizedGrid;
-typedef Pointer<VoxelizedGrid> VoxelizedGridPtr;
+class VoxelizedPartition;
+typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
 
 class HuygensSurfaceDescription;
 typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
@@ -76,11 +76,12 @@ private: // heh, "new private" stuff
 	
 	void voxelizeGrids(const SimulationDescPtr sim,
 		//Map<std::string, GridDescriptionPtr> gridDescriptions,
-		Map<GridDescPtr, VoxelizedGridPtr> voxelizedGrids);
+		Map<GridDescPtr, VoxelizedPartitionPtr> voxelizedGrids);
 	
 	void voxelizeGridRecursor(
-		Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids,
-		GridDescPtr currentGrid);
+		Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
+		GridDescPtr currentGrid,
+		Rect3i myPartition, Rect3i myCalcRegion);
 	
 	GridDescPtr makeAuxGridDescription(Vector3i collapsableDimensions,
 		GridDescPtr parentGrid, HuygensSurfaceDescPtr huygensSurface,

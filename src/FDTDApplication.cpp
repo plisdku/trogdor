@@ -15,7 +15,7 @@
 
 #include "XMLParameterFile.h"
 #include "SimulationDescription.h"
-#include "VoxelizedGrid.h"
+#include "VoxelizedPartition.h"
 #include "YeeUtilities.h"
 
 #include "FDTDApplication.h"
@@ -316,7 +316,7 @@ runNew(string parameterFile)
 	//			create child grids from TFSF sources as 
 	
 	//vector<GridDescPtr> gridDescriptions;
-	Map<GridDescPtr, VoxelizedGridPtr> voxelizedGrids;
+	Map<GridDescPtr, VoxelizedPartitionPtr> voxelizedGrids;
 	Map<string, int> simulationGrids;
 	
 	SimulationDescPtr sim = loadSimulation(parameterFile);
@@ -361,10 +361,27 @@ guessFastestOrientation(const SimulationDescription & grid) const
 
 void FDTDApplication::
 voxelizeGrids(const SimulationDescPtr sim,
-	Map<GridDescPtr, VoxelizedGridPtr> voxelizedGrids)
+	Map<GridDescPtr, VoxelizedPartitionPtr> voxelizedGrids)
 {
 	// Make a copy of the grid descriptions.  We need the ability to modify
 	// them, because TFSFSources may require the creation of additional grids.
+	
+	static const int USE_MPI = 0;
+	Rect3i myPartition, myCalcRegion;
+	
+	if (USE_MPI)
+	{
+		LOG << "Voxelizing the main grid for MPI.\n";
+		LOG << "Determining partitions for each node.\n";
+		assert(sim->getGrids().size() == 1);
+		LOG << "Good, only one main grid present per MPI Trog. limitations.\n";
+		LOG << "Voxelizing per current grid's partition size.\n";
+		
+		myPartition = Rect3i(0,0,0,0,0,0); 
+		myCalcRegion = inset(myPartition, 1,1,1,1,1,1);
+		voxelizeGridRecursor(voxelizedGrids, sim->getGrids()[0], myPartition,
+			myCalcRegion);
+	}
 	
 	LOG << "Voxelizing the grids.\n";
 	for (unsigned int ii = 0; ii < sim->getGrids().size(); ii++)
@@ -373,18 +390,30 @@ voxelizeGrids(const SimulationDescPtr sim,
 		
 		// the recursor paints the setup grid and creates new grids as needed
 		// to implement all TFSF sources.
-		voxelizeGridRecursor(voxelizedGrids, g);
+		
+		LOG << "Determining non-MPI partition size.\n";
+		Rect3i myPartitionWalls = Rect3i(-100000000, -100000000, -100000000, 
+			100000000, 100000000, 100000000);
+		
+		myPartition = clip(myPartitionWalls, g->getHalfCellBounds());
+		myCalcRegion = myPartition;
+		
+		LOG << "My partition: " << myPartition << "\n";
+		
+		voxelizeGridRecursor(voxelizedGrids, g, myPartition, myCalcRegion);
 	}
 }
 
 void FDTDApplication::
-voxelizeGridRecursor(Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids,
-	GridDescPtr currentGrid)
+voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
+	GridDescPtr currentGrid, Rect3i myPartition, Rect3i myCalcRegion)
 {
 	LOG << "Recursing for grid " << currentGrid->getName() << ".\n";
+	LOG << "My partition is " << myPartition << ".\n";
+	LOG << "My calc region is " << myCalcRegion << ".\n";
 	
-	VoxelizedGridPtr setupGrid(new VoxelizedGrid(
-		*currentGrid, voxelizedGrids));
+	VoxelizedPartitionPtr setupGrid(new VoxelizedPartition(
+		*currentGrid, voxelizedGrids, myPartition, myCalcRegion));
 	voxelizedGrids[currentGrid] = setupGrid;
 	
 	LOG << "Origin: " << currentGrid->getOriginYee() << "\n";
@@ -419,7 +448,8 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids,
 			GridDescPtr gPtr = makeAuxGridDescription(collapsable,
 				currentGrid, surfs[nn], auxGridName.str());
 			
-			voxelizeGridRecursor(voxelizedGrids, gPtr);
+			voxelizeGridRecursor(voxelizedGrids, gPtr, myPartition,
+				myCalcRegion);
 		}
 		else
 		{
@@ -440,7 +470,8 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids,
 					GridDescPtr gPtr = makeSourceGridDescription(
 						currentGrid, surfs[nn], srcGridName.str());
 					
-					voxelizeGridRecursor(voxelizedGrids, gPtr);
+					voxelizeGridRecursor(voxelizedGrids, gPtr, myPartition,
+						myCalcRegion);
 				}
 				else
 				{

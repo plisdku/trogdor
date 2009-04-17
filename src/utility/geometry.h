@@ -177,6 +177,10 @@ vmlib::SVec<3,T>
 clip( const Rect<T> & clipRect, const vmlib::SVec<3,T> & v );
 
 template<typename T>
+Rect<T>
+clip( const Rect<T> & rectToClip, const Rect<T> & clipRect);
+
+template<typename T>
 bool operator<(const Rect<T> & lhs, const Rect<T> & rhs);
 
 template<typename T>

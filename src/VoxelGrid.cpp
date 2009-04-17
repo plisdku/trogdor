@@ -21,15 +21,21 @@ using namespace YeeUtilities;
 
 
 VoxelGrid::
-VoxelGrid(Vector3i numYeeCells, Rect3i nonPML)
-{
-	mNonPMLRegion = nonPML;
-	m_nx = numYeeCells[0];
-	m_ny = numYeeCells[1];
-	m_nz = numYeeCells[2];
-	m_nnx = 2*m_nx;
-	m_nny = 2*m_ny;
-	m_nnz = 2*m_nz;
+VoxelGrid(Rect3i voxelizedBounds, Rect3i nonPML) :
+	mBounds(voxelizedBounds),
+	mNonPMLRegion(nonPML)
+{	
+	m_nnx = mBounds.size(0)+1;
+	m_nny = mBounds.size(1)+1;
+	m_nnz = mBounds.size(2)+1;
+	
+	assert(m_nnx%2 == 0);
+	assert(m_nny%2 == 0);
+	assert(m_nnz%2 == 0);
+	
+	m_nx = m_nnx/2;
+	m_ny = m_nny/2;
+	m_nz = m_nnz/2;
 	
 	mMaterialHalfCells.resize(m_nnx*m_nny*m_nnz);
 }
@@ -60,10 +66,12 @@ paintBlock(const GridDescription & gridDesc,
 		halfCells = instruction.getHalfRect();
 	else
 		assert(!"Unknown fill style!");
-	
+	/*
 	halfCells.p1 = clip(gridDesc.getHalfCellBounds(), halfCells.p1);
 	halfCells.p2 = clip(gridDesc.getHalfCellBounds(), halfCells.p2);
 	halfCells = halfCells;
+	*/
+	halfCells = clip(mBounds, halfCells);
 	
 	for (int kk = halfCells.p1[2]; kk <= halfCells.p2[2]; kk++)
 	for (int jj = halfCells.p1[1]; jj <= halfCells.p2[1]; jj++)
@@ -382,9 +390,9 @@ overlayPML()
 	Rect3i nonPML = mNonPMLRegion;
 	Rect3i clipPMLDir(-1, -1, -1, 1, 1, 1);
 	
-	for (int kk = 0; kk < m_nnz; kk++)
-	for (int jj = 0; jj < m_nny; jj++)
-	for (int ii = 0; ii < m_nnx; ii++)
+	for (int kk = mBounds.p1[2]; kk <= mBounds.p2[2]; kk++)
+	for (int jj = mBounds.p1[0]; jj <= mBounds.p2[1]; jj++)
+	for (int ii = mBounds.p1[0]; ii <= mBounds.p2[0]; ii++)
 	if (!nonPML.encloses(ii,jj,kk))
 	{
 		Vector3i pPML(ii,jj,kk);
@@ -405,6 +413,9 @@ overlayPML()
 Paint* & VoxelGrid::
 operator() (int ii, int jj, int kk)
 {
+	ii = ii - mBounds.p1[0];
+	jj = jj - mBounds.p1[1];
+	kk = kk - mBounds.p1[2];
 	return mMaterialHalfCells[(ii+m_nnx)%m_nnx + 
 		((jj+m_nny)%m_nny)*m_nnx +
 		((kk+m_nnz)%m_nnz)*m_nnx*m_nny];
@@ -413,6 +424,9 @@ operator() (int ii, int jj, int kk)
 Paint* VoxelGrid::
 operator() (int ii, int jj, int kk) const
 {
+	ii = ii - mBounds.p1[0];
+	jj = jj - mBounds.p1[1];
+	kk = kk - mBounds.p1[2];
 	return mMaterialHalfCells[(ii+m_nnx)%m_nnx + 
 		((jj+m_nny)%m_nny)*m_nnx +
 		((kk+m_nnz)%m_nnz)*m_nnx*m_nny];
@@ -421,17 +435,19 @@ operator() (int ii, int jj, int kk) const
 Paint* & VoxelGrid::
 operator() (const Vector3i & pp)
 {
-	return mMaterialHalfCells[(pp[0]+m_nnx)%m_nnx + 
-		((pp[1]+m_nny)%m_nny)*m_nnx +
-		((pp[2]+m_nnz)%m_nnz)*m_nnx*m_nny];
+	Vector3i qq(pp - mBounds.p1);
+	return mMaterialHalfCells[(qq[0]+m_nnx)%m_nnx + 
+		((qq[1]+m_nny)%m_nny)*m_nnx +
+		((qq[2]+m_nnz)%m_nnz)*m_nnx*m_nny];
 }
 
 Paint* VoxelGrid::
 operator() (const Vector3i & pp) const
 {
-	return mMaterialHalfCells[(pp[0]+m_nnx)%m_nnx + 
-		((pp[1]+m_nny)%m_nny)*m_nnx +
-		((pp[2]+m_nnz)%m_nnz)*m_nnx*m_nny];
+	Vector3i qq(pp - mBounds.p1);
+	return mMaterialHalfCells[(qq[0]+m_nnx)%m_nnx + 
+		((qq[1]+m_nny)%m_nny)*m_nnx +
+		((qq[2]+m_nnz)%m_nnz)*m_nnx*m_nny];
 }
 
 void VoxelGrid::
@@ -455,6 +471,9 @@ paintPMC(Paint* paint, int iYee, int jYee, int kYee)
 long VoxelGrid::
 linearYeeIndex(int ii, int jj, int kk) const
 {
+	ii = ii - mBounds.p1[0];
+	jj = jj - mBounds.p1[1];
+	kk = kk - mBounds.p1[2];
 	int i = ii/2, j = jj/2, k = kk/2;
 	return ( (i+m_nx)%m_nx +
 		m_nx*( (j+m_ny)%m_ny) +
@@ -464,7 +483,8 @@ linearYeeIndex(int ii, int jj, int kk) const
 long VoxelGrid::
 linearYeeIndex(const Vector3i & halfCell) const
 {
-	int i = halfCell[0]/2, j = halfCell[1]/2, k = halfCell[2]/2;
+	Vector3i qq(halfCell - mBounds.p1);
+	int i = qq[0]/2, j = qq[1]/2, k = qq[2]/2;
 	return ( (i+m_nx)%m_nx +
 		m_nx*( (j+m_ny)%m_ny) +
 		m_nx*m_ny*( (k+m_nz)%m_nz));

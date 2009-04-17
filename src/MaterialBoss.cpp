@@ -24,7 +24,7 @@ using namespace YeeUtilities;
 
 MaterialDelegatePtr NewMaterialFactory::
 getDelegate(const VoxelGrid & vg, const CellCountGridPtr cg, 
-	const vector<CellCountGridPtr> & pmlFaces, Paint* parentPaint)
+	/*const vector<CellCountGridPtr> & pmlFaces,*/ Paint* parentPaint)
 {
 	assert(parentPaint != 0L);
 	LOG << "Delegate for " << *parentPaint << endl;
@@ -100,7 +100,7 @@ SimpleBulkMaterialDelegate() :
 void SimpleBulkMaterialDelegate::
 startRunline(const VoxelGrid & voxelGrid,
 	const CellCountGrid & cellCountGrid,
-	const vector<CellCountGridPtr> & pmlCellCountGrids,
+	/*const vector<CellCountGridPtr> & pmlCellCountGrids,*/
 	const Vector3i & startPos)
 {
 	mStartPoint = startPos;
@@ -147,7 +147,7 @@ startRunline(const VoxelGrid & voxelGrid,
 bool SimpleBulkMaterialDelegate::
 canContinueRunline(const VoxelGrid & voxelGrid,
 		const CellCountGrid & cellCountGrid,
-		const std::vector<CellCountGridPtr> & pmlCellCountGrids,
+		/*const std::vector<CellCountGridPtr> & pmlCellCountGrids,*/
 		const Vector3i & oldPos, const Vector3i & newPos,
 	Paint* newPaint) const
 {

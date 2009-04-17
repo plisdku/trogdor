@@ -17,7 +17,7 @@
 class VoxelGrid
 {
 public:
-	VoxelGrid(Vector3i numYeeCells, Rect3i nonPML);
+	VoxelGrid(Rect3i voxelizedBounds, Rect3i nonPML);
 	
 	friend std::ostream & operator<< (std::ostream & out,
 		const VoxelGrid & grid);
@@ -54,7 +54,13 @@ public:
 private:
 	std::vector<Paint*> mMaterialHalfCells;
 	
+	Rect3i mBounds;
 	Rect3i mNonPMLRegion;
+	
+	// This would be useful maybe if I didn't insist on each partition
+	// being an integral number of Yee cells across.
+	//Rect3i mYeeBounds[8];  // One per octant, a quick cache.
+	
 	int m_nnx;
 	int m_nny;
 	int m_nnz;

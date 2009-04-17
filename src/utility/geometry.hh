@@ -436,6 +436,13 @@ vmlib::SVec<3,T>  clip(const Rect<T> & clipRect, const vmlib::SVec<3,T> & v)
 
 
 template<typename T>
+Rect<T> clip( const Rect<T> & rectToClip, const Rect<T> & clipRect)
+{
+	Rect<T> out( clip(clipRect, rectToClip.p1), clip(clipRect, rectToClip.p2) );
+	return out;
+}
+
+template<typename T>
 bool operator<(const Rect<T> & lhs, const Rect<T> & rhs)
 {
     if (lhs.p1 < rhs.p1)

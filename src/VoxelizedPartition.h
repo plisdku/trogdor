@@ -1,5 +1,5 @@
 /*
- *  VoxelizedGrid.h
+ *  VoxelizedPartition.h
  *  TROGDOR
  *
  *  Created by Paul Hansen on 2/9/09.
@@ -30,20 +30,21 @@
 
 #include "Paint.h"
 
-class VoxelizedGrid
+class VoxelizedPartition
 {
 public:
-	VoxelizedGrid(const GridDescription & gridDesc, 
-		const Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids);  // !
+	VoxelizedPartition(const GridDescription & gridDesc, 
+		const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
+		Rect3i partitionBounds, Rect3i calcRegion);  // !
 	
 	const std::vector<Vector3i> & getHuygensRegionSymmetries() const {
 		return mHuygensRegionSymmetries; }
 	
-	bool hasPML(int faceNum) const;
+	bool partitionHasPML(int faceNum) const;
 	Rect3i getPMLRegionOnFace(int faceNum) const;
 private:
 	void paintFromAssembly(const GridDescription & gridDesc,
-		const Map<GridDescPtr, VoxelizedGridPtr> & voxelizedGrids);
+		const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids);
 	void paintFromHuygensSurfaces(const GridDescription & gridDesc);
 	void paintFromCurrentSources(const GridDescription & gridDesc);
 	void paintPML();
@@ -60,7 +61,7 @@ private:
 	
 	VoxelGrid mVoxels;
 	CellCountGridPtr mCentralIndices;
-	std::vector<CellCountGridPtr> mPMLFaceIndices;
+	//std::vector<CellCountGridPtr> mPMLFaceIndices;
 	
 	class EHBufferSet
 	{
@@ -73,25 +74,19 @@ private:
 	Map<NeighborBufferDescPtr, EHBufferSet> mNBBuffers;
 	Map<Paint*, MaterialDelegatePtr> mDelegates;
 	
-	Rect3i mNonPMLRegion;
+	Rect3i mPartitionBounds;
 	Rect3i mCalcRegion;
-	Vector3i mOriginYee;
-	Vector3i mNumYeeCells;
-	Vector3i mNumHalfCells;
-	int m_nnx;
-	int m_nny;
-	int m_nnz;
-	int m_nx;
-	int m_ny;
-	int m_nz;
 	
+	Rect3i mNonPMLRegion;
+	Vector3i mOriginYee;
+		
 	std::vector<Vector3i> mHuygensRegionSymmetries;
 	
 	friend std::ostream & operator<< (std::ostream & out,
-		const VoxelizedGrid & grid);
+		const VoxelizedPartition & grid);
 };
 
-std::ostream & operator<< (std::ostream & out, const VoxelizedGrid & grid);
+std::ostream & operator<< (std::ostream & out, const VoxelizedPartition & grid);
 
 
 
