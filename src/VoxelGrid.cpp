@@ -21,13 +21,14 @@ using namespace YeeUtilities;
 
 
 VoxelGrid::
-VoxelGrid(Rect3i voxelizedBounds, Rect3i nonPML) :
-	mBounds(voxelizedBounds),
+VoxelGrid(Rect3i voxelizedBounds, Rect3i gridHalfCells, Rect3i nonPML) :
+	mAllocRegion(voxelizedBounds),
+	mGridHalfCells(gridHalfCells),
 	mNonPMLRegion(nonPML)
 {	
-	m_nnx = mBounds.size(0)+1;
-	m_nny = mBounds.size(1)+1;
-	m_nnz = mBounds.size(2)+1;
+	m_nnx = mAllocRegion.size(0)+1;
+	m_nny = mAllocRegion.size(1)+1;
+	m_nnz = mAllocRegion.size(2)+1;
 	
 	assert(m_nnx%2 == 0);
 	assert(m_nny%2 == 0);
@@ -36,6 +37,8 @@ VoxelGrid(Rect3i voxelizedBounds, Rect3i nonPML) :
 	m_nx = m_nnx/2;
 	m_ny = m_nny/2;
 	m_nz = m_nnz/2;
+	
+	LOG << "Non PML is " << nonPML << endl;
 	
 	mMaterialHalfCells.resize(m_nnx*m_nny*m_nnz);
 }
@@ -66,17 +69,16 @@ paintBlock(const GridDescription & gridDesc,
 		halfCells = instruction.getHalfRect();
 	else
 		assert(!"Unknown fill style!");
-	/*
-	halfCells.p1 = clip(gridDesc.getHalfCellBounds(), halfCells.p1);
-	halfCells.p2 = clip(gridDesc.getHalfCellBounds(), halfCells.p2);
-	halfCells = halfCells;
-	*/
-	halfCells = clip(mBounds, halfCells);
+	
+	// Clipping explicitly is unnecessary and even undesirable because of grid-
+	// level wraparound.
+	//halfCells = clip(mAllocRegion, halfCells);
 	
 	for (int kk = halfCells.p1[2]; kk <= halfCells.p2[2]; kk++)
 	for (int jj = halfCells.p1[1]; jj <= halfCells.p2[1]; jj++)
 	for (int ii = halfCells.p1[0]; ii <= halfCells.p2[0]; ii++)
-		(*this)(ii,jj,kk) = paint;
+		paintHalfCell(paint, ii, jj, kk);
+		//(*this)(ii,jj,kk) = paint;
 }
 
 void VoxelGrid::
@@ -212,8 +214,10 @@ paintEllipsoid(const GridDescription & gridDesc,
 		Vector3d center = 0.5*Vector3d(centerTimesTwo[0], centerTimesTwo[1],
 			centerTimesTwo[2]);
 		
-		Rect3i fillRect(clip(gridDesc.getYeeBounds(), yeeRect.p1),
-			clip(gridDesc.getYeeBounds(), yeeRect.p2));
+		// Don't clip: we clip in the paint routines.
+		//Rect3i fillRect(clip(gridDesc.getYeeBounds(), yeeRect.p1),
+		//	clip(gridDesc.getYeeBounds(), yeeRect.p2));
+		Rect3i fillRect(yeeRect);
 		
 		for (kYee = fillRect.p1[2]; kYee <= fillRect.p2[2]; kYee++)
 		for (jYee = fillRect.p1[1]; jYee <= fillRect.p2[1]; jYee++)
@@ -243,11 +247,9 @@ paintEllipsoid(const GridDescription & gridDesc,
 		Vector3d radii = 0.5*Vector3d(extent[0], extent[1], extent[2]);
 		Vector3d center = 0.5*Vector3d(center2[0], center2[1], center2[2]);
 		
-		halfCells.p1 = clip(gridDesc.getHalfCellBounds(),
-			halfCells.p1);
-		halfCells.p2 = clip(gridDesc.getHalfCellBounds(),
-			halfCells.p2);
-		
+		// Don't clip: we clip in the paint routines
+		//halfCells = clip(halfCells, mAllocRegion);
+				
 		if (instruction.getFillStyle() == kHalfCellStyle)
 		{
 			for (kk = halfCells.p1[2]; kk <= halfCells.p2[2]; kk++)
@@ -296,9 +298,9 @@ paintCopyFrom(const GridDescription & gridDesc,
 	matrix(1,1) = (copyFrom.size(1) != 0);
 	matrix(2,2) = (copyFrom.size(2) != 0);
 	
-	Rect3i copyTo2;
-	copyTo2.p1 = clip(gridDesc.getHalfCellBounds(), copyTo.p1);
-	copyTo2.p2 = clip(gridDesc.getHalfCellBounds(), copyTo.p2);
+	// Don't clip here, we clip in the paint routines
+	//Rect3i copyTo2 = clip(copyTo, mAllocRegion);
+	Rect3i copyTo2(copyTo);
 	
 	Vector3i p;
 	Vector3i q;
@@ -319,6 +321,11 @@ paintExtrude(const GridDescription & gridDesc, const Extrude & instruction)
 	int ii,jj,kk;
 	Rect3i fill = instruction.getExtrudeTo();
 	Rect3i from = instruction.getExtrudeFrom();
+	
+	// These two clipping steps here are why the Extrude instruction is not
+	// enabled for MPI.
+	fill = clip(fill, mAllocRegion);
+	from = clip(from, mAllocRegion);
 	
 	for (kk = fill.p1[2]; kk <= fill.p2[2]; kk++)
 	for (jj = fill.p1[1]; jj <= fill.p2[1]; jj++)
@@ -354,7 +361,8 @@ overlayHuygensSurface(const HuygensSurfaceDescription & surf)
 			{
 				Paint* p = Paint::getCurlBufferedPaint( (*this)(ii,jj,kk),
 					sideNum, nb);
-				(*this)(ii,jj,kk) = p;
+				paintHalfCell(p, ii, jj, kk);
+				//(*this)(ii,jj,kk) = p;
 			}
 			
 			//LOG << "Huygens inner " << innerHalfRect << "\n";
@@ -367,7 +375,8 @@ overlayHuygensSurface(const HuygensSurfaceDescription & surf)
 			{
 				Paint* q = Paint::getCurlBufferedPaint( (*this)(ii,jj,kk),
 					oppositeSideNum, nb);
-				(*this)(ii,jj,kk) = q;
+				paintHalfCell(q, ii, jj, kk);
+				//(*this)(ii,jj,kk) = q;
 			}
 			
 			//LOG << "Huygens outer " << outerHalfRect << "\n"; 
@@ -386,26 +395,35 @@ void VoxelGrid::
 overlayPML()
 {
 	LOG << "Overlaying PML.  Using slow algorithm.\n";
+	LOGMORE << "Bounds " << mAllocRegion << "\n";
+	LOGMORE << "nonPML " << mNonPMLRegion << "\n";
 	
-	Rect3i nonPML = mNonPMLRegion;
+	LOG << "Warning: this will not result in correct behavior if the current "
+		"node needs to paint the PML from the opposite side of the whole grid"
+		" and if the PML is not in the same direction.  This can be avoided "
+		"by always painting a half-cell of PEC or PMC at the grid edge, I "
+		"believe, but I don't know that I would count on this behavior.\n";
+	
 	Rect3i clipPMLDir(-1, -1, -1, 1, 1, 1);
+	Rect3i & mGrid = mGridHalfCells;
 	
-	for (int kk = mBounds.p1[2]; kk <= mBounds.p2[2]; kk++)
-	for (int jj = mBounds.p1[0]; jj <= mBounds.p2[1]; jj++)
-	for (int ii = mBounds.p1[0]; ii <= mBounds.p2[0]; ii++)
-	if (!nonPML.encloses(ii,jj,kk))
+	Vector3i pp;
+	for (pp[2] = mGrid.p1[2]; pp[2] <= mGrid.p2[2]; pp[2]++)
+	for (pp[1] = mGrid.p1[1]; pp[1] <= mGrid.p2[1]; pp[1]++)
+	for (pp[0] = mGrid.p1[0]; pp[0] <= mGrid.p2[0]; pp[0]++)
+	if (!mNonPMLRegion.encloses(pp))
 	{
-		Vector3i pPML(ii,jj,kk);
-		Vector3i nearestNonPML(clip(nonPML, pPML));
-		Vector3i pmlOffset(nearestNonPML - pPML);
-		Vector3i pmlDir(-clip(clipPMLDir, pmlOffset));
+		// pmlDir points from the PML to the non PML region, and all components
+		// are 1, -1 or 0.
+		Vector3i pmlDir(clip(clipPMLDir, 
+			Vector3i(pp - clip(mNonPMLRegion, pp))));
 		
-		Paint* q = (*this)(nearestNonPML);
-		Paint* p = Paint::getPMLPaint(q, pmlDir);
-		(*this)(pPML) = p;
+		// this is like paintHalfCell except it tags PML.  there's some fancy
+		// footwork to account for PML that is wrapping around the grid in
+		// MPI contexts, should that ever occur.
+		paintPML(pmlDir, pp);
 	}
 }
-
 
 #pragma mark *** Accessor and grid paint methods ***
 
@@ -413,9 +431,9 @@ overlayPML()
 Paint* & VoxelGrid::
 operator() (int ii, int jj, int kk)
 {
-	ii = ii - mBounds.p1[0];
-	jj = jj - mBounds.p1[1];
-	kk = kk - mBounds.p1[2];
+	ii = ii - mAllocRegion.p1[0];
+	jj = jj - mAllocRegion.p1[1];
+	kk = kk - mAllocRegion.p1[2];
 	return mMaterialHalfCells[(ii+m_nnx)%m_nnx + 
 		((jj+m_nny)%m_nny)*m_nnx +
 		((kk+m_nnz)%m_nnz)*m_nnx*m_nny];
@@ -424,9 +442,9 @@ operator() (int ii, int jj, int kk)
 Paint* VoxelGrid::
 operator() (int ii, int jj, int kk) const
 {
-	ii = ii - mBounds.p1[0];
-	jj = jj - mBounds.p1[1];
-	kk = kk - mBounds.p1[2];
+	ii = ii - mAllocRegion.p1[0];
+	jj = jj - mAllocRegion.p1[1];
+	kk = kk - mAllocRegion.p1[2];
 	return mMaterialHalfCells[(ii+m_nnx)%m_nnx + 
 		((jj+m_nny)%m_nny)*m_nnx +
 		((kk+m_nnz)%m_nnz)*m_nnx*m_nny];
@@ -435,7 +453,7 @@ operator() (int ii, int jj, int kk) const
 Paint* & VoxelGrid::
 operator() (const Vector3i & pp)
 {
-	Vector3i qq(pp - mBounds.p1);
+	Vector3i qq(pp - mAllocRegion.p1);
 	return mMaterialHalfCells[(qq[0]+m_nnx)%m_nnx + 
 		((qq[1]+m_nny)%m_nny)*m_nnx +
 		((qq[2]+m_nnz)%m_nnz)*m_nnx*m_nny];
@@ -444,10 +462,33 @@ operator() (const Vector3i & pp)
 Paint* VoxelGrid::
 operator() (const Vector3i & pp) const
 {
-	Vector3i qq(pp - mBounds.p1);
+	Vector3i qq(pp - mAllocRegion.p1);
 	return mMaterialHalfCells[(qq[0]+m_nnx)%m_nnx + 
 		((qq[1]+m_nny)%m_nny)*m_nnx +
 		((qq[2]+m_nnz)%m_nnz)*m_nnx*m_nny];
+}
+
+void VoxelGrid::
+paintHalfCell(Paint* paint, int ii, int jj, int kk)
+{
+	//	 Paint the cell itself
+	if (mAllocRegion.encloses(ii,jj,kk))
+	{
+		(*this)(ii,jj,kk) = paint;
+	}
+	
+	// Now grid-symmetrical paints
+	for (int transDir = 0; transDir < 6; transDir++)
+	{
+		Vector3i translation(cardinalDirection(transDir)*
+			(mGridHalfCells.size(transDir/2)+1));
+		if (mAllocRegion.encloses(ii+translation[0], jj+translation[1],
+			kk+translation[2]))
+		{
+			(*this)(ii+translation[0], jj+translation[1], kk+translation[2])
+				 = paint;
+		}
+	}
 }
 
 void VoxelGrid::
@@ -456,7 +497,7 @@ paintPEC(Paint* paint, int iYee, int jYee, int kYee)
 	for (int kk = 0; kk < 2; kk++)
 	for (int jj = 0; jj < 2; jj++)
 	for (int ii = 0; ii < 2; ii++)
-		(*this)(2*iYee+ii, 2*jYee+jj, 2*kYee+kk) = paint;
+		paintHalfCell(paint, 2*iYee+ii, 2*jYee+jj, 2*kYee+kk);
 }
 
 void VoxelGrid::
@@ -465,15 +506,38 @@ paintPMC(Paint* paint, int iYee, int jYee, int kYee)
 	for (int kk = 0; kk < 2; kk++)
 	for (int jj = 0; jj < 2; jj++)
 	for (int ii = 0; ii < 2; ii++)
-		(*this)(2*iYee-ii, 2*jYee-jj, 2*kYee-kk) = paint;
+		paintHalfCell(paint, 2*iYee-ii, 2*jYee-jj, 2*kYee-kk);
 }
 
+void VoxelGrid::
+paintPML(Vector3i pmlDir, Vector3i pp)
+{
+	//	 Paint the cell itself
+	if (mAllocRegion.encloses(pp))
+		(*this)(pp) = Paint::getPMLPaint((*this)(pp), pmlDir);
+	
+	// Now grid-symmetrical paints
+	for (int transDir = 0; transDir < 6; transDir++)
+	{
+		Vector3i qq(pp + cardinalDirection(transDir)*
+			(mGridHalfCells.size(transDir/2)+1));
+		
+			
+		if (mAllocRegion.encloses(qq))
+		{
+			(*this)(qq) =
+				Paint::getPMLPaint((*this)(qq), pmlDir);
+		}
+	}
+}
+
+/*
 long VoxelGrid::
 linearYeeIndex(int ii, int jj, int kk) const
 {
-	ii = ii - mBounds.p1[0];
-	jj = jj - mBounds.p1[1];
-	kk = kk - mBounds.p1[2];
+	ii = ii - mAllocRegion.p1[0];
+	jj = jj - mAllocRegion.p1[1];
+	kk = kk - mAllocRegion.p1[2];
 	int i = ii/2, j = jj/2, k = kk/2;
 	return ( (i+m_nx)%m_nx +
 		m_nx*( (j+m_ny)%m_ny) +
@@ -483,12 +547,13 @@ linearYeeIndex(int ii, int jj, int kk) const
 long VoxelGrid::
 linearYeeIndex(const Vector3i & halfCell) const
 {
-	Vector3i qq(halfCell - mBounds.p1);
+	Vector3i qq(halfCell - mAllocRegion.p1);
 	int i = qq[0]/2, j = qq[1]/2, k = qq[2]/2;
 	return ( (i+m_nx)%m_nx +
 		m_nx*( (j+m_ny)%m_ny) +
 		m_nx*m_ny*( (k+m_nz)%m_nz));
 }
+*/
 
 std::ostream &
 operator<< (std::ostream & out, const VoxelGrid & grid)

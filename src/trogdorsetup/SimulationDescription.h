@@ -114,6 +114,7 @@ public:
 	const Rect3i & getCalcRegion() const { return mCalcRegionHalf; }
 	const Rect3i & getNonPMLRegion() const { return mNonPMLHalf; }
 	Vector3i getOriginYee() const { return mOriginYee; }
+	int getNumDimensions() const;
 	
 	const std::vector<OutputDescPtr> & getOutputs() const { return mOutputs; }
 	const std::vector<InputEHDescPtr> & getInputs() const { return mInputs; }
@@ -351,6 +352,10 @@ public:
 		float incidentFieldFactor);
 	
 	void cycleCoordinates();  // rotate x->y, y->z, z->x
+	
+	const Rect3i & getDestHalfRect() const { return mDestHalfRect; }
+	const Rect3i & getBufferHalfRect() const { return mBufferHalfRect; }
+	const Rect3i & getBufferYeeBounds() const { return mBufferYeeBounds; }
 	
 private:
 	Rect3i mDestHalfRect;

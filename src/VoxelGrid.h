@@ -17,7 +17,11 @@
 class VoxelGrid
 {
 public:
-	VoxelGrid(Rect3i voxelizedBounds, Rect3i nonPML);
+	VoxelGrid(Rect3i allocRegion, Rect3i gridHalfCells, Rect3i nonPML);
+	
+	const Rect3i & getGridHalfCells() { return mGridHalfCells; }
+	const Rect3i & getAllocRegion() { return mAllocRegion; }
+	const Rect3i & getNonPMLRegion() { return mNonPMLRegion; }
 	
 	friend std::ostream & operator<< (std::ostream & out,
 		const VoxelGrid & grid);
@@ -44,22 +48,21 @@ public:
 	Paint* operator() (int ii, int jj, int kk) const;
 	Paint* & operator() (const Vector3i & pp);
 	Paint* operator() (const Vector3i & pp) const;
-	
+	/*
 	long linearYeeIndex(int ii, int jj, int kk) const;
 	long linearYeeIndex(const Vector3i & halfCell) const;
-	
+	*/
+	void paintHalfCell(Paint* paint, int ii, int jj, int kk);
 	void paintPEC(Paint* paint, int iYee, int jYee, int kYee);
 	void paintPMC(Paint* paint, int iYee, int jYee, int kYee);
+	void paintPML(Vector3i pmlDir, Vector3i pp);
 	
 private:
 	std::vector<Paint*> mMaterialHalfCells;
 	
-	Rect3i mBounds;
+	Rect3i mAllocRegion;
+	Rect3i mGridHalfCells;
 	Rect3i mNonPMLRegion;
-	
-	// This would be useful maybe if I didn't insist on each partition
-	// being an integral number of Yee cells across.
-	//Rect3i mYeeBounds[8];  // One per octant, a quick cache.
 	
 	int m_nnx;
 	int m_nny;

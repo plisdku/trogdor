@@ -45,17 +45,23 @@ MemoryBuffer(const MemoryBuffer & copyMe) :
 {
 }
 
+BufferPointer::
+BufferPointer() :
+	mBuffer(0L),
+	mOffset(0)
+{
+}
 
 BufferPointer::
 BufferPointer(const MemoryBuffer & buffer) :
-	mBuffer(buffer),
+	mBuffer(&buffer),
 	mOffset(0)
 {
 }
 
 BufferPointer::
 BufferPointer(const MemoryBuffer & buffer, unsigned long offset) :
-	mBuffer(buffer),
+	mBuffer(&buffer),
 	mOffset(offset)
 {
 }
@@ -70,8 +76,8 @@ BufferPointer(const BufferPointer & copyMe) :
 void BufferPointer::
 setOffset(unsigned long offset)
 {
-	assert(offset % mBuffer.mStride == 0);
-	assert(offset < mBuffer.mLength);
+	assert(offset % mBuffer->mStride == 0);
+	assert(offset < mBuffer->mLength);
 	mOffset = offset;
 }
 
@@ -79,14 +85,14 @@ setOffset(unsigned long offset)
 BufferPointer
 operator + (const BufferPointer & lhs, unsigned long rhs)
 {
-	return BufferPointer(lhs.getBuffer(), lhs.getOffset() + rhs);
+	return BufferPointer(*lhs.getBuffer(), lhs.getOffset() + rhs);
 }
 
 BufferPointer
 operator - (const BufferPointer & lhs, unsigned long rhs)
 {
 	assert(lhs.getOffset() >= rhs);
-	return BufferPointer(lhs.getBuffer(), lhs.getOffset() - rhs);
+	return BufferPointer(*lhs.getBuffer(), lhs.getOffset() - rhs);
 }
 
 BufferPointer &
@@ -104,6 +110,16 @@ operator -= (BufferPointer & lhs, unsigned long rhs)
 	return lhs;
 }
 
+std::ostream &
+operator << (std::ostream & str, const BufferPointer & buff)
+{
+	if (buff.mBuffer != 0L)
+		str << buff.mBuffer->getDescription();
+	else
+		str << "(null buffer)";
+	str << " offset " << buff.mOffset;
+	return str;
+}
 
 
 

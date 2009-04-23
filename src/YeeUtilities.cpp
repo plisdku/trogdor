@@ -57,7 +57,7 @@ static int sOctantFieldDirections[8] =
 
 int halfCellIndex(const Vector3i & v)
 {
-	return v[0]%2 + 2*(v[1]%2) + 4*(v[2]%2);
+	return abs(v[0]%2 + 2*(v[1]%2) + 4*(v[2]%2)); // abs deals with -1
 }
 
 const Vector3i & halfCellOffset(int halfCellIndex)
@@ -96,6 +96,11 @@ int octantFieldNumber(int octant)
 	return sOctantFieldIndices[octant];
 }
 
+int octantFieldNumber(Vector3i octant)
+{
+	return octantFieldNumber(halfCellIndex(octant));
+}
+
 int octantENumber(int octant)
 {
 	assert(octant >= 0);
@@ -115,6 +120,11 @@ int octantFieldDirection(int octant)
 	assert(octant >= 0);
 	assert(octant < 8);
 	return sOctantFieldDirections[octant];
+}
+
+int octantFieldDirection(Vector3i octant)
+{
+	return octantFieldDirection(halfCellIndex(octant));
 }
 
 
@@ -194,6 +204,12 @@ Rect3i rectYeeToHalf(const Rect3i & yeeRect)
 {
 	return Rect3i(2*yeeRect.p1, 2*yeeRect.p2 + Vector3i(1,1,1));
 }
+
+Rect3i expandToYeeRect(const Rect3i & halfRect)
+{
+	return rectYeeToHalf(rectHalfToYee(halfRect));
+}
+
 
 // returns the last layer of the rect on the side with normal along sideIndex
 Rect3i edgeOfRect(const Rect3i & rect, int sideIndex)

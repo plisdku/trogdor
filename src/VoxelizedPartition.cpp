@@ -14,6 +14,8 @@
 #include "YeeUtilities.h"
 #include "MaterialBoss.h"
 
+#include <sstream>
+
 using namespace std;
 using namespace YeeUtilities;
 
@@ -22,44 +24,53 @@ using namespace YeeUtilities;
 VoxelizedPartition::
 VoxelizedPartition(const GridDescription & gridDesc, 
 	const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
-	Rect3i partitionBounds, Rect3i calcRegion) :
-	mVoxels(partitionBounds, gridDesc.getNonPMLRegion()),
-	//mPMLFaceIndices(6),
-	mPartitionBounds(partitionBounds),
+	Rect3i allocRegion, Rect3i calcRegion) :
+	mVoxels(allocRegion, gridDesc.getHalfCellBounds(), 
+		gridDesc.getNonPMLRegion()),
+	mGridHalfCells(gridDesc.getHalfCellBounds()),
+	mFieldAllocRegion(expandToYeeRect(allocRegion)),
+	mAuxAllocRegion(allocRegion),
 	mCalcRegion(calcRegion)
 {
 	LOG << "VoxelizedPartition()\n";
+	
+	m_nx = (mFieldAllocRegion.size(0)+1)/2;
+	m_ny = (mFieldAllocRegion.size(1)+1)/2;
+	m_nz = (mFieldAllocRegion.size(2)+1)/2;
+	int bufSize = m_nx*m_ny*m_nz;
+	
+	mEHBuffers.buffers[0] = MemoryBuffer("Ex", bufSize);
+	mEHBuffers.buffers[1] = MemoryBuffer("Ey", bufSize);
+	mEHBuffers.buffers[2] = MemoryBuffer("Hz", bufSize);
+	mEHBuffers.buffers[3] = MemoryBuffer("Ez", bufSize);
+	mEHBuffers.buffers[4] = MemoryBuffer("Hy", bufSize);
+	mEHBuffers.buffers[5] = MemoryBuffer("Hx", bufSize);
 	
 	mNonPMLRegion = gridDesc.getNonPMLRegion();
 	mOriginYee = gridDesc.getOriginYee();
 	
 	LOG << "nonPML " << mNonPMLRegion << "\n";
+	LOG << "alloc region " << mAuxAllocRegion << "\n";
+	LOG << "full field alloc region (integer num Yee cells) "
+		<< mFieldAllocRegion << "\n";
 	LOG << "calc " << mCalcRegion << "\n";
 	LOG << "origin " << mOriginYee << "\n";
 	
 	paintFromAssembly(gridDesc, voxelizedGrids);
-	calculateHuygensSymmetries(gridDesc);
+	calculateHuygensSymmetries(gridDesc); // * NOT MPI FRIENDLY YET
 	paintFromHuygensSurfaces(gridDesc);
 	paintFromCurrentSources(gridDesc);
 	
-	mVoxels.overlayPML();
+	//cout << mVoxels << endl;
 	
-	// 1.  Paint in basic materials
-	//	This includes marking boundaries as boundaries, subcell parts as subcell
-	//	parts, etc.  Everything must be marked as the right *type* in this
-	//	stage.  Nothing should be put into the PML here.  After painting,
-	//  determine the material indices in a second pass, and write variable
-	//  params like space-varying permittivity, etc.  (At least leave room.)
-	// 2.  Calculate symmetries of Huygens surface interiors and paint edges
-	// 3.  Paint PML
+	mVoxels.overlayPML(); // * grid-scale wraparound
+	
+	cout << mVoxels << endl;
 	
 	calculateMaterialIndices();
-	
 	createMaterialDelegates();
-	
-	loadSpaceVaryingData();
-	
-	generateRunlines();
+	loadSpaceVaryingData(); // * grid-scale wraparound
+	generateRunlines(); // * partition wraparound
 }
 
 bool VoxelizedPartition::
@@ -71,12 +82,12 @@ partitionHasPML(int faceNum) const
 	
 	if (faceNum%2 == 0) // low side
 	{
-		if (mNonPMLRegion.p1[faceNum/2] <= mPartitionBounds.p1[faceNum/2])
+		if (mNonPMLRegion.p1[faceNum/2] <= mAuxAllocRegion.p1[faceNum/2])
 			return 0;
 	}
 	else
 	{
-		if (mNonPMLRegion.p2[faceNum/2] >= mPartitionBounds.p2[faceNum/2])
+		if (mNonPMLRegion.p2[faceNum/2] >= mAuxAllocRegion.p2[faceNum/2])
 			return 0;
 	}
 	return 1;
@@ -89,18 +100,128 @@ getPMLRegionOnFace(int faceNum) const
 	assert(faceNum >= 0);
 	assert(faceNum < 6);
 	
-	Rect3i pmlRegion(mPartitionBounds);
+	Rect3i pmlRegion(mGridHalfCells);
 	
 	if (faceNum%2 == 0) // low side
-	{
 		pmlRegion.p2[faceNum/2] = mNonPMLRegion.p1[faceNum/2]-1;
-	}
 	else
-	{
 		pmlRegion.p1[faceNum/2] = mNonPMLRegion.p2[faceNum/2]+1;
-	}
 	return pmlRegion;
 }
+
+Rect3i VoxelizedPartition::
+getPartitionPMLRegionOnFace(int faceNum) const
+{
+	//LOG << "Using non-parallel-friendly method.\n";
+	assert(faceNum >= 0);
+	assert(faceNum < 6);
+	
+	Rect3i pmlRegion(mAuxAllocRegion);
+	
+	if (faceNum%2 == 0) // low side
+		pmlRegion.p2[faceNum/2] = mNonPMLRegion.p1[faceNum/2]-1;
+	else
+		pmlRegion.p1[faceNum/2] = mNonPMLRegion.p2[faceNum/2]+1;
+	return pmlRegion;
+}
+
+Rect3i VoxelizedPartition::
+getPMLRegion(Vector3i pmlDir) const
+{
+	Rect3i pml(mGridHalfCells);
+	
+	for (int nn = 0; nn < 3; nn++)
+	{
+		if (pmlDir[nn] < 0)
+			pml.p2[nn] = mNonPMLRegion.p1[nn]-1;
+		else if (pmlDir[nn] > 0)
+			pml.p1[nn] = mNonPMLRegion.p2[nn]+1;
+		else
+		{
+			pml.p1[nn] = mNonPMLRegion.p1[nn];
+			pml.p2[nn] = mNonPMLRegion.p2[nn];
+		}
+	}
+	return pml;
+}
+
+long VoxelizedPartition::
+linearYeeIndex(int ii, int jj, int kk) const
+{
+	ii = ii - mFieldAllocRegion.p1[0];
+	jj = jj - mFieldAllocRegion.p1[1];
+	kk = kk - mFieldAllocRegion.p1[2];
+	int i = ii/2, j = jj/2, k = kk/2;
+	return ( (i+m_nx)%m_nx +
+		m_nx*( (j+m_ny)%m_ny) +
+		m_nx*m_ny*( (k+m_nz)%m_nz));
+}
+
+long VoxelizedPartition::
+linearYeeIndex(const Vector3i & halfCell) const
+{
+	Vector3i qq(halfCell - mFieldAllocRegion.p1);
+	int i = qq[0]/2, j = qq[1]/2, k = qq[2]/2;
+	return ( (i+m_nx)%m_nx +
+		m_nx*( (j+m_ny)%m_ny) +
+		m_nx*m_ny*( (k+m_nz)%m_nz));
+}
+
+
+long VoxelizedPartition::
+linearYeeIndex(const NeighborBufferDescPtr & nb,
+	int ii, int jj, int kk) const
+{
+	const Rect3i & halfCellBounds (nb->getDestHalfRect());
+	Rect3i yeeBounds(rectHalfToYee(halfCellBounds));
+	int nx = yeeBounds.size(0)+1;
+	int ny = yeeBounds.size(1)+1;
+	int nz = yeeBounds.size(2)+1;
+	
+	int i = (ii/2) - yeeBounds.p1[0];
+	int j = (jj/2) - yeeBounds.p1[1];
+	int k = (kk/2) - yeeBounds.p1[2];
+	
+	return ( (i+nx)%nx + nx*( (j+ny)%ny) + nx*ny*( (k+nz)%nz));
+}
+
+long VoxelizedPartition::
+linearYeeIndex(const NeighborBufferDescPtr & nb,
+	const Vector3i & halfCell) const
+{
+	const Rect3i & halfCellBounds (nb->getDestHalfRect());
+	Rect3i yeeBounds(rectHalfToYee(halfCellBounds));
+	int nx = yeeBounds.size(0)+1;
+	int ny = yeeBounds.size(1)+1;
+	int nz = yeeBounds.size(2)+1;
+	
+	Vector3i p = (halfCell/2) - yeeBounds.p1;
+	
+	return ( (p[0]+nx)%nx + nx*( (p[1]+ny)%ny) + nx*ny*( (p[2]+nz)%nz));
+}
+
+BufferPointer VoxelizedPartition::
+fieldPointer(Vector3i halfCell) const
+{
+	long index = linearYeeIndex(halfCell);
+	int fieldNum = octantFieldNumber(halfCell);
+	return BufferPointer(mEHBuffers.buffers[fieldNum], index);
+}
+
+BufferPointer VoxelizedPartition::
+fieldPointer(const NeighborBufferDescPtr & nb, Vector3i halfCell) const
+{
+	long index = linearYeeIndex(nb, halfCell);
+	int fieldNum = octantFieldNumber(halfCell);
+	return BufferPointer(mNBBuffers[nb].buffers[fieldNum], index);
+}
+
+
+
+
+	
+#pragma mark *** Private methods ***
+
 
 
 void VoxelizedPartition::
@@ -158,7 +279,28 @@ paintFromHuygensSurfaces(const GridDescription & gridDesc)
 		gridDesc.getHuygensSurfaces();
 	
 	for (unsigned int nn = 0; nn < surfaces.size(); nn++)
+	{
 		mVoxels.overlayHuygensSurface(*surfaces[nn]);
+		
+		const vector<NeighborBufferDescPtr> & nbs = surfaces[nn]->getBuffers();
+		
+		for (unsigned int mm = 0; mm < nbs.size(); mm++)
+		if (nbs[mm] != 0L)
+		{
+			NeighborBufferDescPtr nb = nbs[mm];
+			const Rect3i & bufVol = nb->getBufferYeeBounds();
+			int bufSize = (bufVol.size(0)+1)*(bufVol.size(1)+1)*
+				(bufVol.size(2)+1); 
+			
+			for (int ff = 0; ff < 6; ff++)
+			{
+				ostringstream bufferName;
+				bufferName << "HS " << nn << " NB " << mm << " field " << ff;
+				mNBBuffers[nb].buffers[ff] = MemoryBuffer(bufferName.str(),
+					bufSize);
+			}
+		}
+	}
 }
 
 void VoxelizedPartition::
@@ -173,40 +315,10 @@ calculateMaterialIndices()
 {
 	// This must be done separately for each octant.
 	
-	mCentralIndices = CellCountGridPtr(new CellCountGrid(mVoxels,
-		mPartitionBounds));
+	mCentralIndices = PartitionCellCountPtr(new PartitionCellCount(mVoxels,
+		mAuxAllocRegion));
 	
-	cout << *mCentralIndices << endl;
-	
-	/*
-	for (int nFace = 0; nFace < 6; nFace++)
-	if (partitionHasPML(nFace))
-	{
-		//LOG << "Face number " << nFace << " of 6...\n";
-		Rect3i face = edgeOfRect(mNonPMLRegion, nFace);
-		if (nFace % 2 == 0) // low-side face
-			face.p2 -= cardinalDirection(nFace);
-		else // high-side face
-			face.p1 -= cardinalDirection(nFace);
-		
-		assert(mNonPMLRegion.encloses(face));
-		//mPMLFaces[nFace] = face;
-		
-		//LOG << "PML face is " << face << endl;
-		
-		
-		mPMLFaceIndices[nFace] = CellCountGridPtr(new CellCountGrid(mVoxels,
-			face));
-		
-		
-		//cout << *mPMLFaceIndices[nFace] << endl;
-	}
-	else
-	{
-		LOG << "Face number " << nFace << " of 6 has no PML.\n";
-	}
-	*/
-	
+	//cout << *mCentralIndices << endl;
 }
 
 void VoxelizedPartition::
@@ -328,7 +440,7 @@ createMaterialDelegates()
 {
 	set<Paint*> allPaints = mCentralIndices->getCurlBufferParentPaints();
 	
-	// Cache PML rects
+	// Cache PML rects (this is really just to simplify notation further down).
 	vector<Rect3i> pmlRects;
 	for (int nn = 0; nn < 6; nn++)
 		pmlRects.push_back(getPMLRegionOnFace(nn));
@@ -341,7 +453,7 @@ createMaterialDelegates()
 		if (mDelegates.count(p) == 0)
 		{
 			mDelegates[p] = NewMaterialFactory::getDelegate(
-				mVoxels, mCentralIndices, /*mPMLFaceIndices,*/ p);
+				mVoxels, mCentralIndices, p);
 		}
 		MaterialDelegate & mat = *mDelegates[p];
 		
@@ -357,16 +469,11 @@ createMaterialDelegates()
 			
 			// This fills in information for PMLs
 			if (p->isPML()) // this condition just speeds things up
+			for (int faceNum = 0; faceNum < 6; faceNum++)
+			if (partitionHasPML(faceNum))
 			{
-				Paint* nonPML = Paint::getParentPaint(p);
-				for (int faceNum = 0; faceNum < 6; faceNum++)
-				if (partitionHasPML(faceNum))
-				{
-					mat.setPMLDepth(octant, faceNum,
-						rectHalfToYee(pmlRects[faceNum], octant).size(faceNum/2)+1);
-					//mat.setNumCellsOnPMLFace(octant, faceNum,
-					//	mPMLFaceIndices[faceNum]->getNumCells(nonPML, octant));
-				}
+				mat.setPMLDepth(octant, faceNum,
+					rectHalfToYee(pmlRects[faceNum], octant).size(faceNum/2)+1);
 			}
 		}
 	}
@@ -389,28 +496,35 @@ generateRunlines()
 	
 	LOG << "Check it out, we're sticking to the calc region.  I'm not sure "
 		"yet precisely how to use this in the MPI context—work it out later.\n";
-		
+	
 	for (int fieldNum = 0; fieldNum < 6; fieldNum++)
 	{
 		// Remember to set up the buffers here!
 		LOG << "Runlines for offset " << halfCellFieldOffset(fieldNum) << "\n";
 		genRunlinesInOctant(halfCellIndex(halfCellFieldOffset(fieldNum)));
-	} 
+	}
 	
+	LOG << "Printing runlines.\n";
+	map<Paint*, MaterialDelegatePtr>::iterator itr;
+	for (itr = mDelegates.begin(); itr != mDelegates.end(); itr++)
+	{
+		cout << *(itr->first) << "\n";
+		itr->second->printRunlines(cout);
+	}
 }
 
 void VoxelizedPartition::
 genRunlinesInOctant(int octant)
 {
-	//	 First task: generate a starting half-cell in the correct octant.
+	// First task: generate a starting half-cell in the correct octant.
 	// The loops may still end by not exceeding mCalcRegion.p2—this works fine.
 	Vector3i offset = halfCellOffset(octant);
 	Vector3i p1 = mCalcRegion.p1;
 	for (int nn = 0; nn < 3; nn++)
 	if (p1[nn] % 2 != offset[nn])
 		p1[nn]++;
-	LOG << "Calc region " << mCalcRegion << endl;
-	LOG << "Runlines in octant " << octant << " at start " << p1 << endl;
+	//LOG << "Calc region " << mCalcRegion << endl;
+	//LOG << "Runlines in octant " << octant << " at start " << p1 << endl;
 	
 	MaterialDelegate* material; // unsafe pointer for speed in this case.
 	
@@ -434,8 +548,7 @@ genRunlinesInOctant(int octant)
 		if (!needNewRunline)
 		{
 			if (xParentPaint == lastXParentPaint &&
-				material->canContinueRunline(mVoxels, *mCentralIndices,
-					/*mPMLFaceIndices,*/ lastX, x, xPaint)) // kludge
+				material->canContinueRunline(*this, lastX, x, xPaint)) // kludge
 				material->continueRunline(x);
 			else
 			{
@@ -446,14 +559,13 @@ genRunlinesInOctant(int octant)
 		if (needNewRunline)
 		{
 			material = mDelegates[xParentPaint];
-			material->startRunline(mVoxels, *mCentralIndices,
-				/*mPMLFaceIndices,*/ x);
+			material->startRunline(*this, x);
 			needNewRunline = 0;
 		}
 		lastX = x;
 		lastXParentPaint = xParentPaint;
 	}
-	material->endRunline();  // DO NOT FORGET THIS
+	material->endRunline();  // DO NOT FORGET THIS... oh wait, I didn't!
 }
 
 

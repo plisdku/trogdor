@@ -379,8 +379,9 @@ voxelizeGrids(const SimulationDescPtr sim,
 		
 		myPartition = Rect3i(0,0,0,0,0,0); 
 		myCalcRegion = inset(myPartition, 1,1,1,1,1,1);
-		voxelizeGridRecursor(voxelizedGrids, sim->getGrids()[0], myPartition,
-			myCalcRegion);
+		assert(!"Can't go further.");
+		//voxelizeGridRecursor(voxelizedGrids, sim->getGrids()[0], myPartition,
+		//	myCalcRegion);
 	}
 	
 	LOG << "Voxelizing the grids.\n";
@@ -392,32 +393,62 @@ voxelizeGrids(const SimulationDescPtr sim,
 		// to implement all TFSF sources.
 		
 		LOG << "Determining non-MPI partition size.\n";
-		Rect3i myPartitionWalls = Rect3i(-100000000, -100000000, -100000000, 
+		
+		Vector3i numNodes(1,1,1);
+		Vector3i thisNode(0,0,0);
+		
+		Rect3i partitionWalls = Rect3i(-100000000, -100000000, -100000000, 
 			100000000, 100000000, 100000000);
 		
-		myPartition = clip(myPartitionWalls, g->getHalfCellBounds());
-		myCalcRegion = myPartition;
-		
-		LOG << "My partition: " << myPartition << "\n";
-		
-		voxelizeGridRecursor(voxelizedGrids, g, myPartition, myCalcRegion);
+		voxelizeGridRecursor(voxelizedGrids, g, numNodes, thisNode,
+			partitionWalls);
 	}
 }
 
 void FDTDApplication::
 voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
-	GridDescPtr currentGrid, Rect3i myPartition, Rect3i myCalcRegion)
+	GridDescPtr currentGrid, Vector3i numNodes, Vector3i thisNode, 
+	Rect3i partitionWalls)
 {
+	Rect3i myPartition = clip(partitionWalls, currentGrid->getHalfCellBounds());
+	Rect3i myCalcRegion(myPartition);
+	Rect3i allocRegion(myPartition);
+	
+	for (int mm = 0; mm < 3; mm++)
+	if (numNodes[mm] != 1 && currentGrid->getNumYeeCells()[mm] != 1)
+	{
+		allocRegion.p1[mm] -= 1;
+		allocRegion.p2[mm] += 1;
+	}
+	
 	LOG << "Recursing for grid " << currentGrid->getName() << ".\n";
+	LOG << "I am partition " << thisNode << " of " << numNodes << ".\n";
+	LOG << "My node partition region is " << partitionWalls << "\n";
 	LOG << "My partition is " << myPartition << ".\n";
+	LOG << "I allocate fields over the region " << allocRegion << ".\n";
 	LOG << "My calc region is " << myCalcRegion << ".\n";
 	
-	VoxelizedPartitionPtr setupGrid(new VoxelizedPartition(
-		*currentGrid, voxelizedGrids, myPartition, myCalcRegion));
-	voxelizedGrids[currentGrid] = setupGrid;
+	LOG << "HEY!!!!! Lookee here, this function currently does not have any"
+		" sort of boundary region to store neighboring nodes' fields.\n";
 	
-	LOG << "Origin: " << currentGrid->getOriginYee() << "\n";
-	cout << *setupGrid << endl;
+	static const int EXTRUDE_PML = 1;
+	if (EXTRUDE_PML)
+	{
+		LOG << "Adding an Extrude command to implement PML.\n";
+		
+		InstructionPtr extendThisRegion(new Extrude(
+			currentGrid->getNonPMLRegion(),
+			currentGrid->getHalfCellBounds() ));
+		vector<InstructionPtr> assemblyStuff(
+			currentGrid->getAssembly()->getInstructions());
+		assemblyStuff.push_back(extendThisRegion);
+		AssemblyDescPtr assembly(new AssemblyDescription(assemblyStuff));
+		currentGrid->setAssembly(assembly);
+	}
+	
+	VoxelizedPartitionPtr setupGrid(new VoxelizedPartition(
+		*currentGrid, voxelizedGrids, allocRegion, myCalcRegion));
+	voxelizedGrids[currentGrid] = setupGrid;
 	
 	// Handle TFSF sources.
 	const std::vector<HuygensSurfaceDescPtr> surfs = currentGrid->
@@ -432,77 +463,71 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		Vector3i sourceSymm = surfs[nn]->getTFSFSourceSymmetries();
 		Vector3i gridSymm = gridSymmetries[nn];
 		Vector3i gridSize = currentGrid->getNumYeeCells();
-		Vector3i collapsable(
+		Vector3i collapsible(
 			sourceSymm[0]*gridSymm[0] != 0 && gridSize[0] > 1,
 			sourceSymm[1]*gridSymm[1] != 0 && gridSize[1] > 1,
 			sourceSymm[2]*gridSymm[2] != 0 && gridSize[2] > 1);
 		
-		LOG << "collapsibleDimensions = " << collapsable << endl;
+		LOG << "collapsibleDimensions = " << collapsible << endl;
 		
-		if (norm2(collapsable) > 0)
+		if (norm2(collapsible) > 0)
 		{
 			LOG << "Collapsing the grid.\n";
 			
 			ostringstream auxGridName;
 			auxGridName << currentGrid->getName() << "_autoaux_" << nn;
-			GridDescPtr gPtr = makeAuxGridDescription(collapsable,
+			GridDescPtr gPtr = makeAuxGridDescription(collapsible,
 				currentGrid, surfs[nn], auxGridName.str());
 			
-			voxelizeGridRecursor(voxelizedGrids, gPtr, myPartition,
-				myCalcRegion);
+			Rect3i auxPartitionWalls(partitionWalls);
+			
+			for (int ll = 0; ll < 3; ll++)
+			if (collapsible[ll] != 0)
+			{
+				auxPartitionWalls.p1[ll] = 0;
+				auxPartitionWalls.p2[ll] = 1;
+			}
+			voxelizeGridRecursor(voxelizedGrids, gPtr, numNodes, thisNode,
+				auxPartitionWalls);
+		}
+		else if (currentGrid->getNumDimensions() == 1)
+		{
+			LOG << "Need to create last aux grid.\n";
+			ostringstream srcGridName;
+			srcGridName << currentGrid->getName() << "_autosrc";
+			
+			// makeSourceGridDescription will decide based on the
+			// number of omitted sides whether to again make a TFSF
+			// source or to use a hard source.
+			GridDescPtr gPtr = makeSourceGridDescription(
+				currentGrid, surfs[nn], srcGridName.str());
+			voxelizeGridRecursor(voxelizedGrids, gPtr, numNodes, thisNode,
+				partitionWalls);
 		}
 		else
 		{
-			if (surfs[nn]->getType() == kTFSFSource)
-			{
-				Rect3i yeeBounds(Vector3i(0,0,0),
-					currentGrid->getNumYeeCells() - Vector3i(1,1,1));
-				if (yeeBounds.numNonSingularDims() == 1) // 1D grid
-				{
-					LOG << "Need to create last aux grid.\n";
-					
-					ostringstream srcGridName;
-					srcGridName << currentGrid->getName() << "_autosrc";
-					
-					// makeSourceGridDescription will decide based on the
-					// number of omitted sides whether to again make a TFSF
-					// source or to use a hard source.
-					GridDescPtr gPtr = makeSourceGridDescription(
-						currentGrid, surfs[nn], srcGridName.str());
-					
-					voxelizeGridRecursor(voxelizedGrids, gPtr, myPartition,
-						myCalcRegion);
-				}
-				else
-				{
-					assert(yeeBounds.numNonSingularDims() == 1); // hee hee.
-				}
-				
-				// 1D grid: omit the opposite side if needed and go.
-				// Higher-D grids: can't do anything.
-			}
-			else if (surfs[nn]->getType() == kDataRequest)
-			{
-				// Write data request
-				LOG << "Need to write data request.\n";
-			}
+			cerr << "Error: we need a TFSF source, but the grid is not "
+				"collapsible and the current grid is not 1D yet.  Dying.\n";
+			exit(1);
 		}
 	}
-	
-	// if a TFSF source cannot be reduced further from symmetry considerations,
-	// leave it in the grid description as a request for outside data.
+	else if (surfs[nn]->getType() == kDataRequest)
+	{
+		// Write data request
+		LOG << "Need to write data request.\n";
+	}
 }
 
 
 GridDescPtr FDTDApplication::
-makeAuxGridDescription(Vector3i collapsable, GridDescPtr parentGrid,
+makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	HuygensSurfaceDescPtr huygensSurface, string auxGridName)
 {
 	int nn;
 	Mat3i collapser(1);
-	collapser(0,0) = !collapsable[0];
-	collapser(1,1) = !collapsable[1];
-	collapser(2,2) = !collapsable[2];
+	collapser(0,0) = !collapsible[0];
+	collapser(1,1) = !collapsible[1];
+	collapser(2,2) = !collapsible[2];
 	Vector3i origin(collapser*parentGrid->getOriginYee());
 	
 	const set<Vector3i> & omittedSides = huygensSurface->getOmittedSides();
@@ -514,7 +539,7 @@ makeAuxGridDescription(Vector3i collapsable, GridDescPtr parentGrid,
 	Rect3i tfRect(collapser*huygensSurface->getDestHalfRect());
 	tfRect.p2 = maxval(tfRect.p2, Vector3i(1,1,1));
 	
-	Vector3i bigDimensions = Vector3i(1,1,1) - collapsable; // == !collapsable
+	Vector3i bigDimensions = Vector3i(1,1,1) - collapsible; // == !collapsible
 	for (nn = 0; nn < 3; nn++)
 	if (tfRect.size(nn) == 1)
 		bigDimensions[nn] = 0;
@@ -554,7 +579,7 @@ makeAuxGridDescription(Vector3i collapsable, GridDescPtr parentGrid,
 		copyFrom.p1[nn] = copyFrom.p2[nn];
 	else if (omittedSides.count(YeeUtilities::cardinalDirection(nn*2+1)))
 		copyFrom.p2[nn] = copyFrom.p1[nn];
-	else if (collapsable[nn] != 0)
+	else if (collapsible[nn] != 0)
 		copyFrom.p1[nn] = copyFrom.p2[nn]; // symmetry: either side is ok here!
 	
 	// Now let's shift all the rects to have the same origin (namely, zero).

@@ -11,6 +11,7 @@
 #define _MEMORYUTILITIES_
 
 #include <string>
+#include <iostream>
 #include "Pointer.h"
 //class MemoryBuffer;
 class BufferPointer;
@@ -41,20 +42,23 @@ typedef Pointer<MemoryBuffer> MemoryBufferPtr;
 class BufferPointer
 {
 public:
+	BufferPointer();
 	BufferPointer(const MemoryBuffer & buffer);
 	BufferPointer(const MemoryBuffer & buffer, unsigned long offset);
 	BufferPointer(const BufferPointer & copyMe);
 	
 	unsigned long getOffset() const { return mOffset; }
-	const MemoryBuffer & getBuffer() const { return mBuffer; }
+	const MemoryBuffer * getBuffer() const { return mBuffer; }
 	
 	void setOffset(unsigned long offset);
 	
-	
+	friend std::ostream & operator << (std::ostream & str,
+		const BufferPointer & buff);
 private:
-	const MemoryBuffer & mBuffer;
+	const MemoryBuffer* mBuffer;
 	unsigned long mOffset;
 };
+std::ostream & operator << (std::ostream & str, const BufferPointer & buff);
 
 BufferPointer
 operator + (const BufferPointer & lhs, unsigned long rhs);

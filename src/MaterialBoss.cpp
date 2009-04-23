@@ -10,8 +10,9 @@
 #include "MaterialBoss.h"
 #include "SimulationDescription.h"
 
+#include "VoxelizedPartition.h"
 #include "VoxelGrid.h"
-#include "CellCountGrid.h"
+#include "PartitionCellCount.h"
 #include "Paint.h"
 #include "Log.h"
 #include "YeeUtilities.h"
@@ -23,8 +24,8 @@ using namespace std;
 using namespace YeeUtilities;
 
 MaterialDelegatePtr NewMaterialFactory::
-getDelegate(const VoxelGrid & vg, const CellCountGridPtr cg, 
-	/*const vector<CellCountGridPtr> & pmlFaces,*/ Paint* parentPaint)
+getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
+	Paint* parentPaint)
 {
 	assert(parentPaint != 0L);
 	LOG << "Delegate for " << *parentPaint << endl;
@@ -34,6 +35,7 @@ getDelegate(const VoxelGrid & vg, const CellCountGridPtr cg,
 	string materialClass(bulkMaterial->getClass());
 	string materialName(bulkMaterial->getName());
 	
+	/*
 	if (materialClass == "StaticDielectricModel")
 	{
 		return MaterialDelegatePtr(new StaticDielectricDelegate);
@@ -45,20 +47,12 @@ getDelegate(const VoxelGrid & vg, const CellCountGridPtr cg,
 	else if (materialClass == "PEC")
 	{
 	}
+	*/
 	
+	if (parentPaint->isPML())
+		return MaterialDelegatePtr(new SimpleBulkPMLMaterialDelegate);
 	return MaterialDelegatePtr(new SimpleBulkMaterialDelegate);
 }
-/*
-MaterialBoss::
-MaterialBoss(const std::string & materialClass)
-{
-}
-
-MaterialDelegatePtr MaterialBoss::
-getDelegate(Paint* inPaint) const
-{
-}
-*/
 
 MaterialDelegate::
 MaterialDelegate()
@@ -91,6 +85,8 @@ setPMLDepth(int octant, int faceNum, int number)
 }
 
 
+#pragma mark *** Simple Bulk Material ***
+
 SimpleBulkMaterialDelegate::
 SimpleBulkMaterialDelegate() :
 	MaterialDelegate()
@@ -98,64 +94,73 @@ SimpleBulkMaterialDelegate() :
 }
 
 void SimpleBulkMaterialDelegate::
-startRunline(const VoxelGrid & voxelGrid,
-	const CellCountGrid & cellCountGrid,
-	/*const vector<CellCountGridPtr> & pmlCellCountGrids,*/
-	const Vector3i & startPos)
+startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 {
+	int nSide;
+	const VoxelGrid & voxelGrid(vp.getVoxelGrid());
+	const PartitionCellCount & cellCountGrid(*vp.getIndices());
+	
 	mStartPoint = startPos;
 	mStartPaint = voxelGrid(startPos);
-	mCurLength = 1;
-	// Set the start neighbor indices and check buffers
-	for (int nSide = 0; nSide < 6; nSide++)
-	{
-		mStartNeighborIndices[nSide] = voxelGrid.linearYeeIndex(
-			startPos + cardinalDirection(nSide));
-		
-		if (mStartPaint->hasCurlBuffer(nSide))
-			mUsedNeighborIndices[nSide] = 0;
-		else
-			mUsedNeighborIndices[nSide] = 1;
-	}
 	
 	// Set the mask (which directions to check)
-	mStartOctant = halfCellIndex(startPos);
-	switch (mStartOctant)
+	int fieldDirection = octantFieldDirection(startPos);
+	int dir_j = (fieldDirection+1)%3;
+	int dir_k = (fieldDirection+2)%3;
+	
+	// Set the start neighbor indices, check buffers, store pointers
+	BufferPointer bp[6]; // we won't fill all of these, but it makes things easy
+	for (nSide = 0; nSide < 6; nSide++)
 	{
-		case 1: // Ex
-		case 6: // Hx
-			mUsedNeighborIndices[0] = 0;
-			mUsedNeighborIndices[1] = 0;
-			break;
-		case 2: // Ey
-		case 5: // Hy
-			mUsedNeighborIndices[2] = 0;
-			mUsedNeighborIndices[3] = 0;
-			break;
-		case 3: // Hz
-		case 4: // Ez
-			mUsedNeighborIndices[4] = 0;
-			mUsedNeighborIndices[5] = 0;
-			break;
-		default:
-			cerr << "Runlining in octant " << mStartOctant << "?\n";
-			exit(1);
-			break;
+		mStartNeighborIndices[nSide] = vp.linearYeeIndex(
+			startPos + cardinalDirection(nSide));
+		
+		if (nSide/2 == fieldDirection)
+			mUsedNeighborIndices[nSide] = 0;
+		else if (mStartPaint->hasCurlBuffer(nSide))
+		{
+			mUsedNeighborIndices[nSide] = 0;
+			bp[nSide] = vp.fieldPointer(mStartPaint->getCurlBuffer(nSide),
+				mStartPoint+cardinalDirection(nSide));
+		}
+		else
+		{
+			mUsedNeighborIndices[nSide] = 1;
+			bp[nSide] = vp.fieldPointer(mStartPoint+cardinalDirection(nSide));
+		}
 	}
+	mCurrentRunline.f_i = vp.fieldPointer(startPos);
+	mCurrentRunline.f_j[0] = bp[2*dir_j];
+	mCurrentRunline.f_j[1] = bp[2*dir_j+1];
+	mCurrentRunline.f_k[0] = bp[2*dir_k];
+	mCurrentRunline.f_k[1] = bp[2*dir_k+1];
+	mCurrentRunline.auxIndex = cellCountGrid(startPos);
+	mCurrentRunline.length = 1;
+	
+	//LOG << "Field direction " << fieldDirection << " ui " << ui << " uj "
+	//	<< uj << " uk " << uk << "\n";
+	
+	/*
+	LOG << "Start runline:\n";
+	LOGMORE << "start " << mStartPoint << "\n";
+	LOGMORE << "aux " << mCurrentRunline.auxIndex << "\n";
+	LOGMORE << "f_i " << mCurrentRunline.f_i << "\n";
+	LOGMORE << "f_j " << mCurrentRunline.f_j[0] << " "
+		<< mCurrentRunline.f_j[1] << "\n";
+	LOGMORE << "f_k " << mCurrentRunline.f_k[0] << " "
+		<< mCurrentRunline.f_k[1] << "\n";
+	*/
 }
 
 bool SimpleBulkMaterialDelegate::
-canContinueRunline(const VoxelGrid & voxelGrid,
-		const CellCountGrid & cellCountGrid,
-		/*const std::vector<CellCountGridPtr> & pmlCellCountGrids,*/
-		const Vector3i & oldPos, const Vector3i & newPos,
-	Paint* newPaint) const
+canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
+	const Vector3i & newPos, Paint* newPaint) const
 {
 	for (int nSide = 0; nSide < 6; nSide++)
 	if (mUsedNeighborIndices[nSide])
 	{
-		int index = voxelGrid.linearYeeIndex(newPos + cardinalDirection(nSide));
-		if (mStartNeighborIndices[nSide] + mCurLength != index)
+		int index = vp.linearYeeIndex(newPos + cardinalDirection(nSide));
+		if (mStartNeighborIndices[nSide] + mCurrentRunline.length != index)
 			return 0;
 	}
 	else
@@ -169,101 +174,159 @@ canContinueRunline(const VoxelGrid & voxelGrid,
 void SimpleBulkMaterialDelegate::
 continueRunline(const Vector3i & newPos)
 {
-	mCurLength++;
+	mCurrentRunline.length++;
 }
 
 void SimpleBulkMaterialDelegate::
 endRunline()
 {
-	LOG << "Ending: " << mStartPoint << " length " << mCurLength << "\n";
+	int field = octantFieldNumber(mStartPoint);
+	mRunlines[field].push_back(SBMRunlinePtr(new SBMRunline(mCurrentRunline)));
+}
+
+void SimpleBulkMaterialDelegate::
+printRunlines(std::ostream & out) const
+{
+	for (int field = 0; field < 6; field++)
+	{
+		out << "Field " << field << "\n";
+		for (unsigned int rr = 0; rr < mRunlines[field].size(); rr++)
+		{
+			out << rr << ": length " << mRunlines[field][rr]->length <<
+				" aux " << mRunlines[field][rr]->auxIndex << "\n";
+			out << "\t" << mRunlines[field][rr]->f_i << "\n";
+			out << "\t" << mRunlines[field][rr]->f_j[0] << "\n";
+			out << "\t" << mRunlines[field][rr]->f_j[1] << "\n";
+			out << "\t" << mRunlines[field][rr]->f_k[0] << "\n";
+			out << "\t" << mRunlines[field][rr]->f_k[1] << "\n";
+		}
+	}
+}
+
+#pragma mark *** Simple Bulk PML Material ***
+
+SimpleBulkPMLMaterialDelegate::
+SimpleBulkPMLMaterialDelegate() :
+	MaterialDelegate()
+{
+}
+
+void SimpleBulkPMLMaterialDelegate::
+startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
+{
+	int nSide;
+	const VoxelGrid & voxelGrid(vp.getVoxelGrid());
+	const PartitionCellCount & cellCountGrid(*vp.getIndices());
 	
-	int fieldDirection = octantFieldDirection(mStartOctant);
+	mStartPoint = startPos;
+	mStartPaint = voxelGrid(startPos);
+	
+	// Set the mask (which directions to check)
+	int fieldDirection = octantFieldDirection(startPos);
 	int dir_j = (fieldDirection+1)%3;
 	int dir_k = (fieldDirection+2)%3;
 	
-	/*
-	
-	switch (mStartOctant)
+	// Set the start neighbor indices, check buffers, store pointers
+	BufferPointer bp[6]; // we won't fill all of these, but it makes things easy
+	for (nSide = 0; nSide < 6; nSide++)
 	{
-		case 1: // Ex
-		case 6: // Hx
-			mUsedNeighborIndices[0] = 0;
-			mUsedNeighborIndices[1] = 0;
-			break;
-		case 2: // Ey
-		case 5: // Hy
-			mUsedNeighborIndices[2] = 0;
-			mUsedNeighborIndices[3] = 0;
-			break;
-		case 3: // Hz
-		case 4: // Ez
-			mUsedNeighborIndices[4] = 0;
-			mUsedNeighborIndices[5] = 0;
-			break;
-		default:
-			cerr << "Runlining in octant " << mStartOctant << "?\n";
-			exit(1);
-			break;
-	}*/
+		mStartNeighborIndices[nSide] = vp.linearYeeIndex(
+			startPos + cardinalDirection(nSide));
+		
+		if (nSide/2 == fieldDirection)
+			mUsedNeighborIndices[nSide] = 0;
+		else if (mStartPaint->hasCurlBuffer(nSide))
+		{
+			mUsedNeighborIndices[nSide] = 0;
+			bp[nSide] = vp.fieldPointer(mStartPaint->getCurlBuffer(nSide),
+				mStartPoint+cardinalDirection(nSide));
+		}
+		else
+		{
+			mUsedNeighborIndices[nSide] = 1;
+			bp[nSide] = vp.fieldPointer(mStartPoint+cardinalDirection(nSide));
+		}
+	}
+	mCurrentRunline.f_i = vp.fieldPointer(startPos);
+	mCurrentRunline.f_j[0] = bp[2*dir_j];
+	mCurrentRunline.f_j[1] = bp[2*dir_j+1];
+	mCurrentRunline.f_k[0] = bp[2*dir_k];
+	mCurrentRunline.f_k[1] = bp[2*dir_k+1];
+	mCurrentRunline.auxIndex = cellCountGrid(startPos);
+	mCurrentRunline.length = 1;
 	
-}
-
-SimpleBulkMaterialDelegate::SBMRunline::
-SBMRunline()
-{
-}
-
-
-/*
-
-DefaultMaterialDelegate::
-DefaultMaterialDelegate(const VoxelGrid & vg, const CellCountGrid & cg) :
-	MaterialDelegate(vg, cg),
-	mVoxelGrid(vg),
-	mCellCountGrid(cg)
-{
-}
-
-DefaultMaterialDelegate::
-~DefaultMaterialDelegate()
-{
-}
-
-void DefaultMaterialDelegate::
-startRunline(const Vector3i & startPos, Paint* newPaint)
-{
-	LOG << "Starting at " << startPos << "\n";
-	mStartPaint = newPaint;
-	mStart = startPos;
-	mEnd = startPos;
-}
-
-bool DefaultMaterialDelegate::
-canContinueRunline(const Vector3i & oldPos, const Vector3i & newPos,
-	Paint* newPaint) const
-{
-	if (mStartPaint != newPaint) // this checks for TFSF buffers etc.
-		return 0;
-	// now check neighbor indices
+	// PML aux stuff
+	Rect3i gridHalfCells = vp.getGridHalfCells();
+	Vector3i gridSize = gridHalfCells.size() + Vector3i(1,1,1);
+	Vector3i pmlDir = mStartPaint->getPMLDirections();
+	mPMLRect = vp.getPMLRegion(pmlDir);
 	
-	
-	
+	Vector3i wrappedStartPoint = Vector3i(mStartPoint + gridSize) % gridSize;
+	mCurrentRunline.pmlDepthIndex = wrappedStartPoint/2 - mPMLRect.p1/2;
+	/*
+	LOG << "runline for PML in " << mPMLRect << "\n";
+	LOGMORE << "dir " << pmlDir << "\n";
+	LOGMORE << "start " << mStartPoint << "\n";
+	LOGMORE << "grid size " << gridSize << "\n";
+	LOGMORE << "wrap start " << wrappedStartPoint << "\n";
+	LOGMORE << "depth " << mCurrentRunline.pmlDepthIndex << "\n";
+	*/
+}
+
+bool SimpleBulkPMLMaterialDelegate::
+canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
+	const Vector3i & newPos, Paint* newPaint) const
+{
+	for (int nSide = 0; nSide < 6; nSide++)
+	if (mUsedNeighborIndices[nSide])
+	{
+		int index = vp.linearYeeIndex(newPos + cardinalDirection(nSide));
+		if (mStartNeighborIndices[nSide] + mCurrentRunline.length != index)
+			return 0;
+	}
+	else
+	{
+		if (newPaint->getCurlBuffer(nSide) != mStartPaint->getCurlBuffer(nSide))
+			return 0;
+	}
 	return 1;
 }
 
-void DefaultMaterialDelegate::
+void SimpleBulkPMLMaterialDelegate::
 continueRunline(const Vector3i & newPos)
 {
-	mEnd = newPos;
-	//LOG << "Yeah.\n";
+	mCurrentRunline.length++;
 }
 
-void DefaultMaterialDelegate::
+void SimpleBulkPMLMaterialDelegate::
 endRunline()
 {
-	LOG << "Ending runline: from " << mStart << " to " << mEnd << "\n";
+	int field = octantFieldNumber(mStartPoint);
+	mRunlines[field].push_back(SBPMRunlinePtr(
+		new SBPMRunline(mCurrentRunline)));
 }
 
-*/
+void SimpleBulkPMLMaterialDelegate::
+printRunlines(std::ostream & out) const
+{
+	for (int field = 0; field < 6; field++)
+	{
+		out << "Field " << field << "\n";
+		for (unsigned int rr = 0; rr < mRunlines[field].size(); rr++)
+		{
+			out << rr << ": length " << mRunlines[field][rr]->length <<
+				" aux " << mRunlines[field][rr]->auxIndex <<
+				" pml depth";
+			for (int nn = 0; nn < 3; nn++)
+				out << " " << mRunlines[field][rr]->pmlDepthIndex[nn];
+			out << "\n";
+			out << "\t" << mRunlines[field][rr]->f_i << "\n";
+			out << "\t" << mRunlines[field][rr]->f_j[0] << "\n";
+			out << "\t" << mRunlines[field][rr]->f_j[1] << "\n";
+			out << "\t" << mRunlines[field][rr]->f_k[0] << "\n";
+			out << "\t" << mRunlines[field][rr]->f_k[1] << "\n";
+		}
+	}
+}
 
 

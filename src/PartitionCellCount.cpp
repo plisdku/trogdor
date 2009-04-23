@@ -1,5 +1,5 @@
 /*
- *  CellCountGrid.cpp
+ *  PartitionCellCount.cpp
  *  TROGDOR
  *
  *  Created by Paul Hansen on 4/7/09.
@@ -7,7 +7,7 @@
  *
  */
 
-#include "CellCountGrid.h"
+#include "PartitionCellCount.h"
 
 #include <iostream>
 using namespace std;
@@ -16,8 +16,8 @@ using namespace std;
 #include "YeeUtilities.h"
 using namespace YeeUtilities;
 
-CellCountGrid::
-CellCountGrid(const VoxelGrid & grid, Rect3i halfCellBounds) :
+PartitionCellCount::
+PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds) :
 	mNumCells(8),
 	mHalfCellBounds(halfCellBounds),
 	m_nnx(halfCellBounds.size(0)+1),
@@ -30,7 +30,7 @@ CellCountGrid(const VoxelGrid & grid, Rect3i halfCellBounds) :
 }
 
 
-long CellCountGrid::
+long PartitionCellCount::
 operator() (int ii, int jj, int kk) const
 {
 	ii = ii - mHalfCellBounds.p1[0];
@@ -41,7 +41,7 @@ operator() (int ii, int jj, int kk) const
 		((kk+m_nnz)%m_nnz)*m_nnx*m_nny];
 }
 
-long CellCountGrid::
+long PartitionCellCount::
 operator() (const Vector3i & pp) const
 {
 	Vector3i qq(pp - mHalfCellBounds.p1);
@@ -50,7 +50,7 @@ operator() (const Vector3i & pp) const
 		((qq[2]+m_nnz)%m_nnz)*m_nnx*m_nny];
 }
 
-long CellCountGrid::
+long PartitionCellCount::
 getNumCells(Paint* paint, int octant) const
 {
 	assert(octant >= 0 && octant < 8);
@@ -60,14 +60,14 @@ getNumCells(Paint* paint, int octant) const
 	return 0;
 }
 
-Map<Paint*, long> CellCountGrid::
+Map<Paint*, long> PartitionCellCount::
 getAllNumCells(int octant) const
 {
 	assert(octant >= 0 && octant < 8);
 	return mNumCells[octant];
 }
 
-set<Paint*> CellCountGrid::
+set<Paint*> PartitionCellCount::
 getCurlBufferParentPaints() const
 {
 	std::set<Paint*> paints;
@@ -84,7 +84,7 @@ getCurlBufferParentPaints() const
 }
 
 
-void CellCountGrid::
+void PartitionCellCount::
 calcMaterialIndices(const VoxelGrid & grid)
 {
 	for (int nn = 0; nn < 8; nn++)
@@ -98,7 +98,7 @@ calcMaterialIndices(const VoxelGrid & grid)
 		if (start[ss]%2 != offset[ss]%2)
 			start[ss] += 1;
 		
-		LOG << "Calculating from " << start << "\n";
+		//LOG << "Calculating from " << start << "\n";
 		
 		for (int kk = start[2]; kk <= mHalfCellBounds.p2[2]; kk += 2)
 		for (int jj = start[1]; jj <= mHalfCellBounds.p2[1]; jj += 2)
@@ -116,9 +116,9 @@ calcMaterialIndices(const VoxelGrid & grid)
 			{
 				mNumCells[nn][p] = 1;
 				mMaterialIndexHalfCells[linearIndex] = 0;
-				LOG << "Starting material " << hex << p << dec << "\n";
-				LOGMORE << "at " << ii << " " << jj << " " << kk << ", "
-					<< "linear index " << linearIndex << "\n";
+				//LOG << "Starting material " << hex << p << dec << "\n";
+				//LOGMORE << "at " << ii << " " << jj << " " << kk << ", "
+				//	<< "linear index " << linearIndex << "\n";
 			}
 			else
 			{
@@ -130,7 +130,7 @@ calcMaterialIndices(const VoxelGrid & grid)
 }
 
 
-void CellCountGrid::
+void PartitionCellCount::
 allocateAuxiliaryDataSpace(const VoxelGrid & grid)
 {
 	LOG << "Allocating auxiliary space.\n";
@@ -151,7 +151,7 @@ allocateAuxiliaryDataSpace(const VoxelGrid & grid)
 }
 
 
-std::ostream & operator<< (std::ostream & out, const CellCountGrid & grid)
+std::ostream & operator<< (std::ostream & out, const PartitionCellCount & grid)
 {
 	int nni = grid.mHalfCellBounds.size(0)+1;
 	int nnj = grid.mHalfCellBounds.size(1)+1;

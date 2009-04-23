@@ -190,6 +190,15 @@ getHalfCellBounds() const
 	return Rect3i(Vector3i(0,0,0), mNumHalfCells-Vector3i(1,1,1));
 }
 
+int GridDescription::
+getNumDimensions() const
+{
+	int nDim = 0;
+	for (int nn = 0; nn < 3; nn++)
+	if (mNumYeeCells[nn] > 1)
+		nDim += 1;
+	return nDim;
+}
 
 #pragma mark *** InputEH ***
 

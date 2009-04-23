@@ -80,8 +80,8 @@ private: // heh, "new private" stuff
 	
 	void voxelizeGridRecursor(
 		Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
-		GridDescPtr currentGrid,
-		Rect3i myPartition, Rect3i myCalcRegion);
+		GridDescPtr currentGrid, Vector3i numNodes, Vector3i thisNode,
+		Rect3i partitionWalls);
 	
 	GridDescPtr makeAuxGridDescription(Vector3i collapsableDimensions,
 		GridDescPtr parentGrid, HuygensSurfaceDescPtr huygensSurface,

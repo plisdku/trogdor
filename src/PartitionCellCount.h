@@ -1,5 +1,5 @@
 /*
- *  CellCountGrid.h
+ *  PartitionCellCount.h
  *  TROGDOR
  *
  *  Created by Paul Hansen on 4/7/09.
@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _CELLCOUNTGRID_
-#define _CELLCOUNTGRID_
+#ifndef _PARTITIONCELLCOUNT_
+#define _PARTITIONCELLCOUNT_
 
 #include <iostream>
 #include <vector>
@@ -19,12 +19,10 @@
 
 class VoxelGrid;
 
-class CellCountGrid
+class PartitionCellCount
 {
 public:
-	CellCountGrid(const VoxelGrid & grid, Rect3i halfCellBounds);
-	
-	void spaceVaryingBlock();
+	PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds);
 	
 	long operator() (int ii, int jj, int kk) const;
 	long operator() (const Vector3i & pp) const;
@@ -44,13 +42,12 @@ private:
 	int m_nny;
 	int m_nnz;
 	
-	
 	friend std::ostream & operator<< (std::ostream & out,
-		const CellCountGrid & grid);
+		const PartitionCellCount & grid);
 };
-typedef Pointer<CellCountGrid> CellCountGridPtr;
+typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
 
-std::ostream & operator<< (std::ostream & out, const CellCountGrid & grid);
+std::ostream & operator<< (std::ostream & out, const PartitionCellCount & grid);
 
 
 #endif

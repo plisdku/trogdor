@@ -74,13 +74,14 @@ public:
 	static void clearPalette() { mPalette.clear(); }
 	
 	PaintType getType() const { return mType; }
+	Vector3i getPMLDirections() const { return mPMLDirections; }
+	const NeighborBufferDescPtr & getCurlBuffer(int side) const;
 	const MaterialDescPtr getBulkMaterial() const { return mBulkMaterial; }
 	
 	bool equivalentUpdateTo(const Paint & rhs) const;
 	bool hasCurlBuffer() const;
 	bool hasCurlBuffer(int side) const;
 	bool isPML() const;
-	const NeighborBufferDescPtr & getCurlBuffer(int side) const;
 	
 private:
 	

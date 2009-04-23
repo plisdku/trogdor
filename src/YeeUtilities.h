@@ -29,9 +29,11 @@ int halfCellFieldIndex(int fieldIndex);  // returns halfCellIndices of EM fields
 const Vector3i & halfCellFieldOffset(int fieldIndex); // offsets of EM fields
 
 int octantFieldNumber(int octant); // returns field indices or -1
+int octantFieldNumber(Vector3i octant); // returns field indices or -1
 int octantENumber(int octant); // returns 0,1,2 for Ex,y,z or -1
 int octantHNumber(int octant); // returns 0,1,2 for Hx,y,z or -1
 int octantFieldDirection(int octant); // returns 0 for Ex or Hx, 1 for y, etc.
+int octantFieldDirection(Vector3i octant);
 
 // returns halfCell/2
 Vector3i vecHalfToYee(const Vector3i & halfCell);
@@ -64,6 +66,9 @@ Rect3i rectYeeToHalf(const Rect3i & yeeRect, const Vector3i & halfCellOffset);
 
 // returns smallest Yee rect containing all points in given Yee rect
 Rect3i rectYeeToHalf(const Rect3i & yeeRect);
+
+// equivalent to rectYeeToHalf(rectHalftoYee(halfRect))
+Rect3i expandToYeeRect(const Rect3i & halfRect);
 
 // returns the last layer of the rect on the side with normal along sideIndex
 Rect3i edgeOfRect(const Rect3i & rect, int sideIndex);
