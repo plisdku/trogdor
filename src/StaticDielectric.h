@@ -16,8 +16,23 @@ class StaticDielectricDelegate : public SimpleBulkMaterialDelegate
 {
 public:
 	StaticDielectricDelegate();
+    
+    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
+        const CalculationPartition & cp) const;
 private:
+    
 };
 
+
+class StaticDielectric : public Material
+{
+public:
+    StaticDielectric();
+        
+    virtual void calcEPhase(int phasePart = 0);
+    virtual void calcHPhase(int phasePart = 0);
+private:
+    
+};
 
 #endif

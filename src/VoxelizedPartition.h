@@ -61,6 +61,10 @@ public:
 	const VoxelGrid & getVoxelGrid() const { return mVoxels; }
 	const PartitionCellCountPtr & getIndices() const
 		{ return mCentralIndices; }
+    
+    EHBufferSetPtr getEHBuffers() const { return mEHBuffers; }
+    const Map<Paint*, MaterialDelegatePtr> & getDelegates() const
+        { return mDelegates; }
 	
 private:
 	void initFieldBuffers();
@@ -83,11 +87,7 @@ private:
 	VoxelGrid mVoxels;
 	PartitionCellCountPtr mCentralIndices;
 	
-	struct EHBufferSet
-	{
-		MemoryBuffer buffers[6];
-	};
-	EHBufferSet mEHBuffers;
+	EHBufferSetPtr mEHBuffers;
 	Map<NeighborBufferDescPtr, EHBufferSet> mNBBuffers;
 	
 	Map<Paint*, MaterialDelegatePtr> mDelegates;

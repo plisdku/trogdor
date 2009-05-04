@@ -26,6 +26,8 @@ include_directories( ${TROGDOR_SOURCE_DIR}/src/setup
 	${TROGDOR_SOURCE_DIR}/src
 	${TROGDOR_SOURCE_DIR}/src/trogdorsetup
 	${magIncDirs}
+	/usr/local/include/
+	/usr/local/include/boost-1_38
 	/sw/include)
 
 #include_directories( ${magIncDirs} )
@@ -36,41 +38,20 @@ ${TROGDOR_BINARY_DIR}/utility
 ${TROGDOR_BINARY_DIR}/tinyxml
 ${TROGDOR_BINARY_DIR}/trogdorsetup
 ${magLibDirs}
+/usr/local/lib
 /sw/lib)
 
-add_executable( trogdor 
-PartitionCellCount.cpp
-ColocatedOutput.cpp
-DrudeMetalModel.cpp
+add_executable( trogdor
+CalculationPartition.cpp
 DrudeModel1.cpp
 FDTDApplication.cpp
-Fields.cpp
-FileSource.cpp
-FormulaSource.cpp
-Input.cpp
-InputFactory.cpp
 MaterialBoss.cpp
-MaterialFactory.cpp
-MaterialModel.cpp
-MaterialModelNew.cpp
 MemoryUtilities.cpp
-OneFieldInput.cpp
-OneFieldOutput.cpp
-Output.cpp
-OutputFactory.cpp
-Paint.cpp
-PECModel.cpp
+Paint.cpp 
+PartitionCellCount.cpp
 PhysicalConstants.cpp
-Runline.cpp
-SimulationGrid.cpp
-Source.cpp
-SourceFactory.cpp
 StaticDielectric.cpp
-StaticDielectricModel.cpp
-StaticLossyDielectricModel.cpp
-TFSFBufferSet.cpp
-ThreeFieldInput.cpp
-ThreeFieldOutput.cpp
+StaticDielectricPML.hh
 main.cpp
 VoxelizedPartition.cpp
 VoxelGrid.cpp
@@ -79,17 +60,15 @@ YeeUtilities.cpp
 
 
 target_link_libraries( trogdor
-setup
 tinyxml
 utility
 trogdorsetup
-boost_program_options
-boost_thread
+boost_program_options-xgcc40-mt
+boost_thread-xgcc40-mt
 ${magDepLibs}
 )
 
 add_subdirectory( utility )
 add_subdirectory( tinyxml )
-add_subdirectory( setup )
 add_subdirectory( trogdorsetup )
 

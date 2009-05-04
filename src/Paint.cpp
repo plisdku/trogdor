@@ -19,6 +19,8 @@ Map<Paint, PaintPtr> Paint::mPalette;
 
 Paint::
 Paint(PaintType inType) :
+	mBasePaint(this),
+	mBaseUpdatePaint(this),
 	mType(inType),
 	mPMLDirections(0,0,0),
 	mCurlBuffers(6),
@@ -35,7 +37,22 @@ Paint::
 }
 
 Paint::
+Paint(const Paint & copyMe)
+{
+	mBasePaint = copyMe.mBasePaint;
+	mBaseUpdatePaint = copyMe.mBaseUpdatePaint;
+	mType = copyMe.mType;
+	mPMLDirections = copyMe.mPMLDirections;
+	mCurlBuffers = copyMe.mCurlBuffers;
+	mCurrentBufferIndex = copyMe.mCurrentBufferIndex;
+	mBulkMaterial = copyMe.mBulkMaterial;
+}
+
+
+Paint::
 Paint(const MaterialDescPtr & material) :
+	mBasePaint(this),
+	mBaseUpdatePaint(this),
 	mType(kBulkPaintType),
 	mPMLDirections(0,0,0),
 	mCurlBuffers(6),
@@ -44,48 +61,6 @@ Paint(const MaterialDescPtr & material) :
 {
 	assert(material != 0L);
 }
-
-Paint::
-Paint(const Paint & parent, int sideNum, NeighborBufferDescPtr & curlBuffer) :
-	mType(parent.mType),
-	mPMLDirections(parent.mPMLDirections),
-	mCurlBuffers(parent.mCurlBuffers),
-	mCurrentBufferIndex(parent.mCurrentBufferIndex),
-	mBulkMaterial(parent.mBulkMaterial)
-{
-	//LOG << mCurlBuffers[sideNum] << "\n";
-	assert(mCurlBuffers[sideNum] == 0L);
-	assert(mBulkMaterial != 0L);
-	mCurlBuffers[sideNum] = curlBuffer;
-	//LOG << "side num " << sideNum << " buffer " << hex
-	//	<< (void*)mCurlBuffers[sideNum] << dec << "\n";
-}
-
-Paint::
-Paint(const Paint & parent, Vector3i pmlDirection) :
-	mType(parent.mType),
-	mPMLDirections(pmlDirection),
-	mCurlBuffers(6),
-	mCurrentBufferIndex(-1),
-	mBulkMaterial(parent.mBulkMaterial)
-{
-	assert(parent.mPMLDirections == Vector3i(0,0,0));
-	assert(mBulkMaterial != 0L);
-}
-
-
-Paint::
-Paint(const Paint & parent, int donothing) :
-	mType(parent.mType),
-	mPMLDirections(0,0,0),
-	mCurlBuffers(6),
-	mCurrentBufferIndex(-1),
-	mBulkMaterial(parent.mBulkMaterial)
-{
-	assert(mBulkMaterial != 0L);
-}
-
-
 
 Paint* Paint::
 getPaint(const MaterialDescPtr & material)
@@ -98,11 +73,12 @@ getPaint(const MaterialDescPtr & material)
 }
 
 Paint* Paint::
-getCurlBufferedPaint(Paint* basePaint, int sideNum,
-	NeighborBufferDescPtr & curlBuffer)
+withPML(Vector3i pmlDir) const
 {
-	assert(basePaint != 0L);
-	PaintPtr p(new Paint(*basePaint, sideNum, curlBuffer));
+	assert(!isPML());
+	PaintPtr p(new Paint(*this));
+	p->mBaseUpdatePaint = p;
+	p->mPMLDirections = pmlDir;
 	if (mPalette.count(*p) != 0)
 		return mPalette[*p];
 	mPalette[*p] = p;
@@ -110,41 +86,34 @@ getCurlBufferedPaint(Paint* basePaint, int sideNum,
 }
 
 Paint* Paint::
-getPMLPaint(Paint* basePaint, Vector3i pmlDir)
+withCurlBuffer(int side, NeighborBufferDescPtr & curlBuffer) const
 {
-	assert(basePaint != 0L);
-	PaintPtr p(new Paint(*basePaint, pmlDir));
-	if (mPalette.count(*p) != 0)
-		return mPalette[*p];
-	mPalette[*p] = p;
-	return p;
-}
-
-Paint* Paint::
-getParentPaint(Paint* basePaint)
-{
-	assert(basePaint != 0L);
-	if (!basePaint->hasCurlBuffer() && !basePaint->isPML() &&
-		basePaint->mCurrentBufferIndex == -1)
-		return basePaint;
+	assert(mCurlBuffers[side] == 0L);
+	PaintPtr p(new Paint(*this));
+	p->mCurlBuffers[side] = curlBuffer;
 	
-	PaintPtr p(new Paint(*basePaint, 0));
 	if (mPalette.count(*p) != 0)
 		return mPalette[*p];
 	mPalette[*p] = p;
 	return p;
 }
 
-
 Paint* Paint::
-retrieveCurlBufferParentPaint(Paint* basePaint)
+withCurrentSource(int currentSource) const
 {
-	assert(basePaint != 0L);
-	PaintPtr p(new Paint(*basePaint));
-	p->mCurlBuffers.resize(6, NeighborBufferDescPtr(0L));
-	assert(mPalette.count(*p) != 0);
-	return mPalette[*p];
+	assert(mCurrentBufferIndex == -1);
+	PaintPtr p(new Paint(*this));
+	p->mCurrentBufferIndex = currentSource;
+	
+	assert(!"We don't properly handle the base update paint.  It might not"
+		" exist yet, that's the problem, so deal with that at some point.");
+	
+	if (mPalette.count(*p) != 0)
+		return mPalette[*p];
+	mPalette[*p] = p;
+	return p;
 }
+
 
 
 bool Paint::

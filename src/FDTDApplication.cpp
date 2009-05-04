@@ -16,9 +16,12 @@
 #include "XMLParameterFile.h"
 #include "SimulationDescription.h"
 #include "VoxelizedPartition.h"
+#include "CalculationPartition.h"
 #include "YeeUtilities.h"
 
 #include "FDTDApplication.h"
+
+/*
 #include "SetupGrid.h"
 #include "SetupMaterialModel.h"
 #include "SetupSource.h"
@@ -36,6 +39,7 @@
 #include "OutputFactory.h"
 #include "InputFactory.h"
 #include "SourceFactory.h"
+*/
 
 #include "Pointer.h"
 #include "Map.h"
@@ -53,13 +57,11 @@
 #include <numeric>
 #include <sstream>
 
-
 using namespace std;
-
 
 FDTDApplication FDTDApplication::sInstance;
 
-
+/*
 void FDTDApplication::
 runAll(string parameterFile, int numThreads, bool runSim,
 	bool output3D, bool dumpGrid, bool output2D,
@@ -143,16 +145,6 @@ runAll(string parameterFile, int numThreads, bool runSim,
 		t1 = getTimeInMicroseconds();
 		cout << "\nSimulation ending.\n";
 		
-		/*
-		runlog << "Run time: " << (t1 - t0)*1e-6 << " seconds" << endl;
-		runlog << "\tPrint timestep time: " << mPrintTimestepTime*1e-6 <<
-			" seconds\n";
-		runlog << "Work time: " << (t1 - t0 - mPrintTimestepTime)*1e-6 <<
-			" seconds\n";
-		
-		runlog << "\n\nPerformance information\n";
-		*/
-		
 		runlog << "% Post-simulation analysis\n"
 			"% Runtime is the total after the setup is complete.\n"
 			"% Work time is the time not including printing timesteps to "
@@ -212,12 +204,6 @@ runAll(string parameterFile, int numThreads, bool runSim,
 			for (nn = 0; nn < materialTimes.size(); nn++)
 			{
 				cellTimesteps = materials[nn]->numCells()*mNumT;
-				/*
-				runlog << "\t" << materials[nn]->getMaterialName() << " "
-					<< materialTimes[nn]*1000/cellTimesteps << " ns/cell/step"
-					<< "\t\t" << materialTimes[nn]*1e-6 << " seconds "
-					<< "(" << materials[nn]->numCells() << " cells)\n";
-				*/
 				
 				runlog << pre << "material{" << nn+1 << "}.name = '"
 					<< materials[nn]->getMaterialName() << "';\n";
@@ -243,14 +229,6 @@ runAll(string parameterFile, int numThreads, bool runSim,
 			totalTotalIn_us += totalIn_us;
 			totalTotalSrc_us += totalSrc_us;
 			totalTotalBuf_us += totalBuf_us;
-			
-			/*
-			runlog << "\n\tCalculation:\t " << totalMat_us*1e-6 << " seconds\n";
-			runlog << "\tOutput:\t " << totalOut_us*1e-6 << " seconds\n";
-			runlog << "\tInput:\t " << totalIn_us*1e-6 << " seconds\n";
-			runlog << "\tSource:\t " << totalSrc_us*1e-6 << " seconds\n";
-			runlog << "\tBuffer:\t " << totalBuf_us*1e-6 << " seconds\n";
-			*/
 			
 			runlog << pre << "calcTime = " << totalMat_us*1e-6 << ";\n";
 			runlog << pre << "outputTime = " << totalOut_us*1e-6 << ";\n";
@@ -304,6 +282,7 @@ runAll(string parameterFile, int numThreads, bool runSim,
 
 	}
 }
+*/
 
 void FDTDApplication::
 runNew(string parameterFile)
@@ -317,7 +296,7 @@ runNew(string parameterFile)
 	
 	//vector<GridDescPtr> gridDescriptions;
 	Map<GridDescPtr, VoxelizedPartitionPtr> voxelizedGrids;
-	Map<string, int> simulationGrids;
+    Map<string, CalculationPartitionPtr> calculationGrids;
 	
 	SimulationDescPtr sim = loadSimulation(parameterFile);
 	//Mat3i orientation = guessFastestOrientation(*sim);
@@ -327,10 +306,18 @@ runNew(string parameterFile)
 	voxelizeGrids(sim, voxelizedGrids); // includes setup runlines
 	
 	// in here: do any setup that requires the voxelized grids
+	// extract all information that will be needed after the setup grid is gone
 	
+    LOG << "We have " << voxelizedGrids.size() << " voxelized grids.\n";
+    makeCalculationGrids(calculationGrids, voxelizedGrids);
+    
 	voxelizedGrids.clear();
+    
+    completeFieldAllocation(calculationGrids);
 	
 	// allocate memory that can be postponed
+	
+	// RUN THE SIMULATION hoorah.
 	
 	Paint::clearPalette(); // avert static destruction hell )-:
 }
@@ -361,7 +348,7 @@ guessFastestOrientation(const SimulationDescription & grid) const
 
 void FDTDApplication::
 voxelizeGrids(const SimulationDescPtr sim,
-	Map<GridDescPtr, VoxelizedPartitionPtr> voxelizedGrids)
+	Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids)
 {
 	// Make a copy of the grid descriptions.  We need the ability to modify
 	// them, because TFSFSources may require the creation of additional grids.
@@ -783,6 +770,37 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 
 
 
+void FDTDApplication::
+makeCalculationGrids(Map<string, CalculationPartitionPtr> & calcs,
+    const Map<GridDescPtr, VoxelizedPartitionPtr> & voxParts)
+{
+    LOG << "Making calc grids for " << voxParts.size() << " grids.\n";
+    map<GridDescPtr, VoxelizedPartitionPtr>::const_iterator itr;
+    for (itr = voxParts.begin(); itr != voxParts.end(); itr++)
+    {
+        CalculationPartitionPtr calcPart(
+            new CalculationPartition(*itr->second));
+        calcs[itr->first->getName()] = calcPart;
+    }
+}
+
+void FDTDApplication::
+completeFieldAllocation(Map<string, CalculationPartitionPtr> & calcs)
+{
+    LOG << "Completing allocation.\n";
+    
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcs.begin(); itr != calcs.end(); itr++)
+    {
+        LOG << "NEED TO DO FINAL ALLOCATION FOR " << itr->first << endl;
+    }
+}
+
+
+
+
+
+#if 0
 
 #pragma mark *** Setup phase ***
 
@@ -1005,7 +1023,6 @@ setupTFSFBuffers(Map<string, SetupGridPtr> & setupGrids)
 		// or another.
 		
 		LOGF << "Inserting TFSF cells for " << nom << endl;
-		//LOG << "Skipping TFSF insertion.\n";
 		grid->insertTFSF();
 	}
 }
@@ -1104,7 +1121,6 @@ setupTFSFBuffersRecursor(SetupGridPtr setupGrid,
 			int nSingular = 0;
 			for (int mm = 0; mm < 3; mm++)
 				nSingular += currentSingularDimensions[mm];
-			
 			
 			if (nSingular == 2) // handle it in Trogdor
 			{
@@ -1939,6 +1955,8 @@ runSimulation(Map<string, SimulationGridPtr> & simulationGrids)
 	
 }
 
+#endif // 0
+
 #pragma mark *** Helper methods ***
 
 
@@ -1972,61 +1990,3 @@ FDTDApplication::
 ~FDTDApplication()
 {
 }
-
-    
-    //  ------------------- Setup:
-    //  Load and verify parameter file (libxml)
-    //  Load dx (dy, dz?), dt, numT, additional sim parameters (inc. flags?)
-    //  Load each grid (a simulation is made of grids).
-    //      material models
-    //      structure grids
-    //      links
-    //      outputs
-    //
-    //      Remember to load grid coords as floats (i, i.5).
-    //
-    //      Verify: BEFORE handling the Assembly structure, check the bounds
-    //      of each link against the dimensions of each StructureGrid involved.
-    //      Also make sure that the ROI and activeRegions make sense for each
-    //      structure grid.  Then check the assembly units.  If at all possible,
-    //      report the line of the XML file that has some trouble.
-    //
-    //      Load the actual material grids via the Assembly instructions.
-    //      Check (optional): is the whole grid tagged?  Create the modified
-    //      materials in their proper places (links and PMLs).  Should I find
-    //      a way to allow other ABCs?  Say, a half-cell-thick PML is instead
-    //      implemented as Liao or something?  Think about it.
-    //
-    //      Make the runlines.  First traverse the grid and determine the
-    //      material indices.  These are needed for updates and for outputs,
-    //      and maybe later for other things too.
-    //
-    //          Two sets of runlines:
-    //              1.  Calculation runlines
-    //              2.  Output runlines
-    //      
-    //      So, work out the calculation runlines first since that can be part
-    //      of the setup-to-runtime transition.
-    //
-    //  ------------------- Setup-to-runtime:
-    //      Set up the outputs.  They need to get some runline info from the
-    //      structure grid in case they want to output D, B or J information.
-    //      It might be harmless to allocate output memory here (buffers etc.)
-    //      but perhaps it can be done later.
-    //
-    //      Delete the structure grids.  Allocate the simulation grids and the
-    //      material models.  Pass in the model parameters.  Allocate the
-    //      runlines before the material models.
-    //
-    //      Allocate the outputs if needed.  Create the sources from their
-    //      prototypes.  Ready to go!
-    //
-    //      (Make sure all setup/prototype structures are deleted ASAP.)
-    //
-    //  ------------------- Runtime:
-    //  
-    //  Go for it.  Make sure to keep benchmarking stats.  Should there be
-    //  some flags in the param file to determine what is displayed at runtime?
-    //  1.  Loading from XML.  The XML file details must be sequestered here.
-    
-

@@ -51,22 +51,22 @@ class Paint
 {
 public:
 	Paint(PaintType inType);
+	Paint(const Paint & copyMe); // copy constructor, slightly evil
 	~Paint();
 	
 	friend std::ostream & operator<<(std::ostream & out, const Paint & p);
 private:
 	Paint(const MaterialDescPtr & material); // bulk constructor
-	Paint(const Paint & parent, int sideNum, // curl buffer constructor
-		NeighborBufferDescPtr & curlBuffer);
-	Paint(const Paint & parent, Vector3i pmlDir); // pml constructor
-	Paint(const Paint & parent, int donothing); // parent paint constructor (no modification)
+	
 public:
+	
 	static Paint* getPaint(const MaterialDescPtr & material);
-	static Paint* getCurlBufferedPaint(Paint* basePaint, int sideNum,
-		NeighborBufferDescPtr & curlBuffer);
-	static Paint* getPMLPaint(Paint* basePaint, Vector3i pmlDir);
-	static Paint* getParentPaint(Paint* basePaint);
-	static Paint* retrieveCurlBufferParentPaint(Paint* basePaint);
+		
+	Paint* withoutModifications() const { return mBasePaint; }
+	Paint* withoutCurlBuffers() const { return mBaseUpdatePaint; }
+	Paint* withPML(Vector3i pmlDir) const;
+	Paint* withCurlBuffer(int side, NeighborBufferDescPtr & curlBuffer) const;
+	Paint* withCurrentSource(int currentSource) const;
 	
 	static const Map<Paint, PaintPtr> & getPalette() {
 		return mPalette; }
@@ -84,6 +84,10 @@ public:
 	bool isPML() const;
 	
 private:
+	
+	// Cached parent paints (can be self-referential)
+	Paint* mBasePaint;				// as painted, without *any* overlays
+	Paint* mBaseUpdatePaint;		// as painted but includes current sources
 	
 	PaintType mType;
 	Vector3i mPMLDirections;

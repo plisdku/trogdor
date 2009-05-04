@@ -39,12 +39,13 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	m_nz = (mFieldAllocRegion.size(2)+1)/2;
 	int bufSize = m_nx*m_ny*m_nz;
 	
-	mEHBuffers.buffers[0] = MemoryBuffer("Ex", bufSize);
-	mEHBuffers.buffers[1] = MemoryBuffer("Ey", bufSize);
-	mEHBuffers.buffers[2] = MemoryBuffer("Hz", bufSize);
-	mEHBuffers.buffers[3] = MemoryBuffer("Ez", bufSize);
-	mEHBuffers.buffers[4] = MemoryBuffer("Hy", bufSize);
-	mEHBuffers.buffers[5] = MemoryBuffer("Hx", bufSize);
+    mEHBuffers = EHBufferSetPtr(new EHBufferSet);
+	mEHBuffers->buffers[0] = MemoryBuffer("Ex", bufSize);
+	mEHBuffers->buffers[1] = MemoryBuffer("Ey", bufSize);
+	mEHBuffers->buffers[2] = MemoryBuffer("Hz", bufSize);
+	mEHBuffers->buffers[3] = MemoryBuffer("Ez", bufSize);
+	mEHBuffers->buffers[4] = MemoryBuffer("Hy", bufSize);
+	mEHBuffers->buffers[5] = MemoryBuffer("Hx", bufSize);
 	
 	mNonPMLRegion = gridDesc.getNonPMLRegion();
 	mOriginYee = gridDesc.getOriginYee();
@@ -205,7 +206,7 @@ fieldPointer(Vector3i halfCell) const
 {
 	long index = linearYeeIndex(halfCell);
 	int fieldNum = octantFieldNumber(halfCell);
-	return BufferPointer(mEHBuffers.buffers[fieldNum], index);
+	return BufferPointer(mEHBuffers->buffers[fieldNum], index);
 }
 
 BufferPointer VoxelizedPartition::
@@ -216,12 +217,8 @@ fieldPointer(const NeighborBufferDescPtr & nb, Vector3i halfCell) const
 	return BufferPointer(mNBBuffers[nb].buffers[fieldNum], index);
 }
 
-
-
-
 	
 #pragma mark *** Private methods ***
-
 
 
 void VoxelizedPartition::
@@ -500,10 +497,11 @@ generateRunlines()
 	for (int fieldNum = 0; fieldNum < 6; fieldNum++)
 	{
 		// Remember to set up the buffers here!
-		LOG << "Runlines for offset " << halfCellFieldOffset(fieldNum) << "\n";
+		//LOG << "Runlines for offset " << halfCellFieldOffset(fieldNum) << "\n";
 		genRunlinesInOctant(halfCellIndex(halfCellFieldOffset(fieldNum)));
 	}
 	
+    /*
 	LOG << "Printing runlines.\n";
 	map<Paint*, MaterialDelegatePtr>::iterator itr;
 	for (itr = mDelegates.begin(); itr != mDelegates.end(); itr++)
@@ -511,6 +509,7 @@ generateRunlines()
 		cout << *(itr->first) << "\n";
 		itr->second->printRunlines(cout);
 	}
+    */
 }
 
 void VoxelizedPartition::
@@ -544,7 +543,8 @@ genRunlinesInOctant(int octant)
 	for (x[0] = p1[0]; x[0] <= mCalcRegion.p2[0]; x[0] += 2)
 	{
 		xPaint = mVoxels(x);
-		xParentPaint = Paint::retrieveCurlBufferParentPaint(xPaint);
+		xParentPaint = xPaint->withoutCurlBuffers();
+		
 		if (!needNewRunline)
 		{
 			if (xParentPaint == lastXParentPaint &&

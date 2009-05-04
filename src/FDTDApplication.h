@@ -16,19 +16,23 @@
 #ifndef _FDTDAPPLICATION_
 #define _FDTDAPPLICATION_
 
+
+/*
 #include "SetupGrid.h"
 #include "StructureGrid.h"
 #include "SimulationGrid.h"
 
 #include "TFSFBufferSet.h"
-
+*/
+#include "geometry.h"
 #include "tinyxml.h"
-
+#include "Pointer.h"
 #include <string>
-
-
+#include <vector>
+/*
 class Fields;
 typedef Pointer<Fields> FieldsPtr;
+*/
 
 class SimulationDescription;
 typedef Pointer<SimulationDescription> SimulationDescPtr;
@@ -41,6 +45,9 @@ typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
 
 class HuygensSurfaceDescription;
 typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
+
+class CalculationPartition;
+typedef Pointer<CalculationPartition> CalculationPartitionPtr;
 
 /**
  *  Core application singleton
@@ -62,10 +69,11 @@ public:
      *  Functionality is delegated to executeParamFile(), initializeRuntime(),
      *  and runSimulation().
      */
+    /*
     void runAll(std::string parameterFile, int numThreads, bool runSim,
 		bool output3D, bool dumpGrid, bool output2D,
 		int numTimestepsOverride = -1);
-	
+	*/
 	void runNew(std::string parameterFile);
 
 private: // heh, "new private" stuff
@@ -76,7 +84,7 @@ private: // heh, "new private" stuff
 	
 	void voxelizeGrids(const SimulationDescPtr sim,
 		//Map<std::string, GridDescriptionPtr> gridDescriptions,
-		Map<GridDescPtr, VoxelizedPartitionPtr> voxelizedGrids);
+		Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids);
 	
 	void voxelizeGridRecursor(
 		Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
@@ -92,28 +100,23 @@ private: // heh, "new private" stuff
 	
 	GridDescPtr makeSourceGridDescription(GridDescPtr parentGrid,
 		HuygensSurfaceDescPtr huygensSurface, std::string srcGridName);
-	
+    
+    
+    void makeCalculationGrids(Map<std::string, CalculationPartitionPtr> & calcs,
+        const Map<GridDescPtr, VoxelizedPartitionPtr> & voxParts);
+    
+    void completeFieldAllocation(Map<std::string, CalculationPartitionPtr>
+        & calcs);
+    
+    	
 private:
-    /**
-     *  Load and execute the simulation description
-     *
-     *  The parameter file contains descriptions of materials, outputs, sources,
-     *  and the structures of all grids.  The grid structure is loaded from
-     *  any necessary other files (e.g. height maps) in this stage.
-     *
-     *  @param  paramFileName   the local xml instruction file, e.g. "foo.xml"
-     *  @param  setupGrids      map of grid names to setup data, to be filled in
-     *  @param  simulationParams dx, dy, dz, dt, numT
-     */
+/*
     void
     readParameterFile(std::string paramFileName,
         Map<std::string, SetupGridPtr> & setupGrids,
         Map<std::string, std::string> & simulationParams,
 		bool output3D, bool dumpGrid, bool output2D);
 	
-	/**
-	 *	Set up field buffers and auxiliary grids for TFSF sources
-	 */
 	void
 	setupTFSFBuffers(Map<std::string, SetupGridPtr> & setupGrids);
 	
@@ -133,32 +136,12 @@ private:
 	
 	void
 	setupAFPRequests(Map<std::string, SetupGridPtr> & setupGrids);
-    
-    
-    /**
-     *  Allocate runtime memory and deallocate temporary structures
-     *
-     *  This function performs a memory shuffle to unload the StructureGrids
-     *  (which are large) and allocate the memory for fields and runlines.
-     *  Setup methods for MaterialModel, Output and Source classes are called
-     *  here.
-     *
-     *  @param  setupGrids      structures read from the XML file
-     *  @param  simulationGrids runtime memory: fields, materials, etc.
-     */
+        
     void
     initializeRuntime(Map<std::string, SetupGridPtr> & setupGrids,
         Map<std::string, SimulationGridPtr> & simulationGrids,
 		int numThreads, float dx, float dy, float dz, float dt);
     
-    /**
-     *  Run the FDTD simulation
-     *
-     *  This is the main simulation loop that calculates fields and outputs
-     *  data.
-     *
-     *  @param  simulationGrids runtime memory: fields, materials, etc.
-     */
     void
     runSimulation(Map<std::string, SimulationGridPtr> & simulationGrids);
     
@@ -168,32 +151,12 @@ private:
 	makeRuntimeBuffers(SetupGridPtr grid, Map<std::string, FieldsPtr> & fields,
 		Map<SetupTFSFBufferSetPtr, TFSFBufferSetPtr> & buffers);
 	
-    /**
-     *  Helper function for initializeRuntime: create Sources
-     *
-     *  @param  grid        the setup grid for which to make Sources
-     *  @param  inFields    memory addresses of electromagnetic fields
-     */
     std::vector<SourcePtr>
     makeRuntimeSources(SetupGridPtr grid, FieldsPtr inFields);
     
-    
-    /**
-     *  Helper function for initializeRuntime: create Outputs
-     *
-     *  @param  grid        the setup grid for which to make Outputs
-     *  @param  inFields    memory addresses of electromagnetic fields
-     *  @param  inOutputRunlines    run
-     */
     std::vector<OutputPtr>
     makeRuntimeOutputs(SetupGridPtr grid, FieldsPtr inFields);
     
-    /**
-     *  Helper function for initializeRuntime: create Inputs
-     *
-     *  @param  grid        the setup grid for which to make Inputs
-     *  @param  inFields    memory addresses of electromagnetic fields
-     */
     std::vector<InputPtr>
     makeRuntimeInputs(SetupGridPtr grid, FieldsPtr inFields);
     
@@ -203,7 +166,7 @@ private:
         const std::vector<RunlineType> & inMaterialRunlines,
 		Map<SetupTFSFBufferSetPtr, TFSFBufferSetPtr> & inBuffers,
 		float dx, float dy, float dz, float dt);
-	
+*/
 private:
     float m_dx;
     float m_dy;

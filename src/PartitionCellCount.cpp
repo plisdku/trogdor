@@ -110,8 +110,8 @@ calcMaterialIndices(const VoxelGrid & grid)
 			assert(linearIndex >= 0 &&
 				linearIndex < mMaterialIndexHalfCells.size());
 			
-			Paint* p = Paint::retrieveCurlBufferParentPaint(
-				grid(ii,jj,kk));
+			Paint* p =  grid(ii,jj,kk)->withoutCurlBuffers();
+			
 			if (mNumCells[nn].count(p) == 0)
 			{
 				mNumCells[nn][p] = 1;

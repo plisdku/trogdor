@@ -16,6 +16,7 @@
 #include "Paint.h"
 #include "Log.h"
 #include "YeeUtilities.h"
+#include "CalculationPartition.h"
 
 #include "StaticDielectric.h"
 #include "DrudeModel1.h"
@@ -49,9 +50,21 @@ getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	}
 	*/
 	
+	LOG << "Getting delegate for " << *parentPaint << ".\n"; 
+	
 	if (parentPaint->isPML())
 		return MaterialDelegatePtr(new SimpleBulkPMLMaterialDelegate);
 	return MaterialDelegatePtr(new SimpleBulkMaterialDelegate);
+}
+
+Material::
+Material()
+{
+}
+
+Material::
+~Material()
+{
 }
 
 MaterialDelegate::
@@ -203,6 +216,15 @@ printRunlines(std::ostream & out) const
 	}
 }
 
+MaterialPtr SimpleBulkMaterialDelegate::
+makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
+    const
+{
+    cerr << "You shouldn't be here.  Overload for your material.";
+    exit(1);
+}
+
+
 #pragma mark *** Simple Bulk PML Material ***
 
 SimpleBulkPMLMaterialDelegate::
@@ -329,4 +351,10 @@ printRunlines(std::ostream & out) const
 	}
 }
 
-
+MaterialPtr SimpleBulkPMLMaterialDelegate::
+makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
+    const
+{
+    cerr << "You shouldn't be here.  Overload for your material.";
+    exit(1);
+}

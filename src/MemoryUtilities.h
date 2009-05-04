@@ -39,6 +39,12 @@ private:
 };
 typedef Pointer<MemoryBuffer> MemoryBufferPtr;
 
+struct EHBufferSet
+{
+    MemoryBuffer buffers[6];
+};
+typedef Pointer<EHBufferSet> EHBufferSetPtr;
+
 class BufferPointer
 {
 public:

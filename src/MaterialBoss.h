@@ -20,6 +20,9 @@ class VoxelGrid;
 class PartitionCellCount;
 typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
 
+class CalculationPartition;
+typedef Pointer<CalculationPartition> CalculationPartitionPtr;
+
 class VoxelizedPartition;
 
 class MaterialDelegate;
@@ -33,6 +36,19 @@ public:
 		/*const std::vector<PartitionCellCountPtr> & pmlFaces,*/
 		Paint* parentPaint);
 };
+
+class Material
+{
+public:
+    Material();
+    virtual ~Material();
+    
+    virtual void calcEPhase(int phasePart = 0) = 0; // subphase, cache friendly?
+    virtual void calcHPhase(int phasePart = 0) = 0;
+private:
+    
+};
+typedef Pointer<Material> MaterialPtr;
 
 // This is that rare thing—a class in Trogdor which doesn't observe RAII.
 // Initializing it just has too darned many parameters.
@@ -57,9 +73,12 @@ public:
 	virtual void endRunline() = 0;
 	
 	virtual void printRunlines(std::ostream & out) const = 0;
+    
+    // Setting up the runtime materials
+    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
+        const CalculationPartition & cp) const = 0;
 };
 typedef Pointer<MaterialDelegate> MaterialDelegatePtr;
-
 
 
 class SimpleBulkMaterialDelegate : public MaterialDelegate
@@ -78,6 +97,8 @@ public:
 	
 	virtual void printRunlines(std::ostream & out) const;
 	
+    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
+        const CalculationPartition & cp) const;
 protected:
 	struct SBMRunline
 	{
@@ -116,6 +137,8 @@ public:
 	
 	virtual void printRunlines(std::ostream & out) const;
 	
+    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
+        const CalculationPartition & cp) const;
 protected:
 	struct SBPMRunline
 	{

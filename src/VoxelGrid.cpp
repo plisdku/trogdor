@@ -309,7 +309,7 @@ paintCopyFrom(const GridDescription & gridDesc,
 	for (p[0] = copyTo2.p1[0]; p[0] <= copyTo2.p2[0]; p[0]++)
 	{
 		q = copyFrom.p1 + matrix*(p - copyTo.p1);
-		Paint* plainPaint = Paint::getParentPaint(grid2(q));
+		Paint* plainPaint = grid2(q)->withoutModifications();
 		(*this)(p) = plainPaint;
 	}
 }
@@ -359,8 +359,7 @@ overlayHuygensSurface(const HuygensSurfaceDescription & surf)
 			for (jj = innerHalfRect.p1[1]; jj <= innerHalfRect.p2[1]; jj++)
 			for (ii = innerHalfRect.p1[0]; ii <= innerHalfRect.p2[0]; ii++)
 			{
-				Paint* p = Paint::getCurlBufferedPaint( (*this)(ii,jj,kk),
-					sideNum, nb);
+				Paint* p = (*this)(ii,jj,kk)->withCurlBuffer(sideNum, nb);
 				paintHalfCell(p, ii, jj, kk);
 				//(*this)(ii,jj,kk) = p;
 			}
@@ -373,8 +372,8 @@ overlayHuygensSurface(const HuygensSurfaceDescription & surf)
 			for (jj = outerHalfRect.p1[1]; jj <= outerHalfRect.p2[1]; jj++)
 			for (ii = outerHalfRect.p1[0]; ii <= outerHalfRect.p2[0]; ii++)
 			{
-				Paint* q = Paint::getCurlBufferedPaint( (*this)(ii,jj,kk),
-					oppositeSideNum, nb);
+				Paint* q = (*this)(ii,jj,kk)->withCurlBuffer(oppositeSideNum,
+					nb);
 				paintHalfCell(q, ii, jj, kk);
 				//(*this)(ii,jj,kk) = q;
 			}
@@ -514,7 +513,7 @@ paintPML(Vector3i pmlDir, Vector3i pp)
 {
 	//	 Paint the cell itself
 	if (mAllocRegion.encloses(pp))
-		(*this)(pp) = Paint::getPMLPaint((*this)(pp), pmlDir);
+		(*this)(pp) = (*this)(pp)->withPML(pmlDir);
 	
 	// Now grid-symmetrical paints
 	for (int transDir = 0; transDir < 6; transDir++)
@@ -522,11 +521,9 @@ paintPML(Vector3i pmlDir, Vector3i pp)
 		Vector3i qq(pp + cardinalDirection(transDir)*
 			(mGridHalfCells.size(transDir/2)+1));
 		
-			
 		if (mAllocRegion.encloses(qq))
 		{
-			(*this)(qq) =
-				Paint::getPMLPaint((*this)(qq), pmlDir);
+			(*this)(qq) = (*this)(qq)->withPML(pmlDir);
 		}
 	}
 }

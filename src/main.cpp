@@ -55,6 +55,7 @@
 #include <Magick++.h>
 
 #include <boost/program_options.hpp>
+#include <boost/version.hpp>
 
 #include <iostream>
 #include <limits>
@@ -223,6 +224,7 @@ handleArguments(int argc, char* const argv[])
 		cout << "Trogdor version: " << TROGDOR_VERSION_TEXT << endl;
 		cout << "Compile date: " << __DATE__ << endl;
 		cout << "OS type: " << TROGDOR_OS << endl;
+		cout << "Boost version: " << BOOST_LIB_VERSION << endl;
 		cout << "TinyXML version: " << TIXML_MAJOR_VERSION << "."
 			<< TIXML_MINOR_VERSION << "." << TIXML_PATCH_VERSION << endl;
 		cout << "ImageMagick version: " << MagickVersion << endl;
