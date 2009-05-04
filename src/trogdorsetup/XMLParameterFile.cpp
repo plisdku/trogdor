@@ -9,7 +9,7 @@
 
 #include "XMLParameterFile.h"
 
-#include "ValidateSetupAttributes.h"
+//#include "ValidateSetupAttributes.h"
 
 #include "StreamFromString.h"
 #include <sstream>

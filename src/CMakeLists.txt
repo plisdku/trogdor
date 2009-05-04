@@ -51,7 +51,7 @@ Paint.cpp
 PartitionCellCount.cpp
 PhysicalConstants.cpp
 StaticDielectric.cpp
-StaticDielectricPML.hh
+StaticDielectricPML.cpp
 main.cpp
 VoxelizedPartition.cpp
 VoxelGrid.cpp

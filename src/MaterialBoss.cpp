@@ -31,7 +31,7 @@ getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	assert(parentPaint != 0L);
 	LOG << "Delegate for " << *parentPaint << endl;
 	
-	PaintType type = parentPaint->getType();
+	//PaintType type = parentPaint->getType();
 	const MaterialDescPtr bulkMaterial = parentPaint->getBulkMaterial();
 	string materialClass(bulkMaterial->getClass());
 	string materialName(bulkMaterial->getName());
