@@ -101,14 +101,21 @@ private: // heh, "new private" stuff
 	GridDescPtr makeSourceGridDescription(GridDescPtr parentGrid,
 		HuygensSurfaceDescPtr huygensSurface, std::string srcGridName);
     
+    void trimVoxelizedGrids(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs);
     
-    void makeCalculationGrids(Map<std::string, CalculationPartitionPtr> & calcs,
+    void makeCalculationGrids(const SimulationDescPtr sim, 
+        Map<std::string, CalculationPartitionPtr> & calcs,
         const Map<GridDescPtr, VoxelizedPartitionPtr> & voxParts);
     
     void completeFieldAllocation(Map<std::string, CalculationPartitionPtr>
         & calcs);
     
-    	
+    
+    void calcE(Map<std::string, CalculationPartitionPtr> & calcGrids);
+    void calcAfterE(Map<std::string, CalculationPartitionPtr> & calcGrids);
+    void calcH(Map<std::string, CalculationPartitionPtr> & calcGrids);
+    void calcAfterH(Map<std::string, CalculationPartitionPtr> & calcGrids);
+    
 private:
 /*
     void

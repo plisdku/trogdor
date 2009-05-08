@@ -11,7 +11,8 @@
 #ifndef _STATICDIELECTRICPML_
 #define _STATICDIELECTRICPML_
 
-#include "MaterialDelegate.h"
+#include "SimulationDescription.h"
+#include "MaterialBoss.h"
 
 class StaticDielectricPMLDelegate : public SimpleBulkPMLMaterialDelegate
 {
@@ -27,12 +28,18 @@ private:
 class StaticDielectricPML : public Material
 {
 public:
-    StaticDielectricPML();
+    StaticDielectricPML(const StaticDielectricPMLDelegate & deleg,
+        const MaterialDescription & descrip, Vector3f dxyz, float dt);
         
-    virtual void calcEPhase(int phasePart = 0);
-    virtual void calcHPhase(int phasePart = 0);
+    virtual void calcEPhase(int direction);
+    virtual void calcHPhase(int direction);
 private:
+    std::vector<SimplePMLRunline> mRunlines[6];
     
+    float m_epsr;
+    float m_mur;
 };
+
+#include "StaticDielectricPML.cpp"
 
 #endif

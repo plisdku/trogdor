@@ -29,11 +29,17 @@ public:
 	unsigned long getStride() const { return mStride; }
 	const std::string & getDescription() const { return mDescription; }
 	void setDescription(const std::string & inDesc) { mDescription = inDesc; }
+    
+    void setHeadPointer(float* ptr) { mHeadPointer = ptr; }
+    //float* getHeadPointer() { return mHeadPointer; }
+    float* getHeadPointer() const { return mHeadPointer; }
 	
 private:
 	unsigned long mLength;
 	unsigned long mStride;
 	std::string mDescription;
+    
+    float* mHeadPointer;
 	
 	friend class BufferPointer;
 };
@@ -55,6 +61,7 @@ public:
 	
 	unsigned long getOffset() const { return mOffset; }
 	const MemoryBuffer * getBuffer() const { return mBuffer; }
+    float* getPointer() const { return mBuffer->getHeadPointer() + mOffset; }
 	
 	void setOffset(unsigned long offset);
 	

@@ -223,10 +223,15 @@ cycleCoordinates()
 
 OutputDescription::
 OutputDescription(string fileName, string inClass, int inPeriod,
+    Rect3i inRegion, Vector3b whichE, Vector3b whichH, Vector3i inStride,
 	const Map<string, string> & inParameters) throw(Exception) :
 	mFileName(fileName),
 	mClass(inClass),
 	mPeriod(inPeriod),
+    mWhichE(whichE),
+    mWhichH(whichH),
+    mYeeRects(1,inRegion),
+    mStrides(1,inStride),
 	mParams(inParameters)
 {
 	cerr << "Warning: OutputDescription does not validate inClass.\n";
@@ -235,32 +240,51 @@ OutputDescription(string fileName, string inClass, int inPeriod,
 void OutputDescription::
 cycleCoordinates()
 {
+    unsigned int nn;
+	Mat3i permuteForward, permuteBackward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	
 	mCoordinatePermutationNumber += 1;
 	mCoordinatePermutationNumber %= 3;
+    
+    mWhichE = Vector3b(mWhichE[2], mWhichE[0], mWhichE[1]);
+    mWhichH = Vector3b(mWhichH[2], mWhichH[0], mWhichH[1]);
+    
+    for (nn = 0; nn < mYeeRects.size(); nn++)
+        mYeeRects[nn] = permuteForward * mYeeRects[nn];
+    for (nn = 0; nn < mStrides.size(); nn++)
+        mStrides[nn] = permuteForward * mStrides[nn];
 }
 
 #pragma mark *** Source ***
 
 SourceDescription::
 SourceDescription(string formula, string inFileName,
-	Vector3f polarization, Rect3i region, string field,
+	Vector3f polarization, Rect3i region, Vector3b whichE, Vector3b whichH,
 	const Map<string, string> & inParameters) throw(Exception) :
 	mFormula(formula),
 	mInputFileName(inFileName),
 	mPolarization(polarization),
-	mRegion(region),
-	mField(field),
+    mWhichE(whichE),
+    mWhichH(whichH),
+    mIsSpaceVarying(0),
+    mYeeRects(1, region),
+    mFirstTimestep(),
+    mLastTimestep(),
 	mParams(inParameters)
 {
 	cerr << "Warning: SourceDescription does not validate formula.\n";
-	cerr << "Warning: SourceDescription does not validate field.\n";
-	if (!vec_ge(mRegion.size(), 0))
-		throw(Exception("Source region has some negative dimensions"));
+    
+    for (unsigned int nn = 0; nn < mYeeRects.size(); nn++)
+        if (!vec_ge(mYeeRects[nn].size(), 0))
+            throw(Exception("Source region has some negative dimensions"));
 }
 
 void SourceDescription::
 cycleCoordinates()
 {
+    unsigned int nn;
 	Mat3i permuteForward, permuteBackward;
 	permuteForward = 0,0,1,1,0,0,0,1,0;
 	permuteBackward = 0,1,0,0,0,1,1,0,0;
@@ -270,10 +294,12 @@ cycleCoordinates()
 	
 	mPolarization = Vector3f(
 		mPolarization[2], mPolarization[0], mPolarization[1]);
+    
+    mWhichE = Vector3b(mWhichE[2], mWhichE[0], mWhichE[1]);
+    mWhichH = Vector3b(mWhichH[2], mWhichH[0], mWhichH[1]);
 	
-	mRegion = permuteForward*mRegion;
-	
-	LOG << "Not rotating SourceDescription::mField.\n";
+    for (nn = 0; nn < mYeeRects.size(); nn++)
+        mYeeRects[nn] = permuteForward * mYeeRects[nn];
 }
 
 

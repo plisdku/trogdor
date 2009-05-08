@@ -16,7 +16,8 @@ MemoryBuffer::
 MemoryBuffer() :
 	mLength(0),
 	mStride(1),
-	mDescription("Empty buffer")
+	mDescription("Empty buffer"),
+    mHeadPointer(0L)
 {
 }
 
@@ -24,7 +25,8 @@ MemoryBuffer::
 MemoryBuffer(unsigned long length, unsigned long stride) :
 	mLength(length),
 	mStride(stride),
-	mDescription("")
+	mDescription(""),
+    mHeadPointer(0L)
 {
 }
 
@@ -33,7 +35,8 @@ MemoryBuffer(const string & inDescription, unsigned long length,
 	unsigned long stride) :
 	mLength(length),
 	mStride(stride),
-	mDescription(inDescription)
+	mDescription(inDescription),
+    mHeadPointer(0L)
 {
 }
 
@@ -41,7 +44,8 @@ MemoryBuffer::
 MemoryBuffer(const MemoryBuffer & copyMe) :
 	mLength(copyMe.mLength),
 	mStride(copyMe.mStride),
-	mDescription(copyMe.mDescription)
+	mDescription(copyMe.mDescription),
+    mHeadPointer(0L)
 {
 }
 

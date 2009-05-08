@@ -22,6 +22,12 @@ class HuygensSurfaceDescription;
 typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
 class NeighborBufferDescription;
 typedef Pointer<NeighborBufferDescription> NeighborBufferDescPtr;
+class OutputDescription;
+typedef Pointer<OutputDescription> OutputDescPtr;
+class InputEHDescription;
+typedef Pointer<InputEHDescription> InputEHDescPtr;
+class SourceDescription;
+typedef Pointer<SourceDescription> SourceDescPtr;
 
 class AssemblyDescription;
 class Block;

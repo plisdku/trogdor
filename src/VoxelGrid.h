@@ -56,6 +56,8 @@ public:
 	void paintPEC(Paint* paint, int iYee, int jYee, int kYee);
 	void paintPMC(Paint* paint, int iYee, int jYee, int kYee);
 	void paintPML(Vector3i pmlDir, Vector3i pp);
+    
+    void clear();
 	
 private:
 	std::vector<Paint*> mMaterialHalfCells;
@@ -71,6 +73,7 @@ private:
 	int m_ny;
 	int m_nz;
 };
+typedef Pointer<VoxelGrid> VoxelGridPtr;
 
 std::ostream & operator<< (std::ostream & out, const VoxelGrid & grid);
 

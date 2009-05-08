@@ -72,6 +72,11 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	createMaterialDelegates();
 	loadSpaceVaryingData(); // * grid-scale wraparound
 	generateRunlines(); // * partition wraparound
+    
+    
+    createOutputDelegates(gridDesc.getOutputs());
+    createInputDelegates(gridDesc.getInputs());
+    createSourceDelegates(gridDesc.getSources());
 }
 
 bool VoxelizedPartition::
@@ -215,6 +220,20 @@ fieldPointer(const NeighborBufferDescPtr & nb, Vector3i halfCell) const
 	long index = linearYeeIndex(nb, halfCell);
 	int fieldNum = octantFieldNumber(halfCell);
 	return BufferPointer(mNBBuffers[nb].buffers[fieldNum], index);
+}
+
+void VoxelizedPartition::
+clearVoxelGrid()
+{
+    LOG << "Clearing voxel grid.\n";
+    mVoxels.clear();
+}
+
+void VoxelizedPartition::
+clearCellCountGrid()
+{
+    LOG << "Clearing cell count grid.\n";
+    mCentralIndices = 0L;
 }
 
 	
@@ -567,6 +586,35 @@ genRunlinesInOctant(int octant)
 	}
 	material->endRunline();  // DO NOT FORGET THIS... oh wait, I didn't!
 }
+
+
+void VoxelizedPartition::
+createOutputDelegates(const std::vector<OutputDescPtr> & outputs)
+{
+    for (unsigned int nn = 0; nn < outputs.size(); nn++)
+        mOutputDelegates.push_back(
+            OutputFactory::getDelegate(*this, outputs[nn]));
+}
+
+void VoxelizedPartition::
+createInputDelegates(const std::vector<InputEHDescPtr> & inputs)
+{
+    for (unsigned int nn = 0; nn < inputs.size(); nn++)
+    {
+    }
+}
+
+void VoxelizedPartition::
+createSourceDelegates(const std::vector<SourceDescPtr> & sources)
+{
+    for (unsigned int nn = 0; nn < sources.size(); nn++)
+        mSourceDelegates.push_back(
+            SourceFactory::getDelegate(*this, sources[nn]));
+}
+
+
+
+
 
 
 std::ostream &

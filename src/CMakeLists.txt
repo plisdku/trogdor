@@ -45,11 +45,15 @@ add_executable( trogdor
 CalculationPartition.cpp
 DrudeModel1.cpp
 FDTDApplication.cpp
+FormulaSource.cpp
 MaterialBoss.cpp
 MemoryUtilities.cpp
+OutputBoss.cpp
 Paint.cpp 
 PartitionCellCount.cpp
 PhysicalConstants.cpp
+SimpleEHOutput.cpp
+SourceBoss.cpp
 StaticDielectric.cpp
 StaticDielectricPML.cpp
 main.cpp

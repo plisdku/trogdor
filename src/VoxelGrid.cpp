@@ -528,6 +528,12 @@ paintPML(Vector3i pmlDir, Vector3i pp)
 	}
 }
 
+void VoxelGrid::
+clear()
+{
+    mMaterialHalfCells.resize(0);
+}
+
 /*
 long VoxelGrid::
 linearYeeIndex(int ii, int jj, int kk) const

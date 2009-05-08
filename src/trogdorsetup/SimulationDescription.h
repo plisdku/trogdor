@@ -29,7 +29,9 @@ class SimulationDescription;
 class GridDescription;
 class InputEHDescription;
 class OutputDescription;
+class FullAuxDumpDescription;
 class SourceDescription;
+class CurrentSourceDescription;
 class HuygensSurfaceDescription;
 class NeighborBufferDescription;
 class MaterialDescription;
@@ -39,7 +41,9 @@ typedef Pointer<SimulationDescription> SimulationDescPtr;
 typedef Pointer<GridDescription> GridDescPtr;
 typedef Pointer<InputEHDescription> InputEHDescPtr;
 typedef Pointer<OutputDescription> OutputDescPtr;
+typedef Pointer<FullAuxDumpDescription> FullAuxDumpDescPtr;
 typedef Pointer<SourceDescription> SourceDescPtr;
+typedef Pointer<CurrentSourceDescription> CurrentSourceDescPtr;
 typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
 typedef Pointer<NeighborBufferDescription> NeighborBufferDescPtr;
 typedef Pointer<MaterialDescription> MaterialDescPtr;
@@ -157,6 +161,11 @@ private:
 	int mCoordinatePermutationNumber; // 0,1 or 2
 	std::string mFileName;
 	std::string mClass;
+    
+    std::vector<Rect3i> mYeeRects;
+    std::vector<long> mFirstTimestep;
+    std::vector<long> mLastTimestep;
+    
 	Map<std::string, std::string> mParams;
 };
 
@@ -164,7 +173,8 @@ class OutputDescription
 {
 public:
 	OutputDescription(std::string fileName, std::string inClass,
-		int inPeriod, const Map<std::string, std::string> & inParameters)
+		int inPeriod, Rect3i inRegion, Vector3b whichE, Vector3b whichH,
+        Vector3i inStride, const Map<std::string, std::string> & inParameters)
 		throw(Exception);
 	
 	void cycleCoordinates();  // rotate x->y, y->z, z->x
@@ -172,20 +182,50 @@ public:
 	std::string getFileName() const { return mFileName; }
 	std::string getClass() const { return mClass; }
 	int getPeriod() const { return mPeriod; }
+    
+    Vector3b getWhichE() const { return mWhichE; }
+    Vector3b getWhichH() const { return mWhichH; }
+    
+    const std::vector<long> getFirstSamples() const { return mFirstSamples; }
+    const std::vector<long> getLastSamples() const { return mLastSamples; }
+    const std::vector<long> getSamplePeriods() const { return mSamplePeriods; }
+    const std::vector<Rect3i> getYeeRects() const { return mYeeRects; }
+    const std::vector<Vector3i> getStrides() const { return mStrides; }
+    
 	const Map<std::string, std::string> & getParams() const { return mParams; }
 private:
 	int mCoordinatePermutationNumber; // 0,1 or 2
 	std::string mFileName;
 	std::string mClass;
 	int mPeriod;
+    
+    Vector3b mWhichE;
+    Vector3b mWhichH;
+    
+    std::vector<long> mFirstSamples;
+    std::vector<long> mLastSamples;
+    std::vector<long> mSamplePeriods;
+    
+    std::vector<Rect3i> mYeeRects;
+    std::vector<Vector3i> mStrides;
+    
 	Map<std::string, std::string> mParams;
+};
+
+class FullAuxDumpDescription
+{
+public:
+    FullAuxDumpDescription();
+    
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
+private:
 };
 
 class SourceDescription
 {
 public:
 	SourceDescription(std::string formula, std::string inFileName,
-		Vector3f polarization, Rect3i region, std::string field,
+		Vector3f polarization, Rect3i region, Vector3b whichE, Vector3b whichH,
 		const Map<std::string, std::string> & inParameters) throw(Exception);
 	
 	void cycleCoordinates();  // rotate x->y, y->z, z->x
@@ -193,18 +233,46 @@ public:
 	std::string getFormula() const { return mFormula; }
 	std::string getFileName() const { return mInputFileName; }
 	Vector3f getPolarization() const { return mPolarization; }
-	const Rect3i & getYeeRegion() const { return mRegion; }
-	std::string getField() const { return mField; }
+    
+    Vector3b getWhichE() const { return mWhichE; }
+    Vector3b getWhichH() const { return mWhichH; }
+    
+    bool isSpaceVarying() const { return mIsSpaceVarying; }
+    bool isSoft() const { return mIsSoft; }
+    
 	const Map<std::string, std::string> & getParams() const { return mParams; }
 private:
 	int mCoordinatePermutationNumber; // 0,1 or 2
 	std::string mFormula;
 	std::string mInputFileName;
 	Vector3f mPolarization;
-	Rect3i mRegion;
-	std::string mField;
+    
+    Vector3b mWhichE;
+    Vector3b mWhichH;
+    
+    bool mIsSpaceVarying;
+    bool mIsSoft;
+    
+    std::vector<Rect3i> mYeeRects;
+    std::vector<long> mFirstTimestep;
+    std::vector<long> mLastTimestep;
+    
 	Map<std::string, std::string> mParams;
 };
+
+class CurrentSourceDescription
+{
+public:
+    CurrentSourceDescription();
+    
+	void cycleCoordinates();  // rotate x->y, y->z, z->x
+private:
+    std::string mInputFileName;
+    
+    std::vector<Rect3i> mYeeRectsEx;
+    std::vector<Rect3i> mYeeRectsHz;  // you know... might need lots of these.
+};
+
 
 enum HuygensSurfaceSourceType
 {
@@ -337,8 +405,13 @@ private:
 	Vector3i mTFSFSourceDirection;
 	std::string mTFSFFormula;
 	std::string mTFSFFileName;
-	Vector3f mTFSFPolarization;
-	std::string mTFSFField;
+	Vector3f mTFSFPolarization;    
+    Vector3b mTFSFWhichE;
+    Vector3b mTFSFWhichH;
+    
+    std::vector<long> mFirstTimestep;
+    std::vector<long> mLastTimestep;
+    
 	
 	// Only applicable for data request
 	std::string mDataRequestName;
@@ -429,13 +502,7 @@ public:
 		FillStyle style) throw(Exception);
 	ColorKey(Vector3i rgbColor, std::string materialName, FillStyle style)
 		throw(Exception);
-	/*
-	ColorKey(std::string hexColor, MaterialDescPtr materialName,
-		FillStyle style) throw(Exception);
-	ColorKey(Vector3i rgbColor, MaterialDescPtr materialName, FillStyle style)
-		throw(Exception);
-	*/
-	
+    
 	Vector3i getColor() const { return mColor; }
 	const std::string & getMaterialName() const { return mMaterialName; }
 	const MaterialDescPtr & getMaterial() const { return mMaterial; }
@@ -474,11 +541,7 @@ public:
 	Block(Rect3i halfCellRect, std::string material) throw(Exception);
 	Block(Rect3i yeeCellRect, FillStyle style, std::string material)
 		throw(Exception);
-	/*
-	Block(Rect3i halfCellRect, MaterialDescPtr material) throw(Exception);
-	Block(Rect3i yeeCellRect, FillStyle style, MaterialDescPtr material)
-		throw(Exception);
-	*/
+    
 	void cycleCoordinates();  // rotate x->y, y->z, z->x
 	
 	const Rect3i & getYeeRect() const;
@@ -526,11 +589,7 @@ public:
 	HeightMap(Rect3i yeeCellRect, FillStyle style, std::string material,
 		std::string imageFileName, Vector3i rowDirection,
 		Vector3i colDirection, Vector3i upDirection) throw(Exception);
-	/*
-	HeightMap(Rect3i yeeCellRect, FillStyle style, MaterialDescPtr material,
-		std::string imageFileName, Vector3i rowDirection,
-		Vector3i colDirection, Vector3i upDirection) throw(Exception);
-	*/
+    
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 	void cycleCoordinates();  // rotate x->y, y->z, z->x
 	
@@ -560,11 +619,6 @@ public:
 	Ellipsoid(Rect3i halfCellRect, std::string material) throw(Exception);
 	Ellipsoid(Rect3i yeeCellRect, FillStyle style, std::string material)
 		throw(Exception);
-	/*
-	Ellipsoid(Rect3i halfCellRect, MaterialDescPtr material) throw(Exception);
-	Ellipsoid(Rect3i yeeCellRect, FillStyle style, MaterialDescPtr material)
-		throw(Exception);
-	*/
 	
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 	void cycleCoordinates();  // rotate x->y, y->z, z->x

@@ -24,6 +24,8 @@
 #include "VoxelGrid.h"
 #include "PartitionCellCount.h"
 #include "MaterialBoss.h"
+#include "OutputBoss.h"
+#include "SourceBoss.h"
 #include "MemoryUtilities.h"
 
 #include "SimulationDescriptionPredeclarations.h"
@@ -65,6 +67,12 @@ public:
     EHBufferSetPtr getEHBuffers() const { return mEHBuffers; }
     const Map<Paint*, MaterialDelegatePtr> & getDelegates() const
         { return mDelegates; }
+    
+    const std::vector<OutputDelegatePtr> & getOutputDelegates() const
+        { return mOutputDelegates; }
+    
+    void clearVoxelGrid();
+    void clearCellCountGrid();
 	
 private:
 	void initFieldBuffers();
@@ -83,6 +91,10 @@ private:
 	void loadSpaceVaryingData();
 	void generateRunlines();
 	void genRunlinesInOctant(int octant);
+    
+    void createOutputDelegates(const std::vector<OutputDescPtr> & outputs);
+    void createInputDelegates(const std::vector<InputEHDescPtr> & inputs);
+    void createSourceDelegates(const std::vector<SourceDescPtr> & sources);
 	
 	VoxelGrid mVoxels;
 	PartitionCellCountPtr mCentralIndices;
@@ -90,8 +102,15 @@ private:
 	EHBufferSetPtr mEHBuffers;
 	Map<NeighborBufferDescPtr, EHBufferSet> mNBBuffers;
 	
+    // THIS IS WHERE GRID DENIZENS LIVE
 	Map<Paint*, MaterialDelegatePtr> mDelegates;
-	
+	std::vector<OutputDelegatePtr> mOutputDelegates;
+    std::vector<SourceDelegatePtr> mSourceDelegates;
+    int mSources;
+    int mInputs;
+    
+    // END OF GRID DENIZEN ZONE
+    
 	int m_nx, m_ny, m_nz;
 	Rect3i mGridHalfCells;
 	Rect3i mFieldAllocRegion; // must be full Yee cells!

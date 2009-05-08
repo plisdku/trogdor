@@ -19,6 +19,7 @@
 #include "CalculationPartition.h"
 
 #include "StaticDielectric.h"
+#include "StaticDielectricPML.h"
 #include "DrudeModel1.h"
 
 using namespace std;
@@ -36,11 +37,16 @@ getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	string materialClass(bulkMaterial->getClass());
 	string materialName(bulkMaterial->getName());
 	
-	/*
+	LOG << "Getting delegate for " << *parentPaint << ".\n"; 
+    
 	if (materialClass == "StaticDielectricModel")
 	{
-		return MaterialDelegatePtr(new StaticDielectricDelegate);
+        if (parentPaint->isPML())
+            return MaterialDelegatePtr(new StaticDielectricPMLDelegate);
+        else
+            return MaterialDelegatePtr(new StaticDielectricDelegate);
 	}
+    /*
 	else if (materialClass == "DrudeMetalModel")
 	{
 		return MaterialDelegatePtr(new DrudeModel1Delegate);
@@ -50,8 +56,8 @@ getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	}
 	*/
 	
-	LOG << "Getting delegate for " << *parentPaint << ".\n"; 
-	
+	LOG << "Using default (silly) delegate.\n";
+    
 	if (parentPaint->isPML())
 		return MaterialDelegatePtr(new SimpleBulkPMLMaterialDelegate);
 	return MaterialDelegatePtr(new SimpleBulkMaterialDelegate);
@@ -358,3 +364,52 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     cerr << "You shouldn't be here.  Overload for your material.";
     exit(1);
 }
+
+
+SimpleRunline::
+SimpleRunline(const SBMRunline & setupRunline) :
+    fi(setupRunline.f_i.getPointer()),
+    length(setupRunline.length)
+{
+    gj[0] = setupRunline.f_j[0].getPointer();
+    gj[1] = setupRunline.f_j[1].getPointer();
+    gk[0] = setupRunline.f_k[0].getPointer();
+    gk[1] = setupRunline.f_k[1].getPointer();
+}
+
+
+SimplePMLRunline::
+SimplePMLRunline(const SBPMRunline & setupRunline) :
+    fi(setupRunline.f_i.getPointer()),
+    length(setupRunline.length)
+{
+    gj[0] = setupRunline.f_j[0].getPointer();
+    gj[1] = setupRunline.f_j[1].getPointer();
+    gk[0] = setupRunline.f_k[0].getPointer();
+    gk[1] = setupRunline.f_k[1].getPointer();
+    pmlIndex[0] = setupRunline.pmlDepthIndex[0];
+    pmlIndex[1] = setupRunline.pmlDepthIndex[1];
+    pmlIndex[2] = setupRunline.pmlDepthIndex[2];
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

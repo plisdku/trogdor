@@ -21,26 +21,6 @@
 
 #include "FDTDApplication.h"
 
-/*
-#include "SetupGrid.h"
-#include "SetupMaterialModel.h"
-#include "SetupSource.h"
-#include "SetupOutput.h"
-#include "SetupInput.h"
-#include "SetupLink.h"
-#include "SetupTFSFBufferSet.h"
-#include "SetupTFSFSource.h"
-#include "MaterialType.h"
-
-#include "SimulationGrid.h"
-#include "ValidateSetupAttributes.h"
-#include "Fields.h"
-#include "MaterialFactory.h"
-#include "OutputFactory.h"
-#include "InputFactory.h"
-#include "SourceFactory.h"
-*/
-
 #include "Pointer.h"
 #include "Map.h"
 #include "StreamFromString.h"
@@ -287,14 +267,6 @@ runAll(string parameterFile, int numThreads, bool runSim,
 void FDTDApplication::
 runNew(string parameterFile)
 {
-	// Tasks:
-	//		load parameter file
-	//		init simulation description
-	//		for each grid:
-	//			paint grid
-	//			create child grids from TFSF sources as 
-	
-	//vector<GridDescPtr> gridDescriptions;
 	Map<GridDescPtr, VoxelizedPartitionPtr> voxelizedGrids;
     Map<string, CalculationPartitionPtr> calculationGrids;
 	
@@ -308,18 +280,27 @@ runNew(string parameterFile)
 	// in here: do any setup that requires the voxelized grids
 	// extract all information that will be needed after the setup grid is gone
 	
-    LOG << "We have " << voxelizedGrids.size() << " voxelized grids.\n";
-    makeCalculationGrids(calculationGrids, voxelizedGrids);
-    
+    trimVoxelizedGrids(voxelizedGrids); // ditch VoxelGrid & PartitionCellCount
+    makeCalculationGrids(sim, calculationGrids, voxelizedGrids);
 	voxelizedGrids.clear();
-    
     completeFieldAllocation(calculationGrids);
 	
 	// allocate memory that can be postponed
 	
 	// RUN THE SIMULATION hoorah.
-	
-	Paint::clearPalette(); // avert static destruction hell )-:
+    LOG << "Beginning calculation.\n";
+    
+    long numT = sim->getDuration();
+    for (long tt = 0; tt < numT; tt++)
+    {
+        calcE(calculationGrids);
+        calcAfterE(calculationGrids);
+        calcH(calculationGrids);
+        calcAfterH(calculationGrids);
+    }
+    
+    LOG << "Done with simulation.\n";
+	Paint::clearPalette(); // avert embarassing segfaults at the end
 }
 
 SimulationDescPtr FDTDApplication::
@@ -769,9 +750,21 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 }
 
 
+void FDTDApplication::
+trimVoxelizedGrids(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs)
+{
+    LOG << "Trimming the fat from " << vgs.size() << " grids.\n";
+    map<GridDescPtr, VoxelizedPartitionPtr>::iterator itr;
+    for (itr = vgs.begin(); itr != vgs.end(); itr++)
+    {
+        itr->second->clearVoxelGrid();
+        itr->second->clearCellCountGrid();
+    }
+}
 
 void FDTDApplication::
-makeCalculationGrids(Map<string, CalculationPartitionPtr> & calcs,
+makeCalculationGrids(const SimulationDescPtr sim,
+    Map<string, CalculationPartitionPtr> & calcs,
     const Map<GridDescPtr, VoxelizedPartitionPtr> & voxParts)
 {
     LOG << "Making calc grids for " << voxParts.size() << " grids.\n";
@@ -779,7 +772,8 @@ makeCalculationGrids(Map<string, CalculationPartitionPtr> & calcs,
     for (itr = voxParts.begin(); itr != voxParts.end(); itr++)
     {
         CalculationPartitionPtr calcPart(
-            new CalculationPartition(*itr->second));
+            new CalculationPartition(*itr->second,
+                sim->getDxyz(), sim->getDt(), sim->getDuration()));
         calcs[itr->first->getName()] = calcPart;
     }
 }
@@ -791,11 +785,44 @@ completeFieldAllocation(Map<string, CalculationPartitionPtr> & calcs)
     
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcs.begin(); itr != calcs.end(); itr++)
-    {
-        LOG << "NEED TO DO FINAL ALLOCATION FOR " << itr->first << endl;
-    }
+        itr->second->allocateAuxBuffers();
+}
+    
+void FDTDApplication::
+calcE(Map<string, CalculationPartitionPtr> & calcGrids)
+{
+    //cout << "\tUpdating E fields\n";
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->calcE();
 }
 
+void FDTDApplication::
+calcAfterE(Map<string, CalculationPartitionPtr> & calcGrids)
+{
+    //cout << "\tMPI E exchange\n\tOutput E\n";
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->calcAfterE();
+}
+
+void FDTDApplication::
+calcH(Map<string, CalculationPartitionPtr> & calcGrids)
+{
+    //cout << "\tUpdating H fields\n";
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->calcH();
+}
+
+void FDTDApplication::
+calcAfterH(Map<string, CalculationPartitionPtr> & calcGrids)
+{
+    //cout << "\tMPI H exchange\n\tOutput H\n";
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->calcAfterH();
+}
 
 
 

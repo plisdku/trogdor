@@ -366,8 +366,12 @@ loadOutputs(const TiXmlElement* parent) const
 	const TiXmlElement* elem = parent->FirstChildElement("Output");
     while (elem)
 	{
+        Rect3i region;
+        Vector3i stride;
 		string filePrefix;
 		string outputClass;
+        string field;
+        Vector3b whichE(0,0,0), whichH(0,0,0);
 		int period;
 		Map<string,string> params;
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
@@ -378,10 +382,28 @@ loadOutputs(const TiXmlElement* parent) const
 		sGetMandatoryAttribute(elem, "filePrefix", filePrefix);
 		sGetMandatoryAttribute(elem, "class", outputClass);
 		sGetOptionalAttribute(elem, "period", period, 1);
-		
+        
+        LOG << "Extracting some Trogdor 4 params for Trogdor 5.\n";
+        
+        // compatibility stuff
+        sGetMandatoryAttribute(paramXML, "region", region);
+        sGetOptionalAttribute(paramXML, "stride", stride, Vector3i(1,1,1));
+		sGetMandatoryAttribute(paramXML, "field", field);
+        
+        if (field == "ex") whichE[0] = 1;
+        else if (field == "ey") whichE[1] = 1;
+        else if (field == "ez") whichE[2] = 1;
+        else if (field == "hx") whichH[0] = 1;
+        else if (field == "hy") whichH[1] = 1;
+        else if (field == "hz") whichH[2] = 1;
+        else if (field == "electric") whichE = Vector3b(1,1,1);
+        else if (field == "magnetic") whichH = Vector3b(1,1,1);
+        else
+            throw(Exception(sErr("field parameter is invalid", elem)));
+        
 		try {
 			OutputDescPtr output(new OutputDescription(filePrefix, outputClass,
-				period, params));
+				period, region, stride, whichE, whichH, params));
 			outputs.push_back(output);
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
@@ -407,6 +429,7 @@ loadSources(const TiXmlElement* parent) const
 		string field;
 		Vector3f polarization;
 		Rect3i region;
+        Vector3b whichE(0,0,0), whichH(0,0,0);
 		Map<string,string> params;
 		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
 		//if (paramXML == 0L)
@@ -422,10 +445,17 @@ loadSources(const TiXmlElement* parent) const
 		sGetMandatoryAttribute(elem, "field", field);
 		sGetMandatoryAttribute(elem, "polarization", polarization);
 		sGetMandatoryAttribute(elem, "region", region);
+        
+        if (field == "ex") whichE[0] = 1;
+        else if (field == "ey") whichE[1] = 1;
+        else if (field == "ez") whichE[2] = 1;
+        else if (field == "hx") whichH[0] = 1;
+        else if (field == "hy") whichH[1] = 1;
+        else if (field == "hz") whichH[2] = 1;
 		
 		try {
 			SourceDescPtr source(new SourceDescription(formula, filename,
-				polarization, region, field, params));
+				polarization, region, whichE, whichH, params));
 			sources.push_back(source);
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
