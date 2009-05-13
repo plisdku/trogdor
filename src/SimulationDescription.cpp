@@ -86,7 +86,7 @@ void SimulationDescription::
 cycleCoordinates()
 {
 	m_dxyz = Vector3f(m_dxyz[2], m_dxyz[0], m_dxyz[1]);
-	int nn;
+	unsigned int nn;
 	for (nn = 0; nn < mGrids.size(); nn++)
 		mGrids[nn]->cycleCoordinates();
 	for (nn = 0; nn < mMaterials.size(); nn++)

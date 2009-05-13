@@ -11,6 +11,7 @@
 
 //#include "ValidateSetupAttributes.h"
 
+#include "YeeUtilities.h"
 #include "StreamFromString.h"
 #include "ConvertOldXML.h"
 #include "XMLExtras.h"
@@ -21,6 +22,7 @@
 #include <set>
 
 using namespace std;
+using namespace YeeUtilities;
 
 static FillStyle sFillStyleFromString(const string & str) throw(Exception);
 
@@ -133,60 +135,47 @@ loadGrids(const TiXmlElement* parent) const
     while (elem) // FOR EACH GRID: Load data
 	{
 		GridDescPtr gridDesc;
-		int nnx, nny, nnz;
-		Rect3i activeRegion, regionOfInterest;
+        Vector3i numYeeCells;
+        Vector3i numHalfCells;
+		Rect3i nonPMLYeeCells;
+        Rect3i nonPMLHalfCells, calcRegionHalfCells;
 		string name;
 		Vector3i origin;
 		
 		sGetMandatoryAttribute(elem, "name", name);
 		sGetOptionalAttribute(elem, "origin", origin, Vector3i(0,0,0));
 		
-		if (sTryGetAttribute(elem, "nx", nnx))
-			nnx *= 2;
-		else if (!sTryGetAttribute(elem, "nnx", nnx))
-			throw(Exception(sErr("Can't load nnx or nx", elem)));
+        sGetMandatoryAttribute(elem, "nx", numYeeCells[0]);
+        sGetMandatoryAttribute(elem, "ny", numYeeCells[1]);
+        sGetMandatoryAttribute(elem, "nz", numYeeCells[2]);
+        numHalfCells = 2*numYeeCells;
+        
+        sGetMandatoryAttribute(elem, "nonPML", nonPMLYeeCells);
+        nonPMLHalfCells = rectYeeToHalf(nonPMLYeeCells);
 		
-		if (sTryGetAttribute(elem, "ny", nny))
-			nny *= 2;
-		else if (!sTryGetAttribute(elem, "nny", nny))
-			throw(Exception(sErr("Can't load nny or ny", elem)));
-		
-		if (sTryGetAttribute(elem, "nz", nnz))
-			nnz *= 2;
-		else if (!sTryGetAttribute(elem, "nnz", nnz))
-			throw(Exception(sErr("Can't load nnz or nz", elem)));
-		
-		if (sTryGetAttribute(elem, "regionOfInterest", regionOfInterest))
+        // The calc region should stop a half cell short of the boundary
+        // when there is PML, to prevent leakage around the edge of the sim.
+        // The default is a periodic boundary and the calc region needs to go
+        // right to the edges.
+		if (!sTryGetAttribute(elem, "calcRegionHalfCells", calcRegionHalfCells))
 		{
-			regionOfInterest *= 2;
-			regionOfInterest.p2 += Vector3i(1,1,1);
-		}
-		else if (!sTryGetAttribute(elem, "roi", regionOfInterest))
-			throw(Exception(sErr("Can't load region of interest", elem)));
-		
-		if (!sTryGetAttribute(elem, "activeRegion", activeRegion))
-		{
-			activeRegion = Rect3i(1, 1, 1, nnx-2, nny-2, nnz-2);
-			if (regionOfInterest.p1[0] == 0)
-				activeRegion.p1[0] = 0;
-			if (regionOfInterest.p1[1] == 0)
-				activeRegion.p1[1] = 0;
-			if (regionOfInterest.p1[2] == 0)
-				activeRegion.p1[2] = 0;
-			if (regionOfInterest.p2[0] == (nnx-1))
-				activeRegion.p2[0] = nnx-1;
-			if (regionOfInterest.p2[1] == (nny-1))
-				activeRegion.p2[1] = nny-1;
-			if (regionOfInterest.p2[2] == (nnz-1))
-				activeRegion.p2[2] = nnz-1;
+            calcRegionHalfCells.p1 = Vector3i(1,1,1);
+            calcRegionHalfCells.p2 = Vector3i(numHalfCells - Vector3i(2,2,2));
+            for (int mm = 0; mm < 3; mm++)
+            {
+                if (nonPMLHalfCells.p1[mm] == 0)
+                    calcRegionHalfCells.p1[mm] = 0;
+                if (nonPMLHalfCells.p2[mm] == numHalfCells[mm]-1)
+                    calcRegionHalfCells.p2[mm] = numHalfCells[mm]-1;
+            }
 		}
 		
 		// We need to wrap the constructor errors from GridDescription() to
 		// put XML row/column information in.
 		try {
 			gridDesc = GridDescPtr(new GridDescription(name,
-				Vector3i(nnx,nny,nnz)/2, activeRegion,
-				regionOfInterest, origin));
+				numYeeCells, calcRegionHalfCells,
+				nonPMLHalfCells, origin));
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
 		}
@@ -196,7 +185,6 @@ loadGrids(const TiXmlElement* parent) const
 		// exceptions.
 		gridDesc->setOutputs(loadOutputs(elem));
 		gridDesc->setSources(loadSources(elem));
-		//gridDesc->setMaterials(loadMaterials(elem));
 		gridDesc->setAssembly(loadAssembly(elem, allGridNames,
 			allMaterialNames));
 		
@@ -214,7 +202,6 @@ loadGrids(const TiXmlElement* parent) const
 			customSources.end());
 		
 		gridDesc->setHuygensSurfaces(huygensSurfaces);
-		//gridDesc->implementLinksAsBuffers(loadLinks(elem));
 		
 		gridVector.push_back(gridDesc);
         elem = elem->NextSiblingElement("Grid");

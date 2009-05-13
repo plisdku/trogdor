@@ -54,12 +54,14 @@ Paint.cpp
 PartitionCellCount.cpp
 PhysicalConstants.cpp
 SimpleEHOutput.cpp
+SimulationDescription.cpp
 SourceBoss.cpp
 StaticDielectric.cpp
 StaticDielectricPML.cpp
 main.cpp
 VoxelizedPartition.cpp
 VoxelGrid.cpp
+XMLParameterFile.cpp
 YeeUtilities.cpp
 )
 
@@ -67,7 +69,6 @@ YeeUtilities.cpp
 target_link_libraries( trogdor
 tinyxml
 utility
-trogdorsetup
 boost_program_options-xgcc40-mt
 boost_thread-xgcc40-mt
 ${magDepLibs}
@@ -75,5 +76,4 @@ ${magDepLibs}
 
 add_subdirectory( utility )
 add_subdirectory( tinyxml )
-add_subdirectory( trogdorsetup )
 

@@ -12,26 +12,6 @@
 #define _SIMULATIONDESCRIPTIONPREDECLARATIONS_
 
 #include "Pointer.h"
-/*
-class GridDescription;
-typedef Pointer<GridDescription> GridDescPtr;
-class VoxelizedPartition;
-typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
-class MaterialDescription;
-typedef Pointer<MaterialDescription> MaterialDescPtr;
-class HuygensSurfaceDescription;
-typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
-class NeighborBufferDescription;
-typedef Pointer<NeighborBufferDescription> NeighborBufferDescPtr;
-class OutputDescription;
-typedef Pointer<OutputDescription> OutputDescPtr;
-class InputEHDescription;
-typedef Pointer<InputEHDescription> InputEHDescPtr;
-class SourceDescription;
-typedef Pointer<SourceDescription> SourceDescPtr;
-
-class AssemblyDescription;
-*/
 
 class SimulationDescription;
 class GridDescription;
@@ -51,7 +31,6 @@ class HeightMap;
 class Ellipsoid;
 class CopyFrom;
 class Extrude;
-
 
 typedef Pointer<SimulationDescription> SimulationDescPtr;
 typedef Pointer<GridDescription> GridDescPtr;
