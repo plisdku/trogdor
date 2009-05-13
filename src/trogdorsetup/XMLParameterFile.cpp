@@ -12,6 +12,8 @@
 //#include "ValidateSetupAttributes.h"
 
 #include "StreamFromString.h"
+#include "ConvertOldXML.h"
+#include "XMLExtras.h"
 #include <sstream>
 #include <string>
 #include <iostream>
@@ -19,36 +21,6 @@
 #include <set>
 
 using namespace std;
-
-#pragma mark *** Static Prototypes ***
-
-static Map<string, string> sGetAttributes(const TiXmlElement* elem);
-
-template <class T>
-static void sGetMandatoryAttribute(const TiXmlElement* elem,
-	const string & attribute, T & val) throw(Exception);
-
-template <class T>
-static bool sTryGetAttribute(const TiXmlElement* elem,
-	const string & attribute, T & val);
-
-template <class T>
-static void sGetOptionalAttribute(const TiXmlElement* elem,
-	const string & attribute, T & val, const T & defaultVal);
-
-template <>
-static void sGetMandatoryAttribute<string>(const TiXmlElement* elem,
-	const string & attribute, string & val) throw(Exception);
-
-template <>
-static bool sTryGetAttribute<string>(const TiXmlElement* elem,
-	const string & attribute, string & val);
-
-template <>
-static void sGetOptionalAttribute<string>(const TiXmlElement* elem,
-	const string & attribute, string & val, const string & defaultVal);
-
-static string sErr(const string & str, const TiXmlElement* elem);
 
 static FillStyle sFillStyleFromString(const string & str) throw(Exception);
 
@@ -58,21 +30,35 @@ static Vector3i sUnitVectorFromString(const string & axisString)
 #pragma mark *** XMLParameterFile Implementation ***
 
 XMLParameterFile::
-XMLParameterFile(const string & filename) throw(Exception) :
-	mDocument(filename.c_str())
+XMLParameterFile(const string & filename) throw(Exception)
 {
-	string errorMessage;
+	string errorMessage, versionString;
 	
     TiXmlBase::SetCondenseWhiteSpace(0); // for ascii material layers with \n
 	
-	if (!(mDocument.LoadFile()))
+    Pointer<TiXmlDocument> thisDoc(new TiXmlDocument(filename.c_str()));
+	if (!(thisDoc->LoadFile()))
     {
 		ostringstream err;
         err << "Could not load parameter file " << filename << endl;
-        err << "Reason: " << mDocument.ErrorDesc() << endl;
-        err << "(possible location: row " << mDocument.ErrorRow() << " column "
-             << mDocument.ErrorCol() << " .)" << endl;
+        err << "Reason: " << mDocument->ErrorDesc() << endl;
+        err << "(possible location: row " << mDocument->ErrorRow() << " column "
+             << mDocument->ErrorCol() << " .)" << endl;
         throw(Exception(err.str()));
+    }
+    if (!sTryGetAttribute(thisDoc->RootElement(), "version", versionString))
+    {
+        try {
+            Pointer<TiXmlDocument> v5doc = ConvertOldXML::convert4to5(thisDoc);
+            mDocument = v5doc;
+            mDocument->SaveFile("converted.xml");
+            exit(0);
+        } catch (Exception & e) {
+            ostringstream myErr;
+            myErr << "Could not convert version 4 to version 5 file.\n";
+            myErr << e.what();
+            throw(Exception(myErr.str()));
+        }
     }
 }
 
@@ -84,7 +70,7 @@ XMLParameterFile(const string & filename) throw(Exception) :
 void XMLParameterFile::
 load(SimulationDescription & sim) const throw(Exception)
 {
-	const TiXmlElement* elem = mDocument.RootElement();
+	const TiXmlElement* elem = mDocument->RootElement();
 	if (!elem)
 		throw Exception("XML file has no root element.");
 	
@@ -106,7 +92,7 @@ load(SimulationDescription & sim) const throw(Exception)
 void XMLParameterFile::
 loadTrogdor4(SimulationDescription & sim) const throw(Exception)
 {
-    const TiXmlElement* elem = mDocument.RootElement();
+    const TiXmlElement* elem = mDocument->RootElement();
 	assert(elem);  // this condition was checked in load().
 	
 	float dx, dy, dz, dt;
@@ -199,7 +185,7 @@ loadGrids(const TiXmlElement* parent) const
 		// put XML row/column information in.
 		try {
 			gridDesc = GridDescPtr(new GridDescription(name,
-				Vector3i(nnx,nny,nnz)/2, Vector3i(nnx,nny,nnz), activeRegion,
+				Vector3i(nnx,nny,nnz)/2, activeRegion,
 				regionOfInterest, origin));
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
@@ -209,7 +195,6 @@ loadGrids(const TiXmlElement* parent) const
 		// row/column information so we don't need to re-throw their
 		// exceptions.
 		gridDesc->setOutputs(loadOutputs(elem));
-		gridDesc->setInputs(loadInputEHs(elem));
 		gridDesc->setSources(loadSources(elem));
 		//gridDesc->setMaterials(loadMaterials(elem));
 		gridDesc->setAssembly(loadAssembly(elem, allGridNames,
@@ -322,40 +307,7 @@ loadMaterials(const TiXmlElement* parent) const
 	
 	return materials;	
 }
-		
-vector<InputEHDescPtr> XMLParameterFile::
-loadInputEHs(const TiXmlElement* parent) const
-{
-	assert(parent);
-	vector<InputEHDescPtr> inputs;
-	
-	const TiXmlElement* elem = parent->FirstChildElement("Input");
-    while (elem)
-	{
-		string filePrefix;
-		string inputClass;
-		Map<string,string> params;
-		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
-		if (paramXML == 0L)
-			throw(Exception(sErr("Input needs Params element", elem)));
-		params = sGetAttributes(paramXML);
-		
-		sGetMandatoryAttribute(elem, "filePrefix", filePrefix);
-		sGetMandatoryAttribute(elem, "class", inputClass);
-		
-		try {
-			InputEHDescPtr input(new InputEHDescription(filePrefix, inputClass,
-				params));
-			inputs.push_back(input);
-		} catch (Exception & e) {
-			throw(Exception(sErr(e.what(), elem)));
-		}
-		
-		elem = elem->NextSiblingElement("Input");
-	}
 
-	return inputs;
-}
 
 vector<OutputDescPtr> XMLParameterFile::
 loadOutputs(const TiXmlElement* parent) const
@@ -403,7 +355,7 @@ loadOutputs(const TiXmlElement* parent) const
         
 		try {
 			OutputDescPtr output(new OutputDescription(filePrefix, outputClass,
-				period, region, stride, whichE, whichH, params));
+				period, region, whichE, whichH, stride, params));
 			outputs.push_back(output);
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
@@ -951,181 +903,32 @@ loadACopyFrom(const TiXmlElement* elem, const set<string> & allGridNames) const
 	return copyFrom;
 }
 
+InstructionPtr XMLParameterFile::
+loadAnExtrude(const TiXmlElement* elem) const
+{
+	assert(elem);
+	assert(elem->Value() == string("Extrude"));
+	
+	InstructionPtr extrude;
+	Rect3i halfCellFrom, halfCellTo;
+	
+	sGetMandatoryAttribute(elem, "extrudeFromHalf", halfCellFrom);
+	sGetMandatoryAttribute(elem, "extrudeToHalf", halfCellTo);
+    
+	try {
+		extrude = InstructionPtr(
+			new Extrude(
+				halfCellFrom, halfCellTo));
+	} catch (Exception & e) {
+		throw(Exception(sErr(e.what(), elem)));
+	}
+	
+	return extrude;
+}
+
 
 
 #pragma mark *** Static Method Implementations ***
-
-
-Map<string, string> sGetAttributes(const TiXmlElement* elem)
-{
-    Map<string, string> attribs;
-    if (elem)
-    {
-        const TiXmlAttribute* attrib = elem->FirstAttribute();
-        while (attrib)
-        {
-            attribs[attrib->Name()] = attrib->Value();
-            attrib = attrib->Next();
-        }
-    }
-    return attribs;
-}
-
-
-
-template <>
-static void sGetMandatoryAttribute<string>(const TiXmlElement* elem,
-	const string & attribute, string & val) throw(Exception)
-{
-	assert(elem);
-	ostringstream err;
-	
-	if (elem->Attribute(attribute.c_str()) == 0L)
-	{
-		err << elem->Value() << " needs attribute \"" << attribute << "\"";
-		throw(Exception(sErr(err.str(), elem)));
-	}
-	/*
-	istringstream istr(elem->Attribute(attribute.c_str()));
-	
-	if (!(istr >> val))
-	{
-		err << elem->Value() << " has invalid \"" << attribute
-			<<"\" attribute";
-		throw(Exception(sErr(err.str(), elem)));
-	}*/
-	val = elem->Attribute(attribute.c_str());
-}
-
-template <>
-static bool sTryGetAttribute<string>(const TiXmlElement* elem,
-	const string & attribute, string & val)
-{
-	assert(elem);
-	ostringstream err;
-	
-	if (elem->Attribute(attribute.c_str()) == 0L)
-		return 0;
-	else
-	{
-		/*
-		istringstream istr(elem->Attribute(attribute.c_str()));
-		
-		if (!(istr >> val))
-		{
-			err << elem->Value() << " has invalid \"" << attribute
-				<< "\" attribute";
-			throw(Exception(sErr(err.str(), elem)));
-		}*/
-		val = elem->Attribute(attribute.c_str());
-	}
-	return 1;
-}
-
-template <>
-static void sGetOptionalAttribute<string>(const TiXmlElement* elem,
-	const string & attribute, string & val, const string & defaultVal)
-{
-	assert(elem);
-	ostringstream err;
-	
-	if (elem->Attribute(attribute.c_str()) == 0L)
-	{
-		val = defaultVal;
-	}
-	else
-	{
-		/*
-		istringstream istr(elem->Attribute(attribute.c_str()));
-		
-		if (!(istr >> val))
-		{
-			err << elem->Value() << " has invalid \"" << attribute
-				<< "\" attribute";
-			throw(Exception(sErr(err.str(), elem)));
-		}*/
-		val = elem->Attribute(attribute.c_str());
-	}
-}
-
-template <class T>
-static void sGetMandatoryAttribute(const TiXmlElement* elem,
-	const string & attribute, T & val) throw(Exception)
-{
-	assert(elem);
-	ostringstream err;
-	
-	if (elem->Attribute(attribute.c_str()) == 0L)
-	{
-		err << elem->Value() << " needs attribute \"" << attribute << "\"";
-		throw(Exception(sErr(err.str(), elem)));
-	}
-	
-	istringstream istr(elem->Attribute(attribute.c_str()));
-	
-	if (!(istr >> val))
-	{
-		err << elem->Value() << " has invalid \"" << attribute
-			<<"\" attribute";
-		throw(Exception(sErr(err.str(), elem)));
-	}
-}
-
-template <class T>
-static bool sTryGetAttribute(const TiXmlElement* elem,
-	const string & attribute, T & val)
-{
-	assert(elem);
-	ostringstream err;
-	
-	if (elem->Attribute(attribute.c_str()) == 0L)
-		return 0;
-	else
-	{
-		istringstream istr(elem->Attribute(attribute.c_str()));
-		
-		if (!(istr >> val))
-		{
-			err << elem->Value() << " has invalid \"" << attribute
-				<< "\" attribute";
-			throw(Exception(sErr(err.str(), elem)));
-		}
-	}
-	return 1;
-}
-
-template <class T>
-static void sGetOptionalAttribute(const TiXmlElement* elem,
-	const string & attribute, T & val, const T & defaultVal)
-{
-	assert(elem);
-	ostringstream err;
-	
-	if (elem->Attribute(attribute.c_str()) == 0L)
-	{
-		val = defaultVal;
-	}
-	else
-	{
-		istringstream istr(elem->Attribute(attribute.c_str()));
-		
-		if (!(istr >> val))
-		{
-			err << elem->Value() << " has invalid \"" << attribute
-				<< "\" attribute";
-			throw(Exception(sErr(err.str(), elem)));
-		}
-	}
-}
-
-
-static string sErr(const string & str, const TiXmlElement* elem)
-{
-	ostringstream outStr;
-	outStr << str << " (row " << elem->Row() << ", col " << elem->Column()
-		<< ")";
-	return outStr.str();
-}
 
 static FillStyle sFillStyleFromString(const string & str) throw(Exception)
 {

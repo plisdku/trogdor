@@ -75,7 +75,6 @@ VoxelizedPartition(const GridDescription & gridDesc,
     
     
     createOutputDelegates(gridDesc.getOutputs());
-    createInputDelegates(gridDesc.getInputs());
     createSourceDelegates(gridDesc.getSources());
 }
 
@@ -596,13 +595,6 @@ createOutputDelegates(const std::vector<OutputDescPtr> & outputs)
             OutputFactory::getDelegate(*this, outputs[nn]));
 }
 
-void VoxelizedPartition::
-createInputDelegates(const std::vector<InputEHDescPtr> & inputs)
-{
-    for (unsigned int nn = 0; nn < inputs.size(); nn++)
-    {
-    }
-}
 
 void VoxelizedPartition::
 createSourceDelegates(const std::vector<SourceDescPtr> & sources)

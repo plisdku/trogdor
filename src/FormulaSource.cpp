@@ -24,11 +24,11 @@ FormulaSourceDelegate(const SourceDescPtr & desc) :
 {
 }
 
-OutputPtr FormulaSourceDelegate::
+SourcePtr FormulaSourceDelegate::
 makeSource(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
-    return OutputPtr(new FormulaSource(*mDesc));
+    return SourcePtr(new FormulaSource(*mDesc));
 }
 
 

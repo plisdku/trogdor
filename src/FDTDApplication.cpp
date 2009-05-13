@@ -561,7 +561,6 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	
 	GridDescPtr gPtr(new GridDescription(auxGridName,
 		(gridBounds.size() + Vector3i(1,1,1))/2, // num Yee cells
-		gridBounds.size() + Vector3i(1,1,1), // num half cells
 		gridBounds, // calc region
 		nonPMLRect,
 		origin));
@@ -692,7 +691,6 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 
 	GridDescPtr gPtr(new GridDescription(srcGridName,
 		(gridBounds.size() + Vector3i(1,1,1))/2, // num Yee cells
-		gridBounds.size() + Vector3i(1,1,1), // num half cells
 		gridBounds, // calc region
 		nonPMLRect,
 		origin));
@@ -709,12 +707,15 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 		srcYeeCell -= srcDir;
 		
 		LOG << "To-do: ditch TFSFSource Params.\n";
+        cerr << "WAAARRRNNNIIIINNNGGGGGGGG faking the whichE, whichE params";
 		SourceDescPtr sPtr(new SourceDescription(
 			huygensSurface->getTFSFSourceFormula(),
 			huygensSurface->getTFSFSourceFileName(),
 			huygensSurface->getTFSFSourcePolarization(),
 			Rect3i(srcYeeCell, srcYeeCell),
-			huygensSurface->getTFSFSourceField(),
+			/*huygensSurface->getTFSFSourceField(),*/
+            Vector3b(1,1,1),
+            Vector3b(1,1,1),
 			huygensSurface->getTFSFSourceParameters()));
 		hardSources.push_back(sPtr);
 	}

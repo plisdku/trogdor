@@ -19,6 +19,7 @@
 #include "Log.h"
 #include <iomanip>
 #include <cassert>
+#include <cstdlib>
 #include "Map.h"
 
 

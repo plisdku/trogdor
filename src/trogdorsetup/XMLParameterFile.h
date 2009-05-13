@@ -62,9 +62,10 @@ private:
 		const std::set<std::string> & allMaterialNames) const;
 	InstructionPtr loadACopyFrom(const TiXmlElement* elem,
 		const std::set<std::string> & allGridNames) const;
+    InstructionPtr loadAnExtrude(const TiXmlElement* elem) const;
 	
 	
-	TiXmlDocument mDocument;
+	Pointer<TiXmlDocument> mDocument;
 };
 
 

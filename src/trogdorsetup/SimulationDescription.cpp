@@ -96,12 +96,12 @@ cycleCoordinates()
 #pragma mark *** Grid ***
 
 GridDescription::
-GridDescription(string name, Vector3i numYeeCells, Vector3i numHalfCells,
+GridDescription(string name, Vector3i numYeeCells,
 	Rect3i calcRegionHalf, Rect3i nonPMLHalf, Vector3i originYee)
 	throw(Exception) :
 	mName(name),
 	mNumYeeCells(numYeeCells),
-	mNumHalfCells(numHalfCells),
+	mNumHalfCells(2*numYeeCells),
 	mCalcRegionHalf(calcRegionHalf),
 	mNonPMLHalf(nonPMLHalf),
 	mOriginYee(originYee)
@@ -169,8 +169,6 @@ cycleCoordinates()
 	
 	for (nn = 0; nn < mOutputs.size(); nn++)
 		mOutputs[nn]->cycleCoordinates();
-	for (nn = 0; nn < mInputs.size(); nn++)
-		mInputs[nn]->cycleCoordinates();
 	for (nn = 0; nn < mSources.size(); nn++)
 		mSources[nn]->cycleCoordinates();
 	for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
@@ -198,25 +196,6 @@ getNumDimensions() const
 	if (mNumYeeCells[nn] > 1)
 		nDim += 1;
 	return nDim;
-}
-
-#pragma mark *** InputEH ***
-
-InputEHDescription::
-InputEHDescription(string fileName, string inClass, 
-	const Map<string, string> & inParameters) throw(Exception) :
-	mFileName(fileName),
-	mClass(inClass),
-	mParams(inParameters)
-{
-}
-
-
-void InputEHDescription::
-cycleCoordinates()
-{
-	mCoordinatePermutationNumber += 1;
-	mCoordinatePermutationNumber %= 3;
 }
 
 #pragma mark *** Output ***

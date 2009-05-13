@@ -32,6 +32,9 @@
 
 #include "Paint.h"
 
+class VoxelizedPartition;
+typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
+
 class VoxelizedPartition
 {
 public:
@@ -93,7 +96,6 @@ private:
 	void genRunlinesInOctant(int octant);
     
     void createOutputDelegates(const std::vector<OutputDescPtr> & outputs);
-    void createInputDelegates(const std::vector<InputEHDescPtr> & inputs);
     void createSourceDelegates(const std::vector<SourceDescPtr> & sources);
 	
 	VoxelGrid mVoxels;

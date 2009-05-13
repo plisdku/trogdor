@@ -22,6 +22,7 @@ using namespace std;
 SourceDelegatePtr SourceFactory::
 getDelegate(const VoxelizedPartition & vp, const SourceDescPtr & desc)
 {
+    /*
     if (desc->getFormula() != "")
         return SourceDelegatePtr(new FormulaSourceDelegate(desc));
     else if (desc->getFileName() != "")
@@ -32,7 +33,7 @@ getDelegate(const VoxelizedPartition & vp, const SourceDescPtr & desc)
     
     LOG << "Using default (null) source... and crashing.\n";
     exit(1);
-    
+    */
     return SourceDelegatePtr(0L);
 }
 

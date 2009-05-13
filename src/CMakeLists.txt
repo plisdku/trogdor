@@ -43,6 +43,7 @@ ${magLibDirs}
 
 add_executable( trogdor
 CalculationPartition.cpp
+ConvertOldXML.cpp
 DrudeModel1.cpp
 FDTDApplication.cpp
 FormulaSource.cpp

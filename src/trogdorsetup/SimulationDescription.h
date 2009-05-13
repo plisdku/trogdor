@@ -10,7 +10,7 @@
 #ifndef _SIMULATIONDESCRIPTION_
 #define _SIMULATIONDESCRIPTION_
 
-//#include "XMLParameterFile.h"
+#include "SimulationDescriptionPredeclarations.h"
 #include "geometry.h"
 #include "SetupConstants.h"
 #include "Pointer.h"
@@ -20,11 +20,10 @@
 
 #include <vector>
 #include <string>
-//#include <bitset>
 #include <set>
 
 class XMLParameterFile;
-
+/*
 class SimulationDescription;
 class GridDescription;
 class InputEHDescription;
@@ -48,12 +47,13 @@ typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
 typedef Pointer<NeighborBufferDescription> NeighborBufferDescPtr;
 typedef Pointer<MaterialDescription> MaterialDescPtr;
 typedef Pointer<AssemblyDescription> AssemblyDescPtr;
+*/
 
 class SimulationDescription
 {
 	friend class XMLParameterFile;
 public:
-	SimulationDescription(const XMLParameterFile & file)  throw(Exception);
+	SimulationDescription(const XMLParameterFile & file) throw(Exception);
 	
 	void setGrids(const std::vector<GridDescPtr> & grids) {
 		mGrids = grids; }
@@ -70,11 +70,13 @@ public:
 	const std::vector<MaterialDescPtr> & getMaterials() const {
 		return mMaterials; }
 	
+    const std::string & getVersion() const { return mVersionString; }
 	float getDt() const { return m_dt; }
 	Vector3f getDxyz() const { return m_dxyz; }
 	int getDuration() const { return mNumTimesteps; }
 	
 private:
+    std::string mVersionString;
 	std::vector<GridDescPtr> mGrids;
 	std::vector<MaterialDescPtr> mMaterials;
 	
@@ -88,15 +90,13 @@ class GridDescription
 {
 public:
 	GridDescription(std::string name, Vector3i numYeeCells,
-		Vector3i numHalfCells, Rect3i calcRegionHalf, Rect3i nonPMLHalf,
+        Rect3i calcRegionHalf, Rect3i nonPMLHalf,
 		Vector3i originYee)
 		throw(Exception);
 	
 	// Mutators
 	void setOutputs(const std::vector<OutputDescPtr> & outputs) {
 		mOutputs = outputs; }
-	void setInputs(const std::vector<InputEHDescPtr> & inputs) {
-		mInputs = inputs; }
 	void setSources(const std::vector<SourceDescPtr> & sources) {
 		mSources = sources; }
 	void setHuygensSurfaces(
@@ -121,7 +121,6 @@ public:
 	int getNumDimensions() const;
 	
 	const std::vector<OutputDescPtr> & getOutputs() const { return mOutputs; }
-	const std::vector<InputEHDescPtr> & getInputs() const { return mInputs; }
 	const std::vector<SourceDescPtr> & getSources() const { return mSources; }
 	const std::vector<HuygensSurfaceDescPtr> & getHuygensSurfaces() const
 		{ return mHuygensSurfaces; }
@@ -140,33 +139,9 @@ private:
 	Vector3i mOriginYee;
 	
 	std::vector<OutputDescPtr> mOutputs;
-	std::vector<InputEHDescPtr> mInputs;
 	std::vector<SourceDescPtr> mSources;
 	std::vector<HuygensSurfaceDescPtr> mHuygensSurfaces;
 	AssemblyDescPtr mAssembly;
-};
-
-class InputEHDescription
-{
-public:
-	InputEHDescription(std::string fileName, std::string inClass, 
-		const Map<std::string, std::string> & inParameters) throw(Exception);
-	
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
-	
-	std::string getFileName() const { return mFileName; }
-	std::string getClass() const { return mClass; }
-	const Map<std::string, std::string> & getParams() const { return mParams; }
-private:
-	int mCoordinatePermutationNumber; // 0,1 or 2
-	std::string mFileName;
-	std::string mClass;
-    
-    std::vector<Rect3i> mYeeRects;
-    std::vector<long> mFirstTimestep;
-    std::vector<long> mLastTimestep;
-    
-	Map<std::string, std::string> mParams;
 };
 
 class OutputDescription
@@ -408,6 +383,8 @@ private:
 	Vector3f mTFSFPolarization;    
     Vector3b mTFSFWhichE;
     Vector3b mTFSFWhichH;
+    
+    std::string mTFSFField;
     
     std::vector<long> mFirstTimestep;
     std::vector<long> mLastTimestep;
