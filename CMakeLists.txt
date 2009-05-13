@@ -23,6 +23,7 @@ message("ImageMagick inc directories are ${magIncDirs}")
 
 
 include_directories(
+	${TROGDOR_SOURCE_DIR}
 	${TROGDOR_SOURCE_DIR}/utility
 	${TROGDOR_SOURCE_DIR}/tinyxml
 	${magIncDirs}
@@ -33,10 +34,9 @@ include_directories(
 #include_directories( ${magIncDirs} )
 #include_directories( ${magIncDirs} /sw/include )
 
-link_directories( ${TROGDOR_BINARY_DIR}/setup
+link_directories(
 ${TROGDOR_BINARY_DIR}/utility
 ${TROGDOR_BINARY_DIR}/tinyxml
-${TROGDOR_BINARY_DIR}/trogdorsetup
 ${magLibDirs}
 /usr/local/lib
 /sw/lib)
