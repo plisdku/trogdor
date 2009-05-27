@@ -12,6 +12,7 @@
 
 #include <string>
 #include <iostream>
+#include <set>
 #include "Pointer.h"
 //class MemoryBuffer;
 class BufferPointer;
@@ -24,26 +25,34 @@ public:
 	MemoryBuffer(const std::string & inDescription, 
 		unsigned long length, unsigned long stride = 1);
 	MemoryBuffer(const MemoryBuffer & copyMe);
+    ~MemoryBuffer();
 	
 	unsigned long getLength() const { return mLength; }
 	unsigned long getStride() const { return mStride; }
 	const std::string & getDescription() const { return mDescription; }
 	void setDescription(const std::string & inDesc) { mDescription = inDesc; }
     
-    void setHeadPointer(float* ptr) { mHeadPointer = ptr; }
+    void setHeadPointer(float* ptr);
     //float* getHeadPointer() { return mHeadPointer; }
     float* getHeadPointer() const { return mHeadPointer; }
 	
+    static const std::set<MemoryBuffer*> & getAllBuffers()
+        { return sAllBuffers; }
+    
 private:
 	unsigned long mLength;
 	unsigned long mStride;
 	std::string mDescription;
     
     float* mHeadPointer;
+    
+    static std::set<MemoryBuffer*> sAllBuffers;
 	
 	friend class BufferPointer;
 };
 typedef Pointer<MemoryBuffer> MemoryBufferPtr;
+
+std::ostream & operator<<(std::ostream & str, const MemoryBuffer & buffer);
 
 struct EHBufferSet
 {

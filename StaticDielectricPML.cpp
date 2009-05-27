@@ -56,7 +56,7 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg,
         for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
             mRunlines[field][nn] = SimplePMLRunline(*setupRunlines[nn]);
     }
-    LOG << "Created all runlines.\n";
+    //LOG << "Created all runlines.\n";
 }
 
 void StaticDielectricPML::

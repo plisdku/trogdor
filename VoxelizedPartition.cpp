@@ -40,22 +40,23 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	int bufSize = m_nx*m_ny*m_nz;
 	
     mEHBuffers = EHBufferSetPtr(new EHBufferSet);
-	mEHBuffers->buffers[0] = MemoryBuffer("Ex", bufSize);
-	mEHBuffers->buffers[1] = MemoryBuffer("Ey", bufSize);
-	mEHBuffers->buffers[2] = MemoryBuffer("Hz", bufSize);
-	mEHBuffers->buffers[3] = MemoryBuffer("Ez", bufSize);
-	mEHBuffers->buffers[4] = MemoryBuffer("Hy", bufSize);
-	mEHBuffers->buffers[5] = MemoryBuffer("Hx", bufSize);
+	mEHBuffers->buffers[0] = MemoryBuffer(gridDesc.getName()+" Ex", bufSize);
+	mEHBuffers->buffers[1] = MemoryBuffer(gridDesc.getName()+" Ey", bufSize);
+	mEHBuffers->buffers[2] = MemoryBuffer(gridDesc.getName()+" Hz", bufSize);
+	mEHBuffers->buffers[3] = MemoryBuffer(gridDesc.getName()+" Ez", bufSize);
+	mEHBuffers->buffers[4] = MemoryBuffer(gridDesc.getName()+" Hy", bufSize);
+	mEHBuffers->buffers[5] = MemoryBuffer(gridDesc.getName()+" Hx", bufSize);
 	
 	mNonPMLRegion = gridDesc.getNonPMLRegion();
 	mOriginYee = gridDesc.getOriginYee();
 	
-	LOG << "nonPML " << mNonPMLRegion << "\n";
-	LOG << "alloc region " << mAuxAllocRegion << "\n";
-	LOG << "full field alloc region (integer num Yee cells) "
+    LOG << "Partition geometry:\n";
+	LOGMORE << "nonPML " << mNonPMLRegion << "\n";
+	LOGMORE << "alloc region " << mAuxAllocRegion << "\n";
+	LOGMORE << "full field alloc region (integer num Yee cells) "
 		<< mFieldAllocRegion << "\n";
-	LOG << "calc " << mCalcRegion << "\n";
-	LOG << "origin " << mOriginYee << "\n";
+	LOGMORE << "calc " << mCalcRegion << "\n";
+	LOGMORE << "origin " << mOriginYee << "\n";
 	
 	paintFromAssembly(gridDesc, voxelizedGrids);
 	calculateHuygensSymmetries(gridDesc); // * NOT MPI FRIENDLY YET
@@ -72,7 +73,6 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	createMaterialDelegates();
 	loadSpaceVaryingData(); // * grid-scale wraparound
 	generateRunlines(); // * partition wraparound
-    
     
     createOutputDelegates(gridDesc.getOutputs());
     createSourceDelegates(gridDesc.getSources());
@@ -224,14 +224,14 @@ fieldPointer(const NeighborBufferDescPtr & nb, Vector3i halfCell) const
 void VoxelizedPartition::
 clearVoxelGrid()
 {
-    LOG << "Clearing voxel grid.\n";
+    //LOG << "Clearing voxel grid.\n";
     mVoxels.clear();
 }
 
 void VoxelizedPartition::
 clearCellCountGrid()
 {
-    LOG << "Clearing cell count grid.\n";
+    //LOG << "Clearing cell count grid.\n";
     mCentralIndices = 0L;
 }
 
@@ -243,7 +243,7 @@ void VoxelizedPartition::
 paintFromAssembly(const GridDescription & gridDesc,
 	const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids)
 {
-	LOG << "Painting from assembly.\n";
+	//LOG << "Painting from assembly.\n";
 	
 	const vector<InstructionPtr> & instructions = gridDesc.getAssembly()->
 		getInstructions();
@@ -288,7 +288,7 @@ paintFromAssembly(const GridDescription & gridDesc,
 void VoxelizedPartition::
 paintFromHuygensSurfaces(const GridDescription & gridDesc)
 {
-	LOG << "Painting from Huygens surfaces.\n";
+	//LOG << "Painting from Huygens surfaces.\n";
 	
 	const vector<HuygensSurfaceDescPtr> & surfaces =
 		gridDesc.getHuygensSurfaces();
@@ -310,7 +310,8 @@ paintFromHuygensSurfaces(const GridDescription & gridDesc)
 			for (int ff = 0; ff < 6; ff++)
 			{
 				ostringstream bufferName;
-				bufferName << "HS " << nn << " NB " << mm << " field " << ff;
+                bufferName << gridDesc.getName() << " HS " << nn << " NB " <<
+                    mm << " field " << ff;
 				mNBBuffers[nb].buffers[ff] = MemoryBuffer(bufferName.str(),
 					bufSize);
 			}
@@ -339,7 +340,7 @@ calculateMaterialIndices()
 void VoxelizedPartition::
 calculateHuygensSymmetries(const GridDescription & gridDesc)
 {
-	LOG << "Calculating Huygens surface symmetries.\n";
+	//LOG << "Calculating Huygens surface symmetries.\n";
 	
 	const vector<HuygensSurfaceDescPtr> & surfaces =
 		gridDesc.getHuygensSurfaces();
@@ -350,10 +351,11 @@ calculateHuygensSymmetries(const GridDescription & gridDesc)
 	{
 		mHuygensRegionSymmetries[nn] = 
 			huygensSymmetry(*surfaces[nn]);
-		
+		/*
 		LOG << "Surface " << nn << " has bounds " <<
-			surfaces[nn]->getDestHalfRect() << " and symmetries "
+			surfaces[nn]->getHalfCells() << " and symmetries "
 			<< mHuygensRegionSymmetries[nn] << "\n";
+        */
 	}
 }
 
@@ -362,13 +364,13 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 {
 	int ii, jj, kk;
 	
-	Vector3i symmetries(1,1,1);
-	
-	Vector3i o = surf.getDestHalfRect().p1; // origin
-	Vector3i p = surf.getDestHalfRect().p2; // and opposite corner
-	Vector3i dim = surf.getDestHalfRect().size();
+	Vector3i o = surf.getHalfCells().p1; // origin
+	Vector3i p = surf.getHalfCells().p2; // and opposite corner
+	Vector3i dim = surf.getHalfCells().size();
 	const set<Vector3i> & omittedSides = surf.getOmittedSides();
-	
+    
+	Vector3i symmetry(1, 1, 1);
+    
 	for (int side_i = 0; side_i < 3; side_i++)
 	{
 		int side_j = (side_i+1)%3;
@@ -388,7 +390,7 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 				Vector3i frontSide( (o + jj*e2 + kk*e3) );
 				Vector3i backSide( frontSide + (dim[side_i]*e1) );
 				if ( mVoxels(frontSide) != mVoxels(backSide) )
-					symmetries[side_i] = 0;
+					symmetry[side_i] = 0;
 			}
 		}
 		
@@ -403,7 +405,7 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 				for (ii = 0; ii < dim[side_i]; ii++)
 					if (matchMe != mVoxels(
 						(sideOrigin+ii*e1 + kk*e3) ))
-						symmetries[side_i] = 0;
+						symmetry[side_i] = 0;
 			}
 		}
 		if (!omittedSides.count(-e2))
@@ -415,7 +417,7 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 				for (ii = 0; ii < dim[side_i]; ii++)
 					if (matchMe != mVoxels(
 						(sideOrigin+ii*e1 + kk*e3) ))
-						symmetries[side_i] = 0;
+						symmetry[side_i] = 0;
 			}
 		}
 
@@ -430,7 +432,7 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 				for (ii = 0; ii < dim[side_i]; ii++)
 					if (matchMe != mVoxels(
 						(sideOrigin+ii*e1 + jj*e2) ))
-						symmetries[side_i] = 0;
+						symmetry[side_i] = 0;
 			}
 		}
 		if (!omittedSides.count(-e3))
@@ -442,12 +444,12 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 				for (ii = 0; ii < dim[side_i]; ii++)
 					if (matchMe != mVoxels(
 						(sideOrigin+ii*e1 + jj*e2) ))
-						symmetries[side_i] = 0;
+						symmetry[side_i] = 0;
 			}
 		}
 	} // foreach sideNum
 	
-	return symmetries;
+    return Vector3i(symmetry);
 }
 
 void VoxelizedPartition::
@@ -467,13 +469,13 @@ createMaterialDelegates()
 		Paint* p = *itr;
 		if (mDelegates.count(p) == 0)
 		{
-			mDelegates[p] = NewMaterialFactory::getDelegate(
+			mDelegates[p] = MaterialFactory::getDelegate(
 				mVoxels, mCentralIndices, p);
 		}
 		MaterialDelegate & mat = *mDelegates[p];
 		
-		LOGMORE << hex << p << dec << ":\n";
-		LOGMORE << *p << "\n";
+		//LOGMORE << hex << p << dec << ":\n";
+		//LOGMORE << *p << "\n";
 		
 		for (int octant = 0; octant < 8; octant++)
 		{
@@ -603,9 +605,6 @@ createSourceDelegates(const std::vector<SourceDescPtr> & sources)
         mSourceDelegates.push_back(
             SourceFactory::getDelegate(*this, sources[nn]));
 }
-
-
-
 
 
 

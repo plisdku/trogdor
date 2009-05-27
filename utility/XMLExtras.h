@@ -16,43 +16,6 @@
 #include "Map.h"
 #include "Exception.h"
 
-/*
-Map<std::string, std::string> sGetAttributes(const TiXmlElement* elem);
-
-void sSetAttributes(TiXmlElement* elem,
-    const Map<std::string, std::string> & attribs) throw(Exception);
-
-template <class T>
-void sGetMandatoryAttribute(const TiXmlElement* elem,
-	const std::string & attribute, T & val) throw(Exception);
-
-template <class T>
-bool sTryGetAttribute(const TiXmlElement* elem,
-	const std::string & attribute, T & val);
-
-template <class T>
-void sGetOptionalAttribute(const TiXmlElement* elem,
-	const std::string & attribute, T & val, const T & defaultVal);
-    
-template<class T>
-void sSetAttribute(TiXmlElement* elem,
-    const std::string & attribute, T & val) throw(Exception);
-
-template <>
-void sGetMandatoryAttribute<std::string>(const TiXmlElement* elem,
-	const std::string & attribute, std::string & val) throw(Exception);
-
-template <>
-bool sTryGetAttribute<std::string>(const TiXmlElement* elem,
-	const std::string & attribute, std::string & val);
-
-template <>
-void sGetOptionalAttribute<std::string>(const TiXmlElement* elem,
-	const std::string & attribute, std::string & val, const std::string & defaultVal);
-
-std::string sErr(const std::string & str, const TiXmlElement* elem);
-
-*/
 
 #pragma mark *** Implementations ***
 

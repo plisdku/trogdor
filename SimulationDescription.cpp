@@ -11,6 +11,7 @@
 #include "XMLParameterFile.h"
 
 #include <iostream>
+#include <sstream>
 
 // This is included for the function that converts hex colors to RGB.
 #include <Magick++.h>
@@ -125,7 +126,7 @@ setHuygensSurfaces(const vector<HuygensSurfaceDescPtr> & surfaces)
 	// correction.
 	for (unsigned int nn = 0; nn < mHuygensSurfaces.size(); nn++)
 	{
-		Rect3i destHalfRect = mHuygensSurfaces[nn]->getDestHalfRect();
+		Rect3i destHalfRect = mHuygensSurfaces[nn]->getHalfCells();
 		
 		for (int xyz = 0; xyz < 3; xyz++)
 		{
@@ -198,297 +199,518 @@ getNumDimensions() const
 	return nDim;
 }
 
+#pragma mark *** Region ***
+
+void Region::
+cycleCoordinates()
+{
+	Mat3i permuteForward;
+	permuteForward = 0,0,1,1,0,0,0,1,0;
+    
+    mYeeCells = permuteForward*mYeeCells;
+    mStride = permuteForward*mStride;
+}
+
+
 #pragma mark *** Output ***
 
 OutputDescription::
-OutputDescription(string fileName, string inClass, int inPeriod,
-    Rect3i inRegion, Vector3b whichE, Vector3b whichH, Vector3i inStride,
-	const Map<string, string> & inParameters) throw(Exception) :
-	mFileName(fileName),
-	mClass(inClass),
-	mPeriod(inPeriod),
-    mWhichE(whichE),
-    mWhichH(whichH),
-    mYeeRects(1,inRegion),
-    mStrides(1,inStride),
-	mParams(inParameters)
+OutputDescription(std::string fields, std::string file) throw(Exception) :
+    mCoordinatePermutationNumber(0),
+    mFile(file),
+    mIsInterpolated(0),
+    mInterpolationPoint(0.0,0.0,0.0), // specified but not used
+    mRegions(vector<Region>(1,Region())),
+    mDurations(vector<Duration>(1,Duration()))
 {
-	cerr << "Warning: OutputDescription does not validate inClass.\n";
+    determineWhichFields(fields);
+}
+
+OutputDescription::
+OutputDescription(std::string fields, std::string file,
+    Region region, Duration duration) throw(Exception) :
+    mCoordinatePermutationNumber(0),
+    mFile(file),
+    mIsInterpolated(0),
+    mInterpolationPoint(0.0,0.0,0.0), // specified but not used
+    mRegions(vector<Region>(1,region)),
+    mDurations(vector<Duration>(1,duration))
+{
+    determineWhichFields(fields);
+}
+
+OutputDescription::
+OutputDescription(std::string fields, std::string file,
+    const std::vector<Region> & regions,
+    const std::vector<Duration> & durations) throw(Exception) :
+    mCoordinatePermutationNumber(0),
+    mFile(file),
+    mIsInterpolated(0),
+    mInterpolationPoint(0.0,0.0,0.0), // specified but not used
+    mRegions(regions),
+    mDurations(durations)
+{
+    determineWhichFields(fields);
+}
+
+OutputDescription::
+OutputDescription(std::string fields, std::string file,
+    Vector3f interpolationPoint, const std::vector<Region> & regions,
+    const std::vector<Duration> & durations) throw(Exception) :
+    mCoordinatePermutationNumber(0),
+    mFile(file),
+    mWhichE(0,0,0),
+    mWhichH(0,0,0),
+    mWhichJ(0,0,0),
+    mWhichP(0,0,0),
+    mWhichM(0,0,0),
+    mIsInterpolated(1),
+    mInterpolationPoint(interpolationPoint),
+    mRegions(regions),
+    mDurations(durations)
+{
+    determineWhichFields(fields);
 }
 
 void OutputDescription::
 cycleCoordinates()
 {
     unsigned int nn;
-	Mat3i permuteForward, permuteBackward;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteBackward = 0,1,0,0,0,1,1,0,0;
+    Mat3i permuteForwardBool;
+    Mat3f permuteForwardFloat;
+	permuteForwardBool = 0,0,1,1,0,0,0,1,0;
+	permuteForwardFloat = 0,0,1,1,0,0,0,1,0;
 	
 	mCoordinatePermutationNumber += 1;
 	mCoordinatePermutationNumber %= 3;
     
-    mWhichE = Vector3b(mWhichE[2], mWhichE[0], mWhichE[1]);
-    mWhichH = Vector3b(mWhichH[2], mWhichH[0], mWhichH[1]);
+    mWhichE = permuteForwardBool*mWhichE;
+    mWhichH = permuteForwardBool*mWhichH;
+    mWhichJ = permuteForwardBool*mWhichJ;
+    mWhichP = permuteForwardBool*mWhichP;
+    mWhichM = permuteForwardBool*mWhichM;
     
-    for (nn = 0; nn < mYeeRects.size(); nn++)
-        mYeeRects[nn] = permuteForward * mYeeRects[nn];
-    for (nn = 0; nn < mStrides.size(); nn++)
-        mStrides[nn] = permuteForward * mStrides[nn];
+    mInterpolationPoint = permuteForwardFloat*mInterpolationPoint;
+    
+    for (nn = 0; nn < mRegions.size(); nn++)
+        mRegions[nn].cycleCoordinates();
 }
+
+void OutputDescription::
+determineWhichFields(std::string fields) throw(Exception)
+{
+    istringstream istr(fields);
+    string field;
+    while(istr >> field && field != "")
+    {
+        if (field == "electric")
+            mWhichE = Vector3i(1,1,1);
+        else if (field == "magnetic")
+            mWhichH = Vector3i(1,1,1);
+        else if (field == "polarization")
+            mWhichP = Vector3i(1,1,1);
+        else if (field == "current")
+            mWhichJ = Vector3i(1,1,1);
+        else if (field == "magnetization")
+            mWhichM = Vector3i(1,1,1);
+        else if (field.length() == 2)
+        {
+            char c1 = field[0];
+            char c2 = field[1];
+            
+            int direction = int(c2 - 'x');
+            if (direction < 0 || direction > 2)
+                throw(Exception(string("Invalid field ") + field));
+            
+            switch (c1)
+            {
+                case 'e':
+                    mWhichE[direction] = 1;
+                    break;
+                case 'h':
+                    mWhichH[direction] = 1;
+                    break;
+                case 'j':
+                    mWhichJ[direction] = 1;
+                    break;
+                case 'p':
+                    mWhichP[direction] = 1;
+                    break;
+                case 'm':
+                    mWhichM[direction] = 1;
+                    break;
+                default:
+                    throw(Exception(string("Invalid field ") + field));
+                    break;
+            };
+        }
+        else
+            throw(Exception(string("Invalid field ") + field));
+    }
+    
+    Vector3i threeFalses(false,false,false);
+    if (mIsInterpolated)
+    if (mWhichJ != threeFalses ||
+        mWhichP != threeFalses ||
+        mWhichM != threeFalses)
+        throw(Exception("Only E and H fields may be interpolated."));
+}
+
+#pragma mark *** MaterialOutput ***
+
+MaterialOutputDescription::
+MaterialOutputDescription()
+{
+}
+
+void MaterialOutputDescription::
+cycleCoordinates()
+{
+}
+
+#pragma mark *** SourceFields ***
+
+SourceFields::
+SourceFields() :
+    mUsesPolarization(0),
+    mPolarization(0.0, 0.0, 0.0),
+    mWhichE(0,0,0),
+    mWhichH(0,0,0)
+{
+}
+
+SourceFields::
+SourceFields(string fields) :
+    mUsesPolarization(0),
+    mPolarization(0.0, 0.0, 0.0),
+    mWhichE(0,0,0),
+    mWhichH(0,0,0)
+{
+    istringstream istr(fields);
+    string field;
+    while(istr >> field && field != "")
+    {
+        if (field == "electric")
+            mWhichE = Vector3i(1,1,1);
+        else if (field == "magnetic")
+            mWhichH = Vector3i(1,1,1);
+        else if (field.length() == 2)
+        {
+            char c1 = field[0];
+            char c2 = field[1];
+            
+            int direction = int(c2 - 'x');
+            if (direction < 0 || direction > 2)
+                throw(Exception(string("Invalid field ") + field));
+            
+            if (c1 == 'e')
+                mWhichE[direction] = 1;
+            else if (c1 == 'h')
+                mWhichH[direction] = 1;
+            else
+                throw(Exception(string("Invalid field ") + field));
+        }
+        else
+            throw(Exception(string("Invalid field ") + field));
+    }
+}
+
+SourceFields::
+SourceFields(string fields, Vector3f polarization) :
+    mUsesPolarization(1),
+    mPolarization(polarization),
+    mWhichE(0,0,0),
+    mWhichH(0,0,0)
+{
+    if (fields == "electric" || fields == "e")
+        mWhichE = Vector3i(1,1,1);
+    else if (fields == "magnetic" || fields == "h")
+        mWhichH = Vector3i(1,1,1);
+    else
+        throw(Exception(string("When polarization is provided, the field "
+            "must be 'electric' or 'magnetic'; field is ") + fields));
+}
+
+void SourceFields::
+cycleCoordinates()
+{
+    unsigned int nn;
+	Mat3i permuteForwardBool;
+    Mat3f permuteForwardFloat;
+	permuteForwardBool = 0,0,1,1,0,0,0,1,0;
+	permuteForwardFloat = 0,0,1,1,0,0,0,1,0;
+	
+	//mCoordinatePermutationNumber += 1;
+	//mCoordinatePermutationNumber %= 3;
+    
+    mPolarization = permuteForwardFloat*mPolarization;
+    mWhichE = permuteForwardBool*mWhichE;
+    mWhichH = permuteForwardBool*mWhichH;
+}
+
 
 #pragma mark *** Source ***
 
-SourceDescription::
-SourceDescription(string formula, string inFileName,
-	Vector3f polarization, Rect3i region, Vector3b whichE, Vector3b whichH,
-	const Map<string, string> & inParameters) throw(Exception) :
-	mFormula(formula),
-	mInputFileName(inFileName),
-	mPolarization(polarization),
-    mWhichE(whichE),
-    mWhichH(whichH),
-    mIsSpaceVarying(0),
-    mYeeRects(1, region),
-    mFirstTimestep(),
-    mLastTimestep(),
-	mParams(inParameters)
+SourceDescription* SourceDescription::
+newTimeSource(string timeFile, SourceFields fields, bool isSoft,
+    const vector<Region> & regions, const vector<Duration> & durations)
 {
-	cerr << "Warning: SourceDescription does not validate formula.\n";
-    
-    for (unsigned int nn = 0; nn < mYeeRects.size(); nn++)
-        if (!vec_ge(mYeeRects[nn].size(), 0))
-            throw(Exception("Source region has some negative dimensions"));
+    return new SourceDescription(fields, "", timeFile, "",
+        isSoft, regions, durations);
+}
+
+SourceDescription* SourceDescription::
+newSpaceTimeSource(string spaceTimeFile, SourceFields fields, bool isSoft,
+    const vector<Region> & regions, const vector<Duration> & durations)
+{
+    return new SourceDescription(fields, "", "", spaceTimeFile,
+        isSoft, regions, durations);
+}
+
+SourceDescription* SourceDescription::
+newFormulaSource(string formula, SourceFields fields, bool isSoft,
+    const vector<Region> & regions, const vector<Duration> & durations)
+{
+    return new SourceDescription(fields, formula, "", "",
+        isSoft, regions, durations);
 }
 
 void SourceDescription::
 cycleCoordinates()
 {
-    unsigned int nn;
-	Mat3i permuteForward, permuteBackward;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteBackward = 0,1,0,0,0,1,1,0,0;
+    Mat3f permuteForwardFloat;
+	permuteForwardFloat = 0,0,1,1,0,0,0,1,0;
 	
 	mCoordinatePermutationNumber += 1;
 	mCoordinatePermutationNumber %= 3;
-	
-	mPolarization = Vector3f(
-		mPolarization[2], mPolarization[0], mPolarization[1]);
     
-    mWhichE = Vector3b(mWhichE[2], mWhichE[0], mWhichE[1]);
-    mWhichH = Vector3b(mWhichH[2], mWhichH[0], mWhichH[1]);
+    for (unsigned int nn = 0; nn < mRegions.size(); nn++)
+        mRegions[nn].cycleCoordinates();
+    
+    mFields.cycleCoordinates();
+    
+    LOG << "Not permuting coordinates of source formula!!\n";
+}
+
+SourceDescription::
+SourceDescription(SourceFields fields, string formula, string timeFile,
+    string spaceTimeFile, bool isSoft, const vector<Region> & regions,
+    const vector<Duration> & durations) throw(Exception) :
+    mCoordinatePermutationNumber(0),
+    mFormula(formula),
+    mTimeFile(timeFile),
+    mSpaceFileDoThisLaterOkay("whatever you say, man"),
+    mSpaceTimeFile(spaceTimeFile),
+    mFields(fields),
+    mRegions(regions),
+    mDurations(durations),
+    mIsSoft(isSoft)
+{
+}
+
+#pragma mark *** SourceCurrents ***
+
+SourceCurrents::
+SourceCurrents() :
+    mUsesPolarization(0),
+    mPolarization(0.0, 0.0, 0.0),
+    mWhichJ(0,0,0),
+    mWhichK(0,0,0)
+{
+}
+
+SourceCurrents::
+SourceCurrents(string fields) :
+    mUsesPolarization(0),
+    mPolarization(0.0, 0.0, 0.0),
+    mWhichJ(0,0,0),
+    mWhichK(0,0,0)
+{
+    istringstream istr(fields);
+    string field;
+    while(istr >> field && field != "")
+    {
+        if (field == "electric" || field == "j")
+            mWhichJ = Vector3i(1,1,1);
+        else if (field == "magnetic" || field == "k")
+            mWhichK = Vector3i(1,1,1);
+        else if (field.length() == 2)
+        {
+            char c1 = field[0];
+            char c2 = field[1];
+            
+            int direction = int(c2 - 'x');
+            if (direction < 0 || direction > 2)
+                throw(Exception(string("Invalid field ") + field));
+            
+            if (c1 == 'j')
+                mWhichJ[direction] = 1;
+            else if (c1 == 'k')
+                mWhichK[direction] = 1;
+            else
+                throw(Exception(string("Invalid field ") + field));
+        }
+        else
+            throw(Exception(string("Invalid field ") + field));
+    }
+}
+
+SourceCurrents::
+SourceCurrents(string fields, Vector3f polarization) :
+    mUsesPolarization(1),
+    mPolarization(polarization),
+    mWhichJ(0,0,0),
+    mWhichK(0,0,0)
+{
+    if (fields == "electric")
+        mWhichJ = Vector3i(1,1,1);
+    else if (fields == "magnetic")
+        mWhichK = Vector3i(1,1,1);
+    else
+        throw(Exception(string("When polarization is provided, the field "
+            "must be 'electric' or 'magnetic'; field is ") + fields));
+}
+
+void SourceCurrents::
+cycleCoordinates()
+{
+    unsigned int nn;
+	Mat3i permuteForwardBool;
+    Mat3f permuteForwardFloat;
+	permuteForwardBool = 0,0,1,1,0,0,0,1,0;
+	permuteForwardFloat = 0,0,1,1,0,0,0,1,0;
 	
-    for (nn = 0; nn < mYeeRects.size(); nn++)
-        mYeeRects[nn] = permuteForward * mYeeRects[nn];
+	//mCoordinatePermutationNumber += 1;
+	//mCoordinatePermutationNumber %= 3;
+    
+    mPolarization = permuteForwardFloat*mPolarization;
+    mWhichJ = permuteForwardBool*mWhichJ;
+    mWhichK = permuteForwardBool*mWhichK;
+}
+
+#pragma mark *** CurrentSource ***
+
+
+CurrentSourceDescription* CurrentSourceDescription::
+newTimeSource(string timeFile, SourceCurrents currents,
+    const vector<Region> & regions, const vector<Duration> & durations)
+{
+    return new CurrentSourceDescription(currents, "", timeFile, "",
+        regions, durations);
+}
+
+CurrentSourceDescription* CurrentSourceDescription::
+newSpaceTimeSource(string spaceTimeFile, SourceCurrents currents,
+    const vector<Region> & regions, const vector<Duration> & durations)
+{
+    return new CurrentSourceDescription(currents, "", "", spaceTimeFile,
+        regions, durations);
+}
+
+CurrentSourceDescription* CurrentSourceDescription::
+newFormulaSource(string formula, SourceCurrents currents,
+    const vector<Region> & regions, const vector<Duration> & durations)
+{
+    return new CurrentSourceDescription(currents, formula, "", "",
+        regions, durations);
+}
+
+void CurrentSourceDescription::
+cycleCoordinates()
+{
+    Mat3f permuteForwardFloat;
+	permuteForwardFloat = 0,0,1,1,0,0,0,1,0;
+	
+	mCoordinatePermutationNumber += 1;
+	mCoordinatePermutationNumber %= 3;
+    
+    for (unsigned int nn = 0; nn < mRegions.size(); nn++)
+        mRegions[nn].cycleCoordinates();
+    
+    mCurrents.cycleCoordinates();
+    
+    LOG << "Not permuting coordinates of source formula!!\n";
+}
+
+
+CurrentSourceDescription::
+CurrentSourceDescription(SourceCurrents currents, string formula,
+    string timeFile, string spaceTimeFile, const vector<Region> & regions,
+    const vector<Duration> & durations) throw(Exception) :
+    mCoordinatePermutationNumber(0),
+    mFormula(formula),
+    mTimeFile(timeFile),
+    mSpaceFileDoThisLaterOkay("whatever you say, man"),
+    mSpaceTimeFile(spaceTimeFile),
+    mCurrents(currents),
+    mRegions(regions),
+    mDurations(durations)
+{
 }
 
 
 #pragma mark *** HuygensSurface ***
 
-// constructor for LINKS, using source grid name
 HuygensSurfaceDescription::
-HuygensSurfaceDescription(string typeString, string sourceGridName, 
-	Rect3i sourceHalfRect, Rect3i destHalfRect,
-	const std::set<Vector3i> & omittedSides)
-	throw(Exception) :
-	mType(kLink),
-	mDestHalfRect(destHalfRect),
-	mOmittedSides(omittedSides),
-	mBuffers(6),
-	mLinkSourceHalfRect(sourceHalfRect),
-	mLinkSourceGridName(sourceGridName),
-	mLinkSourceGrid(),
-	mTFSFSourceSymmetries(0,0,0),
-	mTFSFType(),
-	mTFSFSourceParams(),
-	mTFSFSourceDirection(0,0,0),
-	mTFSFFormula(),
-	mTFSFPolarization(0,0,0),
-	mTFSFField(),
-	mDataRequestName()
+HuygensSurfaceDescription() :
+    mCoordinatePermutationNumber(0),
+    mBuffers(6),
+    mDirection(0,0,0),
+    mSymmetries(0,0,0)
 {
-	if (!vec_ge(mDestHalfRect.size(), 0))
-		throw(Exception("Link dest rect has some negative dimensions"));
-	if (!vec_ge(mLinkSourceHalfRect.size(), 0))
-		throw(Exception("Link source rect has some negative dimensions"));
-	
-	for (set<Vector3i>::iterator ii = mOmittedSides.begin();
-		ii != mOmittedSides.end(); ii++)
-	{
-		if (*ii != dominantComponent(*ii) ||
-			norm1(*ii) != 1)
-			throw(Exception("Omitted sides must be axis-oriented unit "
-				"vectors"));
-	}
-	
-	if (typeString == "TF")
-		initTFSFBuffers(1.0);
-	else if (typeString == "SF")
-		initTFSFBuffers(-1.0);
-	else
-		throw(Exception("Link type must be 'TF' or 'SF'"));
 }
 
-
-// constructor for LINKS, using source grid pointer
 HuygensSurfaceDescription::
-HuygensSurfaceDescription(string typeString, const GridDescPtr sourceGrid, 
-	Rect3i sourceHalfRect, Rect3i destHalfRect,
-	const std::set<Vector3i> & omittedSides)
-	throw(Exception) :
-	mType(kLink),
-	mDestHalfRect(destHalfRect),
-	mOmittedSides(omittedSides),
-	mBuffers(6),
-	mLinkSourceHalfRect(sourceHalfRect),
-	mLinkSourceGridName(sourceGrid->getName()),
-	mLinkSourceGrid(sourceGrid),
-	mTFSFSourceSymmetries(0,0,0),
-	mTFSFType(),
-	mTFSFSourceParams(),
-	mTFSFSourceDirection(0,0,0),
-	mTFSFFormula(),
-	mTFSFFileName(),
-	mTFSFPolarization(0,0,0),
-	mTFSFField(),
-	mDataRequestName()
+HuygensSurfaceDescription(HuygensSurfaceSourceType type) :
+    mCoordinatePermutationNumber(0),
+    mType(type),
+    mBuffers(6),
+    mDirection(0,0,0),
+    mSymmetries(0,0,0)
 {
-	if (!vec_ge(mDestHalfRect.size(), 0))
-		throw(Exception("Link dest rect has some negative dimensions"));
-	if (!vec_ge(mLinkSourceHalfRect.size(), 0))
-		throw(Exception("Link source rect has some negative dimensions"));
-	
-	for (set<Vector3i>::iterator ii = mOmittedSides.begin();
-		ii != mOmittedSides.end(); ii++)
-	{
-		if (*ii != dominantComponent(*ii) ||
-			norm1(*ii) != 1)
-			throw(Exception("Omitted sides must be axis-oriented unit "
-				"vectors"));
-	}
-	
-	if (typeString == "TF")
-		initTFSFBuffers(1.0);
-	else if (typeString == "SF")
-		initTFSFBuffers(-1.0);
-	else
-		throw(Exception("Link type must be 'TF' or 'SF'"));
 }
 
-
-// constructor for TFSFSOURCES
 HuygensSurfaceDescription::
-HuygensSurfaceDescription(Rect3i inTFRect, Vector3i direction,
-	string formula, string fileName, Vector3f polarization,
-	string field, string inTFSFType, const Map<string,string> & inParameters,
-	const set<Vector3i> & omittedSides)
-	throw(Exception) :
-	mType(kTFSFSource),
-	mDestHalfRect(inTFRect),
-	mOmittedSides(omittedSides),
-	mBuffers(6),
-	mLinkSourceHalfRect(),
-	mLinkSourceGridName(),
-	mLinkSourceGrid(),
-	mTFSFSourceSymmetries(0,0,0),
-	mTFSFType(inTFSFType),
-	mTFSFSourceParams(inParameters),
-	mTFSFSourceDirection(direction),
-	mTFSFFormula(),
-	mTFSFFileName(),
-	mTFSFPolarization(),
-	mTFSFField(),
-	mDataRequestName()
+HuygensSurfaceDescription(const HuygensSurfaceDescription & parent,
+    Rect3i newHalfCells)
 {
-	if (!vec_ge(mDestHalfRect.size(), 0))
-		throw(Exception("TFSFSource TF rect has some negative dimensions"));
-	
-	if (mTFSFSourceDirection != dominantComponent(mTFSFSourceDirection) ||
-		norm1(mTFSFSourceDirection) != 1)
-		throw(Exception("Source direction must be axis-oriented unit vector"));
-	
-	for (unsigned int nn = 0; nn < 3; nn++)
-	if (mTFSFSourceDirection[nn] == 0)
-		mTFSFSourceSymmetries[nn] = 1;
-	
-	for (set<Vector3i>::iterator ii = mOmittedSides.begin();
-		ii != mOmittedSides.end(); ii++)
-	{
-		if (*ii != dominantComponent(*ii) ||
-			norm1(*ii) != 1)
-			throw(Exception("Omitted sides must be axis-oriented unit "
-				"vectors"));
-	}
-	if (inTFSFType == "TF")
-		initTFSFBuffers(1.0);
-	else if (inTFSFType == "SF")
-		initTFSFBuffers(-1.0);
-	else
-		throw(Exception("TFSFSource type must be 'TF' or 'SF'"));
+    *this = parent;
+    mHalfCells = newHalfCells;
 }
 
-// constructor for CustomSources
-HuygensSurfaceDescription::
-HuygensSurfaceDescription(Rect3i inTFRect, const string & inName,
-	Vector3i symmetries, string inTFSFType,
-	const Map<string,string> & inParameters,
-	const std::set<Vector3i> & omittedSides)
-	throw(Exception) :
-	mType(kDataRequest),
-	mDestHalfRect(inTFRect),
-	mOmittedSides(omittedSides),
-	mBuffers(6),
-	mLinkSourceHalfRect(),
-	mLinkSourceGridName(),
-	mLinkSourceGrid(),
-	mTFSFSourceSymmetries(symmetries),
-	mTFSFType(inTFSFType),
-	mTFSFSourceParams(inParameters),
-	mTFSFSourceDirection(0,0,0),
-	mTFSFFormula(),
-	mTFSFFileName(),
-	mTFSFPolarization(0,0,0),
-	mTFSFField(),
-	mDataRequestName(inName)
+void HuygensSurfaceDescription::
+setPointers(const Map<string, GridDescPtr> & gridMap)
 {
-	if (!vec_ge(mDestHalfRect.size(), 0))
-		throw(Exception("CustomSource TF rect has some negative dimensions"));
-	for (unsigned int nn = 0; nn < 3; nn++)
-	if (mTFSFSourceSymmetries[nn] != 1 && mTFSFSourceSymmetries[nn] != 0)
-		throw(Exception("CustomSource symmetry vector must have "
-			"1s and 0s only"));
-	
-	for (set<Vector3i>::iterator ii = mOmittedSides.begin();
-		ii != mOmittedSides.end(); ii++)
-	{
-		if (*ii != dominantComponent(*ii) ||
-			norm1(*ii) != 1)
-			throw(Exception("Omitted sides must be axis-oriented unit "
-				"vectors"));
-	}
-	if (inTFSFType == "TF")
-		initTFSFBuffers(1.0);
-	else if (inTFSFType == "SF")
-		initTFSFBuffers(-1.0);
-	else
-		throw(Exception("CustomSource type must be 'TF' or 'SF'"));
+	assert(mType == kLink);
+	mSourceGrid = gridMap[mSourceGridName];
+    
+    if (!mSourceGrid->getHalfCellBounds().encloses(mFromHalfCells))
+        throw(Exception("Link fromYeeCells or fromHalfCells must be entirely"
+            " contained within sourceGrid's bounds."));
+}
+
+void HuygensSurfaceDescription::
+omitSide(int sideNum)
+{
+	Vector3i side = cardinalDirection(sideNum);
+	mOmittedSides.insert(side);
 }
 
 void HuygensSurfaceDescription::
 cycleCoordinates()
 {
-	Mat3i permuteForward, permuteBackward;
+	Mat3i permuteForward;
+    Mat3i permuteForwardBool;
+	Mat3f permuteForwardf;
 	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteBackward = 0,1,0,0,0,1,1,0,0;
-	
-	vmlib::SMat<3,float> permuteForwardf;
+	permuteForwardBool = 0,0,1,1,0,0,0,1,0;
 	permuteForwardf = 0.0f,0.0f,1.0f,1.0f,0.f,0.f,0.f,1.f,0.f;
 	
 	// Rotate the rects and vectors
-	mDestHalfRect = permuteForward*mDestHalfRect;
-	mLinkSourceHalfRect = permuteForward*mLinkSourceHalfRect;
-	mTFSFSourceSymmetries = permuteForward*mTFSFSourceSymmetries;
-	mTFSFPolarization = permuteForwardf*mTFSFPolarization;
-	mTFSFSourceDirection = permuteForward*mTFSFSourceDirection;
+	mHalfCells = permuteForward*mHalfCells;
+    mDirection = permuteForward*mDirection;
+	mSymmetries = permuteForwardBool*mSymmetries;
+	mFromHalfCells = permuteForward*mFromHalfCells;
 	
 	// Rotate the omitted sides
 	set<Vector3i> newOmittedSides;
@@ -508,44 +730,123 @@ cycleCoordinates()
 			newBuffers[ii]->cycleCoordinates();
 	}
 	mBuffers = newBuffers;
+    
+    mCoordinatePermutationNumber += 1;
+    mCoordinatePermutationNumber %= 3;
 }
 
 HuygensSurfaceDescription* HuygensSurfaceDescription::
-newLink(string typeString, string sourceGridName, Rect3i sourceHalfRect,
-	Rect3i destHalfRect, const set<Vector3i> & omittedSides)
-	throw(Exception)
+newTFSFTimeSource(SourceFields fields, string timeFile, Vector3i direction,
+    Rect3i halfCells, set<Vector3i> omittedSides, bool isTF)
 {
-	return new HuygensSurfaceDescription(typeString, sourceGridName,
-		sourceHalfRect, destHalfRect, omittedSides);
+	if (!vec_ge(halfCells.size(), 0))
+		throw(Exception("TFSFSource rect has some negative dimensions"));
+    if (direction != dominantComponent(direction))
+        throw(Exception("direction needs to be an axis-oriented unit vector."));
+    
+    HuygensSurfaceDescription* hs2 = new HuygensSurfaceDescription(kTFSFSource);
+    hs2->mFields = fields;
+    hs2->mTimeFile = timeFile;
+    hs2->mDirection = direction;
+    for (int nn = 0; nn < 3; nn++)
+    if (direction[nn] == 0)
+        hs2->mSymmetries[nn] = 1;
+    hs2->mHalfCells = halfCells;
+    hs2->mOmittedSides = omittedSides;
+    hs2->mIsTotalField = isTF;
+	
+	if (isTF)
+		hs2->initTFSFBuffers(1.0);
+	else
+		hs2->initTFSFBuffers(-1.0);
+    
+    return hs2;
 }
+
 HuygensSurfaceDescription* HuygensSurfaceDescription::
-newLink(string typeString, GridDescPtr sourceGrid, Rect3i sourceHalfRect,
-	Rect3i destHalfRect, const set<Vector3i> & omittedSides)
-	throw(Exception)
+newTFSFFormulaSource(SourceFields fields, string formula, Vector3i direction,
+    Rect3i halfCells, set<Vector3i> omittedSides, bool isTF)
 {
-	return new HuygensSurfaceDescription(typeString, sourceGrid,
-		sourceHalfRect, destHalfRect, omittedSides);
-}
-HuygensSurfaceDescription* HuygensSurfaceDescription::
-newTFSFSource(Rect3i inHalfRect, Vector3i direction, string formula,
-	string fileName, Vector3f polarization, string field,
-	string inTFSFType, const Map<string, string> & inParameters,
-	const set<Vector3i> & omittedSides) throw(Exception)
-{
-	return new HuygensSurfaceDescription(inHalfRect, direction, formula,
-		fileName, polarization, field, inTFSFType, inParameters, omittedSides);
+	if (!vec_ge(halfCells.size(), 0))
+		throw(Exception("TFSFSource rect has some negative dimensions"));
+    if (direction != dominantComponent(direction))
+        throw(Exception("direction needs to be an axis-oriented unit vector."));
+    LOG << "Warning: not validating formula.\n";
+    
+    HuygensSurfaceDescription* hs2 = new HuygensSurfaceDescription(kTFSFSource);
+    hs2->mFields = fields;
+    hs2->mFormula = formula;
+    hs2->mDirection = direction;
+    for (int nn = 0; nn < 3; nn++)
+    if (direction[nn] == 0)
+        hs2->mSymmetries[nn] = 1;
+    hs2->mDuration = Duration();
+    hs2->mHalfCells = halfCells;
+    hs2->mOmittedSides = omittedSides;
+    hs2->mIsTotalField = isTF;
+	
+	if (isTF)
+		hs2->initTFSFBuffers(1.0);
+	else
+		hs2->initTFSFBuffers(-1.0);
+    
+    return hs2;
 }
 
 HuygensSurfaceDescription* HuygensSurfaceDescription::
-newCustomSource(Rect3i inHalfRect, const std::string & inName,
-	Vector3i symmetries, std::string inTFSFType,
-	const Map<std::string, std::string> & inParameters,
-	const std::set<Vector3i> & omittedSides) throw(Exception)
+newCustomTFSFSource(string file, Vector3i symmetries, Rect3i halfCells,
+    Duration duration, set<Vector3i> omittedSides, bool isTF)
 {
-	return new HuygensSurfaceDescription(inHalfRect, inName, symmetries,
-		inTFSFType, inParameters, omittedSides);
+	if (!vec_ge(halfCells.size(), 0))
+		throw(Exception("TFSFSource rect has some negative dimensions"));
+    
+    HuygensSurfaceDescription* hs2 =
+        new HuygensSurfaceDescription(kCustomTFSFSource);
+    hs2->mFile = file;
+    hs2->mDuration = duration;
+    hs2->mSymmetries = symmetries;
+    hs2->mHalfCells = halfCells;
+    hs2->mOmittedSides = omittedSides;
+    hs2->mIsTotalField = isTF;
+    
+	if (isTF)
+		hs2->initTFSFBuffers(1.0);
+	else
+		hs2->initTFSFBuffers(-1.0);
+    
+    return hs2;
 }
 
+HuygensSurfaceDescription* HuygensSurfaceDescription::
+newLink(string sourceGrid, Rect3i fromHalfCells, Rect3i toHalfCells,
+    set<Vector3i> omittedSides, bool isTF)
+{
+	if (!vec_ge(fromHalfCells.size(), 0))
+		throw(Exception("Link from rect has some negative dimensions"));
+	if (!vec_ge(toHalfCells.size(), 0))
+		throw(Exception("Link to rect has some negative dimensions"));
+    for (int nn = 0; nn < 3; nn++)
+    if (fromHalfCells.size(nn) != toHalfCells.size(nn) &&
+            fromHalfCells.size(nn) != 1)
+        throw(Exception("All dimensions of fromYeeCells or fromHalfCells must"
+            " either be the same as toYeeCells/toHalfCells or span the entire"
+            " dimension of the source grid, which must be one Yee cell across"
+            " in that direction."));
+    
+    HuygensSurfaceDescription* hs2 = new HuygensSurfaceDescription(kLink);
+    hs2->mSourceGridName = sourceGrid;
+    hs2->mFromHalfCells = fromHalfCells;
+    hs2->mHalfCells = toHalfCells;
+    hs2->mOmittedSides = omittedSides;
+    hs2->mIsTotalField = isTF;
+    
+	if (isTF)
+		hs2->initTFSFBuffers(1.0);
+	else
+		hs2->initTFSFBuffers(-1.0);
+    
+    return hs2;
+}
 
 void HuygensSurfaceDescription::
 initTFSFBuffers(float srcFactor)
@@ -560,7 +861,7 @@ initTFSFBuffers(float srcFactor)
 	if (mOmittedSides.count(cardinalDirection(nDir)) == 0)
 	{
 		NeighborBufferDescPtr nb(new NeighborBufferDescription(
-			mDestHalfRect, nDir, srcFactor));
+			mHalfCells, nDir, srcFactor));
 		mBuffers[nDir] = nb;
 	}
 }
@@ -569,20 +870,6 @@ void HuygensSurfaceDescription::
 initFloquetBuffers()
 {
 	LOG << "Not doing anything for Floquet buffers.\n";
-}
-
-void HuygensSurfaceDescription::
-setPointers(const Map<string, GridDescPtr> & gridMap)
-{
-	assert(mType == kLink);
-	mLinkSourceGrid = gridMap[mLinkSourceGridName];
-}
-
-void HuygensSurfaceDescription::
-omitSide(int sideNum)
-{
-	Vector3i side = cardinalDirection(sideNum);
-	mOmittedSides.insert(side);
 }
 
 #pragma mark *** NeighborBuffer ***
@@ -664,13 +951,14 @@ cycleCoordinates()
 #pragma mark *** Material ***
 
 MaterialDescription::
-MaterialDescription(string name, string inClass,
+MaterialDescription(string name, string inModelName,
 	const Map<string,string> & inParams) throw(Exception) :
+    mCoordinatePermutationNumber(0),
 	mName(name),
-	mClass(inClass),
+	mModelName(inModelName),
 	mParams(inParams)
 {
-	cerr << "Warning: MaterialDescription does not validate class.\n";
+	cerr << "Warning: MaterialDescription does not validate model name.\n";
 }
 
 void MaterialDescription::
@@ -685,7 +973,6 @@ operator<<(ostream & out, const MaterialDescription & mat)
 	out << mat.getName();
 	return out;
 }
-
 
 #pragma mark *** Assembly ***
 

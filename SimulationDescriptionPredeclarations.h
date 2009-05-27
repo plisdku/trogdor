@@ -15,7 +15,6 @@
 
 class SimulationDescription;
 class GridDescription;
-class InputEHDescription;
 class OutputDescription;
 class FullAuxDumpDescription;
 class SourceDescription;
@@ -34,7 +33,6 @@ class Extrude;
 
 typedef Pointer<SimulationDescription> SimulationDescPtr;
 typedef Pointer<GridDescription> GridDescPtr;
-typedef Pointer<InputEHDescription> InputEHDescPtr;
 typedef Pointer<OutputDescription> OutputDescPtr;
 typedef Pointer<FullAuxDumpDescription> FullAuxDumpDescPtr;
 typedef Pointer<SourceDescription> SourceDescPtr;

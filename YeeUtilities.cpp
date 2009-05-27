@@ -127,6 +127,20 @@ int octantFieldDirection(Vector3i octant)
 	return octantFieldDirection(halfCellIndex(octant));
 }
 
+Vector3f eFieldPosition(int fieldNum)
+{
+    Vector3f v(0.0, 0.0, 0.0);
+    v[fieldNum] = 0.5;
+    return v;
+}
+
+Vector3f hFieldPosition(int fieldNum)
+{
+    Vector3f v(0.5, 0.5, 0.5);
+    v[fieldNum] = 0.0;
+    return v;
+}
+
 
 // returns halfCell/2
 Vector3i vecHalfToYee(const Vector3i & halfCell)

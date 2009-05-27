@@ -16,7 +16,6 @@
 class VoxelizedPartition;
 class CalculationPartition;
 
-
 class OutputDelegate;
 typedef Pointer<OutputDelegate> OutputDelegatePtr;
 
@@ -33,18 +32,6 @@ private:
     OutputFactory();
 };
 
-// Output types:
-// subset of (Ex Ey Ez Hx Hy Hz) in series of Yee rects with given decimation
-// subset of resampled/colocated (E H) in series of Yee rects, decimated
-// aux field output in series of Yee rects, so RLE needed rectwise
-// full material aux field dump, all (?) aux data; may need space-varying params
-// custom calculation on E and H, in series of Yee rects, given decimation
-
-// Also: specify timesteps in series of intervals with given period
-
-// Report types:
-// material params in cells, whatever may be available (?) (does this go here?)
-
 
 class OutputDelegate
 {
@@ -55,6 +42,7 @@ public:
     virtual OutputPtr makeOutput(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const = 0;
 };
+
 
 class Output
 {
@@ -68,6 +56,7 @@ public:
     virtual void outputEPhase(int timestep);
     virtual void outputHPhase(int timestep);
     
+    virtual void allocateAuxBuffers();
 private:
     
 };

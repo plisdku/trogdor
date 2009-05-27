@@ -135,7 +135,17 @@ material(const TiXmlElement* old)
     Map<string,string> oldAttribs(sGetAttributes(old));
     Map<string,string> newAttribs;
     
-    newAttribs["model"] = oldAttribs["class"];
+    //newAttribs["model"] = oldAttribs["class"];
+    string oldClass = oldAttribs["class"];
+    if (oldClass == "DrudeMetalModel")
+        newAttribs["model"] = "DrudeMetal1";
+    else if (oldClass == "StaticDielectricModel")
+        newAttribs["model"] = "StaticDielectric";
+    else if (oldClass == "StaticLossyDielectricModel")
+        newAttribs["model"] = "StaticLossyDielectric";
+    else if (oldClass == "PECModel")
+        newAttribs["model"] = "PerfectConductor";
+    
     newAttribs["name"] = oldAttribs["name"];
     
     sSetAttributes(mat, newAttribs);
@@ -286,7 +296,7 @@ output(const TiXmlElement* old)
         throw(Exception(sErr("Output doesn't have Params.", old)));
     Map<string,string> oldParamsAttribs = sGetAttributes(oldParams);
     
-    durationAttribs["firstTimestep"] = 1;
+    durationAttribs["firstTimestep"] = "1";
     if (oldParamsAttribs.count("period") != 0)
         durationAttribs["period"] = oldParamsAttribs["period"];
     regionAttribs["yeeCells"] = oldParamsAttribs["region"];
@@ -357,7 +367,7 @@ source(const TiXmlElement* old)
     {
         newSource = new TiXmlElement("AdditiveSource");
         newAttribs["polarization"] = oldAttribs["polarization"];
-        newAttribs["field"] = oldAttribs["field"];
+        newAttribs["fields"] = oldAttribs["field"];
     }
     else
     {
@@ -383,7 +393,7 @@ source(const TiXmlElement* old)
             throw(Exception(sErr("Can't convert hard source with off-axis "
                 "polarization", old)));
         
-        newAttribs["field"] = fieldName;
+        newAttribs["fields"] = fieldName;
     }
     sSetAttributes(newSource, newAttribs);
     newSource->LinkEndChild(region);
@@ -396,7 +406,6 @@ tfsfSource(const TiXmlElement* old)
 {
     TiXmlElement* newTFSFSource = new TiXmlElement("TFSFSource");
     Map<string, string> newAttribs;
-    TiXmlElement* region = new TiXmlElement("Region");
     Map<string, string> regionAttribs;
     
     Map<string,string> oldAttribs = sGetAttributes(old);
@@ -406,7 +415,10 @@ tfsfSource(const TiXmlElement* old)
         throw(Exception(sErr("TFSFSource needs Params", old)));
     Map<string,string> oldParamsAttribs(sGetAttributes(oldParams));
     
-    regionAttribs["yeeCells"] = oldAttribs["TFRect"];
+    if (oldAttribs.count("TFRect"))
+        newAttribs["yeeCells"] = oldAttribs["TFRect"];
+    else
+        newAttribs["halfCells"] = oldAttribs["fineTFRect"];
     newAttribs["direction"] = oldAttribs["direction"];
     newAttribs["polarization"] = oldParamsAttribs["polarization"];
     newAttribs["field"] = oldParamsAttribs["field"];
@@ -428,11 +440,7 @@ tfsfSource(const TiXmlElement* old)
         omit = omit->NextSiblingElement("OmitSide");
     }
     
-    sSetAttributes(region, regionAttribs);
     sSetAttributes(newTFSFSource, newAttribs);
-    
-    newTFSFSource->LinkEndChild(region);
-    //newTFSFSource->LinkEndChild(duration);
     
     return newTFSFSource;
 }

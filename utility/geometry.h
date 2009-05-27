@@ -22,8 +22,9 @@ typedef vmlib::SVec<3,int> Vector3i;
 typedef vmlib::SVec<3,double> Vector3d;
 typedef vmlib::SVec<3,bool> Vector3b;
 typedef vmlib::SVec<3,float> Vector3f;
-//typedef vmlib::SMat<3,float> Mat3f;
+typedef vmlib::SMat<3,float> Mat3f;
 typedef vmlib::SMat<3,int> Mat3i;
+typedef vmlib::SMat<3,bool> Mat3b;
 
 namespace vmlib {
 
@@ -49,13 +50,6 @@ operator% (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T> & rhs);
 } // namespace vmlib
 
 
-/*
-template <unsigned DIM, typename T>
-bool operator<= (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs);
-
-template <unsigned DIM, typename T>
-bool operator>= (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs);
-*/
 
 template <unsigned DIM, typename T>
 bool vec_lt(const vmlib::SVec<DIM,T>& lhs, const T & rhs);

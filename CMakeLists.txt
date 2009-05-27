@@ -58,7 +58,9 @@ SimulationDescription.cpp
 SourceBoss.cpp
 StaticDielectric.cpp
 StaticDielectricPML.cpp
+StaticLossyDielectric.cpp
 main.cpp
+PerfectConductor.cpp
 VoxelizedPartition.cpp
 VoxelGrid.cpp
 XMLParameterFile.cpp
@@ -69,6 +71,7 @@ YeeUtilities.cpp
 target_link_libraries( trogdor
 tinyxml
 utility
+boost_date_time-xgcc40-mt
 boost_program_options-xgcc40-mt
 boost_thread-xgcc40-mt
 ${magDepLibs}

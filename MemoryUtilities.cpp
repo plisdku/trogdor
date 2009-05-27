@@ -9,8 +9,11 @@
 
 #include "MemoryUtilities.h"
 #include <cassert>
+#include <iomanip>
 
 using namespace std;
+
+set<MemoryBuffer*> MemoryBuffer::sAllBuffers;
 
 MemoryBuffer::
 MemoryBuffer() :
@@ -19,6 +22,7 @@ MemoryBuffer() :
 	mDescription("Empty buffer"),
     mHeadPointer(0L)
 {
+    sAllBuffers.insert(this);
 }
 
 MemoryBuffer::
@@ -28,6 +32,7 @@ MemoryBuffer(unsigned long length, unsigned long stride) :
 	mDescription(""),
     mHeadPointer(0L)
 {
+    sAllBuffers.insert(this);
 }
 
 MemoryBuffer::
@@ -38,6 +43,7 @@ MemoryBuffer(const string & inDescription, unsigned long length,
 	mDescription(inDescription),
     mHeadPointer(0L)
 {
+    sAllBuffers.insert(this);
 }
 
 MemoryBuffer::
@@ -45,9 +51,34 @@ MemoryBuffer(const MemoryBuffer & copyMe) :
 	mLength(copyMe.mLength),
 	mStride(copyMe.mStride),
 	mDescription(copyMe.mDescription),
-    mHeadPointer(0L)
+    mHeadPointer(copyMe.mHeadPointer)
 {
+    sAllBuffers.insert(this);
 }
+
+MemoryBuffer::
+~MemoryBuffer()
+{
+    sAllBuffers.erase(this);
+}
+
+void MemoryBuffer::
+setHeadPointer(float* ptr)
+{
+    //LOG << "Setting head ptr for " << hex << this << dec << " to "
+    //    << hex << ptr << dec << "\n";
+    mHeadPointer = ptr;
+}
+
+ostream &
+operator<<(std::ostream & str, const MemoryBuffer & buffer)
+{
+    str << hex << buffer.getHeadPointer() << dec << ": length " <<
+        buffer.getLength() << " stride " << buffer.getStride() << " (" <<
+        buffer.getDescription() << ")";
+    return str;
+}
+
 
 BufferPointer::
 BufferPointer() :

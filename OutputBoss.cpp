@@ -15,6 +15,8 @@
 
 #include "SimpleEHOutput.h"
 
+#include "Version.h"
+
 #include <cstdlib>
 
 using namespace std;
@@ -23,12 +25,10 @@ using namespace std;
 OutputDelegatePtr OutputFactory::
 getDelegate(const VoxelizedPartition & vp, const OutputDescPtr & desc)
 {
-    string outputClass(desc->getClass());
+    Vector3i threeFalses(0,0,0);
     
-    LOG << "Making delegate for " << outputClass << endl;
-    
-    if (outputClass == "OneFieldOutput" || outputClass == "ThreeFieldOutput"
-        || outputClass == "ColocatedOutput")
+    if (desc->getWhichJ() == threeFalses && desc->getWhichP() == threeFalses &&
+        desc->getWhichP() == threeFalses && desc->getWhichM() == threeFalses)
         return OutputDelegatePtr(new SimpleEHOutputDelegate(desc));
     
     LOG << "Using default (null) output... and crashing.\n";
@@ -51,12 +51,19 @@ Output::
 void Output::
 outputEPhase(int timestep)
 {
-    LOG << "Output E timestep " << timestep << "\n";
+    //LOG << "Output E timestep " << timestep << "\n";
 }
 
 void Output::
 outputHPhase(int timestep)
 {
-    LOG << "Output H timestep " << timestep << "\n";
+    //LOG << "Output H timestep " << timestep << "\n";
 }
+
+void Output::
+allocateAuxBuffers()
+{
+    LOG << "Not allocating output buffer.  (What buffer?)\n";
+}
+
 

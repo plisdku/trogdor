@@ -11,6 +11,7 @@
 #define _FORMULASOURCE_
 
 #include "SourceBoss.h"
+#include "SimulationDescription.h"
 #include "Pointer.h"
 #include "geometry.h"
 #include <vector>
@@ -33,10 +34,8 @@ public:
     
 private:
     std::string mFormula;
-    Vector3f mPolarization;
     
-    Vector3b mWhichE;
-    Vector3b mWhichH;
+    SourceFields mFields;
     
     bool mIsSpaceVarying;
     bool mIsSoft;

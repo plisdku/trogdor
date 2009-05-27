@@ -28,7 +28,7 @@ class VoxelizedPartition;
 class MaterialDelegate;
 typedef Pointer<MaterialDelegate> MaterialDelegatePtr;
 
-class NewMaterialFactory
+class MaterialFactory
 {
 public:
 	static MaterialDelegatePtr getDelegate(const VoxelGrid & vg,
@@ -44,6 +44,8 @@ public:
     
     virtual void calcEPhase(int direction) = 0;
     virtual void calcHPhase(int direction) = 0;
+    
+    virtual void allocateAuxBuffers();
 private:
     
 };
@@ -192,19 +194,30 @@ struct SimplePMLRunline
     unsigned long length;
 };
 
-/*
-template<int NUMAUX>
 struct SimpleAuxRunline
 {
+    SimpleAuxRunline() {}
     SimpleAuxRunline(const SBMRunline & setupRunline);
     
     float* fi;
     float* gj[2];
     float* gk[2];
     unsigned long length;
-    unsigned long auxIndex[NUMAUX];
+    unsigned long auxIndex;
 };
-*/
+
+struct SimpleAuxPMLRunline
+{
+    SimpleAuxPMLRunline() {}
+    SimpleAuxPMLRunline(const SBPMRunline & setupRunline);
+    
+    float* fi;
+    float* gj[2];
+    float* gk[2];
+    unsigned long length;
+    unsigned long auxIndex;
+    unsigned long pmlIndex[3];
+};
 
 
 

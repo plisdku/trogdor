@@ -25,18 +25,22 @@ public:
 private:
 	void load(SimulationDescription & sim) const throw(Exception);
 	
-	void loadTrogdor4(SimulationDescription & sim) const throw(Exception);
-	
 	std::vector<GridDescPtr> loadGrids(const TiXmlElement* parent) const;
 	std::set<std::string> collectGridNames(const TiXmlElement* parent) const;
 	std::set<std::string> collectMaterialNames(const TiXmlElement* parent)
 		const;
-	
 	std::vector<MaterialDescPtr> loadMaterials(const TiXmlElement* parent)
 		const;
-	std::vector<InputEHDescPtr> loadInputEHs(const TiXmlElement* parent) const;
 	std::vector<OutputDescPtr> loadOutputs(const TiXmlElement* parent) const;
-	std::vector<SourceDescPtr> loadSources(const TiXmlElement* parent) const;
+    OutputDescPtr loadAFieldOutput(const TiXmlElement* elem) const;
+    
+    std::vector<SourceDescPtr> loadSources(const TiXmlElement* parent) const;
+    SourceDescPtr loadAFieldSource(const TiXmlElement* elem) const;
+    
+    std::vector<CurrentSourceDescPtr> loadCurrentSources(
+        const TiXmlElement* parent) const;
+    CurrentSourceDescPtr loadACurrentSource(const TiXmlElement* elem) const;
+    
 	std::vector<HuygensSurfaceDescPtr> loadTFSFSources(
 		const TiXmlElement* parent, const std::set<std::string> & allGridNames)
 		const;
@@ -45,7 +49,6 @@ private:
 	std::vector<HuygensSurfaceDescPtr> loadLinks(
 		const TiXmlElement* parent, const std::set<std::string> & allGridNames)
 		const;
-	//std::vector<MaterialDescPtr> loadMaterials(const TiXmlElement* parent) const;
 	AssemblyDescPtr loadAssembly(const TiXmlElement* parent,
 		const std::set<std::string> & allGridNames,
 		const std::set<std::string> & allMaterialNames) const;
@@ -64,7 +67,10 @@ private:
 		const std::set<std::string> & allGridNames) const;
     InstructionPtr loadAnExtrude(const TiXmlElement* elem) const;
 	
-	
+	Duration loadADuration(const TiXmlElement* elem) const;
+    Region loadARegion(const TiXmlElement* elem) const;
+    Vector3i loadAnOmitSide(const TiXmlElement* elem) const;
+    
 	Pointer<TiXmlDocument> mDocument;
 };
 

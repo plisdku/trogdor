@@ -22,7 +22,8 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     m_dxyz(dxyz),
     m_dt(dt),
     m_numT(numT),
-    mEHBuffers(vp.getEHBuffers())
+    mEHBuffers(vp.getEHBuffers()),
+    mNBBuffers(vp.getNBBuffers())
 {
     LOG << "New calc partition.\n";
     unsigned int nn;
@@ -47,14 +48,13 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     map<Paint*, MaterialDelegatePtr>::const_iterator itr;
     for (itr = delegs.begin(); itr != delegs.end(); itr++)
     {
-        LOG << "Dealing with paint " << *itr->first << endl;
+        //LOG << "Dealing with paint " << *itr->first << endl;
         mMaterials.push_back(itr->second->makeCalcMaterial(vp, *this));
     }
     
     const std::vector<OutputDelegatePtr> & outs = vp.getOutputDelegates();
     for (nn = 0; nn < outs.size(); nn++)
         mOutputs.push_back(outs[nn]->makeOutput(vp, *this));
-    
 }
 
 CalculationPartition::
@@ -65,10 +65,16 @@ CalculationPartition::
 void CalculationPartition::
 allocateAuxBuffers()
 {
-    for (unsigned int nn = 0; nn < mMaterials.size(); nn++)
+    unsigned int nn;
+    for (nn = 0; nn < mMaterials.size(); nn++)
     {
-        LOG << "Allocating aux buffers for material " << nn << ", in theory.\n";
-        LOGMORE << "Not actually doing it.\n";
+        //LOG << "Aux alloc for material " << nn << "\n";
+        mMaterials[nn]->allocateAuxBuffers();
+    }
+    
+    for (nn = 0; nn < mOutputs.size(); nn++)
+    {
+        mOutputs[nn]->allocateAuxBuffers();
     }
 }
 
@@ -126,6 +132,12 @@ allocate(std::vector<float> & data, EHBufferSet& buffers)
         buffers.buffers[nn].setHeadPointer(&(data[offset]));
         offset += buffers.buffers[nn].getLength();
     }
+    /*
+    LOG << "Printing buffers.\n";
+    for (nn = 0; nn < 6; nn++)
+        LOGMORE << buffers.buffers[nn] << " ptr " <<
+        buffers.buffers[nn].getHeadPointer() << "\n";
+    */
 }
 
 

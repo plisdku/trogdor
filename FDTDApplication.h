@@ -16,23 +16,11 @@
 #ifndef _FDTDAPPLICATION_
 #define _FDTDAPPLICATION_
 
-
-/*
-#include "SetupGrid.h"
-#include "StructureGrid.h"
-#include "SimulationGrid.h"
-
-#include "TFSFBufferSet.h"
-*/
 #include "geometry.h"
 #include "tinyxml.h"
 #include "Pointer.h"
 #include <string>
 #include <vector>
-/*
-class Fields;
-typedef Pointer<Fields> FieldsPtr;
-*/
 
 class SimulationDescription;
 typedef Pointer<SimulationDescription> SimulationDescPtr;
@@ -107,73 +95,14 @@ private: // heh, "new private" stuff
         Map<std::string, CalculationPartitionPtr> & calcs,
         const Map<GridDescPtr, VoxelizedPartitionPtr> & voxParts);
     
-    void completeFieldAllocation(Map<std::string, CalculationPartitionPtr>
+    void allocateAuxBuffers(Map<std::string, CalculationPartitionPtr>
         & calcs);
-    
     
     void calcE(Map<std::string, CalculationPartitionPtr> & calcGrids);
     void calcAfterE(Map<std::string, CalculationPartitionPtr> & calcGrids);
     void calcH(Map<std::string, CalculationPartitionPtr> & calcGrids);
     void calcAfterH(Map<std::string, CalculationPartitionPtr> & calcGrids);
     
-private:
-/*
-    void
-    readParameterFile(std::string paramFileName,
-        Map<std::string, SetupGridPtr> & setupGrids,
-        Map<std::string, std::string> & simulationParams,
-		bool output3D, bool dumpGrid, bool output2D);
-	
-	void
-	setupTFSFBuffers(Map<std::string, SetupGridPtr> & setupGrids);
-	
-	void
-	setupTFSFBuffersRecursor(SetupGridPtr setupGrid,
-		std::vector<SetupGridPtr> & auxGrids);
-	
-	SetupGridPtr
-	makeAndLinkAuxiliaryGrid(SetupGridPtr parentGrid, std::string auxName,
-		SetupTFSFSourcePtr source, Vector3b combinedSymmetries,
-		Vector3b periodicDimensions);
-	
-	void
-	setupTFSFBufferBase1D(SetupGridPtr setupGrid,
-		std::vector<SetupGridPtr> & auxGrids,
-		SetupTFSFSourcePtr source);
-	
-	void
-	setupAFPRequests(Map<std::string, SetupGridPtr> & setupGrids);
-        
-    void
-    initializeRuntime(Map<std::string, SetupGridPtr> & setupGrids,
-        Map<std::string, SimulationGridPtr> & simulationGrids,
-		int numThreads, float dx, float dy, float dz, float dt);
-    
-    void
-    runSimulation(Map<std::string, SimulationGridPtr> & simulationGrids);
-    
-    //  initializeRuntime helpers
-    
-	void
-	makeRuntimeBuffers(SetupGridPtr grid, Map<std::string, FieldsPtr> & fields,
-		Map<SetupTFSFBufferSetPtr, TFSFBufferSetPtr> & buffers);
-	
-    std::vector<SourcePtr>
-    makeRuntimeSources(SetupGridPtr grid, FieldsPtr inFields);
-    
-    std::vector<OutputPtr>
-    makeRuntimeOutputs(SetupGridPtr grid, FieldsPtr inFields);
-    
-    std::vector<InputPtr>
-    makeRuntimeInputs(SetupGridPtr grid, FieldsPtr inFields);
-    
-	std::vector<MaterialPtr>
-    makeRuntimeMaterialModels(SetupGridPtr grid, FieldsPtr theFields,
-        Map<std::string, FieldsPtr> & allFields,
-        const std::vector<RunlineType> & inMaterialRunlines,
-		Map<SetupTFSFBufferSetPtr, TFSFBufferSetPtr> & inBuffers,
-		float dx, float dy, float dz, float dt);
-*/
 private:
     float m_dx;
     float m_dy;
@@ -197,7 +126,6 @@ private:
     FDTDApplication();
     virtual ~FDTDApplication();
     static FDTDApplication sInstance;
-    
 };
 
 

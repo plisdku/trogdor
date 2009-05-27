@@ -20,6 +20,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <set>
+#include <climits>
 
 using namespace std;
 using namespace YeeUtilities;
@@ -43,9 +44,9 @@ XMLParameterFile(const string & filename) throw(Exception)
     {
 		ostringstream err;
         err << "Could not load parameter file " << filename << endl;
-        err << "Reason: " << mDocument->ErrorDesc() << endl;
-        err << "(possible location: row " << mDocument->ErrorRow() << " column "
-             << mDocument->ErrorCol() << " .)" << endl;
+        err << "Reason: " << thisDoc->ErrorDesc() << endl;
+        err << "(possible location: row " << thisDoc->ErrorRow() << " column "
+             << thisDoc->ErrorCol() << " .)" << endl;
         throw(Exception(err.str()));
     }
     if (!sTryGetAttribute(thisDoc->RootElement(), "version", versionString))
@@ -54,7 +55,6 @@ XMLParameterFile(const string & filename) throw(Exception)
             Pointer<TiXmlDocument> v5doc = ConvertOldXML::convert4to5(thisDoc);
             mDocument = v5doc;
             mDocument->SaveFile("converted.xml");
-            exit(0);
         } catch (Exception & e) {
             ostringstream myErr;
             myErr << "Could not convert version 4 to version 5 file.\n";
@@ -62,6 +62,8 @@ XMLParameterFile(const string & filename) throw(Exception)
             throw(Exception(myErr.str()));
         }
     }
+    else
+        mDocument = thisDoc;
 }
 
 // It is the job of XMLParameterFile to validate the XML and to verify that 
@@ -73,29 +75,19 @@ void XMLParameterFile::
 load(SimulationDescription & sim) const throw(Exception)
 {
 	const TiXmlElement* elem = mDocument->RootElement();
+	string versionString;
+    ostringstream err;
+    
 	if (!elem)
 		throw Exception("XML file has no root element.");
-	
-	string versionString;
-	
-	Map<string, string> attributes = sGetAttributes(elem);
-	if (!sTryGetAttribute(elem, "version", versionString))
-	{
-		loadTrogdor4(sim);
-	}
-	else
-	{
-		ostringstream err;
-		err << "Cannot read version " << versionString << " file.";
-		throw Exception(sErr(err.str(), elem));
-	}
-}
-
-void XMLParameterFile::
-loadTrogdor4(SimulationDescription & sim) const throw(Exception)
-{
-    const TiXmlElement* elem = mDocument->RootElement();
-	assert(elem);  // this condition was checked in load().
+    
+    if (!sTryGetAttribute(elem, "version", versionString))
+        throw Exception("Simulation is unversioned!");
+    if (versionString != "5.0")
+    {
+        err << "Cannot read version " << versionString << " file.";
+        throw(Exception(sErr(err.str(), elem)));
+    }
 	
 	float dx, dy, dz, dt;
 	int numTimesteps;
@@ -241,22 +233,16 @@ collectMaterialNames(const TiXmlElement* parent) const
 	assert(parent);
 	set<string> names;
 	
-	const TiXmlElement* gridElem = parent->FirstChildElement("Grid");
-	
-	while (gridElem)
-	{
-		const TiXmlElement* matElem = gridElem->FirstChildElement("Material");
-		
-		while (matElem)
-		{
-			string matName;
-			sGetMandatoryAttribute(matElem, "name", matName);
-			names.insert(matName);
-			matElem = matElem->NextSiblingElement("Material");
-		}
-		
-		gridElem = gridElem->NextSiblingElement("Grid");
-	}
+    const TiXmlElement* matElem = parent->FirstChildElement("Material");
+    
+    while (matElem)
+    {
+        string matName;
+        sGetMandatoryAttribute(matElem, "name", matName);
+        names.insert(matName);
+        matElem = matElem->NextSiblingElement("Material");
+    }
+    
 	return names;
 }
 
@@ -265,32 +251,27 @@ loadMaterials(const TiXmlElement* parent) const
 {
 	assert(parent);
 	vector<MaterialDescPtr> materials;
-	
-	const TiXmlElement* gridElem = parent->FirstChildElement("Grid");
-	while (gridElem)
-	{
-		const TiXmlElement* elem = gridElem->FirstChildElement("Material");
-		while (elem)
-		{
-			string name;
-			string inClass;
-			Map<string,string> params;
-			const TiXmlElement* paramXML = elem->FirstChildElement("Params");
-			// not every material needs params, e.g. PEC/PMC
-			if (paramXML != 0L)
-				params = sGetAttributes(paramXML);
-			
-			sGetMandatoryAttribute(elem, "name", name);
-			sGetMandatoryAttribute(elem, "class", inClass);
-			
-			MaterialDescPtr material(new MaterialDescription(name, inClass,
-				params));
-			materials.push_back(material);
-			
-			elem = elem->NextSiblingElement("Material");
-		}
-		gridElem = gridElem->NextSiblingElement("Grid");
-	}
+    
+    const TiXmlElement* elem = parent->FirstChildElement("Material");
+    while (elem)
+    {
+        string name;
+        string inModel;
+        Map<string,string> params;
+        const TiXmlElement* paramXML = elem->FirstChildElement("Params");
+        // not every material needs params, e.g. PEC/PMC
+        if (paramXML != 0L)
+            params = sGetAttributes(paramXML);
+        
+        sGetMandatoryAttribute(elem, "name", name);
+        sGetMandatoryAttribute(elem, "model", inModel);
+        
+        MaterialDescPtr material(new MaterialDescription(name, inModel,
+            params));
+        materials.push_back(material);
+        
+        elem = elem->NextSiblingElement("Material");
+    }
 	
 	return materials;	
 }
@@ -302,107 +283,275 @@ loadOutputs(const TiXmlElement* parent) const
 	assert(parent);
 	vector<OutputDescPtr> outputs;
 	
-	const TiXmlElement* elem = parent->FirstChildElement("Output");
+	const TiXmlElement* elem = parent->FirstChildElement("FieldOutput");
     while (elem)
 	{
-        Rect3i region;
-        Vector3i stride;
-		string filePrefix;
-		string outputClass;
-        string field;
-        Vector3b whichE(0,0,0), whichH(0,0,0);
-		int period;
-		Map<string,string> params;
-		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
-		if (paramXML == 0L)
-			throw(Exception(sErr("Output needs Params element", elem)));
-		params = sGetAttributes(paramXML);
-		
-		sGetMandatoryAttribute(elem, "filePrefix", filePrefix);
-		sGetMandatoryAttribute(elem, "class", outputClass);
-		sGetOptionalAttribute(elem, "period", period, 1);
-        
-        LOG << "Extracting some Trogdor 4 params for Trogdor 5.\n";
-        
-        // compatibility stuff
-        sGetMandatoryAttribute(paramXML, "region", region);
-        sGetOptionalAttribute(paramXML, "stride", stride, Vector3i(1,1,1));
-		sGetMandatoryAttribute(paramXML, "field", field);
-        
-        if (field == "ex") whichE[0] = 1;
-        else if (field == "ey") whichE[1] = 1;
-        else if (field == "ez") whichE[2] = 1;
-        else if (field == "hx") whichH[0] = 1;
-        else if (field == "hy") whichH[1] = 1;
-        else if (field == "hz") whichH[2] = 1;
-        else if (field == "electric") whichE = Vector3b(1,1,1);
-        else if (field == "magnetic") whichH = Vector3b(1,1,1);
-        else
-            throw(Exception(sErr("field parameter is invalid", elem)));
-        
-		try {
-			OutputDescPtr output(new OutputDescription(filePrefix, outputClass,
-				period, region, whichE, whichH, stride, params));
-			outputs.push_back(output);
-		} catch (Exception & e) {
-			throw(Exception(sErr(e.what(), elem)));
-		}
-		
-		elem = elem->NextSiblingElement("Output");
-	}
-
+        outputs.push_back(loadAFieldOutput(elem));
+        elem = elem->NextSiblingElement("FieldOutput");
+    }
 	return outputs;
 }
+
+OutputDescPtr XMLParameterFile::
+loadAFieldOutput(const TiXmlElement* elem) const
+{
+    string fields;
+    string file;
+    Vector3f interpolationPoint;
+    bool isInterpolated;
+    Map<string,string> attribs = sGetAttributes(elem);
+    Map<string,string> childAttribs;
+    sGetMandatoryAttribute(elem, "fields", fields);
+    sGetMandatoryAttribute(elem, "file", file);
+    isInterpolated = sTryGetAttribute(elem, "interpolate", interpolationPoint);
+    
+    vector<Region> regions;
+    vector<Duration> durations;
+    
+    const TiXmlElement* child = elem->FirstChildElement("Duration");
+    while (child != 0L)
+    {
+        durations.push_back(loadADuration(child));
+        child = child->NextSiblingElement("Duration");
+    }
+    child = elem->FirstChildElement("Region");
+    while (child != 0L)
+    {
+        regions.push_back(loadARegion(child));
+        child = child->NextSiblingElement("Region");
+    }
+    
+    if (regions.size() == 0)
+        regions.push_back(Region());
+    if (durations.size() == 0)
+        durations.push_back(Duration());
+    
+    if (isInterpolated)
+    {
+        try {
+            OutputDescPtr f(new OutputDescription(
+                fields, file, interpolationPoint, regions, durations));
+            return f;
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    else
+    {
+        try {
+            OutputDescPtr f(new OutputDescription(
+                fields, file, regions, durations));
+            return f;
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    
+    LOG << "Shouldn't have gotten here.\n";
+    return OutputDescPtr(0L);
+}
+
 
 vector<SourceDescPtr> XMLParameterFile::
 loadSources(const TiXmlElement* parent) const
 {
-	assert(parent);
-	vector<SourceDescPtr> sources;
-	
-	const TiXmlElement* elem = parent->FirstChildElement("Source");
-    while (elem)
-	{
-		string formula;
-		string filename;
-		string field;
-		Vector3f polarization;
-		Rect3i region;
-        Vector3b whichE(0,0,0), whichH(0,0,0);
-		Map<string,string> params;
-		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
-		//if (paramXML == 0L)
-		//	throw(Exception(sErr("Source needs Params element", elem)));
-		if (paramXML != 0L)
-			params = sGetAttributes(paramXML);
-		
-		if (!sTryGetAttribute(elem, "formula", formula) &&
-			!sTryGetAttribute(elem, "file", filename))
-			throw(Exception(sErr("Source needs formula or file attribute",
-				elem)));
-		
-		sGetMandatoryAttribute(elem, "field", field);
-		sGetMandatoryAttribute(elem, "polarization", polarization);
-		sGetMandatoryAttribute(elem, "region", region);
-        
-        if (field == "ex") whichE[0] = 1;
-        else if (field == "ey") whichE[1] = 1;
-        else if (field == "ez") whichE[2] = 1;
-        else if (field == "hx") whichH[0] = 1;
-        else if (field == "hy") whichH[1] = 1;
-        else if (field == "hz") whichH[2] = 1;
-		
-		try {
-			SourceDescPtr source(new SourceDescription(formula, filename,
-				polarization, region, whichE, whichH, params));
-			sources.push_back(source);
-		} catch (Exception & e) {
-			throw(Exception(sErr(e.what(), elem)));
-		}
-		
-		elem = elem->NextSiblingElement("Source");
-	}
-	return sources;
+    assert(parent);
+    vector<SourceDescPtr> sources;
+    
+    const TiXmlElement* child = parent->FirstChildElement("HardSource");
+    while (child != 0L)
+    {
+        sources.push_back(loadAFieldSource(child));
+        child = child->NextSiblingElement("HardSource");
+    }
+    
+    child = parent->FirstChildElement("AdditiveSource");
+    while (child != 0L)
+    {
+        sources.push_back(loadAFieldSource(child));
+        child = child->NextSiblingElement("AdditiveSource");
+    }
+    return sources;
+}
+
+SourceDescPtr XMLParameterFile::
+loadAFieldSource(const TiXmlElement* elem) const
+{
+    assert(elem);
+    string fields;
+    string formula;
+    string timeFile;
+    string spaceFile;
+    string spaceTimeFile;
+    Vector3f polarization;
+    SourceFields srcFields;
+    vector<Duration> durations;
+    vector<Region> regions;
+    bool isSoft = (elem->Value() == "AdditiveSource");
+    
+    sGetMandatoryAttribute(elem, "fields", fields);
+    if (sTryGetAttribute(elem, "polarization", polarization))
+    {
+        try {
+            srcFields = SourceFields(fields, polarization);
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    else
+    {
+        try {
+            srcFields = SourceFields(fields);
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    
+    const TiXmlElement* child = elem->FirstChildElement("Duration");
+    while (child != 0L)
+    {
+        durations.push_back(loadADuration(child));
+        child = child->NextSiblingElement("Duration");
+    }
+    child = elem->FirstChildElement("Region");
+    while (child != 0L)
+    {
+        regions.push_back(loadARegion(child));
+        child = child->NextSiblingElement("Region");
+    }
+    
+    SourceDescPtr src;
+    if (sTryGetAttribute(elem, "timeFile", timeFile))
+    {
+        try {
+            src = SourceDescPtr(SourceDescription::
+                newTimeSource(timeFile, srcFields, isSoft, regions, durations));
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    else if (sTryGetAttribute(elem, "spaceTimeFile", spaceTimeFile))
+    {
+        try {
+            src = SourceDescPtr(SourceDescription::
+                newSpaceTimeSource(spaceTimeFile, srcFields, isSoft, regions,
+                    durations));
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    else if (sTryGetAttribute(elem, "formula", formula))
+    {
+        try {
+            src = SourceDescPtr(SourceDescription::
+                newFormulaSource(formula, srcFields, isSoft, regions, durations));
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    else
+        throw(Exception(sErr("HardSource needs timeFile, spaceTimeFile or "
+            "formula attribute.", elem)));
+    
+    return src;
+}
+
+vector<CurrentSourceDescPtr> XMLParameterFile::
+loadCurrentSources(const TiXmlElement* parent) const
+{    assert(parent);
+
+    vector<CurrentSourceDescPtr> sources;
+    
+    const TiXmlElement* child = parent->FirstChildElement("CurrentSource");
+    while (child != 0L)
+    {
+        sources.push_back(loadACurrentSource(child));
+        child = child->NextSiblingElement("CurrentSource");
+    }
+    
+    return sources;
+}
+
+
+CurrentSourceDescPtr XMLParameterFile::
+loadACurrentSource(const TiXmlElement* elem) const
+{
+    assert(elem);
+    string fields;
+    string formula;
+    string timeFile;
+    string spaceFile;
+    string spaceTimeFile;
+    Vector3f polarization;
+    SourceCurrents srcCurrents;
+    vector<Duration> durations;
+    vector<Region> regions;
+    
+    sGetMandatoryAttribute(elem, "fields", fields);
+    if (sTryGetAttribute(elem, "polarization", polarization))
+    {
+        try {
+            srcCurrents = SourceCurrents(fields, polarization);
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    else
+    {
+        try {
+            srcCurrents = SourceCurrents(fields);
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    
+    const TiXmlElement* child = elem->FirstChildElement("Duration");
+    while (child != 0L)
+    {
+        durations.push_back(loadADuration(child));
+        child = child->NextSiblingElement("Duration");
+    }
+    child = elem->FirstChildElement("Region");
+    while (child != 0L)
+    {
+        regions.push_back(loadARegion(child));
+        child = child->NextSiblingElement("Region");
+    }
+    
+    CurrentSourceDescPtr src;
+    if (sTryGetAttribute(elem, "timeFile", timeFile))
+    {
+        try {
+            src = CurrentSourceDescPtr(CurrentSourceDescription::
+                newTimeSource(timeFile, srcCurrents, regions, durations));
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    else if (sTryGetAttribute(elem, "spaceTimeFile", spaceTimeFile))
+    {
+        try {
+            src = CurrentSourceDescPtr(CurrentSourceDescription::
+                newSpaceTimeSource(spaceTimeFile, srcCurrents, regions,
+                    durations));
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    else if (sTryGetAttribute(elem, "formula", formula))
+    {
+        try {
+            src = CurrentSourceDescPtr(CurrentSourceDescription::
+                newFormulaSource(formula, srcCurrents, regions, durations));
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    else
+        throw(Exception(sErr("CurrentSource needs timeFile, spaceTimeFile or "
+            "formula attribute.", elem)));
+    
+    return src;
 }
 
 vector<HuygensSurfaceDescPtr> XMLParameterFile::
@@ -415,51 +564,61 @@ loadTFSFSources(const TiXmlElement* parent, const set<string> & allGridNames)
 	const TiXmlElement* elem = parent->FirstChildElement("TFSFSource");
     while (elem)
 	{
-		string tfsfType;
-		Vector3i direction;
-		Vector3f polarization;
-		string formula;
-		string filename;
 		string field;
-		Rect3i region;
-		Map<string,string> params;
-		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
-		if (paramXML == 0L)
-			throw(Exception(sErr("TFSFSource needs Params element", elem)));
-		params = sGetAttributes(paramXML);
-		
-		if (sTryGetAttribute(elem, "TFRect", region))
-		{
-			region *= 2;
-			region.p2 += Vector3i(1,1,1);
-		}
-		else if (!sTryGetAttribute(elem, "fineTFRect", region))
-			throw(Exception(sErr("TFSFSource needs TFRect or fineTFRect "
-				"attribute", elem)));
-		sGetMandatoryAttribute(elem, "direction", direction);
-		sGetMandatoryAttribute(elem, "polarization", polarization);
+		Vector3f polarization;
+        Rect3i temp, halfCells;
+        bool usesPolarization;
+		Vector3i direction;
+		string tfsfType;
+		string formula;
+		string file;
+        SourceFields srcFields;
+        Duration duration;
+        
+        const TiXmlElement *durationXML;
+        durationXML = elem->FirstChildElement("Duration");
+        if (durationXML)
+            duration = loadADuration(durationXML);
+        
+        if (sTryGetAttribute(elem, "yeeCells", temp))
+            halfCells = rectYeeToHalf(temp);
+        else if (!sTryGetAttribute(elem, "halfCells", halfCells))
+            throw(Exception(sErr("TFSFSource needs yeeCells or halfCells "
+                "attribute", elem)));
+        
+        sGetMandatoryAttribute(elem, "direction", direction);
 		sGetOptionalAttribute(elem, "type", tfsfType, string("TF"));
-		sGetOptionalAttribute(elem, "formula", formula, string(""));
-		sGetOptionalAttribute(elem, "filename", filename, string(""));
-		sGetOptionalAttribute(elem, "field", field, string("electric"));
-			
+        
+        if (!sTryGetAttribute(elem, "formula", formula) &&
+            !sTryGetAttribute(elem, "file", file))
+            throw(Exception(sErr("TFSFSource needs either a formula or file"
+                " attribute.", elem)));
+        
+		sGetMandatoryAttribute(elem, "field", field);
+        if (sTryGetAttribute(elem, "polarization", polarization))
+            srcFields = SourceFields(field, polarization);
+        else
+            srcFields = SourceFields(field);
+        
+        set<Vector3i> omittedSides;
+        const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
+        while (omitElem)
+        {
+            omittedSides.insert(loadAnOmitSide(omitElem));
+            omitElem = omitElem->NextSiblingElement("OmitSide");
+        }
+        
 		try {
-			set<Vector3i> omittedSides;
-			const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
-			while (omitElem)
-			{
-				Vector3i omitSide;
-				omitElem->GetText() >> omitSide;
-				cerr << "Warning: no error checking on omit side input.\n";
-				omittedSides.insert(omitSide);
-				omitElem = omitElem->NextSiblingElement("OmitSide");
-			}
-			HuygensSurfaceDescPtr source(
-				HuygensSurfaceDescription::newTFSFSource(region,
-				direction, formula, filename, polarization, field,
-				tfsfType, params, omittedSides));
-			
-			tfsfSources.push_back(source);
+            if (file != "")
+                tfsfSources.push_back(HuygensSurfaceDescPtr(
+                    HuygensSurfaceDescription::newTFSFTimeSource(srcFields,
+                        file, direction, halfCells, omittedSides,
+                        tfsfType == "TF")));
+            else
+                tfsfSources.push_back(HuygensSurfaceDescPtr(
+                    HuygensSurfaceDescription::newTFSFFormulaSource(srcFields,
+                        formula, direction, halfCells, omittedSides,
+                        tfsfType == "TF")));
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
 		}
@@ -475,55 +634,48 @@ loadCustomSources(const TiXmlElement* parent) const
 	assert(parent);
 	vector<HuygensSurfaceDescPtr> customSources;
 	
-	const TiXmlElement* elem = parent->FirstChildElement("CustomSource");
+	const TiXmlElement* elem = parent->FirstChildElement("CustomTFSFSource");
     while (elem)
 	{
-		string tfsfType;
-		Vector3i symmetries;
-		Rect3i region;
-		string name;
-		Map<string,string> params;
-		/*
-		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
-		if (paramXML == 0L)
-			throw(Exception(sErr("TFSFSource needs Params element", elem)));
-		params = sGetAttributes(paramXML);
-		*/
+        string file;
+        Vector3i symmetries(0,0,0);
+        string tfsfType;
+        Rect3i yeeCells;
+        Rect3i halfCells;
+        set<Vector3i> omittedSides;
+        const TiXmlElement* durationXML;
+        Duration duration;
 		
-		sGetMandatoryAttribute(elem, "name", name);
-		
-		if (sTryGetAttribute(elem, "TFRect", region))
-		{
-			region *= 2;
-			region.p2 += Vector3i(1,1,1);
-		}
-		else if (!sTryGetAttribute(elem, "fineTFRect", region))
-			throw(Exception(sErr("CustomSource needs TFRect or fineTFRect "
-				"attribute", elem)));
-		sGetOptionalAttribute(elem, "symmetries", symmetries, Vector3i(0,0,0));
-		sGetOptionalAttribute(elem, "type", tfsfType, string("TF"));
-			
-		try {
-			set<Vector3i> omittedSides;
-			const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
-			while (omitElem)
-			{
-				Vector3i omitSide;
-				omitElem->GetText() >> omitSide;
-				cerr << "Warning: no error checking on omit side input.\n";
-				omittedSides.insert(omitSide);
-				omitElem = omitElem->NextSiblingElement("OmitSide");
-			}
-			HuygensSurfaceDescPtr source(
-				HuygensSurfaceDescription::newCustomSource(region, name,
-				symmetries, tfsfType, params, omittedSides));
-			
-			customSources.push_back(source);
+		sGetMandatoryAttribute(elem, "file", file);
+        sGetMandatoryAttribute(elem, "symmetries", symmetries);
+        sGetOptionalAttribute(elem, "tfsfType", tfsfType, string("TF"));
+        if (sTryGetAttribute(elem, "yeeCells", yeeCells))
+            halfCells = rectYeeToHalf(yeeCells);
+        else if (!sTryGetAttribute(elem, "halfCells", halfCells))
+            throw(Exception(sErr("CustomTFSFSSource needs yeeCells or "
+                "halfCells attribute.", elem)));
+        
+        durationXML = elem->FirstChildElement("Duration");
+        if (durationXML != 0L)
+            duration = loadADuration(durationXML);
+        
+        const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
+        while (omitElem)
+        {
+            omittedSides.insert(loadAnOmitSide(omitElem));
+            omitElem = omitElem->NextSiblingElement("OmitSide");
+        }
+        
+        try {
+            HuygensSurfaceDescPtr source(HuygensSurfaceDescription::
+                newCustomTFSFSource(file, symmetries, halfCells, duration,
+                omittedSides, tfsfType=="TF"));
+            customSources.push_back(source);
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
 		}
 		
-		elem = elem->NextSiblingElement("TFSFSource");
+		elem = elem->NextSiblingElement("CustomTFSFSource");
 	}
 	return customSources;
 }
@@ -533,58 +685,40 @@ loadLinks(const TiXmlElement* parent, const set<string> & allGridNames) const
 {
 	assert(parent);
 	vector<HuygensSurfaceDescPtr> links;
-	cerr << "Warning: links are not validated.\n";
 	
 	const TiXmlElement* elem = parent->FirstChildElement("Link");
     while (elem)
 	{
 		string linkTypeStr;
 		string sourceGridName;
-		Rect3i sourceHalfRect;
-		Rect3i destHalfRect;
-		Map<string,string> params;
-		// I don't think Links have parameters.  this is erroneous...?
-		/*
-		const TiXmlElement* paramXML = elem->FirstChildElement("Params");
-		if (paramXML == 0L)
-			throw(Exception(sErr("Link needs Params element", elem)));
-		params = sGetAttributes(paramXML);
-		*/
-		sGetMandatoryAttribute(elem, "type", linkTypeStr);
+		Rect3i temp;
+		Rect3i fromHalfCells;
+        Rect3i toHalfCells;
+        set<Vector3i> omittedSides;
+        
+		sGetOptionalAttribute(elem, "type", linkTypeStr, string("TF"));
 		sGetMandatoryAttribute(elem, "sourceGrid", sourceGridName);
+        if (sTryGetAttribute(elem, "fromYeeCells", temp))
+            fromHalfCells = rectYeeToHalf(temp);
+        else if (!sTryGetAttribute(elem, "fromHalfCells", fromHalfCells))
+            throw(Exception(sErr("Link needs fromYeeCells or fromHalfCells "
+                "attribute.", elem)));
+        if (sTryGetAttribute(elem, "toYeeCells", temp))
+            toHalfCells = rectYeeToHalf(temp);
+        else if (!sTryGetAttribute(elem, "toHalfCells", toHalfCells))
+            throw(Exception(sErr("Link needs toYeeCells or toHalfCells "
+                "attribute.", elem)));
 		
-		if (sTryGetAttribute(elem, "sourceRect", sourceHalfRect))
-		{
-			sourceHalfRect.p1 *= 2;
-			sourceHalfRect.p2 = 2*sourceHalfRect.p2 + Vector3i(1,1,1);
-		}
-		else if (!sTryGetAttribute(elem, "fineSourceRect", sourceHalfRect))
-			throw(Exception(sErr("Link needs sourceRect or fineSourceRect "
-				"attribute", elem)));
-		if (sTryGetAttribute(elem, "destRect", destHalfRect))
-		{
-			destHalfRect.p1 *= 2;
-			destHalfRect.p2 = 2*destHalfRect.p2 + Vector3i(1,1,1);
-		}
-		else if (!sTryGetAttribute(elem, "fineDestRect", destHalfRect))
-			throw(Exception(sErr("Link needs destRect or fineDestRect "
-				"attribute", elem)));
-		
-		try {
-			set<Vector3i> omittedSides;
-			const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
-			while (omitElem)
-			{
-				Vector3i omitSide;
-				omitElem->GetText() >> omitSide;
-				//link->omitSide(omitSide);
-				omittedSides.insert(omitSide);
-				omitElem = omitElem->NextSiblingElement("OmitSide");
-			}
-			
-			HuygensSurfaceDescPtr link(
-				HuygensSurfaceDescription::newLink(linkTypeStr, sourceGridName,
-				sourceHalfRect, destHalfRect, omittedSides));
+        const TiXmlElement* omitElem = elem->FirstChildElement("OmitSide");
+        while (omitElem)
+        {
+            omittedSides.insert(loadAnOmitSide(omitElem));
+            omitElem = omitElem->NextSiblingElement("OmitSide");
+        }
+		try {	
+			HuygensSurfaceDescPtr link(HuygensSurfaceDescription::
+                newLink(sourceGridName, fromHalfCells, toHalfCells,
+                    omittedSides, linkTypeStr == "TF"));
 			links.push_back(link);
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
@@ -652,7 +786,7 @@ loadABlock(const TiXmlElement* elem, const set<string> & allMaterialNames) const
 		throw(Exception(sErr("Unknown material for Block", elem)));
 	
 	// Does the Block have a Yee region, called "fillRect"?
-	if (sTryGetAttribute(elem, "fillRect", rect))
+	if (sTryGetAttribute(elem, "yeeCells", rect))
 	{
 		sGetOptionalAttribute(elem, "fillStyle", fillStyleStr,
 			string("PECStyle"));
@@ -671,10 +805,10 @@ loadABlock(const TiXmlElement* elem, const set<string> & allMaterialNames) const
 		}
 		// Yee rect
 	}
-	else if (sTryGetAttribute(elem, "fineFillRect", rect))
+	else if (sTryGetAttribute(elem, "halfCells", rect))
 	{
 		if (elem->Attribute("fillStyle"))
-			throw(Exception(sErr("Block with fineFillRect does not need "
+			throw(Exception(sErr("Block with halfCells does not need "
 				"fillStyle attribute", elem)));
 		
 		try {
@@ -687,7 +821,7 @@ loadABlock(const TiXmlElement* elem, const set<string> & allMaterialNames) const
 	}
 	else
 	{
-		throw(Exception(sErr("Block needs fillRect or fineFillRect "
+		throw(Exception(sErr("Block needs yeeCells or halfCells "
 			"attribute", elem)));
 	}
 	
@@ -711,7 +845,7 @@ loadAKeyImage(const TiXmlElement* elem, const set<string> & allMaterialNames)
 	vector<ColorKey> keys;
 	
 	// Step 1 of 2: load all the attributes (and not the tag elements)
-	sGetMandatoryAttribute(elem, "fillRect", yeeRect);
+	sGetMandatoryAttribute(elem, "yeeCells", yeeRect);
 	sGetMandatoryAttribute(elem, "file", imageFileName);
 	sGetMandatoryAttribute(elem, "row", rowDirStr);
 	sGetMandatoryAttribute(elem, "column", colDirStr);
@@ -796,7 +930,7 @@ loadAHeightMap(const TiXmlElement* elem, const set<string> & allMaterialNames)
 	string rowDirStr, colDirStr, upDirStr;
 	Vector3i rowDir, colDir, upDir;
 	
-	sGetMandatoryAttribute(elem, "fillRect", yeeRect);
+	sGetMandatoryAttribute(elem, "yeeCells", yeeRect);
 	sGetMandatoryAttribute(elem, "material", material);
 	if (allMaterialNames.count(material) == 0)
 		throw(Exception(sErr("Unknown material for HeightMap", elem)));
@@ -839,7 +973,7 @@ loadAEllipsoid(const TiXmlElement* elem, const set<string> & allMaterialNames)
 	if (allMaterialNames.count(material) == 0)
 		throw(Exception(sErr("Unknown material for Ellipsoid", elem)));
 	
-	if (sTryGetAttribute(elem, "fillRect", rect))
+	if (sTryGetAttribute(elem, "yeeCells", rect))
 	{
 		sGetOptionalAttribute(elem, "fillStyle", styleStr, string("PECStyle"));
 		
@@ -853,8 +987,8 @@ loadAEllipsoid(const TiXmlElement* elem, const set<string> & allMaterialNames)
 	}
 	else
 	{
-		if (!sTryGetAttribute(elem, "fineFillRect", rect))
-			throw(Exception(sErr("Ellipsoid needs fillRect or fineFillRect "
+		if (!sTryGetAttribute(elem, "halfCells", rect))
+			throw(Exception(sErr("Ellipsoid needs yeeCells or halfCells "
 				"attribute", elem)));
 		
 		ellipsoid = InstructionPtr(
@@ -873,16 +1007,16 @@ loadACopyFrom(const TiXmlElement* elem, const set<string> & allGridNames) const
 	Rect3i sourceRect, destRect;
 	string sourceGridName;
 	
-	sGetMandatoryAttribute(elem, "sourceRect", sourceRect);
-	sGetMandatoryAttribute(elem, "destRect", destRect);
+	sGetMandatoryAttribute(elem, "fromYeeCells", sourceRect);
+	sGetMandatoryAttribute(elem, "toYeeCells", destRect);
 	sGetMandatoryAttribute(elem, "sourceGrid", sourceGridName);
 	if (allGridNames.count(sourceGridName) == 0)
 		throw(Exception(sErr("Unknown source grid name for CopyFrom", elem)));
 	
 	try {
 		copyFrom = InstructionPtr(
-			new CopyFrom(
-				sourceRect, destRect, sourceGridName));
+			new CopyFrom(rectYeeToHalf(sourceRect), rectYeeToHalf(destRect),
+                sourceGridName));
 	} catch (Exception & e) {
 		throw(Exception(sErr(e.what(), elem)));
 	}
@@ -899,8 +1033,8 @@ loadAnExtrude(const TiXmlElement* elem) const
 	InstructionPtr extrude;
 	Rect3i halfCellFrom, halfCellTo;
 	
-	sGetMandatoryAttribute(elem, "extrudeFromHalf", halfCellFrom);
-	sGetMandatoryAttribute(elem, "extrudeToHalf", halfCellTo);
+	sGetMandatoryAttribute(elem, "fromHalfCells", halfCellFrom);
+	sGetMandatoryAttribute(elem, "toHalfCells", halfCellTo);
     
 	try {
 		extrude = InstructionPtr(
@@ -913,6 +1047,56 @@ loadAnExtrude(const TiXmlElement* elem) const
 	return extrude;
 }
 
+
+Duration XMLParameterFile::
+loadADuration(const TiXmlElement* elem) const
+{
+    assert(elem);
+    int firstTimestep;
+    int lastTimestep;
+    int period;
+    
+    if (sTryGetAttribute(elem, "timestep", firstTimestep))
+    {
+        lastTimestep = firstTimestep;
+        period = 1;
+    }
+    else
+    {
+        sGetOptionalAttribute(elem, "firstTimestep", firstTimestep, 0);
+        sGetOptionalAttribute(elem, "lastTimestep", lastTimestep, INT_MAX);
+        sGetOptionalAttribute(elem, "period", period, 1);
+    }
+    
+    return Duration(firstTimestep, lastTimestep, period);
+}
+
+Region XMLParameterFile::
+loadARegion(const TiXmlElement* elem) const
+{
+    assert(elem);
+    Rect3i yeeCells;
+    Vector3i stride;
+    sGetMandatoryAttribute(elem, "yeeCells", yeeCells);
+    sGetOptionalAttribute(elem, "stride", stride, Vector3i(1,1,1));
+    return Region(yeeCells, stride);
+}
+
+Vector3i XMLParameterFile::
+loadAnOmitSide(const TiXmlElement* elem) const
+{
+    Vector3i omitSide;
+    Vector3i omitSideDominantComponent;
+    elem->GetText() >> omitSide;
+    omitSideDominantComponent = dominantComponent(omitSide);
+    
+    if (omitSide != omitSideDominantComponent ||
+        dot(omitSide, omitSide) != 1)
+        throw(Exception(sErr("OmitSide must specify an axis-oriented unit "
+            "vector", elem)));
+    
+    return omitSide;
+}
 
 
 #pragma mark *** Static Method Implementations ***

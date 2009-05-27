@@ -18,36 +18,12 @@
 #include "Map.h"
 #include "Exception.h"
 
+#include <climits>
 #include <vector>
 #include <string>
 #include <set>
 
 class XMLParameterFile;
-/*
-class SimulationDescription;
-class GridDescription;
-class InputEHDescription;
-class OutputDescription;
-class FullAuxDumpDescription;
-class SourceDescription;
-class CurrentSourceDescription;
-class HuygensSurfaceDescription;
-class NeighborBufferDescription;
-class MaterialDescription;
-class AssemblyDescription;
-
-typedef Pointer<SimulationDescription> SimulationDescPtr;
-typedef Pointer<GridDescription> GridDescPtr;
-typedef Pointer<InputEHDescription> InputEHDescPtr;
-typedef Pointer<OutputDescription> OutputDescPtr;
-typedef Pointer<FullAuxDumpDescription> FullAuxDumpDescPtr;
-typedef Pointer<SourceDescription> SourceDescPtr;
-typedef Pointer<CurrentSourceDescription> CurrentSourceDescPtr;
-typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
-typedef Pointer<NeighborBufferDescription> NeighborBufferDescPtr;
-typedef Pointer<MaterialDescription> MaterialDescPtr;
-typedef Pointer<AssemblyDescription> AssemblyDescPtr;
-*/
 
 class SimulationDescription
 {
@@ -99,6 +75,8 @@ public:
 		mOutputs = outputs; }
 	void setSources(const std::vector<SourceDescPtr> & sources) {
 		mSources = sources; }
+	//void setSources2(const std::vector<SourceDesc2Ptr> & sources) {
+	//	mSources2 = sources; }
 	void setHuygensSurfaces(
 		const std::vector<HuygensSurfaceDescPtr> & surfaces);
 	void setAssembly(AssemblyDescPtr assembly) {
@@ -122,6 +100,8 @@ public:
 	
 	const std::vector<OutputDescPtr> & getOutputs() const { return mOutputs; }
 	const std::vector<SourceDescPtr> & getSources() const { return mSources; }
+    //const std::vector<SourceDesc2Ptr> & getSources2() const
+    //    { return mSources2; }
 	const std::vector<HuygensSurfaceDescPtr> & getHuygensSurfaces() const
 		{ return mHuygensSurfaces; }
 	std::vector<HuygensSurfaceDescPtr> & getHuygensSurfaces()
@@ -140,258 +120,335 @@ private:
 	
 	std::vector<OutputDescPtr> mOutputs;
 	std::vector<SourceDescPtr> mSources;
-	std::vector<HuygensSurfaceDescPtr> mHuygensSurfaces;
+    std::vector<HuygensSurfaceDescPtr> mHuygensSurfaces;
 	AssemblyDescPtr mAssembly;
 };
+
+class Duration
+{
+public:
+    Duration() :
+        mFirst(1),
+        mLast(INT_MAX),
+        mPeriod(1) {}
+    Duration(int firstTimestep, int lastTimestep, int period = 1) :
+        mFirst(firstTimestep),
+        mLast(lastTimestep),
+        mPeriod(period) {}
+    static Duration from(int firstTimestep, int period = 1)
+    {
+        return Duration(firstTimestep, INT_MAX, period);
+    }
+    static Duration periodic(int period)
+    {
+        return Duration(0, INT_MAX, period);
+    }
+    
+    int getFirst() const { return mFirst; }
+    int getLast() const { return mLast; }
+    int getPeriod() const { return mPeriod; }
+    
+private:
+    int mFirst;
+    int mLast;
+    int mPeriod;
+};
+//std::ostream & operator<<(std::ostream & str, const Duration & dur);
+
+class Region
+{
+public:
+    Region() :
+        mYeeCells(-INT_MAX, -INT_MAX, -INT_MAX, INT_MAX, INT_MAX, INT_MAX),
+        mStride(1,1,1) {}
+    Region(const Rect3i & yeeCells) :
+        mYeeCells(yeeCells),
+        mStride(1,1,1) {}
+    Region(const Rect3i & yeeCells, Vector3i stride) :
+        mYeeCells(yeeCells),
+        mStride(stride) {}
+    
+    void cycleCoordinates();
+    
+    const Rect3i & getYeeCells() const { return mYeeCells; }
+    const Vector3i & getStride() const { return mStride; }
+private:
+    Rect3i mYeeCells;
+    Vector3i mStride;
+};
+//std::ostream & operator<<(std::ostream & str, const Region & reg);
 
 class OutputDescription
 {
 public:
-	OutputDescription(std::string fileName, std::string inClass,
-		int inPeriod, Rect3i inRegion, Vector3b whichE, Vector3b whichH,
-        Vector3i inStride, const Map<std::string, std::string> & inParameters)
-		throw(Exception);
-	
+    OutputDescription(std::string fields, std::string file)
+        throw(Exception);
+    OutputDescription(std::string fields, std::string file,
+        Region region, Duration duration = Duration()) throw(Exception);
+    OutputDescription(std::string fields, std::string file,
+        const std::vector<Region> & regions,
+        const std::vector<Duration> & durations) throw(Exception);
+    OutputDescription(std::string fields, std::string file,
+        Vector3f interpolationPoint, const std::vector<Region> & regions,
+        const std::vector<Duration> & durations) throw(Exception);
+        
 	void cycleCoordinates();  // rotate x->y, y->z, z->x
-	
-	std::string getFileName() const { return mFileName; }
-	std::string getClass() const { return mClass; }
-	int getPeriod() const { return mPeriod; }
+    int getPermutation() const { return mCoordinatePermutationNumber; }
     
-    Vector3b getWhichE() const { return mWhichE; }
-    Vector3b getWhichH() const { return mWhichH; }
+    const std::string & getFile() const { return mFile; }
+    Vector3i getWhichE() const { return mWhichE; }
+    Vector3i getWhichH() const { return mWhichH; }
+    Vector3i getWhichJ() const { return mWhichJ; }
+    Vector3i getWhichP() const { return mWhichP; }
+    Vector3i getWhichM() const { return mWhichM; }
+    bool isInterpolated() const { return mIsInterpolated; }
+    Vector3f getInterpolationPoint() const { return mInterpolationPoint; }
+    const std::vector<Region> & getRegions() const { return mRegions; }
+    const std::vector<Duration> & getDurations() const { return mDurations; }
     
-    const std::vector<long> getFirstSamples() const { return mFirstSamples; }
-    const std::vector<long> getLastSamples() const { return mLastSamples; }
-    const std::vector<long> getSamplePeriods() const { return mSamplePeriods; }
-    const std::vector<Rect3i> getYeeRects() const { return mYeeRects; }
-    const std::vector<Vector3i> getStrides() const { return mStrides; }
-    
-	const Map<std::string, std::string> & getParams() const { return mParams; }
 private:
-	int mCoordinatePermutationNumber; // 0,1 or 2
-	std::string mFileName;
-	std::string mClass;
-	int mPeriod;
-    
-    Vector3b mWhichE;
-    Vector3b mWhichH;
-    
-    std::vector<long> mFirstSamples;
-    std::vector<long> mLastSamples;
-    std::vector<long> mSamplePeriods;
-    
-    std::vector<Rect3i> mYeeRects;
-    std::vector<Vector3i> mStrides;
-    
-	Map<std::string, std::string> mParams;
+    void determineWhichFields(std::string fields) throw(Exception);
+    int mCoordinatePermutationNumber;
+    std::string mFile;
+    Vector3i mWhichE;
+    Vector3i mWhichH;
+    Vector3i mWhichJ;
+    Vector3i mWhichP;
+    Vector3i mWhichM;
+    bool mIsInterpolated;
+    Vector3f mInterpolationPoint;
+    std::vector<Region> mRegions;
+    std::vector<Duration> mDurations;
 };
 
-class FullAuxDumpDescription
+class MaterialOutputDescription
 {
 public:
-    FullAuxDumpDescription();
+    MaterialOutputDescription();
     
 	void cycleCoordinates();  // rotate x->y, y->z, z->x
 private:
+};
+
+class SourceFields
+{
+public:
+    SourceFields();
+    SourceFields(std::string fields);
+    SourceFields(std::string fields, Vector3f polarization);
+    
+    void cycleCoordinates();
+    
+    bool usesPolarization() const { return mUsesPolarization; }
+    Vector3f getPolarization() const
+        { assert(mUsesPolarization); return mPolarization; }
+    Vector3i getWhichE() const { return mWhichE; }
+    Vector3i getWhichH() const { return mWhichH; }
+private:
+    bool mUsesPolarization;
+    Vector3f mPolarization;
+    Vector3i mWhichE;
+    Vector3i mWhichH;
 };
 
 class SourceDescription
 {
 public:
-	SourceDescription(std::string formula, std::string inFileName,
-		Vector3f polarization, Rect3i region, Vector3b whichE, Vector3b whichH,
-		const Map<std::string, std::string> & inParameters) throw(Exception);
-	
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
-	
-	std::string getFormula() const { return mFormula; }
-	std::string getFileName() const { return mInputFileName; }
-	Vector3f getPolarization() const { return mPolarization; }
+    static SourceDescription* newTimeSource(std::string timeFile,
+        SourceFields fields, bool isSoft, const std::vector<Region> & regions,
+            const std::vector<Duration> & durations);
+    static SourceDescription* newSpaceTimeSource(std::string spaceTimeFile,
+        SourceFields fields, bool isSoft, const std::vector<Region> & regions,
+        const std::vector<Duration> & durations);
+    static SourceDescription* newFormulaSource(std::string formula,
+        SourceFields fields, bool isSoft, const std::vector<Region> & regions,
+        const std::vector<Duration> & durations);
+    SourceDescription(SourceFields fields, std::string formula,
+        std::string timeFile, std::string spaceTimeFile,
+        bool isSoft, const std::vector<Region> & regions,
+        const std::vector<Duration> & durations) throw(Exception);
     
-    Vector3b getWhichE() const { return mWhichE; }
-    Vector3b getWhichH() const { return mWhichH; }
+    void cycleCoordinates();
     
-    bool isSpaceVarying() const { return mIsSpaceVarying; }
-    bool isSoft() const { return mIsSoft; }
+    const std::string & getFormula() const { return mFormula; }
+    const std::string & getTimeFile() const { return mTimeFile; }
+    const std::string & getSpaceTimeFile() const { return mSpaceTimeFile; }
+    const SourceFields & getSourceFields() const { return mFields; }
+    bool isHardSource() const { return !mIsSoft; }
+    bool isSoftSource() const { return mIsSoft; }
+    bool isSpaceVarying() const { return (mSpaceTimeFile != ""); }
     
-	const Map<std::string, std::string> & getParams() const { return mParams; }
 private:
-	int mCoordinatePermutationNumber; // 0,1 or 2
-	std::string mFormula;
-	std::string mInputFileName;
-	Vector3f mPolarization;
+    int mCoordinatePermutationNumber;
     
-    Vector3b mWhichE;
-    Vector3b mWhichH;
+    std::string mFormula;
+    std::string mTimeFile;
+    std::string mSpaceFileDoThisLaterOkay;
+    std::string mSpaceTimeFile;
+    SourceFields mFields;
+    std::vector<Region> mRegions;
+    std::vector<Duration> mDurations;
     
-    bool mIsSpaceVarying;
     bool mIsSoft;
+};
+
+// This incredibly goofy class is exactly the same as SourceFields but uses
+// "j" and "k" instead of "e" and "h".  That's all.  I'm so silly.
+class SourceCurrents
+{
+public:
+    SourceCurrents();
+    SourceCurrents(std::string fields);
+    SourceCurrents(std::string fields, Vector3f polarization);
     
-    std::vector<Rect3i> mYeeRects;
-    std::vector<long> mFirstTimestep;
-    std::vector<long> mLastTimestep;
+    void cycleCoordinates();
     
-	Map<std::string, std::string> mParams;
+    bool usesPolarization() const { return mUsesPolarization; }
+    Vector3f getPolarization() const
+        { assert(mUsesPolarization); return mPolarization; }
+    Vector3i getWhichJ() const { return mWhichJ; }
+    Vector3i getWhichK() const { return mWhichK; }
+private:
+    bool mUsesPolarization;
+    Vector3f mPolarization;
+    Vector3i mWhichJ;
+    Vector3i mWhichK;
 };
 
 class CurrentSourceDescription
 {
 public:
-    CurrentSourceDescription();
+    static CurrentSourceDescription* newTimeSource(std::string timeFile,
+        SourceCurrents currents, const std::vector<Region> & regions,
+            const std::vector<Duration> & durations);
+    static CurrentSourceDescription* newSpaceTimeSource(
+        std::string spaceTimeFile, SourceCurrents currents, 
+        const std::vector<Region> & regions,
+        const std::vector<Duration> & durations);
+    static CurrentSourceDescription* newFormulaSource(std::string formula,
+        SourceCurrents fields, const std::vector<Region> & regions,
+        const std::vector<Duration> & durations);
     
 	void cycleCoordinates();  // rotate x->y, y->z, z->x
-private:
-    std::string mInputFileName;
     
-    std::vector<Rect3i> mYeeRectsEx;
-    std::vector<Rect3i> mYeeRectsHz;  // you know... might need lots of these.
+    const std::string & getFormula() const { return mFormula; }
+    const std::string & getTimeFile() const { return mTimeFile; }
+    const std::string & getSpaceTimeFile() const { return mSpaceTimeFile; }
+    const SourceCurrents & getSourceCurrents() const { return mCurrents; }
+private:
+    CurrentSourceDescription(SourceCurrents currents, std::string formula,
+        std::string timeFile, std::string spaceTimeFile,
+        const std::vector<Region> & regions,
+        const std::vector<Duration> & durations) throw(Exception);
+    
+    int mCoordinatePermutationNumber;
+    std::string mFormula;
+    std::string mTimeFile;
+    std::string mSpaceFileDoThisLaterOkay;
+    std::string mSpaceTimeFile;
+    SourceCurrents mCurrents;
+    std::vector<Region> mRegions;
+    std::vector<Duration> mDurations;
 };
-
 
 enum HuygensSurfaceSourceType
 {
 	kLink,
 	kTFSFSource,
-	kDataRequest
+	kCustomTFSFSource
 };
 
 class HuygensSurfaceDescription
 {
-private:
-	// link constructor
-	HuygensSurfaceDescription(std::string typeString,
-		std::string sourceGridName, Rect3i sourceHalfRect, Rect3i destHalfRect,
-		const std::set<Vector3i> & omittedSides)
-		throw(Exception);
-	HuygensSurfaceDescription(std::string typeString,
-		const GridDescPtr sourceGrid, Rect3i sourceHalfRect, Rect3i destHalfRect,
-		const std::set<Vector3i> & omittedSides)
-		throw(Exception);
-	
-	// tfsf source constructor
-	HuygensSurfaceDescription(Rect3i inTFRect,
-		Vector3i direction, std::string formula, std::string fileName,
-		Vector3f polarization, std::string field, std::string inTFSFType,
-		const Map<std::string,std::string> & inParameters,
-		const std::set<Vector3i> & omittedSides) throw(Exception);
-	
-	// custom TFSF source constructor
-	HuygensSurfaceDescription(Rect3i inHalfRect,
-		const std::string & inName, Vector3i symmetries, std::string inTFSFType,
-		const Map<std::string, std::string> & inParameters,
-		const std::set<Vector3i> & omittedSides) throw(Exception);
-
-	// data request constructor
-	HuygensSurfaceDescription(std::string requestyArgs) throw(Exception);
-	
-	
-public: // user-accessible constructors
-	static HuygensSurfaceDescription* newLink(std::string typeString,
-		std::string sourceGridName, Rect3i sourceHalfRect, Rect3i destHalfRect,
-		const std::set<Vector3i> & omittedSides)
-		throw(Exception);
-	static HuygensSurfaceDescription* newLink(std::string typeString,
-		const GridDescPtr sourceGrid, Rect3i sourceHalfRect, Rect3i destHalfRect,
-		const std::set<Vector3i> & omittedSides)
-		throw(Exception);
-	
-	static HuygensSurfaceDescription* newTFSFSource(Rect3i inHalfRect,
-		Vector3i direction, std::string formula, std::string fileName,
-		Vector3f polarization, std::string field, std::string inTFSFType,
-		const Map<std::string, std::string> & inParameters,
-		const std::set<Vector3i> & omittedSides)
-		throw(Exception);
-	static HuygensSurfaceDescription* newCustomSource(Rect3i inHalfRect,
-		const std::string & inName, Vector3i symmetries, std::string inTFSFType,
-		const Map<std::string, std::string> & inParameters,
-		const std::set<Vector3i> & omittedSides) throw(Exception);
-	
+public:
+    HuygensSurfaceDescription();
+    HuygensSurfaceDescription(const HuygensSurfaceDescription & parent,
+        Rect3i newHalfCells);
+    HuygensSurfaceDescription(HuygensSurfaceSourceType type);
+    static HuygensSurfaceDescription* newTFSFTimeSource(SourceFields fields,
+        std::string timeFile, Vector3i direction, Rect3i halfCells,
+        std::set<Vector3i> omittedSides, bool isTF = 1);
+    static HuygensSurfaceDescription* newTFSFFormulaSource(SourceFields fields,
+        std::string formula, Vector3i direction, Rect3i halfCells,
+        std::set<Vector3i> omittedSides, bool isTF = 1);
+    static HuygensSurfaceDescription* newCustomTFSFSource(std::string file,
+        Vector3i symmetries, Rect3i halfCells, Duration duration,
+        std::set<Vector3i> omittedSides, bool isTF = 1);
+    static HuygensSurfaceDescription* newLink(std::string sourceGrid,
+        Rect3i fromHalfCells, Rect3i toHalfCells,
+        std::set<Vector3i> omittedSides, bool isTF = 1);
+    
 	// modifiers
 	void setPointers(const Map<std::string, GridDescPtr> & gridMap);
 	void omitSide(int nSide);
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
-	
-	// accessors
-	HuygensSurfaceSourceType getType() const { return mType; }
-	const Rect3i & getDestHalfRect() const {
-		return mDestHalfRect; }
-	const std::set<Vector3i> & getOmittedSides() const {
-		return mOmittedSides; }
-	const std::vector<NeighborBufferDescPtr> & getBuffers()
-		const { return mBuffers; }
-	
-	// links only
-	const Rect3i & getLinkSourceHalfRect() const {
-		assert(mType == kLink); return mLinkSourceHalfRect; }
-	const std::string & getLinkSourceGridName() const {
-		assert(mType == kLink); return mLinkSourceGridName; }
-	
-	// kTFSFSource or kDataRequest
-	Vector3i getTFSFSourceSymmetries() const {
-		assert(mType == kTFSFSource || mType == kDataRequest);
-		return mTFSFSourceSymmetries; }
-	const std::string & getTFSFType() const { 
-		assert(mType == kTFSFSource || mType == kDataRequest);
-		return mTFSFType; }
-	
-	// kTFSFSource
-	const Map<std::string, std::string> & getTFSFSourceParameters() const {
-		assert(mType == kTFSFSource); return mTFSFSourceParams; }
-	Vector3i getTFSFSourceDirection() const {
-		assert(mType == kTFSFSource); return mTFSFSourceDirection; }
-	const std::string & getTFSFSourceFormula() const {
-		assert(mType == kTFSFSource); return mTFSFFormula; }
-	const std::string & getTFSFSourceFileName() const {
-		assert(mType == kTFSFSource); return mTFSFFileName; }
-	Vector3f getTFSFSourcePolarization() const {
-		assert(mType == kTFSFSource); return mTFSFPolarization; }
-	const std::string & getTFSFSourceField() const {
-		assert(mType == kTFSFSource); return mTFSFField; }
-	
-	// kDataRequest only
-	const std::string & getName() const {
-		assert(mType == kDataRequest); return mDataRequestName; }
-	
+    void cycleCoordinates();
+    
+    // Common accessors
+    HuygensSurfaceSourceType getType() const { return mType; }
+    const Rect3i & getHalfCells() const { return mHalfCells; }
+    const std::set<Vector3i> & getOmittedSides() const { return mOmittedSides; }
+    bool isTotalField() const { return mIsTotalField; }
+    bool isScatteredField() const { return !mIsTotalField; }
+	const std::vector<NeighborBufferDescPtr> & getBuffers() const
+        { return mBuffers; }
+    
+    // TFSFSource accessors
+    SourceFields getSourceFields() const
+        { assert(mType == kTFSFSource); return mFields; }
+    std::string getTimeFile() const
+        { assert(mType == kTFSFSource); return mTimeFile; }
+    std::string getFormula() const
+        { assert(mType == kTFSFSource); return mFormula; }
+    Vector3i getDirection() const
+        { assert(mType == kTFSFSource); return mDirection; }
+    
+    // Custom or ordinary TFSFSource accessor
+    Vector3i getSymmetries() const
+        { assert(mType == kTFSFSource || mType == kCustomTFSFSource);
+          return mSymmetries; }
+    Duration getDuration() const
+        { assert(mType == kCustomTFSFSource || mType == kTFSFSource);
+          return mDuration; }
+    
+    // Custom source accessors
+    std::string getFile() const
+        { assert(mType == kCustomTFSFSource); return mFile; }
+    
+    // Link accessors
+    std::string getSourceGridName() const
+        { assert(mType == kLink); return mSourceGridName; }
+    Rect3i getFromHalfCells() const { return mFromHalfCells; }
+    
 private:
-	
-	// buffer maker
+    // buffer maker
 	void initTFSFBuffers(float srcFactor); // 1 adds, -1 subtracts
 	void initFloquetBuffers();
-	
-private:
-	HuygensSurfaceSourceType mType;
-	
-	Rect3i mDestHalfRect;
-	std::set<Vector3i> mOmittedSides;
-	
-	std::vector<NeighborBufferDescPtr> mBuffers; // one per side, 0-5	
-	// These members are only applicable for mType = kLink
-	Rect3i mLinkSourceHalfRect;
-	std::string mLinkSourceGridName;
-	GridDescPtr mLinkSourceGrid;
-	
-	// These members are only applicable for mType = kTFSFSource or kDataRequest
-	Vector3i mTFSFSourceSymmetries;
-	std::string mTFSFType;
-	
-	// These members are only applicable for mType = kTFSFSource
-	Map<std::string, std::string> mTFSFSourceParams;
-	Vector3i mTFSFSourceDirection;
-	std::string mTFSFFormula;
-	std::string mTFSFFileName;
-	Vector3f mTFSFPolarization;    
-    Vector3b mTFSFWhichE;
-    Vector3b mTFSFWhichH;
     
-    std::string mTFSFField;
+    // Common data
+    int mCoordinatePermutationNumber;
+    HuygensSurfaceSourceType mType;
+	std::vector<NeighborBufferDescPtr> mBuffers; // one per side, 0-5
+    Rect3i mHalfCells;
+    std::set<Vector3i> mOmittedSides;
+    bool mIsTotalField;
     
-    std::vector<long> mFirstTimestep;
-    std::vector<long> mLastTimestep;
+    // Source data
+    SourceFields mFields;
+    std::string mTimeFile;
+    std::string mFormula;
+    Vector3i mDirection;
     
-	
-	// Only applicable for data request
-	std::string mDataRequestName;
+     // TFSF or custom TFSF source
+    Vector3i mSymmetries;
+    Duration mDuration;
+    
+    // Custom source data
+    std::string mFile;
+    
+    // Link data
+    std::string mSourceGridName;
+    GridDescPtr mSourceGrid;
+    Rect3i mFromHalfCells;
 };
 
 class NeighborBufferDescription
@@ -418,11 +475,11 @@ private:
 class MaterialDescription
 {
 public:
-	MaterialDescription(std::string name, std::string inClass,
+	MaterialDescription(std::string name, std::string inModelName,
 		const Map<std::string, std::string> & inParams) throw(Exception);
 	
 	std::string getName() const { return mName; }
-	std::string getClass() const { return mClass; }
+	std::string getModelName() const { return mModelName; }
 	const Map<std::string, std::string> & getParams() const { return mParams; }
 	
 	void cycleCoordinates();  // rotate x->y, y->z, z->x
@@ -432,7 +489,7 @@ public:
 private:
 	int mCoordinatePermutationNumber; // 0,1 or 2
 	std::string mName;
-	std::string mClass;
+	std::string mModelName;
 	Map<std::string, std::string> mParams;
 };
 std::ostream & operator<<(std::ostream & out, const MaterialDescription & mat);

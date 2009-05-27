@@ -13,6 +13,7 @@
 
 #include <boost/current_function.hpp>
 
+#include <string>
 #include <fstream>
 #include <iostream>
 
@@ -29,6 +30,7 @@ class TrogLog
 public:
 	static StreamTee & tee() { return sTee; }
 	static std::ofstream & logf() { return sLogfile; }
+    static std::string stripArgs(const std::string & str);
 private:
 	static std::ofstream sLogfile;
 	static StreamTee sTee;
@@ -37,9 +39,9 @@ private:
 };
 
 
-#define LOGF (TrogLog::logf() << "[" << BOOST_CURRENT_FUNCTION << ", " << __LINE__ << "]: ")
+#define LOGF (TrogLog::logf() << "[" << TrogLog::stripArgs((BOOST_CURRENT_FUNCTION)) << ", " << __LINE__ << "]: ")
 #define LOGFMORE TrogLog::logf()
-#define LOG (TrogLog::tee() << "[" << BOOST_CURRENT_FUNCTION << ", " << __LINE__ << "]: ")
+#define LOG (TrogLog::tee() << "[" << TrogLog::stripArgs((BOOST_CURRENT_FUNCTION)) << ", " << __LINE__ << "]: ")
 #define LOGMORE TrogLog::tee()
 
 #endif

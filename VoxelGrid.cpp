@@ -351,7 +351,7 @@ overlayHuygensSurface(const HuygensSurfaceDescription & surf)
 			assert(nb != 0L);
 			
 			Rect3i innerHalfRect = edgeOfRect(
-				surf.getDestHalfRect(), sideNum);
+				surf.getHalfCells(), sideNum);
 			Rect3i outerHalfRect = (innerHalfRect + side);
 			
 			// Paint the inside
@@ -393,9 +393,9 @@ overlayCurrentSource(const int & currentSource)
 void VoxelGrid::
 overlayPML()
 {
-	LOG << "Overlaying PML.  Using slow algorithm.\n";
-	LOGMORE << "Bounds " << mAllocRegion << "\n";
-	LOGMORE << "nonPML " << mNonPMLRegion << "\n";
+	//LOG << "Overlaying PML.  Using slow algorithm.\n";
+	//LOGMORE << "Bounds " << mAllocRegion << "\n";
+	//LOGMORE << "nonPML " << mNonPMLRegion << "\n";
 	
 	LOG << "Warning: this will not result in correct behavior if the current "
 		"node needs to paint the PML from the opposite side of the whole grid"

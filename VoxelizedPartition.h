@@ -46,6 +46,7 @@ public:
 		return mHuygensRegionSymmetries; }
 	
 	const Rect3i & getGridHalfCells() const { return mGridHalfCells; }
+    Vector3i getOriginYee() const { return mOriginYee; }
 	bool partitionHasPML(int faceNum) const;
 	Rect3i getPMLRegionOnFace(int faceNum) const;
 	Rect3i getPartitionPMLRegionOnFace(int faceNum) const;
@@ -68,6 +69,8 @@ public:
 		{ return mCentralIndices; }
     
     EHBufferSetPtr getEHBuffers() const { return mEHBuffers; }
+    const Map<NeighborBufferDescPtr, EHBufferSet> & getNBBuffers() const
+        { return mNBBuffers; }
     const Map<Paint*, MaterialDelegatePtr> & getDelegates() const
         { return mDelegates; }
     

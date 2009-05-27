@@ -10,7 +10,7 @@
 #ifndef _SIMPLEEHOUTPUT_
 #define _SIMPLEEHOUTPUT_
 
-#include "SimulationDescriptionPredeclarations.h"
+#include "SimulationDescription.h"
 #include "OutputBoss.h"
 #include "geometry.h"
 #include <vector>
@@ -38,32 +38,27 @@ private:
 class SimpleEHOutput : public Output
 {
 public:
-    SimpleEHOutput();
-private:
-    SimpleEHOutput(const OutputDescription & desc);
+    //SimpleEHOutput();
+    SimpleEHOutput(const OutputDescription & desc, Vector3i origin,
+        Vector3f dxyz, float dt);
     
-public:
-    static OutputPtr makeOneFieldOutput(const CalculationPartition & cp,
-        const OutputDescription & desc);
-    static OutputPtr makeThreeFieldOutput(const CalculationPartition & cp,
-        const OutputDescription & desc);
-    static OutputPtr makeColocatedOutput(const CalculationPartition & cp,
-        const OutputDescription & desc);
+    virtual void outputEPhase(int timestep);
+    virtual void outputHPhase(int timestep);
     
 private:
+    void writeDescriptionFile() const;
+    
+    
     bool mIsInterpolated;
     Vector3f mInterpolationPoint;
     
     long mCurrentSampleInterval;
     
-    Vector3b mWhichE;
-    Vector3b mWhichH;
+    Vector3i mWhichE;
+    Vector3i mWhichH;
     
-    std::vector<long> mFirstSamples;
-    std::vector<long> mLastSamples;
-    std::vector<long> mSamplePeriods;
-    std::vector<Rect3i> mYeeRects;
-    std::vector<Vector3i> mStrides;
+    std::vector<Region> mRegions;
+    std::vector<Duration> mDurations;
 };
 
 

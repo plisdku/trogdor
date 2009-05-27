@@ -20,41 +20,53 @@
 
 #include "StaticDielectric.h"
 #include "StaticDielectricPML.h"
+#include "StaticLossyDielectric.h"
 #include "DrudeModel1.h"
+#include "PerfectConductor.h"
 
 using namespace std;
 using namespace YeeUtilities;
 
-MaterialDelegatePtr NewMaterialFactory::
+MaterialDelegatePtr MaterialFactory::
 getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
 	Paint* parentPaint)
 {
 	assert(parentPaint != 0L);
-	LOG << "Delegate for " << *parentPaint << endl;
+	//LOG << "Delegate for " << *parentPaint << endl;
 	
 	//PaintType type = parentPaint->getType();
 	const MaterialDescPtr bulkMaterial = parentPaint->getBulkMaterial();
-	string materialClass(bulkMaterial->getClass());
+	string materialClass(bulkMaterial->getModelName());
 	string materialName(bulkMaterial->getName());
 	
-	LOG << "Getting delegate for " << *parentPaint << ".\n"; 
+	//LOG << "Getting delegate for " << *parentPaint << ".\n"; 
     
-	if (materialClass == "StaticDielectricModel")
+	if (materialClass == "StaticDielectric")
 	{
         if (parentPaint->isPML())
             return MaterialDelegatePtr(new StaticDielectricPMLDelegate);
         else
             return MaterialDelegatePtr(new StaticDielectricDelegate);
 	}
-    /*
-	else if (materialClass == "DrudeMetalModel")
+    else if (materialClass == "StaticLossyDielectric")
+    {
+        //if (parentPaint->isPML())
+        //    return MaterialDelegatePtr(new StaticLossyDielectricPMLDelegate);
+        //else
+            return MaterialDelegatePtr(new StaticLossyDielectricDelegate);
+    }
+	else if (materialClass == "DrudeMetal")
 	{
-		return MaterialDelegatePtr(new DrudeModel1Delegate);
+        //if (parentPaint->isPML())
+        //    return MaterialDelegatePtr(new DrudeModel1PMLDelegate);
+        //else
+            return MaterialDelegatePtr(new DrudeModel1Delegate(bulkMaterial));
 	}
-	else if (materialClass == "PEC")
+	else if (materialClass == "PerfectConductor")
 	{
+        return MaterialDelegatePtr(new PerfectConductorDelegate);
 	}
-	*/
+	
 	
 	LOG << "Using default (silly) delegate.\n";
     
@@ -70,6 +82,11 @@ Material()
 
 Material::
 ~Material()
+{
+}
+
+void Material::
+allocateAuxBuffers()
 {
 }
 
@@ -391,6 +408,36 @@ SimplePMLRunline(const SBPMRunline & setupRunline) :
     pmlIndex[1] = setupRunline.pmlDepthIndex[1];
     pmlIndex[2] = setupRunline.pmlDepthIndex[2];
 }
+
+
+SimpleAuxRunline::
+SimpleAuxRunline(const SBMRunline & setupRunline) :
+    fi(setupRunline.f_i.getPointer()),
+    length(setupRunline.length)
+{
+    gj[0] = setupRunline.f_j[0].getPointer();
+    gj[1] = setupRunline.f_j[1].getPointer();
+    gk[0] = setupRunline.f_k[0].getPointer();
+    gk[1] = setupRunline.f_k[1].getPointer();
+    auxIndex = setupRunline.auxIndex;
+}
+
+
+SimpleAuxPMLRunline::
+SimpleAuxPMLRunline(const SBPMRunline & setupRunline) :
+    fi(setupRunline.f_i.getPointer()),
+    length(setupRunline.length)
+{
+    gj[0] = setupRunline.f_j[0].getPointer();
+    gj[1] = setupRunline.f_j[1].getPointer();
+    gk[0] = setupRunline.f_k[0].getPointer();
+    gk[1] = setupRunline.f_k[1].getPointer();
+    auxIndex = setupRunline.auxIndex;
+    pmlIndex[0] = setupRunline.pmlDepthIndex[0];
+    pmlIndex[1] = setupRunline.pmlDepthIndex[1];
+    pmlIndex[2] = setupRunline.pmlDepthIndex[2];
+}
+
 
 
 

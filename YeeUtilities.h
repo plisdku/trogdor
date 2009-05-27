@@ -20,6 +20,7 @@ namespace YeeUtilities
 // returns a number from [0,7] telling which octant of the Yee cell v is in
 int halfCellIndex(const Vector3i & v);
 
+
 // returns a vector with origin at 0 pointing to the given Yee octant
 const Vector3i & halfCellOffset(int halfCellIndex);
 
@@ -34,6 +35,9 @@ int octantENumber(int octant); // returns 0,1,2 for Ex,y,z or -1
 int octantHNumber(int octant); // returns 0,1,2 for Hx,y,z or -1
 int octantFieldDirection(int octant); // returns 0 for Ex or Hx, 1 for y, etc.
 int octantFieldDirection(Vector3i octant);
+
+Vector3f eFieldPosition(int fieldIndex);
+Vector3f hFieldPosition(int fieldIndex);
 
 // returns halfCell/2
 Vector3i vecHalfToYee(const Vector3i & halfCell);

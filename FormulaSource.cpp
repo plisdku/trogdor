@@ -36,12 +36,9 @@ FormulaSource::
 FormulaSource(const SourceDescription & desc) :
     Source(),
     mFormula(desc.getFormula()),
-    mPolarization(desc.getPolarization()),
-    mWhichE(desc.getWhichE()),
-    mWhichH(desc.getWhichH()),
+    mFields(desc.getSourceFields()),
     mIsSpaceVarying(desc.isSpaceVarying()),
-    mIsSoft(desc.isSoft()),
-    mParams(desc.getParams())
+    mIsSoft(desc.isSoftSource())
 {
 }
 
