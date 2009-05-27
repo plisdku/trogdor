@@ -11,214 +11,6 @@
 
 #include "geometry.h"
 
-#pragma mark *** Vector ***
-
-namespace vmlib {
-
-template <unsigned DIM, typename T>
-bool operator< (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
-{
-	for (unsigned int ii = 0; ii < DIM; ii++)
-	{
-		if (lhs[ii] < rhs[ii])
-			return 1;
-		else if (lhs[ii] > rhs[ii])
-			return 0;
-	}
-	return 0;
-}
-
-template <unsigned DIM, typename T>
-bool operator> (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
-{
-	for (unsigned int ii = 0; ii < DIM; ii++)
-	{
-		if (lhs[ii] > rhs[ii])
-			return 1;
-		else if (lhs[ii] < rhs[ii])
-			return 0;
-	}
-	return 0;
-}
-
-template <unsigned DIM, typename T>
-bool operator== (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
-{
-	for (unsigned int ii = 0; ii < DIM; ii++)
-	{
-		if (lhs[ii] != rhs[ii])
-			return 0;
-	}
-	return 1;
-}
-
-template <unsigned DIM, typename T>
-bool operator!= (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
-{
-	for (unsigned int ii = 0; ii < DIM; ii++)
-	{
-		if (lhs[ii] != rhs[ii])
-			return 1;
-	}
-	return 0;
-}
-
-template <unsigned DIM, typename T>
-vmlib::SVec<DIM,T> operator% (const vmlib::SVec<DIM,T>& lhs, T rhs)
-{
-	vmlib::SVec<DIM,T> retval(lhs);
-	for (unsigned int ii = 0; ii < DIM; ii++)
-		retval[ii] %= rhs;
-	return retval;
-}
-
-template <unsigned DIM, typename T>
-vmlib::SVec<DIM,T>
-operator% (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T> & rhs)
-{
-	vmlib::SVec<DIM,T> retval(lhs);
-	for (unsigned int ii = 0; ii < DIM; ii++)
-		retval[ii] %= rhs[ii];
-	return retval;
-}
-
-} // namespace vmlib
-
-/*
-template <unsigned DIM, typename T>
-bool operator<= (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
-{
-	for (int ii = 0; ii < DIM; ii++)
-	{
-		if (lhs[ii] >= rhs[ii])
-			return 1;
-		else if (lhs[ii] <= rhs[ii])
-			return 0;
-	}
-	return 0;
-}
-
-template <unsigned DIM, typename T>
-bool operator>= (const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
-{
-	for (int ii = 0; ii < DIM; ii++)
-	{
-		if (lhs[ii] >= rhs[ii])
-			return 1;
-		else if (lhs[ii] <= rhs[ii])
-			return 0;
-	}
-	return 0;
-}
-*/
-
-
-template <unsigned DIM, typename T>
-bool vec_lt(const vmlib::SVec<DIM,T>& lhs, const T& rhs)
-{
-	for (int ii = 0; ii < DIM; ii++)
-		if (lhs[ii] >= rhs)
-			return 0;
-	return 1;
-}
-
-template <unsigned DIM, typename T>
-bool vec_gt(const vmlib::SVec<DIM,T>& lhs, const T& rhs)
-{
-	for (int ii = 0; ii < DIM; ii++)
-		if (lhs[ii] <= rhs)
-			return 0;
-	return 1;
-}
-
-template <unsigned DIM, typename T>
-bool vec_le(const vmlib::SVec<DIM,T>& lhs, const T& rhs)
-{
-	for (int ii = 0; ii < DIM; ii++)
-		if (lhs[ii] > rhs)
-			return 0;
-	return 1;
-}
-
-template <unsigned DIM, typename T>
-bool vec_ge(const vmlib::SVec<DIM,T>& lhs, const T& rhs)
-{
-	for (int ii = 0; ii < DIM; ii++)
-		if (lhs[ii] < rhs)
-			return 0;
-	return 1;
-}
-
-template <unsigned DIM, typename T>
-bool vec_lt(const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
-{
-	for (int ii = 0; ii < DIM; ii++)
-		if (lhs[ii] >= rhs[ii])
-			return 0;
-	return 1;
-}
-
-template <unsigned DIM, typename T>
-bool vec_gt(const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
-{
-	for (int ii = 0; ii < DIM; ii++)
-		if (lhs[ii] <= rhs[ii])
-			return 0;
-	return 1;
-}
-
-template <unsigned DIM, typename T>
-bool vec_le(const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
-{
-	for (unsigned int ii = 0; ii < DIM; ii++)
-		if (lhs[ii] > rhs[ii])
-			return 0;
-	return 1;
-}
-
-template <unsigned DIM, typename T>
-bool vec_ge(const vmlib::SVec<DIM,T>& lhs, const vmlib::SVec<DIM,T>& rhs)
-{
-	for (unsigned int ii = 0; ii < DIM; ii++)
-		if (lhs[ii] < rhs[ii])
-			return 0;
-	return 1;
-}
-
-template <unsigned DIM, typename T>
-vmlib::SVec<DIM,T> dominantComponent(const vmlib::SVec<DIM,T> & arg)
-{
-	T maxabs = normi(arg);
-	
-	vmlib::SVec<DIM,T> retval = 0*arg;
-	
-	for (int ii = 0; ii < DIM; ii++)
-	{
-		if (abs(arg[ii]) == maxabs)
-		{
-			retval[ii] = arg[ii];
-			return retval;
-		}
-	}
-	return retval;
-}
-
-template <typename T>
-vmlib::SVec<3,T>
-cross(const vmlib::SVec<3,T> & lhs, const vmlib::SVec<3,T>& rhs)
-{
-	return vmlib::SVec<3,T>( lhs[1]*rhs[2] - lhs[2]*rhs[1], 
-		lhs[2]*rhs[0] - lhs[0]*rhs[2],
-		lhs[0]*rhs[1] - lhs[1]*rhs[0]);
-}
-
-template <typename T>
-int
-parity(const vmlib::SVec<3,T> & arg)
-{
-	return (arg[0]%2) + 2*(arg[1]%2) + 4*(arg[2]%2);
-}
-
 #pragma mark *** Rect ***
 
 
@@ -237,8 +29,8 @@ Rect<T>::Rect(T i0, T j0, T k0, T i1, T j1, T k1) :
 }
 
 template<typename T>
-Rect<T>::Rect( const vmlib::SVec<3,T> & inP1,
-    const vmlib::SVec<3,T> & inP2 ) :
+Rect<T>::Rect( const Vector3<T> & inP1,
+    const Vector3<T> & inP2 ) :
 	p1(inP1), p2(inP2)
 {
 }
@@ -257,7 +49,7 @@ T Rect<T>::size(unsigned int dim) const
 }
 
 template<typename T>
-vmlib::SVec<3,T> Rect<T>::size() const
+Vector3<T> Rect<T>::size() const
 {
 	return p2 - p1;
 }
@@ -269,7 +61,7 @@ bool Rect<T>::encloses(const Rect<T> & inRect) const
 }
 
 template<typename T>
-bool Rect<T>::encloses(const vmlib::SVec<3,T> & inPt) const
+bool Rect<T>::encloses(const Vector3<T> & inPt) const
 {
     if ( inPt[0] >= p1[0] && inPt[0] <= p2[0] &&
          inPt[1] >= p1[1] && inPt[1] <= p2[1] &&
@@ -291,15 +83,7 @@ bool Rect<T>::encloses(T x, T y, T z) const
 template<typename T>
 bool Rect<T>::intersects(const Rect<T> & inRect) const
 {
-	
-    /*return ( p2[0] >= inRect.p1[0] && p1[0] <= inRect.p2[0] &&
-             p2[1] >= inRect.p1[1] && p1[1] <= inRect.p2[1] &&
-             p2[2] >= inRect.p1[2] && p1[2] <= inRect.p2[2] );
-	*/
-	
 	return (vec_ge(p2, inRect.p1) && vec_le(p1, inRect.p2));
-	
-	//p2 >= inRect.p1 && p1 <= inRect.p2);
 }
 
 template<typename T>
@@ -362,7 +146,7 @@ operator /= (Rect<T> & lhs, const T scalar)
 
 template<typename T>
 Rect<T>
-operator * (const vmlib::SMat<3,T> & lhs, const Rect<T> & rhs)
+operator * (const Matrix3<T> & lhs, const Rect<T> & rhs)
 {
     return Rect<T>(lhs*rhs.p1, lhs*rhs.p2);
 }
@@ -370,28 +154,28 @@ operator * (const vmlib::SMat<3,T> & lhs, const Rect<T> & rhs)
 
 template<typename T>
 Rect<T>
-operator + (const Rect<T> & lhs, const vmlib::SVec<3,T> & rhs)
+operator + (const Rect<T> & lhs, const Vector3<T> & rhs)
 {
 	return Rect<T>(lhs.p1 + rhs, lhs.p2 + rhs);
 }
 
 template<typename T>
 Rect<T>
-operator - (const Rect<T> & lhs, const vmlib::SVec<3,T> & rhs)
+operator - (const Rect<T> & lhs, const Vector3<T> & rhs)
 {
 	return Rect<T>(lhs.p1 - rhs, lhs.p2 - rhs);
 }
 
 template<typename T>
 Rect<T>
-operator + (const vmlib::SVec<3,T> & lhs, const Rect<T> & rhs)
+operator + (const Vector3<T> & lhs, const Rect<T> & rhs)
 {
 	return Rect<T>(rhs.p1 + lhs, rhs.p2 + lhs);
 }
 
 template<typename T>
 Rect<T>
-operator - (const vmlib::SVec<3,T> & lhs, const Rect<T> & rhs)
+operator - (const Vector3<T> & lhs, const Rect<T> & rhs)
 {
 	return Rect<T>(lhs - rhs.p1, lhs - rhs.p2);
 }
@@ -413,9 +197,9 @@ inset( const Rect<T> & inRect, T dx0, T dx1, T dy0, T dy1, T dz0, T dz1 )
 }
                    
 template<typename T>
-vmlib::SVec<3,T>  clip(const Rect<T> & clipRect, const vmlib::SVec<3,T> & v)
+Vector3<T>  clip(const Rect<T> & clipRect, const Vector3<T> & v)
 {
-    vmlib::SVec<3,T> out(v);
+    Vector3<T> out(v);
     if (out[0] < clipRect.p1[0])
         out[0] = clipRect.p1[0];
     else if (out[0] > clipRect.p2[0])
@@ -467,38 +251,6 @@ bool operator>(const Rect<T> & lhs, const Rect<T> & rhs)
     return 0;
 }
 
-
-template<typename T>
-vmlib::SMat<3,T> matWithCols(const vmlib::SVec<3,T> & v1,
-	const vmlib::SVec<3,T> & v2, const vmlib::SVec<3,T> & v3)
-{
-	vmlib::SMat<3,T> m;
-	for (int row = 0; row < 3; row++)
-	{
-		m(row,0) = v1[row];
-		m(row,1) = v2[row];
-		m(row,2) = v3[row];
-	}
-	return m;
-}
-
-template<typename T, typename S>
-void mapPoint(const Rect<T> & fromRect, const vmlib::SVec<3,T> & fromPoint,
-    const Rect<T> & toRect, vmlib::SVec<3,T> & toPoint)
-{
-    toPoint[0] = (fromPoint[0] - fromRect.p1[0]) + toRect.p1[0];
-    toPoint[1] = (fromPoint[1] - fromRect.p1[1]) + toRect.p1[1];
-    toPoint[2] = (fromPoint[2] - fromRect.p1[2]) + toRect.p1[2];
-}
-
-template<typename T, typename S>
-void mapPoint(const Rect<T> & fromRect, int fromX, int fromY, int fromZ,
-    const Rect<T> & toRect, int & toX, int & toY, int & toZ)
-{
-    toX = (fromX - fromRect.p1[0]) + toRect.p1[0];
-    toY = (fromY - fromRect.p1[1]) + toRect.p1[1];
-    toZ = (fromZ - fromRect.p1[2]) + toRect.p1[2];
-}
 
 
 template<typename T>

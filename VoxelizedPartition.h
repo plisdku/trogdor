@@ -18,8 +18,6 @@
 
 #include "Pointer.h"
 #include "geometry.h"
-#include <vector>
-#include <string>
 #include "Map.h"
 #include "VoxelGrid.h"
 #include "PartitionCellCount.h"
@@ -31,6 +29,10 @@
 #include "SimulationDescriptionPredeclarations.h"
 
 #include "Paint.h"
+
+#include <vector>
+#include <string>
+
 
 class VoxelizedPartition;
 typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;

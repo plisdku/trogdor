@@ -156,9 +156,8 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap,
 void GridDescription::
 cycleCoordinates()
 {
-	Mat3i permuteForward, permuteBackward;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	mNumYeeCells = permuteForward*mNumYeeCells;
 	mNumHalfCells = permuteForward*mNumHalfCells;
@@ -204,8 +203,8 @@ getNumDimensions() const
 void Region::
 cycleCoordinates()
 {
-	Mat3i permuteForward;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
     
     mYeeCells = permuteForward*mYeeCells;
     mStride = permuteForward*mStride;
@@ -276,21 +275,19 @@ void OutputDescription::
 cycleCoordinates()
 {
     unsigned int nn;
-    Mat3i permuteForwardBool;
-    Mat3f permuteForwardFloat;
-	permuteForwardBool = 0,0,1,1,0,0,0,1,0;
-	permuteForwardFloat = 0,0,1,1,0,0,0,1,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	mCoordinatePermutationNumber += 1;
 	mCoordinatePermutationNumber %= 3;
     
-    mWhichE = permuteForwardBool*mWhichE;
-    mWhichH = permuteForwardBool*mWhichH;
-    mWhichJ = permuteForwardBool*mWhichJ;
-    mWhichP = permuteForwardBool*mWhichP;
-    mWhichM = permuteForwardBool*mWhichM;
+    mWhichE = permuteForward*mWhichE;
+    mWhichH = permuteForward*mWhichH;
+    mWhichJ = permuteForward*mWhichJ;
+    mWhichP = permuteForward*mWhichP;
+    mWhichM = permuteForward*mWhichM;
     
-    mInterpolationPoint = permuteForwardFloat*mInterpolationPoint;
+    mInterpolationPoint = permuteForward*mInterpolationPoint;
     
     for (nn = 0; nn < mRegions.size(); nn++)
         mRegions[nn].cycleCoordinates();
@@ -435,17 +432,15 @@ void SourceFields::
 cycleCoordinates()
 {
     unsigned int nn;
-	Mat3i permuteForwardBool;
-    Mat3f permuteForwardFloat;
-	permuteForwardBool = 0,0,1,1,0,0,0,1,0;
-	permuteForwardFloat = 0,0,1,1,0,0,0,1,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	//mCoordinatePermutationNumber += 1;
 	//mCoordinatePermutationNumber %= 3;
     
-    mPolarization = permuteForwardFloat*mPolarization;
-    mWhichE = permuteForwardBool*mWhichE;
-    mWhichH = permuteForwardBool*mWhichH;
+    mPolarization = permuteForward*mPolarization;
+    mWhichE = permuteForward*mWhichE;
+    mWhichH = permuteForward*mWhichH;
 }
 
 
@@ -478,8 +473,8 @@ newFormulaSource(string formula, SourceFields fields, bool isSoft,
 void SourceDescription::
 cycleCoordinates()
 {
-    Mat3f permuteForwardFloat;
-	permuteForwardFloat = 0,0,1,1,0,0,0,1,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	mCoordinatePermutationNumber += 1;
 	mCoordinatePermutationNumber %= 3;
@@ -575,17 +570,15 @@ void SourceCurrents::
 cycleCoordinates()
 {
     unsigned int nn;
-	Mat3i permuteForwardBool;
-    Mat3f permuteForwardFloat;
-	permuteForwardBool = 0,0,1,1,0,0,0,1,0;
-	permuteForwardFloat = 0,0,1,1,0,0,0,1,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	//mCoordinatePermutationNumber += 1;
 	//mCoordinatePermutationNumber %= 3;
     
-    mPolarization = permuteForwardFloat*mPolarization;
-    mWhichJ = permuteForwardBool*mWhichJ;
-    mWhichK = permuteForwardBool*mWhichK;
+    mPolarization = permuteForward*mPolarization;
+    mWhichJ = permuteForward*mWhichJ;
+    mWhichK = permuteForward*mWhichK;
 }
 
 #pragma mark *** CurrentSource ***
@@ -618,8 +611,8 @@ newFormulaSource(string formula, SourceCurrents currents,
 void CurrentSourceDescription::
 cycleCoordinates()
 {
-    Mat3f permuteForwardFloat;
-	permuteForwardFloat = 0,0,1,1,0,0,0,1,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	mCoordinatePermutationNumber += 1;
 	mCoordinatePermutationNumber %= 3;
@@ -699,17 +692,13 @@ omitSide(int sideNum)
 void HuygensSurfaceDescription::
 cycleCoordinates()
 {
-	Mat3i permuteForward;
-    Mat3i permuteForwardBool;
-	Mat3f permuteForwardf;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteForwardBool = 0,0,1,1,0,0,0,1,0;
-	permuteForwardf = 0.0f,0.0f,1.0f,1.0f,0.f,0.f,0.f,1.f,0.f;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	// Rotate the rects and vectors
 	mHalfCells = permuteForward*mHalfCells;
     mDirection = permuteForward*mDirection;
-	mSymmetries = permuteForwardBool*mSymmetries;
+	mSymmetries = permuteForward*mSymmetries;
 	mFromHalfCells = permuteForward*mFromHalfCells;
 	
 	// Rotate the omitted sides
@@ -924,9 +913,8 @@ NeighborBufferDescription(const Rect3i & destHalfRect, int nSide,
 void NeighborBufferDescription::
 cycleCoordinates()
 {
-	Mat3i permuteForward, permuteBackward;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	// Rotate the rects
 	mDestHalfRect = permuteForward * mDestHalfRect;
@@ -1096,9 +1084,8 @@ Block(Rect3i yeeCellRect, FillStyle style, string material) throw(Exception) :
 void Block::
 cycleCoordinates()
 {
-	Mat3i permuteForward, permuteBackward;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	mFillRect = permuteForward*mFillRect;
 }
@@ -1158,9 +1145,8 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap)
 void KeyImage::
 cycleCoordinates()
 {
-	Mat3i permuteForward, permuteBackward;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	mYeeRect = permuteForward*mYeeRect;
 	mRow = permuteForward*mRow;
@@ -1209,9 +1195,8 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap)
 void HeightMap::
 cycleCoordinates()
 {
-	Mat3i permuteForward, permuteBackward;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	mYeeRect = permuteForward*mYeeRect;
 	mRow = permuteForward*mRow;
@@ -1256,9 +1241,8 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap)
 void Ellipsoid::
 cycleCoordinates()
 {
-	Mat3i permuteForward, permuteBackward;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	mFillRect = permuteForward*mFillRect;
 }
@@ -1351,9 +1335,8 @@ setPointers(const Map<string, GridDescPtr> & gridMap)
 void CopyFrom::
 cycleCoordinates()
 {
-	Mat3i permuteForward, permuteBackward;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	mSourceRect = permuteForward*mSourceRect;
 	mDestRect = permuteForward*mDestRect;
@@ -1377,9 +1360,8 @@ Extrude(Rect3i halfCellExtrudeFrom, Rect3i halfCellExtrudeTo) throw(Exception) :
 void Extrude::
 cycleCoordinates()
 {
-	Mat3i permuteForward, permuteBackward;
-	permuteForward = 0,0,1,1,0,0,0,1,0;
-	permuteBackward = 0,1,0,0,0,1,1,0,0;
+	Mat3i permuteForward(Mat3i::cyclicPermutation());
+    Mat3i permuteBackward(inverse(permuteForward));
 	
 	mExtrudeFrom = permuteForward*mExtrudeFrom;
 	mExtrudeTo = permuteForward*mExtrudeTo;

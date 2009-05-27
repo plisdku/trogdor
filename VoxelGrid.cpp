@@ -93,7 +93,7 @@ paintKeyImage(const GridDescription & gridDesc,
 	assert(norm2(u3) == 1);
 	int nUp = abs(dot(u3, yeeRect.p2-yeeRect.p1)) + 1;
 	
-	Mat3i matrixImgToGrid = matWithCols(u1,u2,u3);
+	Mat3i matrixImgToGrid(Mat3i::withColumns(u1,u2,u3));
 		
 	// this will select the correct corner of the fill rect regardless of the
 	// direction of the image unit vectors.  This point corresponds to the
@@ -153,7 +153,7 @@ paintHeightMap(const GridDescription & gridDesc,
 	
 	int nUp = abs(dot(u3, yeeRect.p2-yeeRect.p1)) + 1;
 	
-	Mat3i matrixImgToGrid = matWithCols(u1,u2,u3);
+	Mat3i matrixImgToGrid(Mat3i::withColumns(u1,u2,u3));
 	
 	// this will select the correct corner of the fill rect regardless of the
 	// direction of the image unit vectors.  This point corresponds to the
@@ -293,7 +293,7 @@ paintCopyFrom(const GridDescription & gridDesc,
 	
 	// This matrix will project a coordinate in the dest grid onto the source
 	// grid if the source grid has fewer dimensions.
-	Mat3i matrix(0);
+	Mat3i matrix;
 	matrix(0,0) = (copyFrom.size(0) != 0);
 	matrix(1,1) = (copyFrom.size(1) != 0);
 	matrix(2,2) = (copyFrom.size(2) != 0);
@@ -331,7 +331,7 @@ paintExtrude(const GridDescription & gridDesc, const Extrude & instruction)
 	for (jj = fill.p1[1]; jj <= fill.p2[1]; jj++)
 	for (ii = fill.p1[0]; ii <= fill.p2[0]; ii++)
 	{
-		Vector3i q(maxval(minval(Vector3i(ii,jj,kk), from.p2), from.p1));
+		Vector3i q(vec_max(vec_min(Vector3i(ii,jj,kk), from.p2), from.p1));
 		(*this)(ii,jj,kk) = (*this)(q);
 	}
 }

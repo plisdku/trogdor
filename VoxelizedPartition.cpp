@@ -378,7 +378,7 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 		Vector3i e1 = -cardinalDirection(2*side_i);
 		Vector3i e2 = -cardinalDirection( (2*side_i+2)%6 );
 		Vector3i e3 = -cardinalDirection( (2*side_i+4)%6 );
-		Mat3i m = matWithCols(e1,e2,e3);
+		Mat3i m(Mat3i::withColumns(e1,e2,e3));
 		
 		// 1.  Check the "front" and "back" sides (the sides perpendicular
 		// to vector e1).

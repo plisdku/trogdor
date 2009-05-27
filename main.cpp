@@ -228,7 +228,7 @@ handleArguments(int argc, char* const argv[])
 		cout << "TinyXML version: " << TIXML_MAJOR_VERSION << "."
 			<< TIXML_MINOR_VERSION << "." << TIXML_PATCH_VERSION << endl;
 		cout << "ImageMagick version: " << MagickVersion << endl;
-		cout << "vmlib version: 5.1" << endl;
+		//cout << "vmlib version: 5.1" << endl;
 		cout << "calc version: 4.7" << endl;
 		
 		return variablesMap;

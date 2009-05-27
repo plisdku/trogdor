@@ -9,6 +9,26 @@
 
 #ifdef _VECTORMATRIX_
 
+#include <cassert>
+
+template<typename T>
+static T smax(T lhs, T rhs)
+{
+    return rhs > lhs ? rhs : lhs;
+}
+
+template<typename T>
+static T smin(T lhs, T rhs)
+{
+    return lhs < rhs ? lhs : rhs;
+}
+
+template<typename T>
+static T sabs(T val)
+{
+    return val < 0 ? -val : val;
+}
+
 #pragma mark *** VECTOR ***
 
 template<typename T>
@@ -326,16 +346,116 @@ Vector3<T> cross(const Vector3<T> & lhs, const Vector3<T> & rhs)
 }
 
 template<typename T>
-T abs(const Vector3<T> & v)
+T norm(const Vector3<T> & v)
 {
     return sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
 }
 
 template<typename T>
-T abs2(const Vector3<T> & v)
+T norm1(const Vector3<T> & v)
+{
+    return smax(smax(sabs(v[0]), sabs(v[1])), sabs(v[2]));
+}
+
+template<typename T>
+T norm2(const Vector3<T> & v)
 {
     return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
 }
+
+template<typename T>
+Vector3<T> dominantComponent(const Vector3<T> & rhs)
+{
+    T a2, b2, c2;
+    a2 = rhs[0]*rhs[0];
+    b2 = rhs[1]*rhs[1];
+    c2 = rhs[2]*rhs[2];
+    
+    if (a2 > b2 && a2 > c2)
+        return Vector3<T>(rhs[0], 0, 0);
+    else if (b2 > c2)
+        return Vector3<T>(0, rhs[1], 0);
+    return Vector3<T>(0, 0, rhs[2]);
+}
+
+
+template <typename T, typename S>
+bool vec_lt(const Vector3<T>& lhs, const S & rhs)
+{
+    return (lhs[0] < rhs && lhs[1] < rhs && lhs[2] < rhs);
+}
+
+template <typename T, typename S>
+bool vec_gt(const Vector3<T>& lhs, const S & rhs)
+{
+    return (lhs[0] > rhs && lhs[1] > rhs && lhs[2] > rhs);
+}
+
+template <typename T, typename S>
+bool vec_le(const Vector3<T>& lhs, const S & rhs)
+{
+    return (lhs[0] <= rhs && lhs[1] <= rhs && lhs[2] <= rhs);
+}
+
+template <typename T, typename S>
+bool vec_ge(const Vector3<T>& lhs, const S & rhs)
+{
+    return (lhs[0] >= rhs && lhs[1] >= rhs && lhs[2] >= rhs);
+}
+
+template <typename T, typename S>
+bool vec_lt(const Vector3<T>& lhs, const Vector3<S>& rhs)
+{
+    return (lhs[0] < rhs[0] && lhs[1] < rhs[1] && lhs[2] < rhs[2]);
+}
+
+template <typename T, typename S>
+bool vec_gt(const Vector3<T>& lhs, const Vector3<S>& rhs)
+{
+    return (lhs[0] > rhs[0] && lhs[1] > rhs[1] && lhs[2] > rhs[2]);
+}
+
+template <typename T, typename S>
+bool vec_le(const Vector3<T>& lhs, const Vector3<S>& rhs)
+{
+    return (lhs[0] <= rhs[0] && lhs[1] <= rhs[1] && lhs[2] <= rhs[2]);
+}
+
+template <typename T, typename S>
+bool vec_ge(const Vector3<T>& lhs, const Vector3<S>& rhs)
+{
+    return (lhs[0] >= rhs[0] && lhs[1] >= rhs[1] && lhs[2] >= rhs[2]);
+}
+
+
+template<typename T>
+Vector3<T> vec_max(const Vector3<T> & lhs, const Vector3<T> & rhs)
+{
+    return Vector3<T>(smax(lhs[0], rhs[0]), smax(lhs[1], rhs[1]),
+        smax(lhs[2], rhs[2]));
+}
+
+template<typename T>
+Vector3<T> vec_min(const Vector3<T> & lhs, const Vector3<T> & rhs)
+{
+    return Vector3<T>(smin(lhs[0], rhs[0]), smin(lhs[1], rhs[1]),
+        smin(lhs[2], rhs[2]));
+}
+
+template<typename T>
+Vector3<T> vec_max(const Vector3<T> & lhs, T rhs)
+{
+    return Vector3<T>(smax(lhs[0], rhs), smax(lhs[1], rhs), smax(lhs[2], rhs));
+}
+
+template<typename T>
+Vector3<T> vec_min(const Vector3<T> & lhs, T rhs)
+{
+    return Vector3<T>(smin(lhs[0], rhs), smin(lhs[1], rhs), smin(lhs[2], rhs));
+}
+
+
+
 
 
 
@@ -466,6 +586,50 @@ diagonal(T2 d)
         d, 0, 0,
         0, d, 0,
         0, 0, d);
+}
+
+template<typename T>
+Matrix3<T> Matrix3<T>::
+cyclicPermutation()
+{
+    return Matrix3<T>(
+        0, 0, 1,
+        1, 0, 0,
+        0, 1, 0);
+}
+
+template<typename T>
+Matrix3<T> transpose(const Matrix3<T> & rhs)
+{
+    return Matrix3<T>(
+        rhs[0], rhs[3], rhs[6],
+        rhs[1], rhs[4], rhs[7],
+        rhs[2], rhs[5], rhs[8]);
+}
+
+template<typename T>
+T determinant(const Matrix3<T> & rhs)
+{
+    return rhs[0]*(rhs[4]*rhs[8] - rhs[7]*rhs[5])
+        - rhs[1]*(rhs[3]*rhs[8] - rhs[6]*rhs[5])
+        + rhs[2]*(rhs[3]*rhs[7] - rhs[6]*rhs[4]);
+}
+
+template<typename T>
+Matrix3<T> inverse(const Matrix3<T> & rhs)
+{
+    // http://www.dr-lex.be/random/matrix_inv.html;
+    return Matrix3<T>(
+        rhs(2,2)*rhs(1,1)-rhs(2,1)*rhs(1,2),
+        -(rhs(2,2)*rhs(0,1)-rhs(2,1)*rhs(0,2)),
+        rhs(1,2)*rhs(0,1)-rhs(1,1)*rhs(0,2),
+        -(rhs(2,2)*rhs(1,0)-rhs(2,0)*rhs(1,2)),
+        rhs(2,2)*rhs(0,0)-rhs(2,0)*rhs(0,2),
+        -(rhs(1,2)*rhs(0,0)-rhs(1,0)*rhs(0,2)),
+        rhs(2,1)*rhs(1,0)-rhs(2,0)*rhs(1,1),
+        -(rhs(2,1)*rhs(0,0)-rhs(2,0)*rhs(0,1)),
+        rhs(1,1)*rhs(0,0)-rhs(1,0)*rhs(0,1)
+        ) / determinant(rhs);
 }
 
 template<typename T, typename S>

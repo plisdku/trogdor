@@ -5,10 +5,14 @@
  *  Created by Paul Hansen on 5/18/09.
  *  Copyright 2009 Stanford University. All rights reserved.
  *
+ *  THESE VECTORS ETC. DO NOT BEHAVE CORRECTLY FOR COMPLEX NUMBERS.
+ *  There are no complex conjugations anywhere, e.g. in dot products and in
+ *  absolute values/norms.
  */
 
 #ifndef _VECTORMATRIX_
 #define _VECTORMATRIX_
+
 
 #include <iostream>
 #include <cmath>
@@ -119,9 +123,41 @@ T dot(const Vector3<T> & lhs, const Vector3<T> & rhs);
 template<typename T>
 Vector3<T> cross(const Vector3<T> & lhs, const Vector3<T> & rhs);
 template<typename T>
-T abs(const Vector3<T> & v);
+T norm(const Vector3<T> & v);
 template<typename T>
-T abs2(const Vector3<T> & v);
+T norm1(const Vector3<T> & v);
+template<typename T>
+T norm2(const Vector3<T> & v);
+template<typename T>
+Vector3<T> dominantComponent(const Vector3<T> & rhs);
+
+template <typename T, typename S>
+bool vec_lt(const Vector3<T>& lhs, const S & rhs);
+template <typename T, typename S>
+bool vec_gt(const Vector3<T>& lhs, const S & rhs);
+template <typename T, typename S>
+bool vec_le(const Vector3<T>& lhs, const S & rhs);
+template <typename T, typename S>
+bool vec_ge(const Vector3<T>& lhs, const S & rhs);
+template <typename T, typename S>
+bool vec_lt(const Vector3<T>& lhs, const Vector3<S>& rhs);
+template <typename T, typename S>
+bool vec_gt(const Vector3<T>& lhs, const Vector3<S>& rhs);
+template <typename T, typename S>
+bool vec_le(const Vector3<T>& lhs, const Vector3<S>& rhs);
+template <typename T, typename S>
+bool vec_ge(const Vector3<T>& lhs, const Vector3<S>& rhs);
+
+
+template<typename T>
+Vector3<T> vec_max(const Vector3<T> & lhs, const Vector3<T> & rhs);
+template<typename T>
+Vector3<T> vec_min(const Vector3<T> & lhs, const Vector3<T> & rhs); 
+template<typename T>
+Vector3<T> vec_max(const Vector3<T> & lhs, T rhs);
+template<typename T>
+Vector3<T> vec_min(const Vector3<T> & lhs, T rhs); 
+
 
 
 template<typename T>
@@ -160,6 +196,9 @@ public:
     template<typename T2>
     static Matrix3<T> diagonal(T2 d);
     
+    static Matrix3<T> cyclicPermutation();
+    
+    
     T & operator[](unsigned int n)
         { return m[n]; }
     const T & operator[](unsigned int n) const
@@ -168,11 +207,20 @@ public:
         { return m[3*mm+nn]; }
     const T & operator()(unsigned int mm, unsigned int nn) const
         { return m[3*mm+nn]; }
-    
+    /*
+    Matrix3<T> transpose() const;
+    T determinant() const;
+    */
 private:
     T m[9];
 };
 
+template<typename T>
+Matrix3<T> transpose(const Matrix3<T> & lhs);
+template<typename T>
+T determinant(const Matrix3<T> & lhs);
+template<typename T>
+Matrix3<T> inverse(const Matrix3<T> & lhs);
 
 template<typename T, typename S>
 Matrix3<T> operator+(const Matrix3<T> & lhs, const Matrix3<S> & rhs);
@@ -195,19 +243,18 @@ Matrix3<T> operator+(const Matrix3<T> & lhs, S & rhs);
 template<typename T, typename S>
 Matrix3<T> operator-(const Matrix3<T> & lhs, S & rhs);
 template<typename T, typename S>
-Vector3<S> operator*(const Matrix3<T> & lhs, S rhs);
+Matrix3<T> operator*(const Matrix3<T> & lhs, S rhs);
 template<typename T, typename S>
-Vector3<S> operator/(const Matrix3<T> & lhs, S rhs);
+Matrix3<T> operator/(const Matrix3<T> & lhs, S rhs);
 
-
 template<typename T, typename S>
-Vector3<S> operator+(S lhs, const Matrix3<T> rhs);
+Matrix3<S> operator+(S lhs, const Matrix3<T> rhs);
 template<typename T, typename S>
-Vector3<S> operator-(S lhs, const Matrix3<T> rhs);
+Matrix3<S> operator-(S lhs, const Matrix3<T> rhs);
 template<typename T, typename S>
-Vector3<S> operator*(S lhs, const Matrix3<T> rhs);
+Matrix3<S> operator*(S lhs, const Matrix3<T> rhs);
 template<typename T, typename S>
-Vector3<S> operator/(S lhs, const Matrix3<T> rhs);
+Matrix3<S> operator/(S lhs, const Matrix3<T> rhs);
 
 template<typename T>
 Matrix3<T> operator+(const Matrix3<T> & rhs);

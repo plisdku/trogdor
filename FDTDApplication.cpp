@@ -111,7 +111,7 @@ Mat3i FDTDApplication::
 guessFastestOrientation(const SimulationDescription & grid) const
 {
 	LOG << "Defaulting to standard orientation.\n";
-	return Mat3i(1); // identity matrix
+	return Mat3i::eye(); // identity matrix
 }
 
 void FDTDApplication::
@@ -277,7 +277,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	HuygensSurfaceDescPtr huygensSurface, string auxGridName)
 {
 	int nn;
-	Mat3i collapser(1);
+	Mat3i collapser(Mat3i::eye());
 	collapser(0,0) = !collapsible[0];
 	collapser(1,1) = !collapsible[1];
 	collapser(2,2) = !collapsible[2];
@@ -290,7 +290,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	// non-1D dimensions get 10 cells of PML.
 	
 	Rect3i tfRect(collapser*huygensSurface->getHalfCells());
-	tfRect.p2 = maxval(tfRect.p2, Vector3i(1,1,1));
+	tfRect.p2 = vec_max(tfRect.p2, Vector3i(1,1,1));
 	
 	Vector3i bigDimensions(!collapsible[0], !collapsible[1], !collapsible[2]);
     for (nn = 0; nn < 3; nn++)
@@ -420,7 +420,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	//   whole space and make a source with omitted back side.
 	
 	Rect3i tfRect(huygensSurface->getHalfCells());
-	tfRect.p2 = maxval(tfRect.p2, Vector3i(1,1,1));
+	tfRect.p2 = vec_max(tfRect.p2, Vector3i(1,1,1));
 	
 	Vector3i bigDimensions(1,1,1);
 	for (nn = 0; nn < 3; nn++)
