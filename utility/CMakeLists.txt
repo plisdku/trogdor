@@ -6,6 +6,7 @@ TimeWrapper.cpp
 geometry.hh
 calc.hh
 Exception.cpp
+VectorMatrix.cpp
 )
 
 include_directories(
