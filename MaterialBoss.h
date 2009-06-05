@@ -60,9 +60,11 @@ public:
 	virtual ~MaterialDelegate();
 	
 	// Auxiliary variables
-	virtual void setNumCells(int octant, int number);
-	virtual void setNumCellsOnPMLFace(int octant, int faceNum, int number);
-	virtual void setPMLDepth(int octant, int faceNum, int depthCells);
+    virtual void setNumCellsE(int fieldDir, int numCells);
+    virtual void setNumCellsH(int fieldDir, int numCells);
+    virtual void setPMLHalfCells(int pmlDirection, Rect3i halfCellsOnSide);
+    virtual void setNumCellsOnPMLFaceE(int fieldDir, int faceNum, int numCells);
+    virtual void setNumCellsOnPMLFaceH(int fieldDir, int faceNum, int numCells);
 	
 	// Runline handling
 	virtual void startRunline(const VoxelizedPartition & vp,
@@ -78,6 +80,12 @@ public:
     // Setting up the runtime materials
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const = 0;
+    
+    // Accessor for paint with all the goodies
+    void setParentPaint(Paint* paint) { mParentPaint = paint; }
+    Paint* getParentPaint() const { return mParentPaint; }
+private:
+    Paint* mParentPaint;
 };
 typedef Pointer<MaterialDelegate> MaterialDelegatePtr;
 
@@ -112,6 +120,7 @@ public:
     
     const std::vector<SBMRunlinePtr> & getRunlines(int field) const
         { return mRunlines[field]; }
+    Paint* getPaint() const { return mStartPaint; }
 protected:
 	
 	std::vector<SBMRunlinePtr> mRunlines[6];
@@ -157,6 +166,7 @@ public:
         
     const std::vector<SBPMRunlinePtr> & getRunlines(int field) const
         { return mRunlines[field]; }
+    
 protected:
 	
 	std::vector<SBPMRunlinePtr> mRunlines[6];

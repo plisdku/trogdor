@@ -78,7 +78,7 @@ SourceBoss.cpp
 StaticDielectric.h
 StaticDielectric.cpp
 StaticDielectricPML.h
-StaticDielectricPML.cpp
+StaticDielectricPML.hpp
 StaticLossyDielectric.h
 StaticLossyDielectric.cpp
 Version.h

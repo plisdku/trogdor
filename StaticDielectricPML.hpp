@@ -12,38 +12,123 @@
 #include "StaticDielectricPML.h"
 #include "CalculationPartition.h"
 #include "Paint.h"
+#include "YeeUtilities.h"
 #include <sstream>
 
+using namespace YeeUtilities;
 using namespace std;
 
 StaticDielectricPMLDelegate::
-StaticDielectricPMLDelegate() :
+StaticDielectricPMLDelegate(Vector3i pmlDir) :
     SimpleBulkPMLMaterialDelegate()
 {
-    mPMLDir = mStartPaint->getPMLDirections();
-    mPMLHalfCells = vp.getPMLHalfCells(mPMLDir);
 }
 
 void StaticDielectricPMLDelegate::
-setNumCells(int octant, int number)
+setNumCellsE(int fieldDir, int numCells)
 {
-	const int STRIDE = 1;
-	int eIndex = octantENumber(octant);
-    int hIndex = octantHNumber(octant);
+    const int STRIDE = 1;
+    int jDir = (fieldDir+1)%3;
+    int kDir = (jDir+1)%3;
+    char fieldChar = '0' + fieldDir;
+    Vector3i pmlDir = getParentPaint()->getPMLDirections();
+    string prefix = getParentPaint()->getBulkMaterial()->getName() + " accum E";
     
-    LOG << "Setting number of cells.\n";
+    if (pmlDir[jDir])
+    {
+        mBufAccumEj[fieldDir] = MemoryBufferPtr(
+            new MemoryBuffer( prefix + 'j' + fieldChar, numCells, STRIDE ) );
+    }
+    if (pmlDir[kDir])
+    {
+        mBufAccumEk[fieldDir] = MemoryBufferPtr(
+            new MemoryBuffer( prefix + 'k' + fieldChar, numCells, STRIDE ) );
+    }
+}
+
+void StaticDielectricPMLDelegate::
+setNumCellsH(int fieldDir, int numCells)
+{
+    const int STRIDE = 1;
+    int jDir = (fieldDir+1)%3;
+    int kDir = (jDir+1)%3;
+    char fieldChar = '0' + fieldDir;
+    Vector3i pmlDir = getParentPaint()->getPMLDirections();
+    string prefix = getParentPaint()->getBulkMaterial()->getName() + " accum H";
     
-    ostringstream bufName;
-    if (eIndex != -1)
+    if (pmlDir[jDir])
     {
-        bufName.clear();
-        bufName << mDesc->getName() << " AccumEj " << eIndex;
-        mCurrents[eIndex] = MemoryBufferPtr(new MemoryBuffer(
-            bufName.str(), number, STRIDE));
+        mBufAccumHj[fieldDir] = MemoryBufferPtr(
+            new MemoryBuffer( prefix + 'j' + fieldChar, numCells, STRIDE ) );
     }
-    else if (hIndex != -1)
+    if (pmlDir[kDir])
     {
+        mBufAccumHk[fieldDir] = MemoryBufferPtr(
+            new MemoryBuffer( prefix + 'k' + fieldChar, numCells, STRIDE ) );
     }
+}
+
+void StaticDielectricPMLDelegate::
+setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide)
+{
+    Rect3i pmlYee;
+    int pmlDepthYee;
+    int nYee, nHalf, nHalf0;
+    int fieldDir;
+    float depthHalf, depthFrac;
+    float pmlDepthHalf = halfCellsOnSide.size(pmlDir)+2; // bigger by 1!!!
+    
+    const int ONE = 0; // if I set it to 0, the PML layer includes depth==0.
+    
+    for (fieldDir = 0; fieldDir < 3; fieldDir++)
+    if (fieldDir != pmlDir)
+    {
+        // E field auxiliary constants
+        pmlYee = rectHalfToYee(halfCellsOnSide, eOctantNumber(fieldDir));
+        pmlDepthYee = pmlYee.size(pmlDir)+1;
+        mSigmaE[fieldDir][pmlDir].resize(pmlDepthYee);
+        mAlphaE[fieldDir][pmlDir].resize(pmlDepthYee);
+        mKappaE[fieldDir][pmlDir].resize(pmlDepthYee);
+        
+        nHalf0 = rectYeeToHalf(pmlYee, eOctantNumber(fieldDir)).p1[pmlDir];
+        
+        for (nYee = 0, nHalf=nHalf0; nYee < pmlDepthYee; nYee++, nHalf+=2)
+        {
+            if (pmlDir%2 == 0) // going left/down etc. (negative direction)
+                depthHalf = float(halfCellsOnSide.p2[pmlDir]-nHalf+ONE)
+            else
+                depthHalf = float(nHalf-halfCellsOnSide.p1[pmlDir]+ONE);
+            depthFrac = depthHalf / pmlDepthHalf;
+            mSigmaE[fieldDir][pmlDir][nYee] = depthFrac;
+            mKappaE[fieldDir][pmlDir][nYee] = 1.0;
+            mAlphaE[fieldDir][pmlDir][nYee] = 0.0;
+        }
+        
+        // H field auxiliary constants
+        pmlYee = rectHalfToYee(halfCellsOnSide, hOctantNumber(fieldDir));
+        pmlDepthYee = pmlYee.size(pmlDir)+1;
+        mSigmaH[fieldDir][pmlDir].resize(pmlDepthYee);
+        mAlphaH[fieldDir][pmlDir].resize(pmlDepthYee);
+        mKappaH[fieldDir][pmlDir].resize(pmlDepthYee);
+        
+        nHalf0 = rectYeeToHalf(pmlYee, hOctantNumber(fieldDir)).p1[pmlDir];
+        
+        for (nYee = 0, nHalf=nHalf0; nYee < pmlDepthYee; nYee++, nHalf+=2)
+        {
+            if (pmlDir%2 == 0) // going left/down etc. (negative direction)
+                depthHalf = float(halfCellsOnSide.p2[pmlDir]-nHalf+ONE)
+            else
+                depthHalf = float(nHalf-halfCellsOnSide.p1[pmlDir]+ONE);
+            depthFrac = depthHalf / pmlDepthHalf;
+            mSigmaH[fieldDir][pmlDir][nYee] = depthFrac;
+            mKappaH[fieldDir][pmlDir][nYee] = 1.0;
+            mAlphaH[fieldDir][pmlDir][nYee] = 0.0;
+        }
+
+    }
+    
+    if (ONE != 1)
+        LOG << "Warning: ONE is not 1.\n";
 }
 
 MaterialPtr StaticDielectricPMLDelegate::
@@ -59,25 +144,21 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
         if (mPMLDir[1] && mPMLDir[2])
         {
             m = MaterialPtr(new StaticDielectricPML<1,1,1>(*this,
-                *mStartPaint->getBulkMaterial(), mPMLHalfCells, mPMLDir,
                 cp.getDxyz(), cp.getDt() ));
         }
         else if (mPMLDir[1])
         {
             m = MaterialPtr(new StaticDielectricPML<1,1,0>(*this,
-                *mStartPaint->getBulkMaterial(), mPMLHalfCells, mPMLDir,
                 cp.getDxyz(), cp.getDt() ));
         }
         else if (mPMLDir[2])
         {
             m = MaterialPtr(new StaticDielectricPML<1,0,1>(*this,
-                *mStartPaint->getBulkMaterial(), mPMLHalfCells, mPMLDir,
                 cp.getDxyz(), cp.getDt() ));
         }
         else
         {
             m = MaterialPtr(new StaticDielectricPML<1,0,0>(*this,
-                *mStartPaint->getBulkMaterial(), mPMLHalfCells, mPMLDir,
                 cp.getDxyz(), cp.getDt() ));
         }
     }
@@ -86,21 +167,18 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
         if (mPMLDir[2])
         {
             m = MaterialPtr(new StaticDielectricPML<0,1,1>(*this,
-                *mStartPaint->getBulkMaterial(), mPMLHalfCells, mPMLDir,
                 cp.getDxyz(), cp.getDt() ));
         }
         else
         {
             m = MaterialPtr(new StaticDielectricPML<0,1,0>(*this,
-                *mStartPaint->getBulkMaterial(), mPMLHalfCells, mPMLDir,
                 cp.getDxyz(), cp.getDt() ));
         }
     }
     else if (mPMLDir[2] != 0)
     {
         m = MaterialPtr(new StaticDielectricPML<0,0,1>(*this,
-            *mStartPaint->getBulkMaterial(), mPMLHalfCells, mPMLDir,
-            cp.getDxyz(), cp.getDt() ));
+                cp.getDxyz(), cp.getDt() ));
     }
     else
         assert(!"What, a directionless PML???");
@@ -111,21 +189,20 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
 
 template <bool X_ATTENUATION, bool Y_ATTENUATION, bool Z_ATTENUATION>
 StaticDielectricPML::
-StaticDielectricPML(const StaticDielectricPMLDelegate & deleg,
-    const MaterialDescription & descrip, Rect3i pmlHalfCells, Vector3i pmlDir,
-    Vector3f dxyz, float dt) :
+StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
+    float dt) :
     Material(),
-    mPMLHalfCells(pmlHalfCells),
-    mPMLDir(pmlDir),
     mDxyz(dxyz),
     mDt(dt),
     m_epsr(1.0),
     m_mur(1.0)
 {
-    if (descrip.getParams().count("epsr"))
-        istringstream(descrip.getParams()["epsr"]) >> m_epsr;
-    if (descrip.getParams().count("mur"))
-        istringstream(descrip.getParams()["mur"]) >> m_mur;
+    MaterialDescPtr desc = deleg.getParentPaint()->getBulkMaterial();
+     
+    if (desc->getParams().count("epsr"))
+        istringstream(desc->getParams()["epsr"]) >> m_epsr;
+    if (desc->getParams().count("mur"))
+        istringstream(desc->getParams()["mur"]) >> m_mur;
     
     // Make the runlines
     for (int field = 0; field < 6; field++)
@@ -138,7 +215,7 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg,
         for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
             mRunlines[field][nn] = SimplePMLRunline(*setupRunlines[nn]);
     }
-    
+    /*
     // For simplicity all field octants use the same size of PML array.
     for (int attenDir = 0; attenDir < 3; attenDir++)
     if (mPMLDir[attenDir] != 0)
@@ -159,6 +236,7 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg,
         mC_PsijM[attenDir].resize(depthYee);
         mC_PsikM[attenDir].resize(depthYee);
     }
+    */
     
     /*
     // Allocate the auxiliary thingies

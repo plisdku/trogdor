@@ -17,16 +17,57 @@
 class StaticDielectricPMLDelegate : public SimpleBulkPMLMaterialDelegate
 {
 public:
-    StaticDielectricPMLDelegate();
+    StaticDielectricPMLDelegate(Vector3i pmlDir);
     
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
+        
+    virtual void setNumCellsE(int fieldDir, int numCells);
+    virtual void setNumCellsH(int fieldDir, int numCells);
+    virtual void setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide);
+    
+    const std::vector<float> & getSigmaE(int fieldDir, int pmlDir) const
+        { return mSigmaE[fieldDir][pmlDir]; }
+    const std::vector<float> & getAlphaE(int fieldDir, int pmlDir) const
+        { return mAlphaE[fieldDir][pmlDir]; }
+    const std::vector<float> & getKappaE(int fieldDir, int pmlDir) const
+        { return mKappaE[fieldDir][pmlDir]; }
+    
+    const std::vector<float> & getSigmaH(int fieldDir, int pmlDir) const
+        { return mSigmaH[fieldDir][pmlDir]; }
+    const std::vector<float> & getAlphaH(int fieldDir, int pmlDir) const
+        { return mAlphaH[fieldDir][pmlDir]; }
+    const std::vector<float> & getKappaH(int fieldDir, int pmlDir) const
+        { return mKappaH[fieldDir][pmlDir]; }
+    
+    const MemoryBufferPtr getBufAccumEj(int fieldDir) const
+        { return mBufAccumEj[fieldDir]; }
+    const MemoryBufferPtr getBufAccumEk(int fieldDir) const
+        { return mBufAccumEk[fieldDir]; }
+    const MemoryBufferPtr getBufAccumHj(int fieldDir) const
+        { return mBufAccumHj[fieldDir]; }
+    const MemoryBufferPtr getBufAccumHk(int fieldDir) const
+        { return mBufAccumHk[fieldDir]; }
+    
 private:
     MemoryBufferPtr mBufAccumEj[3], mBufAccumEk[3],
         mBufAccumHj[3], mBufAccumHk[3];
     
-    Rect3i mPMLHalfCells;
-    Vector3i mPMLDir;
+    // Indexing is [fieldDir][pmlDir]
+    std::vector<float> mSigmaE[3][3];
+    std::vector<float> mSigmaH[3][3];
+    std::vector<float> mAlphaE[3][3];
+    std::vector<float> mAlphaH[3][3];
+    std::vector<float> mKappaE[3][3];
+    std::vector<float> mKappaH[3][3];
+    /*
+    std::vector<float> mSigmaj[3];
+    std::vector<float> mSigmak[3];
+    std::vector<float> mAlphaj[3];
+    std::vector<float> mAlphak[3];
+    std::vector<float> mKappaj[3];
+    std::vector<float> mKappak[3];
+    */
 };
 
 template <bool X_ATTENUATION, bool Y_ATTENUATION, bool Z_ATTENUATION>
@@ -34,27 +75,12 @@ class StaticDielectricPML : public Material
 {
 public:
     StaticDielectricPML(const StaticDielectricPMLDelegate & deleg,
-        const MaterialDescription & descrip, Rect3i pmlHalfCells,
-        Vector3i pmlDir, Vector3f dxyz, float dt);
+        Vector3f dxyz, float dt);
     
     virtual void calcEPhase(int direction);
     virtual void calcHPhase(int direction);
 private:
     std::vector<SimplePMLRunline> mRunlines[6];
-    
-    // The memory buffers define the skeleton of accumulated data but are not
-    // responsible for its allocation.
-    
-    MemoryBufferPtr mBufAccumEj[3], mBufAccumEk[3],
-        mBufAccumHj[3], mBufAccumHk[3];
-    /*
-    MemoryBufferPtr mBufC_JjH[3], mBufC_JkH[3],
-        mBufC_PhijH[3], mBufC_PhikH[3],
-        mBufC_PhijJ[3], mBufC_PhikJ[3];
-    MemoryBufferPtr mBufC_MjE[3], mBufC_MkE[3],
-        mBufC_PsijE[3], mBufC_PsikE[3],
-        mBufC_PsijM[3], mBufC_PsikM[3];
-    */
     
     // These vectors are the actual location of the allocated fields and
     // update constants.
@@ -67,10 +93,8 @@ private:
         mC_PsijE[3], mC_PsikE[3],
         mC_PsijM[3], mC_PsikM[3];
     
-    
-    
-    Rect3i mMyPMLHalfCells;
-    Vector3i mPMLDir;
+    //Rect3i mMyPMLHalfCells;
+    //Vector3i mPMLDir;
     
     Vector3f mDxyz;
     float mDt;

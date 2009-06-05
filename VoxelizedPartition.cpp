@@ -562,25 +562,22 @@ createMaterialDelegates()
 		}
 		MaterialDelegate & mat = *mDelegates[p];
 		
-		//LOGMORE << hex << p << dec << ":\n";
-		//LOGMORE << *p << "\n";
-		
-		for (int octant = 0; octant < 8; octant++)
-		{
-			long numCellsInOctant = mCentralIndices->getNumCells(p, octant);
-			
-			// This count suffices for bulk materials
-			mat.setNumCells(octant, numCellsInOctant);
-			
-			// This fills in information for PMLs
-			if (p->isPML()) // this condition just speeds things up
-			for (int faceNum = 0; faceNum < 6; faceNum++)
-			if (partitionHasPML(faceNum))
-			{
-				mat.setPMLDepth(octant, faceNum,
-					rectHalfToYee(pmlRects[faceNum], octant).size(faceNum/2)+1);
-			}
-		}
+        int fieldDir;
+        long cells;
+        for (fieldDir = 0; fieldDir < 3; fieldDir++)
+        {
+            cells = mCentralIndices->getNumCells(p, eOctantNumber(fieldDir));
+            mat.setNumCellsE(fieldDir, cells);            
+            cells = mCentralIndices->getNumCells(p, hOctantNumber(fieldDir));
+            mat.setNumCellsH(fieldDir, cells);
+        }
+        
+        LOG << "Not calling that PML cells on side function.  What's it for?\n";
+        if (p->isPML())
+        for (int faceNum = 0; faceNum < 6; faceNum++)
+        {
+            mat.setPMLHalfCells(faceNum, pmlRects[faceNum]);
+        }
 	}
 }
 

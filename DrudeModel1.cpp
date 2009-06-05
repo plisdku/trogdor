@@ -25,6 +25,20 @@ DrudeModel1Delegate(const MaterialDescPtr & material) :
 {
 }
 
+
+void DrudeModel1Delegate::
+setNumCellsE(int fieldDir, int number)
+{
+    const int STRIDE = 1;
+    
+    ostringstream bufName;
+    bufName << mDesc->getName() << " J" << fieldDir;
+    mCurrents[fieldDir] = MemoryBufferPtr(new MemoryBuffer(
+        bufName.str(), number, STRIDE));
+}
+
+
+/*
 void DrudeModel1Delegate::
 setNumCells(int octant, int number)
 {
@@ -40,7 +54,7 @@ setNumCells(int octant, int number)
 	mCurrents[eIndex] = MemoryBufferPtr(new MemoryBuffer(
         bufName.str(), number, STRIDE));
 }
-
+*/
 
 MaterialPtr DrudeModel1Delegate::
 makeCalcMaterial(const VoxelizedPartition & vp,

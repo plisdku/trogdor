@@ -61,7 +61,7 @@ private:
 public:
 	
 	static Paint* getPaint(const MaterialDescPtr & material);
-		
+    
 	Paint* withoutModifications() const { return mBasePaint; }
 	Paint* withoutCurlBuffers() const { return mBaseUpdatePaint; }
 	Paint* withPML(Vector3i pmlDir) const;

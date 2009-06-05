@@ -32,9 +32,8 @@ getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	Paint* parentPaint)
 {
 	assert(parentPaint != 0L);
-	//LOG << "Delegate for " << *parentPaint << endl;
-	
-	//PaintType type = parentPaint->getType();
+    
+    MaterialDelegatePtr matDel;
 	const MaterialDescPtr bulkMaterial = parentPaint->getBulkMaterial();
 	string materialClass(bulkMaterial->getModelName());
 	string materialName(bulkMaterial->getName());
@@ -44,35 +43,30 @@ getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	if (materialClass == "StaticDielectric")
 	{
         if (parentPaint->isPML())
-            return MaterialDelegatePtr(new StaticDielectricPMLDelegate);
+            matDel = MaterialDelegatePtr(new StaticDielectricPMLDelegate);
         else
-            return MaterialDelegatePtr(new StaticDielectricDelegate);
+            matDel = MaterialDelegatePtr(new StaticDielectricDelegate);
 	}
     else if (materialClass == "StaticLossyDielectric")
     {
-        //if (parentPaint->isPML())
-        //    return MaterialDelegatePtr(new StaticLossyDielectricPMLDelegate);
-        //else
-            return MaterialDelegatePtr(new StaticLossyDielectricDelegate);
+        matDel = MaterialDelegatePtr(new StaticLossyDielectricDelegate);
     }
 	else if (materialClass == "DrudeMetal")
 	{
-        //if (parentPaint->isPML())
-        //    return MaterialDelegatePtr(new DrudeModel1PMLDelegate);
-        //else
-            return MaterialDelegatePtr(new DrudeModel1Delegate(bulkMaterial));
+        matDel = MaterialDelegatePtr(new DrudeModel1Delegate(bulkMaterial));
 	}
 	else if (materialClass == "PerfectConductor")
 	{
-        return MaterialDelegatePtr(new PerfectConductorDelegate);
+        matDel = MaterialDelegatePtr(new PerfectConductorDelegate);
 	}
-	
-	
-	LOG << "Using default (silly) delegate.\n";
+	else
+    {
+        LOG << "Using default (silly) delegate.\n";
+        matDel = MaterialDelegatePtr(new SimpleBulkMaterialDelegate);
+    }
+    matDel->setParentPaint(parentPaint);
     
-	if (parentPaint->isPML())
-		return MaterialDelegatePtr(new SimpleBulkPMLMaterialDelegate);
-	return MaterialDelegatePtr(new SimpleBulkMaterialDelegate);
+    return matDel;
 }
 
 Material::
@@ -100,26 +94,32 @@ MaterialDelegate::
 {
 }
 
+
+
 void MaterialDelegate::
-setNumCells(int octant, int number)
+setNumCellsE(int fieldDir, int numCells)
 {
-	//LOG << "Default: octant " << octant << ", num " << number << "\n";
 }
 
 void MaterialDelegate::
-setNumCellsOnPMLFace(int octant, int faceNum, int number)
+setNumCellsH(int fieldDir, int numCells)
 {
-	//LOG << "Default: octant " << octant << ", face " << faceNum << ", num "
-	//	<< number << "\n";
+}
+
+
+void MaterialDelegate::
+setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide)
+{
 }
 
 void MaterialDelegate::
-setPMLDepth(int octant, int faceNum, int number)
+setNumCellsOnPMLFaceE(int fieldDir, int faceNum, int numCells)
 {
-	//LOG << "Default: octant " << octant << ", face " << faceNum << ", num "
-	//	<< number << "\n";
 }
-
+void MaterialDelegate::
+setNumCellsOnPMLFaceH(int fieldDir, int faceNum, int numCells)
+{
+}
 
 #pragma mark *** Simple Bulk Material ***
 
@@ -301,6 +301,23 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	mCurrentRunline.auxIndex = cellCountGrid(startPos);
 	mCurrentRunline.length = 1;
 	
+    // PML aux stuff
+    // The start point of the runline *may* be outside the grid, *if* we are
+    // performing calculations on ghost points!  This may happen in data-push
+    // adjoint update equations.  In any case, usually the wrap does nothing.
+    assert(vec_eq(vp.getGridHalfCells().p1, 0));
+    Vector3i gridNumHalfCells = vp.getGridHalfCells().size() + 1;
+    Vector3i wrappedStart = (mStartPoint+gridNumHalfCells) % gridNumHalfCells;
+    assert(halfCellIndex(wrappedStart) == halfCellIndex(mStartPoint));
+    Rect3i pmlYeeCells = rectHalfToYee(
+        vp.getPMLHalfCells(mStartPaint->getPMLDirections()),
+        halfCellIndex(wrappedStart));
+    mCurrentRunline.pmlDepthIndex = vecHalfToYee(wrappedStart) - pmlYeeCells.p1;
+    
+    // TODO: test that this gives the correct PML if we wrapped to the far
+    // side of the grid somehow.  (What am I talking about???)
+    
+    /*
 	// PML aux stuff
 	Rect3i gridHalfCells = vp.getGridHalfCells();
     assert(vec_eq(gridHalfCells.p1, 0));  // never hurts to be sure.
@@ -320,6 +337,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
     //  the pml depth index is 0 at the lowest-conductivity point, which is
     //  considered to be a physical distance of dx or dx/2 into the PML.
     // This index is in Yee cells.
+    */
     
 	/*
 	LOG << "runline for PML in " << mPMLRect << "\n";

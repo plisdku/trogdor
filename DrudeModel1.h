@@ -21,7 +21,7 @@ class DrudeModel1Delegate : public SimpleBulkMaterialDelegate
 public:
 	DrudeModel1Delegate(const MaterialDescPtr & material);
 	
-	virtual void setNumCells(int octant, int number);
+    virtual void setNumCellsE(int fieldDir, int numCells);
     
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
