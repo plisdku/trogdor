@@ -75,15 +75,24 @@ runNew(string parameterFile)
 	// RUN THE SIMULATION hoorah.
     LOG << "Beginning calculation.\n";
     
-    long numT = sim->getDuration();
-    for (long tt = 0; tt < numT; tt++)
+    // The execution order here is a wee bit weird, with the priming-the-pump
+    // step.  Timestep 0 is considered to be the initial condition, and is
+    // settable through hard or soft sources.  Also timestep zero needs to be
+    // written to the output files.  So there are N-1 updates in an N step
+    // simulation.
+    
+    sourceE(calculationGrids, 0);
+    outputE(calculationGrids, 0);
+    sourceH(calculationGrids, 0);
+    outputH(calculationGrids, 0);
+    for (long tt = 1; tt < sim->getDuration(); tt++)
     {
-        //outputE
-        //outputH
-        calcE(calculationGrids);
-        calcAfterE(calculationGrids);
-        calcH(calculationGrids);
-        calcAfterH(calculationGrids);
+        updateE(calculationGrids, tt);
+        sourceE(calculationGrids, tt);
+        outputE(calculationGrids, tt);
+        updateH(calculationGrids, tt);
+        sourceH(calculationGrids, tt);
+        outputH(calculationGrids, tt);
     }
     
     LOG << "Done with simulation.\n";
@@ -149,45 +158,48 @@ voxelizeGrids(const SimulationDescPtr sim,
 		Vector3i numNodes(1,1,1);
 		Vector3i thisNode(0,0,0);
 		
-		Rect3i partitionWalls = Rect3i(-100000000, -100000000, -100000000, 
+		Rect3i partitionWallsHalf = Rect3i(-100000000, -100000000, -100000000, 
 			100000000, 100000000, 100000000);
 		
 		voxelizeGridRecursor(voxelizedGrids, g, numNodes, thisNode,
-			partitionWalls);
+			partitionWallsHalf);
 	}
 }
 
 void FDTDApplication::
 voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	GridDescPtr currentGrid, Vector3i numNodes, Vector3i thisNode, 
-	Rect3i partitionWalls)
+	Rect3i partitionWallsHalf)
 {
-	Rect3i myPartition = clip(partitionWalls, currentGrid->getHalfCellBounds());
-	Rect3i myCalcRegion(myPartition);
-	Rect3i allocRegion(myPartition);
-	
+	Rect3i myPartitionHalfCells = clip(partitionWallsHalf,
+        currentGrid->getHalfCellBounds());
+	Rect3i myCalcHalfCells(myPartitionHalfCells);
+	Rect3i myAllocatedHalfCells(myPartitionHalfCells);
+    
 	for (int mm = 0; mm < 3; mm++)
 	if (numNodes[mm] != 1 && currentGrid->getNumYeeCells()[mm] != 1)
 	{
-		allocRegion.p1[mm] -= 1;
-		allocRegion.p2[mm] += 1;
+		myAllocatedHalfCells.p1[mm] -= 2;
+		myAllocatedHalfCells.p2[mm] += 2;
 	}
 	
+    /*
     LOG << "Recursing:\n";
 	LOGMORE << "Recursing for grid " << currentGrid->getName() << ".\n";
 	LOGMORE << "I am partition " << thisNode << " of " << numNodes << ".\n";
-	LOGMORE << "My node partition region is " << partitionWalls << "\n";
-	LOGMORE << "My partition is " << myPartition << ".\n";
+	LOGMORE << "My node partition region is " << partitionWallsHalf << "\n";
+	LOGMORE << "My partition is " << myPartitionHalfCells << ".\n";
 	LOGMORE << "I allocate fields over the region " << allocRegion << ".\n";
 	LOGMORE << "My calc region is " << myCalcRegion << ".\n";
-	
+	*/
+    
 	static const int EXTRUDE_PML = 1;
 	if (EXTRUDE_PML)
 	{
 		LOG << "Adding an Extrude command to implement PML.\n";
 		
 		InstructionPtr extendThisRegion(new Extrude(
-			currentGrid->getNonPMLRegion(),
+			currentGrid->getNonPMLHalfCells(),
 			currentGrid->getHalfCellBounds() ));
 		vector<InstructionPtr> assemblyStuff(
 			currentGrid->getAssembly()->getInstructions());
@@ -197,7 +209,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	}
 	
 	VoxelizedPartitionPtr partition(new VoxelizedPartition(
-		*currentGrid, voxelizedGrids, allocRegion, myCalcRegion));
+		*currentGrid, voxelizedGrids, myAllocatedHalfCells, myCalcHalfCells));
 	voxelizedGrids[currentGrid] = partition;
     
     //cout << *partition << endl;
@@ -215,11 +227,11 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	{
 		Vector3i sourceSymm = surfs[nn]->getSymmetries();
 		Vector3i gridSymm = gridSymmetries[nn];
-		Vector3i gridSize = currentGrid->getNumYeeCells();
+		Vector3i gridYeeCells = currentGrid->getNumYeeCells();
 		Vector3i collapsible(
-			sourceSymm[0]*gridSymm[0] != 0 && gridSize[0] > 1,
-			sourceSymm[1]*gridSymm[1] != 0 && gridSize[1] > 1,
-			sourceSymm[2]*gridSymm[2] != 0 && gridSize[2] > 1);
+			sourceSymm[0]*gridSymm[0] != 0 && gridYeeCells[0] > 1,
+			sourceSymm[1]*gridSymm[1] != 0 && gridYeeCells[1] > 1,
+			sourceSymm[2]*gridSymm[2] != 0 && gridYeeCells[2] > 1);
 		
 		LOG << "collapsibleDimensions = " << collapsible << endl;
 		
@@ -232,16 +244,16 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 			GridDescPtr gPtr = makeAuxGridDescription(collapsible,
 				currentGrid, surfs[nn], auxGridName.str());
 			
-			Rect3i auxPartitionWalls(partitionWalls);
+			Rect3i auxPartitionWallsHalf(partitionWallsHalf);
 			
 			for (int ll = 0; ll < 3; ll++)
 			if (collapsible[ll] != 0)
 			{
-				auxPartitionWalls.p1[ll] = 0;
-				auxPartitionWalls.p2[ll] = 1;
+				auxPartitionWallsHalf.p1[ll] = 0;
+				auxPartitionWallsHalf.p2[ll] = 1;
 			}
 			voxelizeGridRecursor(voxelizedGrids, gPtr, numNodes, thisNode,
-				auxPartitionWalls);
+				auxPartitionWallsHalf);
 		}
 		else if (currentGrid->getNumDimensions() == 1)
 		{
@@ -255,7 +267,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 			GridDescPtr gPtr = makeSourceGridDescription(
 				currentGrid, surfs[nn], srcGridName.str());
 			voxelizeGridRecursor(voxelizedGrids, gPtr, numNodes, thisNode,
-				partitionWalls);
+				partitionWallsHalf);
 		}
 		else
 		{
@@ -281,7 +293,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	collapser(0,0) = !collapsible[0];
 	collapser(1,1) = !collapsible[1];
 	collapser(2,2) = !collapsible[2];
-	Vector3i origin(collapser*parentGrid->getOriginYee());
+	Vector3i originYee(collapser*parentGrid->getOriginYee());
 	
 	const set<Vector3i> & omittedSides = huygensSurface->getOmittedSides();
 	
@@ -289,25 +301,26 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	// It's the size of the original total field region, collapsed, and all
 	// non-1D dimensions get 10 cells of PML.
 	
-	Rect3i tfRect(collapser*huygensSurface->getHalfCells());
-	tfRect.p2 = vec_max(tfRect.p2, Vector3i(1,1,1));
+	Rect3i tfHalfCells(collapser*huygensSurface->getHalfCells());
+	tfHalfCells.p2 = vec_max(tfHalfCells.p2, Vector3i(1,1,1));
 	
 	Vector3i bigDimensions(!collapsible[0], !collapsible[1], !collapsible[2]);
     for (nn = 0; nn < 3; nn++)
-	if (tfRect.size(nn) == 1)
+	if (tfHalfCells.size(nn) == 1)
 		bigDimensions[nn] = 0;
 	
-	Rect3i copyTo(tfRect); // needs to be the same size as original TF rect
-	tfRect.p1 -= bigDimensions*2; // expand TF rect by one cell
-	tfRect.p2 += bigDimensions*2;
+	Rect3i copyTo(tfHalfCells); // needs to be the same size as original TF rect
+	tfHalfCells.p1 -= bigDimensions*2; // expand TF rect by one cell
+	tfHalfCells.p2 += bigDimensions*2;
 	
-	Rect3i nonPMLRect(rectYeeToHalf(rectHalfToYee(tfRect))); // full Yee cells
-	nonPMLRect.p1 -= bigDimensions*4;
-	nonPMLRect.p2 += bigDimensions*4; // two Yee cells of spacing
+    // make nonPMLHalfCells be full Yee cells in size
+	Rect3i nonPMLHalfCells(rectYeeToHalf(rectHalfToYee(tfHalfCells)));
+	nonPMLHalfCells.p1 -= bigDimensions*4;
+	nonPMLHalfCells.p2 += bigDimensions*4; // two Yee cells of spacing
 	
-	Rect3i gridBounds(nonPMLRect);
-	gridBounds.p1 -= bigDimensions*20; // 10 cells of PML
-	gridBounds.p2 += bigDimensions*20; // 10 cells of PML
+	Rect3i gridHalfCells(nonPMLHalfCells);
+	gridHalfCells.p1 -= bigDimensions*20; // 10 Yee cells of PML
+	gridHalfCells.p2 += bigDimensions*20; // 10 Yee cells of PML
 	
 	// We need to copy the structure from the parent grid to the child grid.
 	// Determine the copyFrom rect; the copyTo rect is tfRect.
@@ -338,17 +351,17 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	
 	// Now let's shift all the rects to have the same origin (namely, zero).
 	// copyFrom is not shifted because it is in the parent grid.
-	nonPMLRect = nonPMLRect - gridBounds.p1;
-	tfRect = tfRect - gridBounds.p1;
-	copyTo = copyTo - gridBounds.p1;
-	origin = origin - vecHalfToYee(gridBounds.p1);
-	gridBounds = gridBounds - gridBounds.p1;
+	nonPMLHalfCells = nonPMLHalfCells - gridHalfCells.p1;
+	tfHalfCells = tfHalfCells - gridHalfCells.p1;
+	copyTo = copyTo - gridHalfCells.p1;
+	originYee = originYee - vecHalfToYee(gridHalfCells.p1);
+	gridHalfCells = gridHalfCells - gridHalfCells.p1;
 
 	GridDescPtr gPtr(new GridDescription(auxGridName,
-		(gridBounds.size() + Vector3i(1,1,1))/2, // num Yee cells
-		gridBounds, // calc region
-		nonPMLRect,
-		origin));
+		(gridHalfCells.size() + Vector3i(1,1,1))/2, // num Yee cells
+		gridHalfCells, // calc region
+		nonPMLHalfCells,
+		originYee));
 	
 	HuygensSurfaceDescPtr hPtr;
 	if (huygensSurface->getType() == kTFSFSource)
@@ -362,7 +375,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
                 newTFSFFormulaSource(huygensSurface->getSourceFields(),
                     huygensSurface->getFormula(),
                     huygensSurface->getDirection(),
-                    tfRect,
+                    tfHalfCells,
                     ///huygensSurface->getHalfCells(),
                     newSourceOmittedSides,
                     huygensSurface->isTotalField()));
@@ -371,7 +384,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
                 newTFSFTimeSource(huygensSurface->getSourceFields(),
                     huygensSurface->getTimeFile(),
                     huygensSurface->getDirection(),
-                    tfRect,
+                    tfHalfCells,
                     //huygensSurface->getHalfCells(),
                     newSourceOmittedSides,
                     huygensSurface->isTotalField()));
@@ -382,14 +395,14 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
             newCustomTFSFSource(
 			huygensSurface->getFile(),
 			huygensSurface->getSymmetries(),
-            tfRect,
+            tfHalfCells,
             huygensSurface->getDuration(),
 			huygensSurface->getOmittedSides(),
             huygensSurface->isTotalField()));
 	}
 	
 	InstructionPtr copyThisRegion(new CopyFrom(copyFrom, copyTo, parentGrid));
-	InstructionPtr extendThisRegion(new Extrude(copyTo, gridBounds));
+	InstructionPtr extendThisRegion(new Extrude(copyTo, gridHalfCells));
 	vector<InstructionPtr> assemblyStuff;
 	assemblyStuff.push_back(copyThisRegion);
 	assemblyStuff.push_back(extendThisRegion);
@@ -576,7 +589,58 @@ allocateAuxBuffers(Map<string, CalculationPartitionPtr> & calcs)
     for (itr = calcs.begin(); itr != calcs.end(); itr++)
         itr->second->allocateAuxBuffers();
 }
-    
+
+
+void FDTDApplication::
+updateE(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->updateE(timestep);
+}
+
+void FDTDApplication::
+sourceE(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->sourceE(timestep);
+}
+
+void FDTDApplication::
+outputE(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->outputE(timestep);
+}
+
+void FDTDApplication::
+updateH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->updateH(timestep);
+}
+
+void FDTDApplication::
+sourceH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->sourceH(timestep);
+}
+
+void FDTDApplication::
+outputH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->outputH(timestep);
+}
+
+
+/*
 void FDTDApplication::
 calcE(Map<string, CalculationPartitionPtr> & calcGrids)
 {
@@ -587,12 +651,21 @@ calcE(Map<string, CalculationPartitionPtr> & calcGrids)
 }
 
 void FDTDApplication::
-calcAfterE(Map<string, CalculationPartitionPtr> & calcGrids)
+calcBeforeE(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 {
     //cout << "\tMPI E exchange\n\tOutput E\n";
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
-        itr->second->calcAfterE();
+        itr->second->calcBeforeE(timestep);
+}
+
+void FDTDApplication::
+calcAfterE(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    //cout << "\tMPI E exchange\n\tOutput E\n";
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->calcAfterE(timestep);
 }
 
 void FDTDApplication::
@@ -605,14 +678,23 @@ calcH(Map<string, CalculationPartitionPtr> & calcGrids)
 }
 
 void FDTDApplication::
-calcAfterH(Map<string, CalculationPartitionPtr> & calcGrids)
+calcBeforeH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 {
     //cout << "\tMPI H exchange\n\tOutput H\n";
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
-        itr->second->calcAfterH();
+        itr->second->calcBeforeH(timestep);
 }
 
+void FDTDApplication::
+calcAfterH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    //cout << "\tMPI H exchange\n\tOutput H\n";
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->calcAfterH(timestep);
+}
+*/
 
 /*
 #pragma mark *** Run the simulation ***

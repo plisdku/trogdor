@@ -110,6 +110,10 @@ Rect<T>
 clip( const Rect<T> & rectToClip, const Rect<T> & clipRect);
 
 template<typename T>
+Rect<T>
+cyclicPermute(const Rect<T> & r, unsigned int nn);
+
+template<typename T>
 bool operator<(const Rect<T> & lhs, const Rect<T> & rhs);
 
 template<typename T>

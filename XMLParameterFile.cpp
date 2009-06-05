@@ -387,7 +387,7 @@ loadAFieldSource(const TiXmlElement* elem) const
     SourceFields srcFields;
     vector<Duration> durations;
     vector<Region> regions;
-    bool isSoft = (elem->Value() == "AdditiveSource");
+    bool isSoft = (string("AdditiveSource") == elem->Value());
     
     sGetMandatoryAttribute(elem, "fields", fields);
     if (sTryGetAttribute(elem, "polarization", polarization))
@@ -413,6 +413,9 @@ loadAFieldSource(const TiXmlElement* elem) const
         durations.push_back(loadADuration(child));
         child = child->NextSiblingElement("Duration");
     }
+    if (durations.size() == 0)
+        durations.push_back(Duration());
+    
     child = elem->FirstChildElement("Region");
     while (child != 0L)
     {
@@ -511,6 +514,9 @@ loadACurrentSource(const TiXmlElement* elem) const
         durations.push_back(loadADuration(child));
         child = child->NextSiblingElement("Duration");
     }
+    if (durations.size() == 0)
+        durations.push_back(Duration());
+    
     child = elem->FirstChildElement("Region");
     while (child != 0L)
     {

@@ -14,6 +14,7 @@
 #include "SimulationDescription.h"
 
 //#include "SimpleEHSource.h"
+#include "FormulaSource.h"
 
 #include <cstdlib>
 
@@ -22,10 +23,10 @@ using namespace std;
 SourceDelegatePtr SourceFactory::
 getDelegate(const VoxelizedPartition & vp, const SourceDescPtr & desc)
 {
-    /*
+    
     if (desc->getFormula() != "")
         return SourceDelegatePtr(new FormulaSourceDelegate(desc));
-    else if (desc->getFileName() != "")
+    else if (desc->getTimeFile() != "" || desc->getSpaceTimeFile() != "")
     {
         LOG << "File source not supported.\n";
         exit(1);
@@ -33,7 +34,7 @@ getDelegate(const VoxelizedPartition & vp, const SourceDescPtr & desc)
     
     LOG << "Using default (null) source... and crashing.\n";
     exit(1);
-    */
+    
     return SourceDelegatePtr(0L);
 }
 
@@ -49,13 +50,13 @@ Source::
 }
 
 void Source::
-sourceEPhase(int timestep)
+sourceEPhase(CalculationPartition & cp, int timestep)
 {
     LOG << "Source E timestep " << timestep << "\n";
 }
 
 void Source::
-sourceHPhase(int timestep)
+sourceHPhase(CalculationPartition & cp, int timestep)
 {
     LOG << "Source H timestep " << timestep << "\n";
 }

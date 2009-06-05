@@ -48,36 +48,94 @@ public:
 		return mHuygensRegionSymmetries; }
 	
 	const Rect3i & getGridHalfCells() const { return mGridHalfCells; }
+    Rect3i getGridYeeCells() const;
+    const Rect3i & getAllocHalfCells() const { return mFieldAllocHalfCells; }
+    Rect3i getAllocYeeCells() const;
     Vector3i getOriginYee() const { return mOriginYee; }
 	bool partitionHasPML(int faceNum) const;
-	Rect3i getPMLRegionOnFace(int faceNum) const;
-	Rect3i getPartitionPMLRegionOnFace(int faceNum) const;
-	Rect3i getPMLRegion(Vector3i pmlDir) const;
+	Rect3i getPMLHalfCellsOnFace(int faceNum) const;
+	Rect3i getPartitionPMLHalfCellsOnFace(int faceNum) const;
+	Rect3i getPMLHalfCells(Vector3i pmlDir) const;
 	
-	long linearYeeIndex(int ii, int jj, int kk) const;
+    // v            global half-cell coordinate, possibly outside alloc region
+    // returns      a vector inside the alloc region, offset from v by integer
+    //              multiples of the alloc half cells in each dimension.
+    Vector3i wrap(Vector3i vv) const;
+    
+    // ii,jj,kk     global half-cell coordinate, possibly outside alloc region
+    // returns      a vector inside the alloc region, offset from v by integer
+    //              multiples of the alloc half cells in each dimension.
+    Vector3i wrap(int ii, int jj, int kk) const;
+    
+    // nb           partition's neighbor buffer
+    // v            global half-cell coordinate, possibly outside alloc region
+    // returns      a vector inside the alloc region, offset from v by integer
+    //              multiples of the alloc half cells in each dimension.
+    Vector3i wrap(const NeighborBufferDescPtr & nb, Vector3i vv) const;
+    
+    // nb           partition's neighbor buffer
+    // ii,jj,kk     global half-cell coordinate, possibly outside alloc region
+    // returns      a vector inside the alloc region, offset from v by integer
+    //              multiples of the alloc half cells in each dimension.
+    //Vector3i wrap(const NeighborBufferDescPtr & nb, int ii, int jj, int kk)
+    //    const;
+    
+    // ii,jj,kk     global half-cell coordinates, inside the alloc region
+    // returns      index into partition's alloc region
+	//long linearYeeIndex(int ii, int jj, int kk) const;
 	long linearYeeIndex(const Vector3i & halfCell) const;
 	
-	long linearYeeIndex(const NeighborBufferDescPtr & nb,
-		int ii, int jj, int kk) const;
+    // nb           partition's neighbor buffer
+    // ii,jj,kk     global half-cell coordinates, inside the alloc region
+    // returns      index into partition's neighbor buffer
+	//long linearYeeIndex(const NeighborBufferDescPtr & nb,
+	//	int ii, int jj, int kk) const;
 	long linearYeeIndex(const NeighborBufferDescPtr & nb,
 		const Vector3i & halfCell) const;
 	
+    // halfCell     global half-cell coordinate, possibly outside alloc region
+    // returns      linearYeeIndex into the correct field
 	BufferPointer fieldPointer(Vector3i halfCell) const;
+    
+    // nb           partition's neighbor buffer
+    // halfCell     global half-cell coordinate, possibly outside alloc region
+    // returns      linearYeeIndex into partition's neighbor buffer
 	BufferPointer fieldPointer(const NeighborBufferDescPtr & nb,
 		Vector3i halfCell) const;
+    
+    // returns      amount to add to float* to go from Ex(here) to Ex(neighbor) 
+    Vector3i getFieldStride() const;
 	
+    // returns      which material goes in which cell in this partition
 	const VoxelGrid & getVoxelGrid() const { return mVoxels; }
+    
+    // returns      the index of each cell by material type (air #1, air #2...)
 	const PartitionCellCountPtr & getIndices() const
 		{ return mCentralIndices; }
     
-    EHBufferSetPtr getEHBuffers() const { return mEHBuffers; }
-    const Map<NeighborBufferDescPtr, EHBufferSet> & getNBBuffers() const
-        { return mNBBuffers; }
+    // returns      the allocation skeleton for fields in this partition
+    const std::vector<MemoryBufferPtr> & getEHBuffers() const
+        { return mEHBuffers; }
+    
+    // returns      the allocation skeleton for partition's neighbor buffers
+    const Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > &
+        getNBBuffers() const { return mNBBuffers; }
+    
+    // returns      the structures that store temp data for setting up materials
     const Map<Paint*, MaterialDelegatePtr> & getDelegates() const
         { return mDelegates; }
     
+    // returns      the structures that store temp data for setting up outputs
     const std::vector<OutputDelegatePtr> & getOutputDelegates() const
         { return mOutputDelegates; }
+    
+    // returns      the structures that store temp data for setting up sources
+    const std::vector<SourceDelegatePtr> & getSoftSourceDelegates() const
+        { return mSoftSourceDelegates; }
+    
+    // returns      the structures that store temp data for setting up sources
+    const std::vector<SourceDelegatePtr> & getHardSourceDelegates() const
+        { return mHardSourceDelegates; }
     
     void clearVoxelGrid();
     void clearCellCountGrid();
@@ -106,25 +164,29 @@ private:
 	VoxelGrid mVoxels;
 	PartitionCellCountPtr mCentralIndices;
 	
-	EHBufferSetPtr mEHBuffers;
-	Map<NeighborBufferDescPtr, EHBufferSet> mNBBuffers;
+	std::vector<MemoryBufferPtr> mEHBuffers;
+	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffers;
 	
     // THIS IS WHERE GRID DENIZENS LIVE
 	Map<Paint*, MaterialDelegatePtr> mDelegates;
 	std::vector<OutputDelegatePtr> mOutputDelegates;
-    std::vector<SourceDelegatePtr> mSourceDelegates;
+    std::vector<SourceDelegatePtr> mSoftSourceDelegates;
+    std::vector<SourceDelegatePtr> mHardSourceDelegates;
     int mSources;
     int mInputs;
     
     // END OF GRID DENIZEN ZONE
     
 	int m_nx, m_ny, m_nz;
+    int m_nnx, m_nny, m_nnz;
+    int m_nnx0, m_nny0, m_nnz0; // equal to mFieldAllocHalfCells.p1
+    Vector3i mNumAllocHalfCells;
 	Rect3i mGridHalfCells;
-	Rect3i mFieldAllocRegion; // must be full Yee cells!
+	Rect3i mFieldAllocHalfCells; // must be full Yee cells!
 	Rect3i mAuxAllocRegion; // doesn't need to be full Yee cells!
-	Rect3i mCalcRegion;
+	Rect3i mCalcHalfCells;
 	
-	Rect3i mNonPMLRegion;
+	Rect3i mNonPMLHalfCells;
 	Vector3i mOriginYee;
 		
 	std::vector<Vector3i> mHuygensRegionSymmetries;

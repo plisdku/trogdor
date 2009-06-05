@@ -13,7 +13,9 @@
 #include "SimulationDescription.h"
 #include "OutputBoss.h"
 #include "geometry.h"
+#include "MemoryUtilities.h"
 #include <vector>
+#include <fstream>
 
 class MaterialDescription;
 
@@ -34,29 +36,37 @@ private:
     OutputDescPtr mDesc;
 };
 
-
 class SimpleEHOutput : public Output
 {
 public:
-    //SimpleEHOutput();
-    SimpleEHOutput(const OutputDescription & desc, Vector3i origin,
-        Vector3f dxyz, float dt);
+    SimpleEHOutput(const OutputDescription & desc,
+        const VoxelizedPartition & vp,
+        const CalculationPartition & cp);
+    virtual ~SimpleEHOutput();
     
-    virtual void outputEPhase(int timestep);
-    virtual void outputHPhase(int timestep);
+    virtual void outputEPhase(const CalculationPartition & cp, int timestep);
+    virtual void outputHPhase(const CalculationPartition & cp, int timestep);
     
 private:
-    void writeDescriptionFile() const;
+    void writeE(const CalculationPartition & cp);
+    void writeH(const CalculationPartition & cp);
     
+    void writeDescriptionFile(const VoxelizedPartition & vp,
+        const CalculationPartition & cp,
+        std::string specfile, std::string datafile, std::string materialfile)
+        const;
+    
+    int mCoordPermutation;
+    std::ofstream mDatafile;
+    long mCurrentSampleInterval;
     
     bool mIsInterpolated;
     Vector3f mInterpolationPoint;
-    
-    long mCurrentSampleInterval;
-    
     Vector3i mWhichE;
     Vector3i mWhichH;
     
+    Vector3i mAllocYeeOrigin;
+    Vector3i mAllocYeeCells;
     std::vector<Region> mRegions;
     std::vector<Duration> mDurations;
 };

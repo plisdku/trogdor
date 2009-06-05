@@ -90,7 +90,6 @@ DrudeModel1(const DrudeModel1Delegate & deleg,
         mCurrentBuffers[nn] = deleg.mCurrents[nn];
 }
 
-
 void DrudeModel1::
 allocateAuxBuffers()
 {

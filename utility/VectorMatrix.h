@@ -130,7 +130,11 @@ template<typename T>
 T norm2(const Vector3<T> & v);
 template<typename T>
 Vector3<T> dominantComponent(const Vector3<T> & rhs);
+template<typename T>
+Vector3<T> cyclicPermute(const Vector3<T> & rhs, unsigned int nn);
 
+template <typename T, typename S>
+bool vec_eq(const Vector3<T>& lhs, const S & rhs);
 template <typename T, typename S>
 bool vec_lt(const Vector3<T>& lhs, const S & rhs);
 template <typename T, typename S>

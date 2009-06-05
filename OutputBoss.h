@@ -15,6 +15,7 @@
 
 class VoxelizedPartition;
 class CalculationPartition;
+typedef Pointer<CalculationPartition> CalculationPartitionPtr;
 
 class OutputDelegate;
 typedef Pointer<OutputDelegate> OutputDelegatePtr;
@@ -53,8 +54,8 @@ public:
     // A chance to do runlines...
     //virtual void setupFromGrid(const VoxelizedPartition & vp);
     
-    virtual void outputEPhase(int timestep);
-    virtual void outputHPhase(int timestep);
+    virtual void outputEPhase(const CalculationPartition & cp, int timestep);
+    virtual void outputHPhase(const CalculationPartition & cp, int timestep);
     
     virtual void allocateAuxBuffers();
 private:

@@ -13,8 +13,12 @@
 #include "Log.h"
 #include "VoxelizedPartition.h"
 #include "Map.h"
+#include "YeeUtilities.h"
+
+#include <cmath>
 
 using namespace std;
+using namespace YeeUtilities;
 
 CalculationPartition::
 CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
@@ -22,6 +26,8 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     m_dxyz(dxyz),
     m_dt(dt),
     m_numT(numT),
+    mAllocOriginYee(vp.getAllocYeeCells().p1),
+    mAllocYeeCells(vp.getAllocYeeCells().size() + 1),
     mEHBuffers(vp.getEHBuffers()),
     mNBBuffers(vp.getNBBuffers())
 {
@@ -38,8 +44,8 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     }
     else
     {
-        allocate(mFields, *mEHBuffers);
-        map<NeighborBufferDescPtr, EHBufferSet>::iterator itr;
+        allocate(mFields, mEHBuffers);
+        map<NeighborBufferDescPtr, vector<MemoryBufferPtr> >::iterator itr;
         for (itr = mNBBuffers.begin(); itr != mNBBuffers.end(); itr++)
             allocate(mNBFields[itr->first], itr->second);
     }
@@ -52,9 +58,40 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mMaterials.push_back(itr->second->makeCalcMaterial(vp, *this));
     }
     
-    const std::vector<OutputDelegatePtr> & outs = vp.getOutputDelegates();
+    const vector<OutputDelegatePtr> & outs = vp.getOutputDelegates();
     for (nn = 0; nn < outs.size(); nn++)
-        mOutputs.push_back(outs[nn]->makeOutput(vp, *this));
+        mOutputs.push_back(outs[nn]->makeOutput(vp,
+            *this));
+    
+    const vector<SourceDelegatePtr> & softSrcs = vp.getSoftSourceDelegates();
+    for (nn = 0; nn < softSrcs.size(); nn++)
+    {
+        mSoftSources.push_back(softSrcs[nn]->makeSource(vp, *this));
+    }
+    
+    const vector<SourceDelegatePtr> & hardSrcs = vp.getHardSourceDelegates();
+    for (nn = 0; nn < hardSrcs.size(); nn++)
+    {
+        mHardSources.push_back(hardSrcs[nn]->makeSource(vp, *this));
+    }
+    
+    // Prepare helper variables for the field accessors.
+    // We cache the head pointers just so they're in a quick order for later.
+    for (int dir = 0; dir < 3; dir++)
+    {
+        mHeadE[dir] = mEHBuffers[eFieldNumber(dir)]->getHeadPointer();
+        mHeadH[dir] = mEHBuffers[hFieldNumber(dir)]->getHeadPointer();
+        mEOffset[dir] = eFieldPosition(dir);
+        mHOffset[dir] = hFieldPosition(dir);
+        
+        LOG << "mHeadE[" << dir << "] is "
+            << MemoryBuffer::identify(mHeadE[dir]) << "\n";
+        LOG << "mHeadH[" << dir << "] is "
+            << MemoryBuffer::identify(mHeadH[dir]) << "\n";
+    }
+    mMemStride[0] = mEHBuffers[0]->getStride(); // should be same for all
+    mMemStride[1] = mAllocYeeCells[0]*mMemStride[0];
+    mMemStride[2] = mAllocYeeCells[1]*mMemStride[1];
 }
 
 CalculationPartition::
@@ -78,7 +115,61 @@ allocateAuxBuffers()
     }
 }
 
+void CalculationPartition::
+updateE(int timestep)
+{
+    for (int eNum = 0; eNum < 3; eNum++)
+    for (unsigned int nn = 0; nn < mMaterials.size(); nn++)
+        mMaterials[nn]->calcEPhase(eNum);
+}
 
+void CalculationPartition::
+sourceE(int timestep)
+{
+    int nn;
+    for (nn = 0; nn < mSoftSources.size(); nn++)
+        mSoftSources[nn]->sourceEPhase(*this, timestep);
+    for (nn = 0; nn < mHardSources.size(); nn++)
+        mHardSources[nn]->sourceEPhase(*this, timestep);
+}
+
+void CalculationPartition::
+outputE(int timestep)
+{
+    int nn;
+    for (nn = 0; nn < mOutputs.size(); nn++)
+        mOutputs[nn]->outputEPhase(*this, timestep);
+}
+
+void CalculationPartition::
+updateH(int timestep)
+{
+    for (int hNum = 0; hNum < 3; hNum++)
+    for (unsigned int nn = 0; nn < mMaterials.size(); nn++)
+        mMaterials[nn]->calcHPhase(hNum);
+}
+
+void CalculationPartition::
+sourceH(int timestep)
+{
+    int nn;
+    for (nn = 0; nn < mSoftSources.size(); nn++)
+        mSoftSources[nn]->sourceHPhase(*this, timestep);
+    for (nn = 0; nn < mHardSources.size(); nn++)
+        mHardSources[nn]->sourceHPhase(*this, timestep);
+}
+
+void CalculationPartition::
+outputH(int timestep)
+{
+    int nn;
+    for (nn = 0; nn < mOutputs.size(); nn++)
+        mOutputs[nn]->outputHPhase(*this, timestep);
+}
+
+
+
+/*
 void CalculationPartition::
 calcE()
 {
@@ -88,13 +179,22 @@ calcE()
 }
 
 void CalculationPartition::
-calcAfterE()
+calcBeforeE(int timestep)
 {
     unsigned int nn;
-    int timestep = 5;
     
+    for (nn = 0; nn < mSoftSources.size(); nn++)
+        mSoftSources[nn]->sourceEPhase(*this, timestep);
+    for (nn = 0; nn < mHardSources.size(); nn++)
+        mHardSources[nn]->sourceEPhase(*this, timestep);
     for (nn = 0; nn < mOutputs.size(); nn++)
-        mOutputs[nn]->outputEPhase(timestep);
+        mOutputs[nn]->outputEPhase(*this, timestep);
+}
+
+void CalculationPartition::
+calcAfterE(int timestep)
+{
+    unsigned int nn;
 }
 
 void CalculationPartition::
@@ -106,38 +206,168 @@ calcH()
 }
 
 void CalculationPartition::
-calcAfterH()
+calcBeforeH(int timestep)
 {
     unsigned int nn;
-    int timestep = 5;
     
+    for (nn = 0; nn < mSoftSources.size(); nn++)
+        mSoftSources[nn]->sourceHPhase(*this, timestep);
+    for (nn = 0; nn < mHardSources.size(); nn++)
+        mHardSources[nn]->sourceHPhase(*this, timestep);
     for (nn = 0; nn < mOutputs.size(); nn++)
-        mOutputs[nn]->outputHPhase(timestep);
+        mOutputs[nn]->outputHPhase(*this, timestep);
+}
+
+void CalculationPartition::
+calcAfterH(int timestep)
+{
+    unsigned int nn;
+}
+*/
+
+float CalculationPartition::
+getE(int direction, int xi, int xj, int xk) const
+{
+    // wrap coordinates within alloc region (this handles periodic boundaries
+    // when there's only one partition, e.g. non-MPI).
+    xi = (xi - mAllocOriginYee[0] + mAllocYeeCells[0])%mAllocYeeCells[0];
+    xj = (xj - mAllocOriginYee[1] + mAllocYeeCells[1])%mAllocYeeCells[1];
+    xk = (xk - mAllocOriginYee[2] + mAllocYeeCells[2])%mAllocYeeCells[2];
+    
+    return mHeadE[direction][xi*mMemStride[0] + xj*mMemStride[1] +
+        xk*mMemStride[2] ];
+}
+    
+float CalculationPartition::
+getH(int direction, int xi, int xj, int xk) const
+{
+    // wrap coordinates within alloc region (this handles periodic boundaries
+    // when there's only one partition, e.g. non-MPI).
+    xi = (xi - mAllocOriginYee[0] + mAllocYeeCells[0])%mAllocYeeCells[0];
+    xj = (xj - mAllocOriginYee[1] + mAllocYeeCells[1])%mAllocYeeCells[1];
+    xk = (xk - mAllocOriginYee[2] + mAllocYeeCells[2])%mAllocYeeCells[2];
+    
+    return mHeadH[direction][xi*mMemStride[0] + xj*mMemStride[1] +
+        xk*mMemStride[2] ];
+}
+
+float CalculationPartition::
+getE(int direction, Vector3i xx) const
+{
+    // wrap coordinates within alloc region (this handles periodic boundaries
+    // when there's only one partition, e.g. non-MPI).
+    xx = (xx - mAllocOriginYee + mAllocYeeCells)%mAllocYeeCells;
+    
+    return mHeadE[direction][dot(xx, mMemStride)];
+}
+    
+float CalculationPartition::
+getH(int direction, Vector3i xx) const
+{
+    // wrap coordinates within alloc region (this handles periodic boundaries
+    // when there's only one partition, e.g. non-MPI).
+    xx = (xx - mAllocOriginYee + mAllocYeeCells)%mAllocYeeCells;
+    
+    return mHeadH[direction][dot(xx, mMemStride)];
+}
+
+float CalculationPartition::
+getE(int direction, float xi, float xj, float xk) const
+{
+    xi = xi - mEOffset[direction][0];
+    xj = xj - mEOffset[direction][1];
+    xk = xk - mEOffset[direction][2];
+    const int ilow(floor(xi)), jlow(floor(xj)), klow(floor(xk));
+    const int ihigh(ilow+1), jhigh(jlow+1), khigh(klow+1);
+    const float dx(xi-floor(xi)), dy(xj-floor(xj)), dz(xk-floor(xk));
+    
+    return dx*dy*dz*getE(direction, ihigh, jhigh, khigh) +
+        (1.0f-dx)*dy*dz*getE(direction, ilow, jhigh, khigh) +
+        dx*(1.0f-dy)*dz*getE(direction, ihigh, jlow, khigh) +
+        (1.0f-dx)*(1.0f-dy)*dz*getE(direction, ilow, jlow, khigh) +
+        dx*dy*(1.0f-dz)*getE(direction, ihigh, jhigh, klow) +
+        (1.0f-dx)*dy*(1.0f-dz)*getE(direction, ilow, jhigh, klow) +
+        dx*(1.0f-dy)*(1.0f-dz)*getE(direction, ihigh, jlow, klow) +
+        (1.0f-dx)*(1.0f-dy)*(1.0f-dz)*getE(direction, ilow, jlow, klow);
+}
+
+float CalculationPartition::
+getH(int direction, float xi, float xj, float xk) const
+{
+    xi = xi - mHOffset[direction][0];
+    xj = xj - mHOffset[direction][1];
+    xk = xk - mHOffset[direction][2];
+    const int ilow(floor(xi)), jlow(floor(xj)), klow(floor(xk));
+    const int ihigh(ilow+1), jhigh(jlow+1), khigh(klow+1);
+    const float dx(xi-floor(xi)), dy(xj-floor(xj)), dz(xk-floor(xk));
+    
+    return dx*dy*dz*getH(direction, ihigh, jhigh, khigh) +
+        (1.0f-dx)*dy*dz*getH(direction, ilow, jhigh, khigh) +
+        dx*(1.0f-dy)*dz*getH(direction, ihigh, jlow, khigh) +
+        (1.0f-dx)*(1.0f-dy)*dz*getH(direction, ilow, jlow, khigh) +
+        dx*dy*(1.0f-dz)*getH(direction, ihigh, jhigh, klow) +
+        (1.0f-dx)*dy*(1.0f-dz)*getH(direction, ilow, jhigh, klow) +
+        dx*(1.0f-dy)*(1.0f-dz)*getH(direction, ihigh, jlow, klow) +
+        (1.0f-dx)*(1.0f-dy)*(1.0f-dz)*getH(direction, ilow, jlow, klow);
+}
+
+
+float CalculationPartition::
+getE(int direction, Vector3f xx) const
+{
+    return getE(direction, xx[0], xx[1], xx[2]); // lazy
+}
+
+float CalculationPartition::
+getH(int direction, Vector3f xx) const
+{
+    return getH(direction, xx[0], xx[1], xx[2]); // also lazy, help me gcc!!!
+}
+
+void CalculationPartition::
+setE(int direction, int xi, int xj, int xk, float val)
+{
+    xi = (xi - mAllocOriginYee[0] + mAllocYeeCells[0])%mAllocYeeCells[0];
+    xj = (xj - mAllocOriginYee[1] + mAllocYeeCells[1])%mAllocYeeCells[1];
+    xk = (xk - mAllocOriginYee[2] + mAllocYeeCells[2])%mAllocYeeCells[2];
+    
+    mHeadE[direction][xi*mMemStride[0] + xj*mMemStride[1] +
+        xk*mMemStride[2] ] = val;
+    //LOG << MemoryBuffer::identify(&mHeadE[direction][xi*mMemStride[0] + xj*mMemStride[1] +
+    //    xk*mMemStride[2]]);
+}
+
+void CalculationPartition::
+setH(int direction, int xi, int xj, int xk, float val)
+{
+    xi = (xi - mAllocOriginYee[0] + mAllocYeeCells[0])%mAllocYeeCells[0];
+    xj = (xj - mAllocOriginYee[1] + mAllocYeeCells[1])%mAllocYeeCells[1];
+    xk = (xk - mAllocOriginYee[2] + mAllocYeeCells[2])%mAllocYeeCells[2];
+    
+    mHeadH[direction][xi*mMemStride[0] + xj*mMemStride[1] +
+        xk*mMemStride[2] ] = val;
+    //LOG << MemoryBuffer::identify(&mHeadH[direction][xi*mMemStride[0] + xj*mMemStride[1] +
+    //    xk*mMemStride[2]]);
 }
 
 
 void CalculationPartition::
-allocate(std::vector<float> & data, EHBufferSet& buffers)
+allocate(std::vector<float> & data, vector<MemoryBufferPtr> & buffers)
 {
     int nn;
     int bufsize = 0;
-    for (nn = 0; nn < 6; nn++)
-        bufsize += buffers.buffers[nn].getLength();
+    long offset = 0;
     
+    for (nn = 0; nn < 6; nn++)
+        bufsize += buffers[nn]->getLength();
+    LOG << "Bufsize is " << bufsize << endl;
     data.resize(bufsize);
     
-    long offset = 0;
     for (nn = 0; nn < 6; nn++)
     {
-        buffers.buffers[nn].setHeadPointer(&(data[offset]));
-        offset += buffers.buffers[nn].getLength();
+        buffers[nn]->setHeadPointer(&(data[offset]));
+        offset += buffers[nn]->getLength();
     }
-    /*
-    LOG << "Printing buffers.\n";
-    for (nn = 0; nn < 6; nn++)
-        LOGMORE << buffers.buffers[nn] << " ptr " <<
-        buffers.buffers[nn].getHeadPointer() << "\n";
-    */
 }
 
 

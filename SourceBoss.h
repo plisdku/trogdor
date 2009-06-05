@@ -49,8 +49,8 @@ public:
     Source();
     virtual ~Source();
     
-    virtual void sourceEPhase(int timestep);
-    virtual void sourceHPhase(int timestep);
+    virtual void sourceEPhase(CalculationPartition & cp, int timestep);
+    virtual void sourceHPhase(CalculationPartition & cp, int timestep);
     
 private:
     

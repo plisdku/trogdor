@@ -84,6 +84,12 @@ Pointer(T* inPtr) :
 {
     if (mPtr != 0L)
     {
+        // This assertion is not a guard against immediately dangerous behavior,
+        // but it does encourage the user to comply with the very good rule that
+        // once a pointer is handed over to the shared Pointer system, it will
+        // not be exposed again as a raw pointer.
+        // The assertion can fail if an object creates a smart pointer to itself
+        // its own constructor.
         assert(mReferenceCounts[inPtr] == 0);
         mReferenceCounts[inPtr]++;
     }

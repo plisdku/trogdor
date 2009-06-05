@@ -534,29 +534,6 @@ clear()
     mMaterialHalfCells.resize(0);
 }
 
-/*
-long VoxelGrid::
-linearYeeIndex(int ii, int jj, int kk) const
-{
-	ii = ii - mAllocRegion.p1[0];
-	jj = jj - mAllocRegion.p1[1];
-	kk = kk - mAllocRegion.p1[2];
-	int i = ii/2, j = jj/2, k = kk/2;
-	return ( (i+m_nx)%m_nx +
-		m_nx*( (j+m_ny)%m_ny) +
-		m_nx*m_ny*( (k+m_nz)%m_nz));
-}
-
-long VoxelGrid::
-linearYeeIndex(const Vector3i & halfCell) const
-{
-	Vector3i qq(halfCell - mAllocRegion.p1);
-	int i = qq[0]/2, j = qq[1]/2, k = qq[2]/2;
-	return ( (i+m_nx)%m_nx +
-		m_nx*( (j+m_ny)%m_ny) +
-		m_nx*m_ny*( (k+m_nz)%m_nz));
-}
-*/
 
 std::ostream &
 operator<< (std::ostream & out, const VoxelGrid & grid)

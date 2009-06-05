@@ -149,7 +149,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	for (nSide = 0; nSide < 6; nSide++)
 	{
 		mStartNeighborIndices[nSide] = vp.linearYeeIndex(
-			startPos + cardinalDirection(nSide));
+			vp.wrap(startPos + cardinalDirection(nSide)));
 		
 		if (nSide/2 == fieldDirection)
 			mUsedNeighborIndices[nSide] = 0;
@@ -176,7 +176,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	//LOG << "Field direction " << fieldDirection << " ui " << ui << " uj "
 	//	<< uj << " uk " << uk << "\n";
 	
-	/*
+	
 	LOG << "Start runline:\n";
 	LOGMORE << "start " << mStartPoint << "\n";
 	LOGMORE << "aux " << mCurrentRunline.auxIndex << "\n";
@@ -185,7 +185,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		<< mCurrentRunline.f_j[1] << "\n";
 	LOGMORE << "f_k " << mCurrentRunline.f_k[0] << " "
 		<< mCurrentRunline.f_k[1] << "\n";
-	*/
+	
 }
 
 bool SimpleBulkMaterialDelegate::
@@ -195,7 +195,8 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	for (int nSide = 0; nSide < 6; nSide++)
 	if (mUsedNeighborIndices[nSide])
 	{
-		int index = vp.linearYeeIndex(newPos + cardinalDirection(nSide));
+		int index = vp.linearYeeIndex(vp.wrap(
+            newPos + cardinalDirection(nSide)));
 		if (mStartNeighborIndices[nSide] + mCurrentRunline.length != index)
 			return 0;
 	}
@@ -276,7 +277,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	for (nSide = 0; nSide < 6; nSide++)
 	{
 		mStartNeighborIndices[nSide] = vp.linearYeeIndex(
-			startPos + cardinalDirection(nSide));
+			vp.wrap(startPos + cardinalDirection(nSide)));
 		
 		if (nSide/2 == fieldDirection)
 			mUsedNeighborIndices[nSide] = 0;
@@ -302,12 +303,24 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	
 	// PML aux stuff
 	Rect3i gridHalfCells = vp.getGridHalfCells();
+    assert(vec_eq(gridHalfCells.p1, 0));  // never hurts to be sure.
 	Vector3i gridSize = gridHalfCells.size() + Vector3i(1,1,1);
 	Vector3i pmlDir = mStartPaint->getPMLDirections();
-	mPMLRect = vp.getPMLRegion(pmlDir);
+	mPMLRect = vp.getPMLHalfCells(pmlDir);
 	
+    // The start point of the runline *may* be outside the grid, *if* we are
+    // performing calculations on ghost points!  This may happen in data-push
+    // adjoint update equations.  In any case, usually the wrap does nothing.
 	Vector3i wrappedStartPoint = Vector3i(mStartPoint + gridSize) % gridSize;
 	mCurrentRunline.pmlDepthIndex = wrappedStartPoint/2 - mPMLRect.p1/2;
+    
+    // IF THE PML IS ON A NEGATIVE (e.g. left or bottom) SIDE:
+    //  the pml depth index is 0 at the highest-conductivity point
+    // IF THE PML IS ON A POSITIVE (e.g. right or top) SIDE:
+    //  the pml depth index is 0 at the lowest-conductivity point, which is
+    //  considered to be a physical distance of dx or dx/2 into the PML.
+    // This index is in Yee cells.
+    
 	/*
 	LOG << "runline for PML in " << mPMLRect << "\n";
 	LOGMORE << "dir " << pmlDir << "\n";
@@ -325,7 +338,8 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	for (int nSide = 0; nSide < 6; nSide++)
 	if (mUsedNeighborIndices[nSide])
 	{
-		int index = vp.linearYeeIndex(newPos + cardinalDirection(nSide));
+		int index = vp.linearYeeIndex(vp.wrap(
+            newPos + cardinalDirection(nSide)));
 		if (mStartNeighborIndices[nSide] + mCurrentRunline.length != index)
 			return 0;
 	}
@@ -436,6 +450,51 @@ SimpleAuxPMLRunline(const SBPMRunline & setupRunline) :
     pmlIndex[0] = setupRunline.pmlDepthIndex[0];
     pmlIndex[1] = setupRunline.pmlDepthIndex[1];
     pmlIndex[2] = setupRunline.pmlDepthIndex[2];
+}
+
+
+ostream &
+operator<<(std::ostream & str, const SimpleRunline & rl)
+{
+    /*
+    str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
+        << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.length;
+    */
+    
+    str << hex << rl.fi << ": " << MemoryBuffer::identify(rl.fi) << "\n";
+    str << hex << rl.gj[0] << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
+    str << hex << rl.gj[1] << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
+    str << hex << rl.gk[0] << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
+    str << hex << rl.gk[1] << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
+    return str;
+}
+
+ostream &
+operator<<(std::ostream & str, const SimplePMLRunline & rl)
+{
+    str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
+        << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.pmlIndex[0]
+        << " " << rl.pmlIndex[1] << " " << rl.pmlIndex[2] << " " << rl.length;
+    return str;
+}
+
+ostream &
+operator<<(std::ostream & str, const SimpleAuxRunline & rl)
+{
+    str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
+        << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.auxIndex
+        << " " << rl.length;
+    return str;
+}
+
+ostream &
+operator<<(std::ostream & str, const SimpleAuxPMLRunline & rl)
+{
+    str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
+        << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.auxIndex << " "
+        << rl.pmlIndex[0] << " " << rl.pmlIndex[1] << " " << rl.pmlIndex[2]
+        << " " << rl.length;
+    return str;
 }
 
 

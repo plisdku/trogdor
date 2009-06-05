@@ -219,6 +219,11 @@ struct SimpleAuxPMLRunline
     unsigned long pmlIndex[3];
 };
 
+std::ostream & operator<<(std::ostream & str, const SimpleRunline & rl);
+std::ostream & operator<<(std::ostream & str, const SimplePMLRunline & rl);
+std::ostream & operator<<(std::ostream & str, const SimpleAuxRunline & rl);
+std::ostream & operator<<(std::ostream & str, const SimpleAuxPMLRunline & rl);
+
 
 
 

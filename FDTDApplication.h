@@ -77,7 +77,7 @@ private: // heh, "new private" stuff
 	void voxelizeGridRecursor(
 		Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		GridDescPtr currentGrid, Vector3i numNodes, Vector3i thisNode,
-		Rect3i partitionWalls);
+		Rect3i partitionWallsHalf);
 	
 	GridDescPtr makeAuxGridDescription(Vector3i collapsableDimensions,
 		GridDescPtr parentGrid, HuygensSurfaceDescPtr huygensSurface,
@@ -98,10 +98,30 @@ private: // heh, "new private" stuff
     void allocateAuxBuffers(Map<std::string, CalculationPartitionPtr>
         & calcs);
     
+    void updateE(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
+    void sourceE(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
+    void outputE(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
+    void updateH(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
+    void sourceH(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
+    void outputH(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
+    /*
     void calcE(Map<std::string, CalculationPartitionPtr> & calcGrids);
-    void calcAfterE(Map<std::string, CalculationPartitionPtr> & calcGrids);
+    void calcBeforeE(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
+    void calcAfterE(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
     void calcH(Map<std::string, CalculationPartitionPtr> & calcGrids);
-    void calcAfterH(Map<std::string, CalculationPartitionPtr> & calcGrids);
+    void calcBeforeH(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
+    void calcAfterH(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
+    */
     
 private:
     float m_dx;

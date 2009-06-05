@@ -55,9 +55,22 @@ static int sOctantHIndices[8] =
 static int sOctantFieldDirections[8] =
 	{ -1, 0, 1, 2, 2, 1, 0, -1 }; // x = 0, y = 1, z = 2
 
+static int sEFieldOctants[3] =
+    { 1, 2, 4 };
+
+static int sHFieldOctants[3] =
+    { 6, 5, 3 };
+
+static int sEFieldNumbers[3] =
+    { 0, 1, 3 };
+
+static int sHFieldNumbers[3] =
+    { 5, 4, 2 };
+
 int halfCellIndex(const Vector3i & v)
 {
-	return abs(v[0]%2 + 2*(v[1]%2) + 4*(v[2]%2)); // abs deals with -1
+    assert(vec_ge(v, 0));
+	return v[0]%2 + 2*(v[1]%2) + 4*(v[2]%2);
 }
 
 const Vector3i & halfCellOffset(int halfCellIndex)
@@ -127,6 +140,26 @@ int octantFieldDirection(Vector3i octant)
 	return octantFieldDirection(halfCellIndex(octant));
 }
 
+int eOctantNumber(int directionIndex)
+{
+    return sEFieldOctants[directionIndex];
+}
+
+int hOctantNumber(int directionIndex)
+{
+    return sHFieldOctants[directionIndex];
+}
+
+int eFieldNumber(int directionIndex)
+{
+    return sEFieldNumbers[directionIndex];
+}
+
+int hFieldNumber(int directionIndex)
+{
+    return sHFieldNumbers[directionIndex];
+}
+
 Vector3f eFieldPosition(int fieldNum)
 {
     Vector3f v(0.0, 0.0, 0.0);
@@ -138,6 +171,20 @@ Vector3f hFieldPosition(int fieldNum)
 {
     Vector3f v(0.5, 0.5, 0.5);
     v[fieldNum] = 0.0;
+    return v;
+}
+
+Vector3i eFieldOffset(int fieldNum)
+{
+    Vector3i v(0,0,0);
+    v[fieldNum] = 1;
+    return v;
+}
+
+Vector3i hFieldOffset(int fieldNum)
+{
+    Vector3i v(1,1,1);
+    v[fieldNum] = 0;
     return v;
 }
 

@@ -33,11 +33,14 @@ public:
 	void setDescription(const std::string & inDesc) { mDescription = inDesc; }
     
     void setHeadPointer(float* ptr);
-    //float* getHeadPointer() { return mHeadPointer; }
     float* getHeadPointer() const { return mHeadPointer; }
 	
     static const std::set<MemoryBuffer*> & getAllBuffers()
         { return sAllBuffers; }
+    
+    bool includes(float const* ptr) const;
+    
+    static std::string identify(float const* ptr);
     
 private:
 	unsigned long mLength;
@@ -54,11 +57,13 @@ typedef Pointer<MemoryBuffer> MemoryBufferPtr;
 
 std::ostream & operator<<(std::ostream & str, const MemoryBuffer & buffer);
 
+/*
 struct EHBufferSet
 {
-    MemoryBuffer buffers[6];
+    MemoryBuffer buffers[6]; // in field order: Ex, Ey, Hz, Ez, Hy, Hx
 };
 typedef Pointer<EHBufferSet> EHBufferSetPtr;
+*/
 
 class BufferPointer
 {

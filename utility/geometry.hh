@@ -227,6 +227,12 @@ Rect<T> clip( const Rect<T> & rectToClip, const Rect<T> & clipRect)
 }
 
 template<typename T>
+Rect<T> cyclicPermute(const Rect<T> & r, unsigned int nn)
+{
+    return Rect<T>(cyclicPermute(r.p1,nn), cyclicPermute(r.p2,nn));
+}
+
+template<typename T>
 bool operator<(const Rect<T> & lhs, const Rect<T> & rhs)
 {
     if (lhs.p1 < rhs.p1)

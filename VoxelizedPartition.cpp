@@ -26,36 +26,51 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	Rect3i allocRegion, Rect3i calcRegion) :
 	mVoxels(allocRegion, gridDesc.getHalfCellBounds(), 
-		gridDesc.getNonPMLRegion()),
+		gridDesc.getNonPMLHalfCells()),
 	mGridHalfCells(gridDesc.getHalfCellBounds()),
-	mFieldAllocRegion(expandToYeeRect(allocRegion)),
+	mFieldAllocHalfCells(expandToYeeRect(allocRegion)),
 	mAuxAllocRegion(allocRegion),
-	mCalcRegion(calcRegion)
+	mCalcHalfCells(calcRegion)
 {
 	LOG << "VoxelizedPartition()\n";
 	
-	m_nx = (mFieldAllocRegion.size(0)+1)/2;
-	m_ny = (mFieldAllocRegion.size(1)+1)/2;
-	m_nz = (mFieldAllocRegion.size(2)+1)/2;
+    m_nnx = mFieldAllocHalfCells.size(0)+1;
+    m_nny = mFieldAllocHalfCells.size(1)+1;
+    m_nnz = mFieldAllocHalfCells.size(2)+1;
+    m_nnx0 = mFieldAllocHalfCells.p1[0];
+    m_nny0 = mFieldAllocHalfCells.p1[1];
+    m_nnz0 = mFieldAllocHalfCells.p1[2];
+	m_nx = (mFieldAllocHalfCells.size(0)+1)/2;
+	m_ny = (mFieldAllocHalfCells.size(1)+1)/2;
+	m_nz = (mFieldAllocHalfCells.size(2)+1)/2;
 	int bufSize = m_nx*m_ny*m_nz;
+    
+    mNumAllocHalfCells = mFieldAllocHalfCells.size()+1;
 	
-    mEHBuffers = EHBufferSetPtr(new EHBufferSet);
-	mEHBuffers->buffers[0] = MemoryBuffer(gridDesc.getName()+" Ex", bufSize);
-	mEHBuffers->buffers[1] = MemoryBuffer(gridDesc.getName()+" Ey", bufSize);
-	mEHBuffers->buffers[2] = MemoryBuffer(gridDesc.getName()+" Hz", bufSize);
-	mEHBuffers->buffers[3] = MemoryBuffer(gridDesc.getName()+" Ez", bufSize);
-	mEHBuffers->buffers[4] = MemoryBuffer(gridDesc.getName()+" Hy", bufSize);
-	mEHBuffers->buffers[5] = MemoryBuffer(gridDesc.getName()+" Hx", bufSize);
+    //mEHBuffers = EHBufferSetPtr(new EHBufferSet);
+    mEHBuffers.resize(6);
+	mEHBuffers[0] =
+        MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Ex", bufSize));
+	mEHBuffers[1] =
+        MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Ey", bufSize));
+	mEHBuffers[2] =
+        MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Hz", bufSize));
+	mEHBuffers[3] =
+        MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Ez", bufSize));
+	mEHBuffers[4] =
+         MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Hy", bufSize));
+	mEHBuffers[5] =
+        MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Hx", bufSize));
 	
-	mNonPMLRegion = gridDesc.getNonPMLRegion();
+	mNonPMLHalfCells = gridDesc.getNonPMLHalfCells();
 	mOriginYee = gridDesc.getOriginYee();
 	
     LOG << "Partition geometry:\n";
-	LOGMORE << "nonPML " << mNonPMLRegion << "\n";
+	LOGMORE << "nonPML " << mNonPMLHalfCells << "\n";
 	LOGMORE << "alloc region " << mAuxAllocRegion << "\n";
 	LOGMORE << "full field alloc region (integer num Yee cells) "
-		<< mFieldAllocRegion << "\n";
-	LOGMORE << "calc " << mCalcRegion << "\n";
+		<< mFieldAllocHalfCells << "\n";
+	LOGMORE << "calc " << mCalcHalfCells << "\n";
 	LOGMORE << "origin " << mOriginYee << "\n";
 	
 	paintFromAssembly(gridDesc, voxelizedGrids);
@@ -78,6 +93,18 @@ VoxelizedPartition(const GridDescription & gridDesc,
     createSourceDelegates(gridDesc.getSources());
 }
 
+Rect3i VoxelizedPartition::
+getGridYeeCells() const
+{
+    return rectHalfToYee(mGridHalfCells);
+}
+
+Rect3i VoxelizedPartition::
+getAllocYeeCells() const
+{
+    return rectHalfToYee(mFieldAllocHalfCells);
+}
+
 bool VoxelizedPartition::
 partitionHasPML(int faceNum) const
 {
@@ -87,19 +114,19 @@ partitionHasPML(int faceNum) const
 	
 	if (faceNum%2 == 0) // low side
 	{
-		if (mNonPMLRegion.p1[faceNum/2] <= mAuxAllocRegion.p1[faceNum/2])
+		if (mNonPMLHalfCells.p1[faceNum/2] <= mAuxAllocRegion.p1[faceNum/2])
 			return 0;
 	}
 	else
 	{
-		if (mNonPMLRegion.p2[faceNum/2] >= mAuxAllocRegion.p2[faceNum/2])
+		if (mNonPMLHalfCells.p2[faceNum/2] >= mAuxAllocRegion.p2[faceNum/2])
 			return 0;
 	}
 	return 1;
 }
 
 Rect3i VoxelizedPartition::
-getPMLRegionOnFace(int faceNum) const
+getPMLHalfCellsOnFace(int faceNum) const
 {
 	//LOG << "Using non-parallel-friendly method.\n";
 	assert(faceNum >= 0);
@@ -108,14 +135,14 @@ getPMLRegionOnFace(int faceNum) const
 	Rect3i pmlRegion(mGridHalfCells);
 	
 	if (faceNum%2 == 0) // low side
-		pmlRegion.p2[faceNum/2] = mNonPMLRegion.p1[faceNum/2]-1;
+		pmlRegion.p2[faceNum/2] = mNonPMLHalfCells.p1[faceNum/2]-1;
 	else
-		pmlRegion.p1[faceNum/2] = mNonPMLRegion.p2[faceNum/2]+1;
+		pmlRegion.p1[faceNum/2] = mNonPMLHalfCells.p2[faceNum/2]+1;
 	return pmlRegion;
 }
 
 Rect3i VoxelizedPartition::
-getPartitionPMLRegionOnFace(int faceNum) const
+getPartitionPMLHalfCellsOnFace(int faceNum) const
 {
 	//LOG << "Using non-parallel-friendly method.\n";
 	assert(faceNum >= 0);
@@ -124,101 +151,162 @@ getPartitionPMLRegionOnFace(int faceNum) const
 	Rect3i pmlRegion(mAuxAllocRegion);
 	
 	if (faceNum%2 == 0) // low side
-		pmlRegion.p2[faceNum/2] = mNonPMLRegion.p1[faceNum/2]-1;
+		pmlRegion.p2[faceNum/2] = mNonPMLHalfCells.p1[faceNum/2]-1;
 	else
-		pmlRegion.p1[faceNum/2] = mNonPMLRegion.p2[faceNum/2]+1;
+		pmlRegion.p1[faceNum/2] = mNonPMLHalfCells.p2[faceNum/2]+1;
 	return pmlRegion;
 }
 
 Rect3i VoxelizedPartition::
-getPMLRegion(Vector3i pmlDir) const
+getPMLHalfCells(Vector3i pmlDir) const
 {
 	Rect3i pml(mGridHalfCells);
 	
 	for (int nn = 0; nn < 3; nn++)
 	{
 		if (pmlDir[nn] < 0)
-			pml.p2[nn] = mNonPMLRegion.p1[nn]-1;
+			pml.p2[nn] = mNonPMLHalfCells.p1[nn]-1;
 		else if (pmlDir[nn] > 0)
-			pml.p1[nn] = mNonPMLRegion.p2[nn]+1;
+			pml.p1[nn] = mNonPMLHalfCells.p2[nn]+1;
 		else
 		{
-			pml.p1[nn] = mNonPMLRegion.p1[nn];
-			pml.p2[nn] = mNonPMLRegion.p2[nn];
+			pml.p1[nn] = mNonPMLHalfCells.p1[nn];
+			pml.p2[nn] = mNonPMLHalfCells.p2[nn];
 		}
 	}
 	return pml;
 }
 
+Vector3i VoxelizedPartition::
+wrap(Vector3i vv) const
+{
+    vv = vv - mFieldAllocHalfCells.p1;
+    
+    if (vv[0] >= 0)
+        vv[0] = m_nnx0 + vv[0]%m_nnx;
+    else
+        vv[0] = m_nnx0 + (m_nnx-1)-(-vv[0]-1)%m_nnx;
+    
+    if (vv[1] >= 0)
+        vv[1] = m_nny0 + vv[1]%m_nny;
+    else
+        vv[1] = m_nny0 + (m_nny-1)-(-vv[1]-1)%m_nny;
+    
+    if (vv[2] >= 0)
+        vv[2] = m_nnz0 + vv[2]%m_nnz;
+    else
+        vv[2] = m_nnz0 + (m_nnz-1)-(-vv[2]-1)%m_nnz;
+    
+    assert(mFieldAllocHalfCells.encloses(vv));
+    
+    return vv;
+}
+
+Vector3i VoxelizedPartition::
+wrap(const NeighborBufferDescPtr & nb, Vector3i vv) const
+{
+	const Rect3i & halfCellBounds(nb->getDestHalfRect());
+    const Vector3i & p1 = halfCellBounds.p1;
+    Vector3i halfCells = halfCellBounds.size() + 1;
+    
+    vv = vv - p1;
+    
+    if (vv[0] >= 0)
+        vv[0] = p1[0] + vv[0]%halfCells[0];
+    else
+        vv[0] = p1[0] + (halfCells[0]-1)-(-vv[0]-1)%halfCells[0];
+    
+    if (vv[1] >= 0)
+        vv[1] = p1[1] + vv[1]%halfCells[1];
+    else
+        vv[1] = p1[1] + (halfCells[1]-1)-(-vv[1]-1)%halfCells[1];
+    
+    if (vv[2] >= 0)
+        vv[2] = p1[2] + vv[2]%halfCells[2];
+    else
+        vv[2] = p1[2] + (halfCells[2]-1)-(-vv[2]-1)%halfCells[2];
+    
+    assert(halfCellBounds.encloses(vv));
+    
+    return vv;
+}
+
+
+/*
 long VoxelizedPartition::
 linearYeeIndex(int ii, int jj, int kk) const
 {
-	ii = ii - mFieldAllocRegion.p1[0];
-	jj = jj - mFieldAllocRegion.p1[1];
-	kk = kk - mFieldAllocRegion.p1[2];
-	int i = ii/2, j = jj/2, k = kk/2;
-	return ( (i+m_nx)%m_nx +
-		m_nx*( (j+m_ny)%m_ny) +
-		m_nx*m_ny*( (k+m_nz)%m_nz));
+    assert(mFieldAllocHalfCells.encloses(ii,jj,kk));
+    
+    ii = ii-m_nnx0;
+    jj = jj-m_nny0;
+    kk = kk-m_nnz0;
+        
+    return ( (ii/2)%m_nx + m_nx*( (jj/2)%m_ny ) + m_nx*m_ny*( (kk/2)%m_nz ) );
 }
+*/
 
 long VoxelizedPartition::
 linearYeeIndex(const Vector3i & halfCell) const
 {
-	Vector3i qq(halfCell - mFieldAllocRegion.p1);
-	int i = qq[0]/2, j = qq[1]/2, k = qq[2]/2;
-	return ( (i+m_nx)%m_nx +
-		m_nx*( (j+m_ny)%m_ny) +
-		m_nx*m_ny*( (k+m_nz)%m_nz));
+    assert(mFieldAllocHalfCells.encloses(halfCell));
+    
+    int ii = halfCell[0] - m_nnx0;
+    int jj = halfCell[1] - m_nny0;
+    int kk = halfCell[2] - m_nnz0;
+    
+    return ( (ii/2) + m_nx*(jj/2) + m_nx*m_ny*(kk/2) );
 }
 
-
-long VoxelizedPartition::
-linearYeeIndex(const NeighborBufferDescPtr & nb,
-	int ii, int jj, int kk) const
-{
-	const Rect3i & halfCellBounds (nb->getDestHalfRect());
-	Rect3i yeeBounds(rectHalfToYee(halfCellBounds));
-	int nx = yeeBounds.size(0)+1;
-	int ny = yeeBounds.size(1)+1;
-	int nz = yeeBounds.size(2)+1;
-	
-	int i = (ii/2) - yeeBounds.p1[0];
-	int j = (jj/2) - yeeBounds.p1[1];
-	int k = (kk/2) - yeeBounds.p1[2];
-	
-	return ( (i+nx)%nx + nx*( (j+ny)%ny) + nx*ny*( (k+nz)%nz));
-}
 
 long VoxelizedPartition::
 linearYeeIndex(const NeighborBufferDescPtr & nb,
 	const Vector3i & halfCell) const
 {
 	const Rect3i & halfCellBounds (nb->getDestHalfRect());
+    Vector3i halfCells = halfCellBounds.size() + 1;
+    
 	Rect3i yeeBounds(rectHalfToYee(halfCellBounds));
 	int nx = yeeBounds.size(0)+1;
 	int ny = yeeBounds.size(1)+1;
 	int nz = yeeBounds.size(2)+1;
-	
-	Vector3i p = (halfCell/2) - yeeBounds.p1;
-	
-	return ( (p[0]+nx)%nx + nx*( (p[1]+ny)%ny) + nx*ny*( (p[2]+nz)%nz));
+    
+    assert(halfCellBounds.encloses(halfCell));
+    
+	int ii = halfCell[0] - halfCellBounds.p1[0];
+	int jj = halfCell[1] - halfCellBounds.p1[1];
+	int kk = halfCell[2] - halfCellBounds.p1[2];
+    
+    return ( (ii/2) + nx*(jj/2) + nx*ny*(kk/2) );
 }
 
 BufferPointer VoxelizedPartition::
 fieldPointer(Vector3i halfCell) const
 {
+    halfCell = wrap(halfCell);
 	long index = linearYeeIndex(halfCell);
 	int fieldNum = octantFieldNumber(halfCell);
-	return BufferPointer(mEHBuffers->buffers[fieldNum], index);
+	return BufferPointer(*mEHBuffers[fieldNum], index);
 }
 
 BufferPointer VoxelizedPartition::
 fieldPointer(const NeighborBufferDescPtr & nb, Vector3i halfCell) const
 {
+    halfCell = wrap(nb, halfCell);
 	long index = linearYeeIndex(nb, halfCell);
 	int fieldNum = octantFieldNumber(halfCell);
-	return BufferPointer(mNBBuffers[nb].buffers[fieldNum], index);
+	return BufferPointer(*mNBBuffers[nb][fieldNum], index);
+}
+
+Vector3i VoxelizedPartition::
+getFieldStride() const
+{
+    int stride = mEHBuffers[0]->getStride(); // same for all E, H
+    
+    for (int nn = 0; nn < 6; nn++)
+        assert(mEHBuffers[nn]->getStride() == stride); // but make sure.
+    
+    return Vector3i(stride, stride*m_nx, stride*m_nx*m_ny);
 }
 
 void VoxelizedPartition::
@@ -312,8 +400,8 @@ paintFromHuygensSurfaces(const GridDescription & gridDesc)
 				ostringstream bufferName;
                 bufferName << gridDesc.getName() << " HS " << nn << " NB " <<
                     mm << " field " << ff;
-				mNBBuffers[nb].buffers[ff] = MemoryBuffer(bufferName.str(),
-					bufSize);
+				mNBBuffers[nb][ff] = MemoryBufferPtr(
+                    new MemoryBuffer(bufferName.str(), bufSize));
 			}
 		}
 	}
@@ -460,7 +548,7 @@ createMaterialDelegates()
 	// Cache PML rects (this is really just to simplify notation further down).
 	vector<Rect3i> pmlRects;
 	for (int nn = 0; nn < 6; nn++)
-		pmlRects.push_back(getPMLRegionOnFace(nn));
+		pmlRects.push_back(getPMLHalfCellsOnFace(nn));
 	
 	LOG << "Iterating over paints...\n";
 	for (set<Paint*>::iterator itr = allPaints.begin(); itr != allPaints.end();
@@ -536,13 +624,13 @@ void VoxelizedPartition::
 genRunlinesInOctant(int octant)
 {
 	// First task: generate a starting half-cell in the correct octant.
-	// The loops may still end by not exceeding mCalcRegion.p2—this works fine.
+	// The loops may still end by not exceeding mCalcHalfCells.p2—this works fine.
 	Vector3i offset = halfCellOffset(octant);
-	Vector3i p1 = mCalcRegion.p1;
+	Vector3i p1 = mCalcHalfCells.p1;
 	for (int nn = 0; nn < 3; nn++)
 	if (p1[nn] % 2 != offset[nn])
 		p1[nn]++;
-	//LOG << "Calc region " << mCalcRegion << endl;
+	//LOG << "Calc region " << mCalcHalfCells << endl;
 	//LOG << "Runlines in octant " << octant << " at start " << p1 << endl;
 	
 	MaterialDelegate* material; // unsafe pointer for speed in this case.
@@ -558,9 +646,9 @@ genRunlinesInOctant(int octant)
 	bool needNewRunline = 1;
 	Vector3i x(p1), lastX(p1);
 	Paint *xPaint, *xParentPaint = 0L, *lastXParentPaint = 0L;
-	for (x[2] = p1[2]; x[2] <= mCalcRegion.p2[2]; x[2] += 2)
-	for (x[1] = p1[1]; x[1] <= mCalcRegion.p2[1]; x[1] += 2)
-	for (x[0] = p1[0]; x[0] <= mCalcRegion.p2[0]; x[0] += 2)
+	for (x[2] = p1[2]; x[2] <= mCalcHalfCells.p2[2]; x[2] += 2)
+	for (x[1] = p1[1]; x[1] <= mCalcHalfCells.p2[1]; x[1] += 2)
+	for (x[0] = p1[0]; x[0] <= mCalcHalfCells.p2[0]; x[0] += 2)
 	{
 		xPaint = mVoxels(x);
 		xParentPaint = xPaint->withoutCurlBuffers();
@@ -602,8 +690,14 @@ void VoxelizedPartition::
 createSourceDelegates(const std::vector<SourceDescPtr> & sources)
 {
     for (unsigned int nn = 0; nn < sources.size(); nn++)
-        mSourceDelegates.push_back(
-            SourceFactory::getDelegate(*this, sources[nn]));
+    {
+        if (sources[nn]->isSoftSource())
+            mSoftSourceDelegates.push_back(
+                SourceFactory::getDelegate(*this, sources[nn]));
+        else
+            mSoftSourceDelegates.push_back(
+                SourceFactory::getDelegate(*this, sources[nn]));
+    }
 }
 
 

@@ -71,12 +71,10 @@ public:
 		throw(Exception);
 	
 	// Mutators
-	void setOutputs(const std::vector<OutputDescPtr> & outputs) {
-		mOutputs = outputs; }
-	void setSources(const std::vector<SourceDescPtr> & sources) {
-		mSources = sources; }
-	//void setSources2(const std::vector<SourceDesc2Ptr> & sources) {
-	//	mSources2 = sources; }
+	void setOutputs(const std::vector<OutputDescPtr> & outputs)
+        { mOutputs = outputs; }
+	void setSources(const std::vector<SourceDescPtr> & sources)
+        { mSources = sources; }
 	void setHuygensSurfaces(
 		const std::vector<HuygensSurfaceDescPtr> & surfaces);
 	void setAssembly(AssemblyDescPtr assembly) {
@@ -93,8 +91,8 @@ public:
 	Vector3i getNumHalfCells() const { return mNumHalfCells; }
 	Rect3i getYeeBounds() const;
 	Rect3i getHalfCellBounds() const;
-	const Rect3i & getCalcRegion() const { return mCalcRegionHalf; }
-	const Rect3i & getNonPMLRegion() const { return mNonPMLHalf; }
+	const Rect3i & getCalcHalfCells() const { return mCalcRegionHalf; }
+	const Rect3i & getNonPMLHalfCells() const { return mNonPMLHalf; }
 	Vector3i getOriginYee() const { return mOriginYee; }
 	int getNumDimensions() const;
 	
@@ -128,7 +126,7 @@ class Duration
 {
 public:
     Duration() :
-        mFirst(1),
+        mFirst(0),
         mLast(INT_MAX),
         mPeriod(1) {}
     Duration(int firstTimestep, int lastTimestep, int period = 1) :
@@ -147,6 +145,10 @@ public:
     int getFirst() const { return mFirst; }
     int getLast() const { return mLast; }
     int getPeriod() const { return mPeriod; }
+    
+    void setFirst(int first) { mFirst = first; }
+    void setLast(int last) { mLast = last; }
+    void setPeriod(int period) { mPeriod = period; }
     
 private:
     int mFirst;
@@ -170,6 +172,8 @@ public:
     
     void cycleCoordinates();
     
+    void setYeeCells(const Rect3i & rect) { mYeeCells = rect; }
+    void setStride(const Vector3i & stride) { mStride = stride; }
     const Rect3i & getYeeCells() const { return mYeeCells; }
     const Vector3i & getStride() const { return mStride; }
 private:
@@ -277,6 +281,9 @@ public:
     bool isHardSource() const { return !mIsSoft; }
     bool isSoftSource() const { return mIsSoft; }
     bool isSpaceVarying() const { return (mSpaceTimeFile != ""); }
+    
+    const std::vector<Region> & getRegions() const { return mRegions; }
+    const std::vector<Duration> & getDurations() const { return mDurations; }
     
 private:
     int mCoordinatePermutationNumber;

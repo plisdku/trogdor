@@ -10,6 +10,7 @@
 #include "MemoryUtilities.h"
 #include <cassert>
 #include <iomanip>
+#include <sstream>
 
 using namespace std;
 
@@ -70,6 +71,35 @@ setHeadPointer(float* ptr)
     mHeadPointer = ptr;
 }
 
+bool MemoryBuffer::
+includes(float const* ptr) const
+{
+    long offset = long(ptr) - long(mHeadPointer);
+    offset /= sizeof(float);
+    
+    if (offset >= 0 && offset/mStride < mLength && offset%mStride == 0)
+        return 1;
+    return 0;
+}
+
+string MemoryBuffer::
+identify(float const * ptr)
+{
+    set<MemoryBuffer*>::const_iterator itr;
+    for (itr = sAllBuffers.begin(); itr != sAllBuffers.end(); itr++)
+    {
+        if ((*itr)->includes(ptr))
+        {
+            ostringstream str;
+            str << (*itr)->getDescription() << " offset " <<
+                (long(ptr)-long((*itr)->getHeadPointer()))/sizeof(float);
+            return str.str();
+        }
+    }
+    return "Pointer not covered!";
+}
+
+
 ostream &
 operator<<(std::ostream & str, const MemoryBuffer & buffer)
 {
@@ -99,6 +129,7 @@ BufferPointer(const MemoryBuffer & buffer, unsigned long offset) :
 	mBuffer(&buffer),
 	mOffset(offset)
 {
+    assert(mOffset >= 0 && mOffset < mBuffer->getLength());
 }
 
 BufferPointer::
@@ -106,6 +137,7 @@ BufferPointer(const BufferPointer & copyMe) :
 	mBuffer(copyMe.mBuffer),
 	mOffset(copyMe.mOffset)
 {
+    assert(mOffset >= 0 && mOffset < mBuffer->getLength());
 }
 
 void BufferPointer::

@@ -378,6 +378,18 @@ Vector3<T> dominantComponent(const Vector3<T> & rhs)
     return Vector3<T>(0, 0, rhs[2]);
 }
 
+template<typename T>
+Vector3<T> cyclicPermute(const Vector3<T> & rhs, unsigned int nn)
+{
+    return Vector3<T>(rhs[(3-nn)%3], rhs[(4-nn)%3], rhs[(5-nn)%3]);
+}
+
+
+template <typename T, typename S>
+bool vec_eq(const Vector3<T> & lhs, const S & rhs)
+{
+    return (lhs[0] == rhs && lhs[1] == rhs && lhs[2] == rhs);
+}
 
 template <typename T, typename S>
 bool vec_lt(const Vector3<T>& lhs, const S & rhs)

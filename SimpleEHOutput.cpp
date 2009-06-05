@@ -15,11 +15,11 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
-#include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "Version.h"
 
 using namespace std;
-using namespace boost::gregorian;
+using namespace boost::posix_time;
 using namespace YeeUtilities;
 
 #pragma mark *** Delegate ***
@@ -35,166 +35,315 @@ OutputPtr SimpleEHOutputDelegate::
 makeOutput(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
-    //string outputClass(mDesc->getClass());
-    
-    if (norm2(mDesc->getWhichJ()) == 0 &&
-        norm2(mDesc->getWhichP()) == 0 &&
-        norm2(mDesc->getWhichM()) == 0)
-    {
-        return OutputPtr(new SimpleEHOutput(*mDesc, vp.getOriginYee(),
-            cp.getDxyz(), cp.getDt()));
-    }
-    else
-    {
-        cerr << "Warning: can't handle outputs for other than E or H.\n";
-        exit(1);
-    }
-    
-    return OutputPtr(0L);
+    return OutputPtr(new SimpleEHOutput(*mDesc, vp, cp));
 }
 
 #pragma mark *** Output ***
 
-/*
 SimpleEHOutput::
-SimpleEHOutput() :
-    mIsInterpolated(0),
-    mWhichE(0,0,0),
-    mWhichH(0,0,0),
-    mRegions(1,Region()),
-    mDurations(1,Duration())
-{
-}
-*/
-
-SimpleEHOutput::
-SimpleEHOutput(const OutputDescription & desc, Vector3i origin, Vector3f dxyz,
-    float dt) :
-    mIsInterpolated(0),
-    mInterpolationPoint(0,0,0),
+SimpleEHOutput(const OutputDescription & desc,
+    const VoxelizedPartition & vp,
+    const CalculationPartition & cp) :
+    mCoordPermutation(desc.getPermutation()),
+    mDatafile(),
     mCurrentSampleInterval(0),
+    mIsInterpolated(desc.isInterpolated()),
+    mInterpolationPoint(desc.getInterpolationPoint()),
     mWhichE(desc.getWhichE()),
     mWhichH(desc.getWhichH()),
-    mRegions(desc.getRegions()),
+    mAllocYeeOrigin(vp.getAllocYeeCells().p1),
+    mAllocYeeCells(vp.getAllocYeeCells().size()+1),
     mDurations(desc.getDurations())
 {
-    writeDescriptionFile();
-}
-
-
-void SimpleEHOutput::
-outputEPhase(int timestep)
-{
-    if (norm2(mWhichE) != 0)
-        LOG << "Output E.\n";
-}
-
-void SimpleEHOutput::
-outputHPhase(int timestep)
-{
-    if (norm2(mWhichH) != 0)
-        LOG << "Output H.\n";
-}
-
-
-void SimpleEHOutput::
-writeDescriptionFile() const
-{
-    /*
-    int nn, dir;
-    Mat3i permuteBackwardi;
-    Mat3f permuteBackwardf;
-    Mat3i unpermutei(1);
-    Mat3f unpermutef(1);
-    permuteBackwardi = 0,1,0,0,0,1,1,0,0;
-    permuteBackwardf = 0,1,0,0,0,1,1,0,0;
-    int permutation = desc.getPermutation();
-    
-    for (nn = 0; nn < permutation; nn++)
+    // Clip the regions to the current partition bounds (calc bounds, not
+    //     allocation bounds!)
+    LOG << "Clipping output regions to partition bounds.  This is not in the"
+        " right place; it should be performed earlier somehow.\n";
+    assert(desc.getRegions().size() > 0);
+    for (int rr = 0; rr < desc.getRegions().size(); rr++)
     {
-        unpermutei = permuteBackwardi * unpermutei;
-        unpermutef = permuteBackwardf * unpermutef;
+        Rect3i outRect(clip(desc.getRegions()[rr].getYeeCells(),
+            vp.getGridYeeCells()));
+        outRect.p1 = cyclicPermute(outRect.p1, 3-mCoordPermutation);
+        outRect.p2 = cyclicPermute(outRect.p2, 3-mCoordPermutation);
+        
+        Vector3i outStride(cyclicPermute(desc.getRegions()[rr].getStride(),
+            3-mCoordPermutation));
+        
+        mRegions.push_back(Region(outRect, outStride));
     }
+    LOG << "Truncating durations to simulation duration.  This is in the "
+        "wrong place; can't it be done earlier?\n";
+    int numTimesteps = cp.getDuration();
+    for (int dd = 0; dd < mDurations.size(); dd++)
+    if (mDurations[dd].getLast() > (numTimesteps-1))
+        mDurations[dd].setLast(numTimesteps-1);
     
-    // Write description file
     string specfile(desc.getFile() + string(".txt"));
     string datafile(desc.getFile());
     string materialfile(desc.getFile() + string(".mat"));
     
-    ofstream descFile(specfile.c_str());
-    //descFile.open();
+    writeDescriptionFile(vp, cp, specfile, datafile, materialfile);
     
-    date today = day_clock::local_day();
-    date todayUTC = day_clock::universal_day();
+    mDatafile.open(datafile.c_str());
+}
+
+SimpleEHOutput::
+~SimpleEHOutput()
+{
+    mDatafile.close();
+}
+
+
+void SimpleEHOutput::
+outputEPhase(const CalculationPartition & cp, int timestep)
+{
+    if (norm2(mWhichE) == 0)
+        return;
+    if (mCurrentSampleInterval >= mDurations.size())
+        return;
+    while (timestep > mDurations[mCurrentSampleInterval].getLast())
+    {
+        mCurrentSampleInterval++;
+        if (mCurrentSampleInterval >= mDurations.size())
+            return;
+    }
+    
+    int firstT = mDurations[mCurrentSampleInterval].getFirst();
+    int period = mDurations[mCurrentSampleInterval].getPeriod();
+    
+    if (timestep >= firstT && (timestep - firstT)%period == 0)
+        writeE(cp);
+}
+
+void SimpleEHOutput::
+outputHPhase(const CalculationPartition & cp, int timestep)
+{
+    if (norm2(mWhichH) == 0)
+        return;
+    if (mCurrentSampleInterval >= mDurations.size())
+        return;
+    while (timestep > mDurations[mCurrentSampleInterval].getLast())
+    {
+        mCurrentSampleInterval++;
+        if (mCurrentSampleInterval >= mDurations.size())
+            return;
+    }
+    
+    int firstT = mDurations[mCurrentSampleInterval].getFirst();
+    int period = mDurations[mCurrentSampleInterval].getPeriod();
+    
+    if (timestep >= firstT && (timestep - firstT)%period == 0)
+        writeH(cp);
+}
+
+void SimpleEHOutput::
+writeE(const CalculationPartition & cp)
+{
+    // Variables prefixed by "out" are as seen by the output file and user.
+    // Variables prefixed by "in" are the corresponding permuted ones, to deal
+    // with "invisible" grid rotations.
+    
+    int in0 = (3-mCoordPermutation)%3;  // direction corresponding to outside x
+    int in1 = (4-mCoordPermutation)%3;  // ... outside y
+    int in2 = (5-mCoordPermutation)%3;  // ... outside z
+    
+    // If there is no grid rotation, in0 = 0, in1 = 1, in2 = 2 because the
+    // inside and outside xyz axes point the same directions...
+    
+    for (unsigned int rr = 0; rr < mRegions.size(); rr++)
+    {
+        for (int outDir = 0; outDir < 3; outDir++)
+        {
+            int inDir = (outDir + 3 - mCoordPermutation)%3;
+            
+            Rect3i rect = mRegions[rr].getYeeCells();
+            Vector3i stride = mRegions[rr].getStride();
+            Vector3i p;
+            
+            if (mWhichE[inDir] != 0)
+            {
+                if (!mIsInterpolated)
+                {
+                    for (p[in2] = rect.p1[in2]; p[in2] <= rect.p2[in2];
+                        p[in2] += stride[in2])
+                    for (p[in1] = rect.p1[in1]; p[in1] <= rect.p2[in1];
+                        p[in1] += stride[in1])
+                    for (p[in0] = rect.p1[in0]; p[in0] <= rect.p2[in0];
+                        p[in0] += stride[in0])
+                    {
+                        float val = cp.getE(inDir, p);
+                        mDatafile.write((char*)(&val),
+                            (std::streamsize)sizeof(float));
+                    }
+                }
+                else
+                {
+                    for (p[in2] = rect.p1[in2]; p[in2] <= rect.p2[in2];
+                        p[in2] += stride[in2])
+                    for (p[in1] = rect.p1[in1]; p[in1] <= rect.p2[in1];
+                        p[in1] += stride[in1])
+                    for (p[in0] = rect.p1[in0]; p[in0] <= rect.p2[in0];
+                        p[in0] += stride[in0])
+                    {
+                        float val = 
+                            cp.getE(inDir, Vector3f(p)+mInterpolationPoint);
+                        mDatafile.write((char*)(&val),
+                            (std::streamsize)sizeof(float));
+                    }
+                }
+            }
+        }
+    }
+    mDatafile << flush;
+}
+
+void SimpleEHOutput::
+writeH(const CalculationPartition & cp)
+{
+    // Variables prefixed by "out" are as seen by the output file and user.
+    // Variables prefixed by "in" are the corresponding permuted ones, to deal
+    // with "invisible" grid rotations.
+    
+    int in0 = (3-mCoordPermutation)%3;  // direction corresponding to outside x
+    int in1 = (4-mCoordPermutation)%3;  // ... outside y
+    int in2 = (5-mCoordPermutation)%3;  // ... outside z
+    
+    // If there is no grid rotation, in0 = 0, in1 = 1, in2 = 2 because the
+    // inside and outside xyz axes point the same directions...
+    
+    for (unsigned int rr = 0; rr < mRegions.size(); rr++)
+    {
+        for (int outDir = 0; outDir < 3; outDir++)
+        {
+            int inDir = (outDir + 3 - mCoordPermutation)%3;
+            
+            Rect3i rect = mRegions[rr].getYeeCells();
+            Vector3i stride = mRegions[rr].getStride();
+            Vector3i p;
+            
+            if (mWhichH[inDir] != 0)
+            {
+                if (!mIsInterpolated)
+                {
+                    for (p[in2] = rect.p1[in2]; p[in2] <= rect.p2[in2];
+                        p[in2] += stride[in2])
+                    for (p[in1] = rect.p1[in1]; p[in1] <= rect.p2[in1];
+                        p[in1] += stride[in1])
+                    for (p[in0] = rect.p1[in0]; p[in0] <= rect.p2[in0];
+                        p[in0] += stride[in0])
+                    {
+                        float val = cp.getH(inDir, p);
+                        mDatafile.write((char*)(&val),
+                            (std::streamsize)sizeof(float));
+                    }
+                }
+                else
+                {
+                    for (p[in2] = rect.p1[in2]; p[in2] <= rect.p2[in2];
+                        p[in2] += stride[in2])
+                    for (p[in1] = rect.p1[in1]; p[in1] <= rect.p2[in1];
+                        p[in1] += stride[in1])
+                    for (p[in0] = rect.p1[in0]; p[in0] <= rect.p2[in0];
+                        p[in0] += stride[in0])
+                    {
+                        float val = 
+                            cp.getH(inDir, Vector3f(p)+mInterpolationPoint);
+                        mDatafile.write((char*)(&val),
+                            (std::streamsize)sizeof(float));
+                    }
+                }
+            }
+        }
+    }
+    mDatafile << flush;
+}
+
+void SimpleEHOutput::
+writeDescriptionFile(const VoxelizedPartition & vp,
+    const CalculationPartition & cp, string specfile,
+    string datafile, string materialfile) const
+{
+    int nn, dir;
+    int unpermute = 3-mCoordPermutation;
+        
+    ofstream descFile(specfile.c_str());
+    
+    //date today = day_clock::local_day();
+    //date todayUTC = day_clock::universal_day();
+    ptime now(second_clock::local_time());
+    
     descFile << "trogdor5output\n";
     descFile << "trogdorMajorVersion " << TROGDOR_MAJOR_VERSION << "\n";
     descFile << "trogdorSVNVersion NOTUSED\n";
     descFile << "trogdorBuildDate " << __DATE__ << "\n";
     descFile << "specfile " << specfile << "\n";
     descFile << "datafile " << datafile << "\n";
-    descFile << "date " << to_iso_extended_string(today) << "\n";
-    descFile << "dxyz " << dxyz << "\n";
-    descFile << "dt " << dt << "\n";
+    //descFile << "date " << to_iso_extended_string(today) << " "
+    descFile << "date " << to_iso_extended_string(now) << "\n";
+    descFile << "dxyz " << cp.getDxyz() << "\n";
+    descFile << "dt " << cp.getDt() << "\n";
     
-    if (desc.isInterpolated())
+    if (!mIsInterpolated)
     {
         // E fields
         for (nn = 0; nn < 3; nn++)
-        if (desc.getWhichE()[nn])
+        if (mWhichE[nn])
         {
-            dir = (nn+3-permutation)%3;  // undo permutation
+            dir = (nn+3-mCoordPermutation)%3;  // undo permutation
             descFile << "field e" << char('x' + dir) << " "
-                << eFieldPosition(dir) << "0.0 \n";
+                << eFieldPosition(dir) << " 0.0 \n";
         }
         
         // H fields
         for (nn = 0; nn < 3; nn++)
-        if (desc.getWhichH()[nn])
+        if (mWhichH[nn])
         {
-            dir = (nn+3-permutation)%3;  // undo permutation
+            dir = (nn+3-mCoordPermutation)%3;  // undo permutation
             descFile << "field h" << char('x' + dir) << " "
                 << hFieldPosition(dir) << " 0.5\n";
         }
     }
     else
     {
-        Vector3f interp(unpermutef * desc.getInterpolationPoint());
+        Vector3f interp(cyclicPermute(mInterpolationPoint, unpermute));
         // E fields
         for (nn = 0; nn < 3; nn++)
-        if (desc.getWhichE()[nn])
+        if (mWhichE[nn])
         {
-            dir = (nn+3-permutation)%3;  // undo permutation
+            dir = (nn+3-mCoordPermutation)%3;  // undo permutation
             descFile << "field e" << char('x' + dir) << " " << interp
                 << " 0.0 \n";
         }
         
         // H fields
         for (nn = 0; nn < 3; nn++)
-        if (desc.getWhichH()[nn])
+        if (mWhichH[nn])
         {
-            dir = (nn+3-permutation)%3;  // undo permutation
+            dir = (nn+3-mCoordPermutation)%3;  // undo permutation
             descFile << "field h" << char('x' + dir) << " " << interp
                 << " 0.5 \n";
         }
     }
     
-    const vector<Region> & regions = desc.getRegions();
-    const vector<Duration> & durations = desc.getDurations();
-    
-    for (nn = 0; nn < regions.size(); nn++)
+    for (nn = 0; nn < mRegions.size(); nn++)
     {
-        descFile << "region " << unpermutei*(regions[nn].getYeeCells() - origin)
-            << " stride " << unpermutei*regions[nn].getStride() << "\n";
+        descFile << "region "
+            << cyclicPermute(mRegions[nn].getYeeCells()-vp.getOriginYee(),
+                unpermute)
+            << " stride "
+            << cyclicPermute(mRegions[nn].getStride(), unpermute)
+            << "\n";
     }
     
-    for (nn = 0; nn < durations.size(); nn++)
+    for (nn = 0; nn < mDurations.size(); nn++)
     {
-        descFile << "duration from " << durations[nn].getFirst() << " to "
-            << durations[nn].getLast() << " period "
-            << durations[nn].getPeriod() << "\n";
+        descFile << "duration from "
+            << mDurations[nn].getFirst() << " to "
+            << mDurations[nn].getLast() << " period "
+            << mDurations[nn].getPeriod() << "\n";
     }
     
     descFile.close();
-    */
 }
 

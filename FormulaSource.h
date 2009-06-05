@@ -14,6 +14,7 @@
 #include "SimulationDescription.h"
 #include "Pointer.h"
 #include "geometry.h"
+#include "calc.hh"
 #include <vector>
 
 class FormulaSourceDelegate : public SourceDelegate
@@ -30,19 +31,29 @@ private:
 class FormulaSource : public Source
 {
 public:
-    FormulaSource(const SourceDescription & desc);
+    FormulaSource(const SourceDescription & desc,
+        const VoxelizedPartition & vp, const CalculationPartition & cp);
     
+    virtual void sourceEPhase(CalculationPartition & cp, int timestep);
+    virtual void sourceHPhase(CalculationPartition & cp, int timestep);
 private:
-    std::string mFormula;
+    void uniformSourceE(CalculationPartition & cp, int timestep);
+    void uniformSourceH(CalculationPartition & cp, int timestep);
+    void polarizedSourceE(CalculationPartition & cp, int timestep);
+    void polarizedSourceH(CalculationPartition & cp, int timestep);
     
+    int mCurrentDuration;
+    
+    std::string mFormula;
+	calc_defs::Calculator<float> mCalculator;
     SourceFields mFields;
     
+    float mDt;
     bool mIsSpaceVarying;
     bool mIsSoft;
     
-    std::vector<Rect3i> mYeeRects;
-    std::vector<long> mFirstTimestep;
-    std::vector<long> mLastTimestep;
+    std::vector<Region> mRegions;
+    std::vector<Duration> mDurations;
     
     Map<std::string, std::string> mParams;
 };

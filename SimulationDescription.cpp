@@ -115,7 +115,6 @@ GridDescription(string name, Vector3i numYeeCells,
 		throw(Exception("Non-PML region has some negative dimensions"));
 }
 
-
 void GridDescription::
 setHuygensSurfaces(const vector<HuygensSurfaceDescPtr> & surfaces)
 {

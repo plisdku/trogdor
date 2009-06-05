@@ -35,6 +35,9 @@ public:
     virtual void calcEPhase(int phasePart = 0);
     virtual void calcHPhase(int phasePart = 0);
 private:
+    Vector3f mDxyz;
+    float mDt;
+    
     float m_epsr;
     float m_mur;
     std::vector<SimpleRunline> mRunlines[6];

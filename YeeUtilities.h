@@ -35,9 +35,15 @@ int octantENumber(int octant); // returns 0,1,2 for Ex,y,z or -1
 int octantHNumber(int octant); // returns 0,1,2 for Hx,y,z or -1
 int octantFieldDirection(int octant); // returns 0 for Ex or Hx, 1 for y, etc.
 int octantFieldDirection(Vector3i octant);
+int eOctantNumber(int directionIndex); // returns octant 1 for dir 0 (Ex), etc.
+int hOctantNumber(int directionIndex); // returns octant 6 for dir 0 (Hx), etc.
+int eFieldNumber(int directionIndex);
+int hFieldNumber(int directionIndex);
 
 Vector3f eFieldPosition(int fieldIndex);
 Vector3f hFieldPosition(int fieldIndex);
+Vector3i eFieldOffset(int directionIndex);
+Vector3i hFieldOffset(int directionIndex);
 
 // returns halfCell/2
 Vector3i vecHalfToYee(const Vector3i & halfCell);
