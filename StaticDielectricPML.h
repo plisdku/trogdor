@@ -17,7 +17,7 @@
 class StaticDielectricPMLDelegate : public SimpleBulkPMLMaterialDelegate
 {
 public:
-    StaticDielectricPMLDelegate(Vector3i pmlDir);
+    StaticDielectricPMLDelegate();
     
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
@@ -40,37 +40,30 @@ public:
     const std::vector<float> & getKappaH(int fieldDir, int pmlDir) const
         { return mKappaH[fieldDir][pmlDir]; }
     
-    const MemoryBufferPtr getBufAccumEj(int fieldDir) const
+    MemoryBufferPtr getBufAccumEj(int fieldDir) const
         { return mBufAccumEj[fieldDir]; }
-    const MemoryBufferPtr getBufAccumEk(int fieldDir) const
+    MemoryBufferPtr getBufAccumEk(int fieldDir) const
         { return mBufAccumEk[fieldDir]; }
-    const MemoryBufferPtr getBufAccumHj(int fieldDir) const
+    MemoryBufferPtr getBufAccumHj(int fieldDir) const
         { return mBufAccumHj[fieldDir]; }
-    const MemoryBufferPtr getBufAccumHk(int fieldDir) const
+    MemoryBufferPtr getBufAccumHk(int fieldDir) const
         { return mBufAccumHk[fieldDir]; }
     
 private:
     MemoryBufferPtr mBufAccumEj[3], mBufAccumEk[3],
         mBufAccumHj[3], mBufAccumHk[3];
     
-    // Indexing is [fieldDir][pmlDir]
+    // Indexing is [fieldDir][pmlDir].  The diagonal elements are unused because
+    // Ex is not attenuated in the x direction, etc.
     std::vector<float> mSigmaE[3][3];
     std::vector<float> mSigmaH[3][3];
     std::vector<float> mAlphaE[3][3];
     std::vector<float> mAlphaH[3][3];
     std::vector<float> mKappaE[3][3];
     std::vector<float> mKappaH[3][3];
-    /*
-    std::vector<float> mSigmaj[3];
-    std::vector<float> mSigmak[3];
-    std::vector<float> mAlphaj[3];
-    std::vector<float> mAlphak[3];
-    std::vector<float> mKappaj[3];
-    std::vector<float> mKappak[3];
-    */
 };
 
-template <bool X_ATTENUATION, bool Y_ATTENUATION, bool Z_ATTENUATION>
+template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
 class StaticDielectricPML : public Material
 {
 public:
@@ -92,16 +85,13 @@ private:
     std::vector<float> mC_MjE[3], mC_MkE[3],
         mC_PsijE[3], mC_PsikE[3],
         mC_PsijM[3], mC_PsikM[3];
-    
-    //Rect3i mMyPMLHalfCells;
-    //Vector3i mPMLDir;
-    
+        
     Vector3f mDxyz;
     float mDt;
     float m_epsr;
     float m_mur;
 };
 
-#include "StaticDielectricPML.cpp"
+#include "StaticDielectricPML.hpp"
 
 #endif

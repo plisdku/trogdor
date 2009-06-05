@@ -19,7 +19,7 @@ using namespace YeeUtilities;
 using namespace std;
 
 StaticDielectricPMLDelegate::
-StaticDielectricPMLDelegate(Vector3i pmlDir) :
+StaticDielectricPMLDelegate() :
     SimpleBulkPMLMaterialDelegate()
 {
 }
@@ -95,7 +95,7 @@ setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide)
         for (nYee = 0, nHalf=nHalf0; nYee < pmlDepthYee; nYee++, nHalf+=2)
         {
             if (pmlDir%2 == 0) // going left/down etc. (negative direction)
-                depthHalf = float(halfCellsOnSide.p2[pmlDir]-nHalf+ONE)
+                depthHalf = float(halfCellsOnSide.p2[pmlDir]-nHalf+ONE);
             else
                 depthHalf = float(nHalf-halfCellsOnSide.p1[pmlDir]+ONE);
             depthFrac = depthHalf / pmlDepthHalf;
@@ -116,7 +116,7 @@ setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide)
         for (nYee = 0, nHalf=nHalf0; nYee < pmlDepthYee; nYee++, nHalf+=2)
         {
             if (pmlDir%2 == 0) // going left/down etc. (negative direction)
-                depthHalf = float(halfCellsOnSide.p2[pmlDir]-nHalf+ONE)
+                depthHalf = float(halfCellsOnSide.p2[pmlDir]-nHalf+ONE);
             else
                 depthHalf = float(nHalf-halfCellsOnSide.p1[pmlDir]+ONE);
             depthFrac = depthHalf / pmlDepthHalf;
@@ -136,22 +136,23 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
     MaterialPtr m;
+    Vector3i pmlDir = getParentPaint()->getPMLDirections();
     
     // This disgusting dispatch procedure is necessary because the attenuation
     // directions are handled via templates, which are static creatures...
-    if (mPMLDir[0] != 0)
+    if (pmlDir[0] != 0)
     {
-        if (mPMLDir[1] && mPMLDir[2])
+        if (pmlDir[1] && pmlDir[2])
         {
             m = MaterialPtr(new StaticDielectricPML<1,1,1>(*this,
                 cp.getDxyz(), cp.getDt() ));
         }
-        else if (mPMLDir[1])
+        else if (pmlDir[1])
         {
             m = MaterialPtr(new StaticDielectricPML<1,1,0>(*this,
                 cp.getDxyz(), cp.getDt() ));
         }
-        else if (mPMLDir[2])
+        else if (pmlDir[2])
         {
             m = MaterialPtr(new StaticDielectricPML<1,0,1>(*this,
                 cp.getDxyz(), cp.getDt() ));
@@ -162,9 +163,9 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
                 cp.getDxyz(), cp.getDt() ));
         }
     }
-    else if (mPMLDir[1] != 0)
+    else if (pmlDir[1] != 0)
     {
-        if (mPMLDir[2])
+        if (pmlDir[2])
         {
             m = MaterialPtr(new StaticDielectricPML<0,1,1>(*this,
                 cp.getDxyz(), cp.getDt() ));
@@ -175,7 +176,7 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
                 cp.getDxyz(), cp.getDt() ));
         }
     }
-    else if (mPMLDir[2] != 0)
+    else if (pmlDir[2] != 0)
     {
         m = MaterialPtr(new StaticDielectricPML<0,0,1>(*this,
                 cp.getDxyz(), cp.getDt() ));
@@ -187,8 +188,8 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
 }
 
 
-template <bool X_ATTENUATION, bool Y_ATTENUATION, bool Z_ATTENUATION>
-StaticDielectricPML::
+template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
+StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
     float dt) :
     Material(),
@@ -197,6 +198,7 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
     m_epsr(1.0),
     m_mur(1.0)
 {
+    int fieldDir, jDir, kDir;
     MaterialDescPtr desc = deleg.getParentPaint()->getBulkMaterial();
      
     if (desc->getParams().count("epsr"))
@@ -215,70 +217,77 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
         for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
             mRunlines[field][nn] = SimplePMLRunline(*setupRunlines[nn]);
     }
-    /*
-    // For simplicity all field octants use the same size of PML array.
-    for (int attenDir = 0; attenDir < 3; attenDir++)
-    if (mPMLDir[attenDir] != 0)
-    {
-        int depthYee = mPMLHalfCells.p2[attenDir]/2
-            - mPMLHalfCells.p1[attenDir]/2 + 1;
-        
-        mC_JjH[attenDir].resize(depthYee);
-        mC_Jjk[attenDir].resize(depthYee);
-        mC_PhijH[attenDir].resize(depthYee);
-        mC_PhikH[attenDir].resize(depthYee);
-        mC_PhijJ[attenDir].resize(depthYee);
-        mC_PhikJ[attenDir].resize(depthYee);
-        mC_MjE[attenDir].resize(depthYee);
-        mC_MkE[attenDir].resize(depthYee);
-        mC_PsijE[attenDir].resize(depthYee);
-        mC_PsikE[attenDir].resize(depthYee);
-        mC_PsijM[attenDir].resize(depthYee);
-        mC_PsikM[attenDir].resize(depthYee);
-    }
-    */
     
-    /*
-    // Allocate the auxiliary thingies
-    int attenDir;
-    for (attenDir = 0; attenDir < 3; attenDir++)
-    if (mPMLDir[attenDir] != 0)
+    // PML STUFF HERE
+    Vector3i pmlDir = deleg.getParentPaint()->getPMLDirections();
+    
+    // Allocate auxiliary variables
+    MemoryBufferPtr p;
+    for (fieldDir = 0; fieldDir < 3; fieldDir++)
     {
-        int depthYee;
-        int jDir = (attenDir+1)%3;
-        int kDir = (jDir+1)%3;
+        jDir = (fieldDir+1)%3;
+        kDir = (fieldDir+2)%3;
         
-        for (int nField = 1; nField <= 2; nField++)
+        if (pmlDir[jDir] != 0)
         {
-            int jkDir = (attenDir+nField)%3;
+            p = deleg.getBufAccumEj(fieldDir);
+            mAccumEj[fieldDir].resize(p->getLength());
+            p->setHeadPointer(&(mAccumEj[fieldDir][0]));
             
-            // E field things!
-            Rect3i ePMLYee = rectHalfToYee(mPMLHalfCells,
-                eOctantNumber(jkDir));
-            depthYee = ePMLYee.size(attenDir)+1;
+            p = deleg.getBufAccumHj(fieldDir);
+            mAccumHj[fieldDir].resize(p->getLength());
+            p->setHeadPointer(&(mAccumHj[fieldDir][0]));
+        }
+        
+        if (pmlDir[kDir] != 0)
+        {
+            p = deleg.getBufAccumEk(fieldDir);
+            mAccumEk[fieldDir].resize(p->getLength());
+            p->setHeadPointer(&(mAccumEk[fieldDir][0]));
             
-            mC_J
-                        
-            // H field things!
-            Rect3i hPMLYee = rectHalfToYee(mPMLHalfCells,
-                hOctantNumber(jkDir));
-            depthYee = hPMLYee.size(attenDir)+1;
+            p = deleg.getBufAccumHk(fieldDir);
+            mAccumHk[fieldDir].resize(p->getLength());
+            p->setHeadPointer(&(mAccumHk[fieldDir][0]));
         }
     }
-    */
     
-    //LOG << "Created all runlines.\n";
+    // Allocate and calculate update constants
+    for (fieldDir = 0; fieldDir < 3; fieldDir++)
+    {
+        jDir = (fieldDir+1)%3;
+        kDir = (fieldDir+2)%3;
+        
+        if (pmlDir[jDir] != 0)
+        {
+            mC_JjH[fieldDir].resize(deleg.getSigmaE(fieldDir, jDir).size());
+            mC_PhijH[fieldDir].resize(deleg.getSigmaE(fieldDir, jDir).size());
+            mC_PhijJ[fieldDir].resize(deleg.getSigmaE(fieldDir, jDir).size());
+            mC_MjE[fieldDir].resize(deleg.getSigmaH(fieldDir, jDir).size());
+            mC_PsijE[fieldDir].resize(deleg.getSigmaH(fieldDir, jDir).size());
+            mC_PsijM[fieldDir].resize(deleg.getSigmaH(fieldDir, jDir).size());
+        }
+        
+        if (pmlDir[kDir] != 0)
+        {
+            mC_JkH[fieldDir].resize(deleg.getSigmaE(fieldDir, kDir).size());
+            mC_PhikH[fieldDir].resize(deleg.getSigmaE(fieldDir, kDir).size());
+            mC_PhikJ[fieldDir].resize(deleg.getSigmaE(fieldDir, kDir).size());
+            mC_MkE[fieldDir].resize(deleg.getSigmaH(fieldDir, kDir).size());
+            mC_PsikE[fieldDir].resize(deleg.getSigmaH(fieldDir, kDir).size());
+            mC_PsikM[fieldDir].resize(deleg.getSigmaH(fieldDir, kDir).size());
+        }
+    }
 }
 
-template <bool X_ATTENUATION, bool Y_ATTENUATION, bool Z_ATTENUATION>
-void StaticDielectricPML::
+template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
+void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcEPhase(int direction)
 {
     //LOG << "Calculating E.\n";
 }
 
-template <bool X_ATTENUATION, bool Y_ATTENUATION, bool Z_ATTENUATION>
-void StaticDielectricPML::
+template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
+void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcHPhase(int direction)
 {
     //LOG << "Calculating H.\n";
