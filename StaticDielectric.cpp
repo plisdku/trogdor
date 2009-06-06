@@ -61,14 +61,14 @@ StaticDielectric(const StaticDielectricDelegate & deleg,
         
         mRunlines[field].resize(setupRunlines.size());
         
-        LOG << "Printing as we create runlines in field " << field << "\n";
+        //LOG << "Printing as we create runlines in field " << field << "\n";
         for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
         {
             mRunlines[field][nn] = SimpleRunline(*setupRunlines[nn]);
-            LOGMORE << mRunlines[field][nn] << "\n";
+            //LOGMORE << mRunlines[field][nn] << "\n";
         }
     }
-    LOG << "Created all runlines.\n";
+    //LOG << "Created all runlines.\n";
 }
 
 void StaticDielectric::

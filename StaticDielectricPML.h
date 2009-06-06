@@ -85,7 +85,7 @@ private:
     std::vector<float> mC_MjE[3], mC_MkE[3],
         mC_PsijE[3], mC_PsikE[3],
         mC_PsijM[3], mC_PsikM[3];
-        
+    
     Vector3f mDxyz;
     float mDt;
     float m_epsr;

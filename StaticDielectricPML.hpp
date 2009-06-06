@@ -13,10 +13,59 @@
 #include "CalculationPartition.h"
 #include "Paint.h"
 #include "YeeUtilities.h"
+#include "PhysicalConstants.h"
 #include <sstream>
 
 using namespace YeeUtilities;
 using namespace std;
+
+
+static vector<float>
+calcC_JH(const vector<float> & kappa,
+    const vector<float> & sigma, const vector<float> & alpha, float dt)
+{
+    assert(kappa.size() == sigma.size() && sigma.size() == alpha.size());
+    vector<float> c(sigma.size());
+    for (unsigned int nn = 0; nn < sigma.size(); nn++)
+    {
+        c[nn] = ( Constants::eps0 + 0.5*alpha[nn]*dt ) /
+            ( kappa[nn]*Constants::eps0 +
+            0.5*dt*(kappa[nn]*alpha[nn]+sigma[nn]) )
+            - 1.0;
+    }
+    return c;
+}
+
+static vector<float>
+calcC_PhiH(const vector<float> & kappa,
+    const vector<float> & sigma, const vector<float> & alpha, float dt)
+{
+    assert(kappa.size() == sigma.size() && sigma.size() == alpha.size());
+    vector<float> c(sigma.size());
+    for (unsigned int nn = 0; nn < sigma.size(); nn++)
+    {
+        c[nn] = dt*( (1.0-kappa[nn])*alpha[nn] - sigma[nn] ) /
+            (kappa[nn]*Constants::eps0 +
+            0.5*dt*(kappa[nn]*alpha[nn]+sigma[nn]));
+    }
+    return c;
+}
+
+static vector<float>
+calcC_PhiJ(const vector<float> & kappa,
+    const vector<float> & sigma, const vector<float> & alpha, float dt)
+{
+    assert(kappa.size() == sigma.size() && sigma.size() == alpha.size());
+    vector<float> c(sigma.size());
+    for (unsigned int nn = 0; nn < sigma.size(); nn++)
+    {
+        c[nn] = dt*( kappa[nn]*alpha[nn] + sigma[nn] ) /
+            ( kappa[nn]*Constants::eps0 +
+                0.5*dt*(kappa[nn]*alpha[nn]+sigma[nn]) );
+    }
+    return c;
+}
+
 
 StaticDielectricPMLDelegate::
 StaticDielectricPMLDelegate() :
@@ -69,61 +118,65 @@ setNumCellsH(int fieldDir, int numCells)
 }
 
 void StaticDielectricPMLDelegate::
-setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide)
+setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide)
 {
     Rect3i pmlYee;
     int pmlDepthYee;
     int nYee, nHalf, nHalf0;
     int fieldDir;
     float depthHalf, depthFrac;
-    float pmlDepthHalf = halfCellsOnSide.size(pmlDir)+2; // bigger by 1!!!
+    float pmlDepthHalf = halfCellsOnSide.size(faceNum/2)+2; // bigger by 1!!!
     
     const int ONE = 0; // if I set it to 0, the PML layer includes depth==0.
     
     for (fieldDir = 0; fieldDir < 3; fieldDir++)
-    if (fieldDir != pmlDir)
+    if (fieldDir != faceNum/2)
     {
         // E field auxiliary constants
         pmlYee = rectHalfToYee(halfCellsOnSide, eOctantNumber(fieldDir));
-        pmlDepthYee = pmlYee.size(pmlDir)+1;
-        mSigmaE[fieldDir][pmlDir].resize(pmlDepthYee);
-        mAlphaE[fieldDir][pmlDir].resize(pmlDepthYee);
-        mKappaE[fieldDir][pmlDir].resize(pmlDepthYee);
+        pmlDepthYee = pmlYee.size(faceNum/2)+1;
+        mSigmaE[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
+        mAlphaE[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
+        mKappaE[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
         
-        nHalf0 = rectYeeToHalf(pmlYee, eOctantNumber(fieldDir)).p1[pmlDir];
+        nHalf0 = rectYeeToHalf(pmlYee, eOctantNumber(fieldDir)).p1[faceNum/2];
         
         for (nYee = 0, nHalf=nHalf0; nYee < pmlDepthYee; nYee++, nHalf+=2)
         {
-            if (pmlDir%2 == 0) // going left/down etc. (negative direction)
-                depthHalf = float(halfCellsOnSide.p2[pmlDir]-nHalf+ONE);
+            if (faceNum%2 == 0) // going left/down etc. (negative direction)
+                depthHalf = float(halfCellsOnSide.p2[faceNum/2]-nHalf+ONE);
             else
-                depthHalf = float(nHalf-halfCellsOnSide.p1[pmlDir]+ONE);
+                depthHalf = float(nHalf-halfCellsOnSide.p1[faceNum/2]+ONE);
             depthFrac = depthHalf / pmlDepthHalf;
-            mSigmaE[fieldDir][pmlDir][nYee] = depthFrac;
-            mKappaE[fieldDir][pmlDir][nYee] = 1.0;
-            mAlphaE[fieldDir][pmlDir][nYee] = 0.0;
+            mSigmaE[fieldDir][faceNum/2][nYee] = depthFrac;
+            mKappaE[fieldDir][faceNum/2][nYee] = 1.0;
+            mAlphaE[fieldDir][faceNum/2][nYee] = 0.0;
         }
+        LOG << "E: field " << fieldDir << " faceNum " << faceNum << " num "
+            << pmlDepthYee << "\n";
         
         // H field auxiliary constants
         pmlYee = rectHalfToYee(halfCellsOnSide, hOctantNumber(fieldDir));
-        pmlDepthYee = pmlYee.size(pmlDir)+1;
-        mSigmaH[fieldDir][pmlDir].resize(pmlDepthYee);
-        mAlphaH[fieldDir][pmlDir].resize(pmlDepthYee);
-        mKappaH[fieldDir][pmlDir].resize(pmlDepthYee);
+        pmlDepthYee = pmlYee.size(faceNum/2)+1;
+        mSigmaH[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
+        mAlphaH[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
+        mKappaH[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
         
-        nHalf0 = rectYeeToHalf(pmlYee, hOctantNumber(fieldDir)).p1[pmlDir];
+        nHalf0 = rectYeeToHalf(pmlYee, hOctantNumber(fieldDir)).p1[faceNum/2];
         
         for (nYee = 0, nHalf=nHalf0; nYee < pmlDepthYee; nYee++, nHalf+=2)
         {
-            if (pmlDir%2 == 0) // going left/down etc. (negative direction)
-                depthHalf = float(halfCellsOnSide.p2[pmlDir]-nHalf+ONE);
+            if (faceNum%2 == 0) // going left/down etc. (negative direction)
+                depthHalf = float(halfCellsOnSide.p2[faceNum/2]-nHalf+ONE);
             else
-                depthHalf = float(nHalf-halfCellsOnSide.p1[pmlDir]+ONE);
+                depthHalf = float(nHalf-halfCellsOnSide.p1[faceNum/2]+ONE);
             depthFrac = depthHalf / pmlDepthHalf;
-            mSigmaH[fieldDir][pmlDir][nYee] = depthFrac;
-            mKappaH[fieldDir][pmlDir][nYee] = 1.0;
-            mAlphaH[fieldDir][pmlDir][nYee] = 0.0;
+            mSigmaH[fieldDir][faceNum/2][nYee] = depthFrac;
+            mKappaH[fieldDir][faceNum/2][nYee] = 1.0;
+            mAlphaH[fieldDir][faceNum/2][nYee] = 0.0;
         }
+        LOG << "H: field " << fieldDir << " faceNum " << faceNum << " num "
+            << pmlDepthYee << "\n";
 
     }
     
@@ -209,13 +262,17 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
     // Make the runlines
     for (int field = 0; field < 6; field++)
     {
+        LOG << "Printing as we create runlines in field " << field << "\n";
         const std::vector<SBPMRunlinePtr> & setupRunlines =
             deleg.getRunlines(field);
         
         mRunlines[field].resize(setupRunlines.size());
         
         for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
+        {
             mRunlines[field][nn] = SimplePMLRunline(*setupRunlines[nn]);
+            LOGMORE << mRunlines[field][nn] << "\n";
+        }
     }
     
     // PML STUFF HERE
@@ -254,27 +311,58 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
     // Allocate and calculate update constants
     for (fieldDir = 0; fieldDir < 3; fieldDir++)
     {
+        
         jDir = (fieldDir+1)%3;
         kDir = (fieldDir+2)%3;
         
         if (pmlDir[jDir] != 0)
         {
-            mC_JjH[fieldDir].resize(deleg.getSigmaE(fieldDir, jDir).size());
-            mC_PhijH[fieldDir].resize(deleg.getSigmaE(fieldDir, jDir).size());
-            mC_PhijJ[fieldDir].resize(deleg.getSigmaE(fieldDir, jDir).size());
-            mC_MjE[fieldDir].resize(deleg.getSigmaH(fieldDir, jDir).size());
-            mC_PsijE[fieldDir].resize(deleg.getSigmaH(fieldDir, jDir).size());
-            mC_PsijM[fieldDir].resize(deleg.getSigmaH(fieldDir, jDir).size());
+            mC_JjH[fieldDir] = calcC_JH(deleg.getKappaE(fieldDir,jDir),
+                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+                dt);
+            mC_PhijH[fieldDir] = calcC_PhiH(deleg.getKappaE(fieldDir,jDir),
+                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+                dt);
+            mC_PhijJ[fieldDir] = calcC_PhiJ(deleg.getKappaE(fieldDir,jDir),
+                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+                dt);
+            
+            // the magnetic coefficients are of the same form as the electric
+            // ones and can be handled with the same functions 
+            mC_MjE[fieldDir] = calcC_JH(deleg.getKappaE(fieldDir,jDir),
+                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+                dt);
+            mC_PsijE[fieldDir] = calcC_PhiH(deleg.getKappaE(fieldDir,jDir),
+                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+                dt);
+            mC_PsijM[fieldDir] = calcC_PhiJ(deleg.getKappaE(fieldDir,jDir),
+                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+                dt);
         }
         
         if (pmlDir[kDir] != 0)
         {
-            mC_JkH[fieldDir].resize(deleg.getSigmaE(fieldDir, kDir).size());
-            mC_PhikH[fieldDir].resize(deleg.getSigmaE(fieldDir, kDir).size());
-            mC_PhikJ[fieldDir].resize(deleg.getSigmaE(fieldDir, kDir).size());
-            mC_MkE[fieldDir].resize(deleg.getSigmaH(fieldDir, kDir).size());
-            mC_PsikE[fieldDir].resize(deleg.getSigmaH(fieldDir, kDir).size());
-            mC_PsikM[fieldDir].resize(deleg.getSigmaH(fieldDir, kDir).size());
+            mC_JkH[fieldDir] = calcC_JH(deleg.getKappaE(fieldDir,kDir),
+                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+                dt);
+            mC_PhikH[fieldDir] = calcC_PhiH(deleg.getKappaE(fieldDir,kDir),
+                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+                dt);
+            mC_PhikJ[fieldDir] = calcC_PhiJ(deleg.getKappaE(fieldDir,kDir),
+                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+                dt);
+            
+            // the magnetic coefficients are of the same form as the electric
+            // ones and can be handled with the same functions 
+            mC_MkE[fieldDir] = calcC_JH(deleg.getKappaE(fieldDir,kDir),
+                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+                dt);
+            mC_PsikE[fieldDir] = calcC_PhiH(deleg.getKappaE(fieldDir,kDir),
+                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+                dt);
+            mC_PsikM[fieldDir] = calcC_PhiJ(deleg.getKappaE(fieldDir,kDir),
+                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+                dt);
         }
     }
 }

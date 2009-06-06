@@ -366,6 +366,13 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 		if (newPaint->getCurlBuffer(nSide) != mStartPaint->getCurlBuffer(nSide))
 			return 0;
 	}
+    
+    // Notably differing from non-PML, the PML materials can't wrap to a new
+    // y or z coordinate because that screws up the indexing into their
+    // update constants.
+    if (oldPos[1] != newPos[1] || oldPos[2] != newPos[2])
+        return 0;
+    
 	return 1;
 }
 
@@ -490,9 +497,19 @@ operator<<(std::ostream & str, const SimpleRunline & rl)
 ostream &
 operator<<(std::ostream & str, const SimplePMLRunline & rl)
 {
+    /*
     str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
         << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.pmlIndex[0]
         << " " << rl.pmlIndex[1] << " " << rl.pmlIndex[2] << " " << rl.length;
+    */
+    
+    str << hex << rl.fi << ": " << MemoryBuffer::identify(rl.fi) << "\n";
+    str << hex << rl.gj[0] << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
+    str << hex << rl.gj[1] << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
+    str << hex << rl.gk[0] << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
+    str << hex << rl.gk[1] << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
+    str << dec << rl.pmlIndex[0] << ", " << rl.pmlIndex[1] << ", "
+        << rl.pmlIndex[2] << " length " << rl.length << "\n";
     return str;
 }
 

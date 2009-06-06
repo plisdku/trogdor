@@ -575,6 +575,7 @@ createMaterialDelegates()
         LOG << "Not calling that PML cells on side function.  What's it for?\n";
         if (p->isPML())
         for (int faceNum = 0; faceNum < 6; faceNum++)
+        if (partitionHasPML(faceNum))
         {
             mat.setPMLHalfCells(faceNum, pmlRects[faceNum]);
         }

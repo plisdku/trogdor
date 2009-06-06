@@ -122,7 +122,6 @@ public:
         { return mRunlines[field]; }
     Paint* getPaint() const { return mStartPaint; }
 protected:
-	
 	std::vector<SBMRunlinePtr> mRunlines[6];
 	
 	// Runline generation storage
