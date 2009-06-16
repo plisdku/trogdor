@@ -9,3 +9,37 @@
 
 #include "NeighborBuffer.h"
 
+NeighborBufferDelegate::
+NeighborBufferDelegate()
+{
+    
+}
+
+
+
+NeighborBuffer::
+NeighborBuffer()
+{
+}
+
+
+
+
+void NeighborBuffer::
+updateE()
+{
+    for (int nk = 0; nk < mNumYeeCells[2]; nk++)
+    for (int nj = 0; nj < mNumYeeCells[1]; nj++)
+    for (int ni = 0; ni < mNumYeeCells[0]; ni++)
+    {
+        
+    }
+}
+
+
+
+
+void NeighborBuffer::
+updateH()
+{
+}

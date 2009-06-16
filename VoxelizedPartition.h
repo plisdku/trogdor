@@ -123,7 +123,7 @@ public:
     
     // returns      the structures that store temp data for setting up materials
     const Map<Paint*, MaterialDelegatePtr> & getDelegates() const
-        { return mDelegates; }
+        { return mMaterialDelegates; }
     
     // returns      the structures that store temp data for setting up outputs
     const std::vector<OutputDelegatePtr> & getOutputDelegates() const
@@ -136,6 +136,10 @@ public:
     // returns      the structures that store temp data for setting up sources
     const std::vector<SourceDelegatePtr> & getHardSourceDelegates() const
         { return mHardSourceDelegates; }
+    
+    // returns      the structures that store temp data for setting up NBs
+    const std::vector<NeighborBufferDelegatePtr> & getNeighborBufferDelegates()
+        const { return mNeighborBufferDelegates; }
     
     void clearVoxelGrid();
     void clearCellCountGrid();
@@ -160,6 +164,9 @@ private:
     
     void createOutputDelegates(const std::vector<OutputDescPtr> & outputs);
     void createSourceDelegates(const std::vector<SourceDescPtr> & sources);
+    void createNeighborBufferDelegates(
+        const std::vector<HuygensSurfaceDescPtr> & surfaces,
+        const Map<GridDescPtr, VoxelizedPartitionPtr> & grids);
 	
 	VoxelGrid mVoxels;
 	PartitionCellCountPtr mCentralIndices;
@@ -168,13 +175,11 @@ private:
 	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffers;
 	
     // THIS IS WHERE GRID DENIZENS LIVE
-	Map<Paint*, MaterialDelegatePtr> mDelegates;
+	Map<Paint*, MaterialDelegatePtr> mMaterialDelegates;
 	std::vector<OutputDelegatePtr> mOutputDelegates;
     std::vector<SourceDelegatePtr> mSoftSourceDelegates;
     std::vector<SourceDelegatePtr> mHardSourceDelegates;
-    std::vector<NeighborBufferDelegatePtr> mNBDelegates;
-    int mSources;
-    int mInputs;
+    std::vector<NeighborBufferDelegatePtr> mNeighborBufferDelegates;
     
     // END OF GRID DENIZEN ZONE
     

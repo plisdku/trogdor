@@ -77,6 +77,7 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	paintFromAssembly(gridDesc, voxelizedGrids);
 	calculateHuygensSymmetries(gridDesc); // * NOT MPI FRIENDLY YET
 	paintFromHuygensSurfaces(gridDesc);
+    createNeighborBufferDelegates(gridDesc.getHuygensSurfaces());
 	paintFromCurrentSources(gridDesc);
 	
 	//cout << mVoxels << endl;
@@ -386,6 +387,9 @@ paintFromHuygensSurfaces(const GridDescription & gridDesc)
 	{
 		mVoxels.overlayHuygensSurface(*surfaces[nn]);
 		
+        // I do not see a reason to do this here.  It's moved down to
+        // createNeighborBufferDelegates().
+        /*
 		const vector<NeighborBufferDescPtr> & nbs = surfaces[nn]->getBuffers();
 		
 		for (unsigned int mm = 0; mm < nbs.size(); mm++)
@@ -406,6 +410,7 @@ paintFromHuygensSurfaces(const GridDescription & gridDesc)
                     new MemoryBuffer(bufferName.str(), bufSize));
 			}
 		}
+        */
 	}
 }
 
@@ -559,12 +564,12 @@ createMaterialDelegates(const GridDescription & gridDesc)
 		itr++)
 	{
 		Paint* p = *itr;
-		if (mDelegates.count(p) == 0)
+		if (mMaterialDelegates.count(p) == 0)
 		{
-			mDelegates[p] = MaterialFactory::getDelegate(
+			mMaterialDelegates[p] = MaterialFactory::getDelegate(
 				mVoxels, mCentralIndices, gridDesc, p);
 		}
-		MaterialDelegate & mat = *mDelegates[p];
+		MaterialDelegate & mat = *mMaterialDelegates[p];
 		
         int fieldDir;
         long cells;
@@ -614,7 +619,7 @@ generateRunlines()
     /*
 	LOG << "Printing runlines.\n";
 	map<Paint*, MaterialDelegatePtr>::iterator itr;
-	for (itr = mDelegates.begin(); itr != mDelegates.end(); itr++)
+	for (itr = mMaterialDelegates.begin(); itr != mMaterialDelegates.end(); itr++)
 	{
 		cout << *(itr->first) << "\n";
 		itr->second->printRunlines(cout);
@@ -668,7 +673,7 @@ genRunlinesInOctant(int octant)
 		}
 		if (needNewRunline)
 		{
-			material = mDelegates[xParentPaint];
+			material = mMaterialDelegates[xParentPaint];
 			material->startRunline(*this, x);
 			needNewRunline = 0;
 		}
@@ -687,7 +692,6 @@ createOutputDelegates(const std::vector<OutputDescPtr> & outputs)
             OutputFactory::getDelegate(*this, outputs[nn]));
 }
 
-
 void VoxelizedPartition::
 createSourceDelegates(const std::vector<SourceDescPtr> & sources)
 {
@@ -702,6 +706,34 @@ createSourceDelegates(const std::vector<SourceDescPtr> & sources)
     }
 }
 
+void VoxelizedPartition::
+createNeighborBufferDelegates(const vector<HuygensSurfaceDescPtr> & surfaces,
+    const Map<GridDescPtr, VoxelizedPartitionPtr> & grids)
+{
+	for (unsigned int nn = 0; nn < surfaces.size(); nn++)
+	{
+		const vector<NeighborBufferDescPtr> & nbs = surfaces[nn]->getBuffers();
+		
+		for (unsigned int mm = 0; mm < nbs.size(); mm++)
+		if (nbs[mm] != 0L)
+		{
+			NeighborBufferDescPtr nb = nbs[mm];
+			const Rect3i & bufVol = nb->getBufferYeeBounds();
+			int bufSize = (bufVol.size(0)+1)*(bufVol.size(1)+1)*
+				(bufVol.size(2)+1); 
+			
+            mNBBuffers[nb].resize(6);
+			for (int ff = 0; ff < 6; ff++)
+			{
+				ostringstream bufferName;
+                bufferName << gridDesc.getName() << " HS " << nn << " NB " <<
+                    mm << " field " << ff;
+				mNBBuffers[nb][ff] = MemoryBufferPtr(
+                    new MemoryBuffer(bufferName.str(), bufSize));
+			}
+		}
+	}
+}
 
 
 std::ostream &
