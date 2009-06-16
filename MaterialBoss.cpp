@@ -229,18 +229,23 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 			bp[nSide] = vp.fieldPointer(mStartPoint+cardinalDirection(nSide));
 		}
 	}
+    // WATCH CAREFULLY
+    // f_i will be, e.g., Ex
+    // f_j will be Hy
+    // f_k will be Hz
+    // 
 	mCurrentRunline.f_i = vp.fieldPointer(startPos);
-	mCurrentRunline.f_j[0] = bp[2*dir_j];
-	mCurrentRunline.f_j[1] = bp[2*dir_j+1];
-	mCurrentRunline.f_k[0] = bp[2*dir_k];
-	mCurrentRunline.f_k[1] = bp[2*dir_k+1];
+	mCurrentRunline.f_j[0] = bp[2*dir_k];
+	mCurrentRunline.f_j[1] = bp[2*dir_k+1];
+	mCurrentRunline.f_k[0] = bp[2*dir_j];
+	mCurrentRunline.f_k[1] = bp[2*dir_j+1];
 	mCurrentRunline.auxIndex = cellCountGrid(startPos);
 	mCurrentRunline.length = 1;
 	
 	//LOG << "Field direction " << fieldDirection << " ui " << ui << " uj "
 	//	<< uj << " uk " << uk << "\n";
 	
-	
+	/*
 	LOG << "Start runline:\n";
 	LOGMORE << "start " << mStartPoint << "\n";
 	LOGMORE << "aux " << mCurrentRunline.auxIndex << "\n";
@@ -249,7 +254,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		<< mCurrentRunline.f_j[1] << "\n";
 	LOGMORE << "f_k " << mCurrentRunline.f_k[0] << " "
 		<< mCurrentRunline.f_k[1] << "\n";
-	
+	*/
 }
 
 bool SimpleBulkMaterialDelegate::
@@ -358,10 +363,10 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		}
 	}
 	mCurrentRunline.f_i = vp.fieldPointer(startPos);
-	mCurrentRunline.f_j[0] = bp[2*dir_j];
-	mCurrentRunline.f_j[1] = bp[2*dir_j+1];
-	mCurrentRunline.f_k[0] = bp[2*dir_k];
-	mCurrentRunline.f_k[1] = bp[2*dir_k+1];
+	mCurrentRunline.f_j[0] = bp[2*dir_k];    // for Ex, Hy is the z neighbor.
+	mCurrentRunline.f_j[1] = bp[2*dir_k+1];
+	mCurrentRunline.f_k[0] = bp[2*dir_j];
+	mCurrentRunline.f_k[1] = bp[2*dir_j+1];
 	mCurrentRunline.auxIndex = cellCountGrid(startPos);
 	mCurrentRunline.length = 1;
 	

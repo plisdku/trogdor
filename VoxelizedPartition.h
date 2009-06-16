@@ -172,6 +172,7 @@ private:
 	std::vector<OutputDelegatePtr> mOutputDelegates;
     std::vector<SourceDelegatePtr> mSoftSourceDelegates;
     std::vector<SourceDelegatePtr> mHardSourceDelegates;
+    std::vector<NeighborBufferDelegatePtr> mNBDelegates;
     int mSources;
     int mInputs;
     

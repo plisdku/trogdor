@@ -118,6 +118,8 @@ allocateAuxBuffers()
 void CalculationPartition::
 updateE(int timestep)
 {
+    // Update Huygens surfaces (add H stuff)
+    
     for (int eNum = 0; eNum < 3; eNum++)
     for (unsigned int nn = 0; nn < mMaterials.size(); nn++)
         mMaterials[nn]->calcEPhase(eNum);
@@ -144,6 +146,9 @@ outputE(int timestep)
 void CalculationPartition::
 updateH(int timestep)
 {
+    // Update E fields in Huygens surfaces
+    
+    
     for (int hNum = 0; hNum < 3; hNum++)
     for (unsigned int nn = 0; nn < mMaterials.size(); nn++)
         mMaterials[nn]->calcHPhase(hNum);

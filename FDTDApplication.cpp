@@ -59,7 +59,7 @@ runNew(string parameterFile)
 	// in here: do any setup that requires the voxelized grids
 	// extract all information that will be needed after the setup grid is gone
 	
-    trimVoxelizedGrids(voxelizedGrids); // ditch VoxelGrid & PartitionCellCount
+    trimVoxelizedGrids(voxelizedGrids); // delete VoxelGrid & PartitionCellCount
     makeCalculationGrids(sim, calculationGrids, voxelizedGrids);
 	voxelizedGrids.clear();  // this will delete the delegates
     allocateAuxBuffers(calculationGrids);
@@ -183,15 +183,15 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		myAllocatedHalfCells.p2[mm] += 2;
 	}
 	
-    /*
+    
     LOG << "Recursing:\n";
 	LOGMORE << "Recursing for grid " << currentGrid->getName() << ".\n";
 	LOGMORE << "I am partition " << thisNode << " of " << numNodes << ".\n";
 	LOGMORE << "My node partition region is " << partitionWallsHalf << "\n";
 	LOGMORE << "My partition is " << myPartitionHalfCells << ".\n";
-	LOGMORE << "I allocate fields over the region " << allocRegion << ".\n";
-	LOGMORE << "My calc region is " << myCalcRegion << ".\n";
-	*/
+	LOGMORE << "I allocate fields in " << myAllocatedHalfCells << ".\n";
+	LOGMORE << "My calc region is " << myCalcHalfCells << ".\n";
+	
     
 	static const int EXTRUDE_PML = 1;
 	if (EXTRUDE_PML)
@@ -426,6 +426,8 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	const set<Vector3i> & omittedSides = huygensSurface->getOmittedSides();
 	Vector3i srcDir = huygensSurface->getDirection();
 	Vector3i origin = parentGrid->getOriginYee();
+    
+    LOG << omittedSides << "\n";
 	
 	// What does the source grid look like?
 	// Two cases:
@@ -513,6 +515,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 		// use a hard source
 		LOG << "Using a hard source.\n";
         const int SIGNIFIESHARDSOURCE = 0;
+        const int SIGNIFIESSOFTSOURCE = 1;
 				
 		Rect3i yeeTFRect = YeeUtilities::rectHalfToYee(tfRect);
 		Vector3i srcYeeCell = clip(yeeTFRect, Vector3i(1000000*srcDir));
@@ -532,12 +535,13 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	}
 	else
 	{
-		// use a soft source
+		// use a soft source, and omit the back side
 		LOG << "Using a soft source.\n";
         const int SIGNIFIESSOFTSOURCE = 1;
         
 		HuygensSurfaceDescPtr hPtr(
             new HuygensSurfaceDescription(*huygensSurface, tfRect));
+        hPtr->omitSide(srcDir);
 		huygensSurfaces.push_back(hPtr);
 	}
 	

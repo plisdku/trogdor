@@ -57,6 +57,8 @@ MaterialBoss.h
 MaterialBoss.cpp
 MemoryUtilities.h
 MemoryUtilities.cpp
+NeighborBuffer.h
+NeighborBuffer.cpp
 OutputBoss.h
 OutputBoss.cpp
 Paint.h

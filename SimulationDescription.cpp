@@ -701,6 +701,12 @@ omitSide(int sideNum)
 }
 
 void HuygensSurfaceDescription::
+omitSide(Vector3i direction)
+{
+    mOmittedSides.insert(direction);
+}
+
+void HuygensSurfaceDescription::
 cycleCoordinates()
 {
 	Mat3i permuteForward(Mat3i::cyclicPermutation());

@@ -125,6 +125,11 @@ void StaticDielectricPMLDelegate::
 setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
     const GridDescription & gridDesc)
 {
+    Vector3i pmlDir = getParentPaint()->getPMLDirections();
+    
+    if (dot(pmlDir, cardinalDirection(faceNum)) < 0) // check which side it is
+        return;
+    
     Rect3i pmlYee;
     int pmlDepthYee;
     int nYee, nHalf, nHalf0;
@@ -134,6 +139,8 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
     string alphaStr, kappaStr, sigmaStr;
     
     const int ONE = 1; // if I set it to 0, the PML layer includes depth==0.
+    
+    //LOG << "------------ " << getParentPaint()->getPMLDirections() << "\n";
     
     calc_defs::Calculator<float> calculator;
     calculator.set("eps0", Constants::eps0);
@@ -169,7 +176,7 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
             calculator.set("d", depthFrac);
             /*
             LOG << "nYee " << nYee << " nHalf " << nHalf << " within "
-                << halfCellsOnSide << "\n";
+                << halfCellsOnSide << " depth " << depthFrac << "\n";
             */
             bool parseError = calculator.parse(sigmaStr);
             if (parseError)
@@ -199,7 +206,7 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
             mAlphaE[fieldDir][faceNum/2][nYee] = 0.0;
             */
         }
-        /*
+        
         LOG << "E: field " << fieldDir << " faceNum " << faceNum << " num "
             << pmlDepthYee << "\n";
         LOGMORE << "Sigma " << sigmaStr << "\n" <<
@@ -208,7 +215,7 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
             mAlphaE[fieldDir][faceNum/2] << endl;
         LOGMORE << "Kappa " << kappaStr << "\n" <<
             mKappaE[fieldDir][faceNum/2] << endl;
-        */
+        
         
         // H field auxiliary constants
         pmlYee = rectHalfToYee(halfCellsOnSide, hOctantNumber(fieldDir));
@@ -362,12 +369,19 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
         for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
         {
             mRunlines[field][nn] = SimpleAuxPMLRunline(*setupRunlines[nn]);
+            /*
+            LOGMORE << MemoryBuffer::identify(mRunlines[field][nn].fi)
+                << " " << MemoryBuffer::identify(mRunlines[field][nn].gj[0]) <<
+                " " << MemoryBuffer::identify(mRunlines[field][nn].gk[0]) <<
+                "\n";
+            */
             //LOGMORE << mRunlines[field][nn] << "\n";
         }
     }
     
     // PML STUFF HERE
     Vector3i pmlDir = deleg.getParentPaint()->getPMLDirections();
+    //LOG << "------- " << pmlDir << "\n";
     
     // Allocate auxiliary variables
     MemoryBufferPtr p;
@@ -381,8 +395,6 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
             p = deleg.getBufAccumEj(fieldDir);
             mAccumEj[fieldDir].resize(p->getLength());
             p->setHeadPointer(&(mAccumEj[fieldDir][0]));
-            LOG << hex << &mAccumEj[fieldDir][0] << " " << dec <<
-                MemoryBuffer::identify(&mAccumEj[fieldDir][0]);
             
             p = deleg.getBufAccumHj(fieldDir);
             mAccumHj[fieldDir].resize(p->getLength());
@@ -422,15 +434,31 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
             
             // the magnetic coefficients are of the same form as the electric
             // ones and can be handled with the same functions 
-            mC_MjE[fieldDir] = calcC_JH(deleg.getKappaE(fieldDir,jDir),
-                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+            mC_MjE[fieldDir] = calcC_JH(deleg.getKappaH(fieldDir,jDir),
+                deleg.getSigmaH(fieldDir,jDir), deleg.getAlphaH(fieldDir,jDir),
                 dt);
-            mC_PsijE[fieldDir] = calcC_PhiH(deleg.getKappaE(fieldDir,jDir),
-                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+            mC_PsijE[fieldDir] = calcC_PhiH(deleg.getKappaH(fieldDir,jDir),
+                deleg.getSigmaH(fieldDir,jDir), deleg.getAlphaH(fieldDir,jDir),
                 dt);
-            mC_PsijM[fieldDir] = calcC_PhiJ(deleg.getKappaE(fieldDir,jDir),
-                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+            mC_PsijM[fieldDir] = calcC_PhiJ(deleg.getKappaH(fieldDir,jDir),
+                deleg.getSigmaH(fieldDir,jDir), deleg.getAlphaH(fieldDir,jDir),
                 dt);
+            /*
+            LOG << "SigmaE " << fieldDir << jDir << ":\n";
+            LOGMORE << deleg.getSigmaE(fieldDir,jDir) << "\n";
+            LOG << "KappaE " << fieldDir << jDir << ":\n";
+            LOGMORE << deleg.getKappaE(fieldDir,jDir) << "\n";
+            LOG << "AlphaE " << fieldDir << jDir << ":\n";
+            LOGMORE << deleg.getAlphaE(fieldDir,jDir) << "\n";
+            
+            
+            LOG << "SigmaH " << fieldDir << jDir << ":\n";
+            LOGMORE << deleg.getSigmaH(fieldDir,jDir) << "\n";
+            LOG << "KappaH " << fieldDir << jDir << ":\n";
+            LOGMORE << deleg.getKappaH(fieldDir,jDir) << "\n";
+            LOG << "AlphaH " << fieldDir << jDir << ":\n";
+            LOGMORE << deleg.getAlphaH(fieldDir,jDir) << "\n";
+            */
         }
         
         if (pmlDir[kDir] != 0)
@@ -447,15 +475,30 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
             
             // the magnetic coefficients are of the same form as the electric
             // ones and can be handled with the same functions 
-            mC_MkE[fieldDir] = calcC_JH(deleg.getKappaE(fieldDir,kDir),
-                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+            mC_MkE[fieldDir] = calcC_JH(deleg.getKappaH(fieldDir,kDir),
+                deleg.getSigmaH(fieldDir,kDir), deleg.getAlphaH(fieldDir,kDir),
                 dt);
-            mC_PsikE[fieldDir] = calcC_PhiH(deleg.getKappaE(fieldDir,kDir),
-                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+            mC_PsikE[fieldDir] = calcC_PhiH(deleg.getKappaH(fieldDir,kDir),
+                deleg.getSigmaH(fieldDir,kDir), deleg.getAlphaH(fieldDir,kDir),
                 dt);
-            mC_PsikM[fieldDir] = calcC_PhiJ(deleg.getKappaE(fieldDir,kDir),
-                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+            mC_PsikM[fieldDir] = calcC_PhiJ(deleg.getKappaH(fieldDir,kDir),
+                deleg.getSigmaH(fieldDir,kDir), deleg.getAlphaH(fieldDir,kDir),
                 dt);
+            /*
+            LOG << "SigmaE " << fieldDir << kDir << ":\n";
+            LOGMORE << deleg.getSigmaE(fieldDir,kDir) << "\n";
+            LOG << "KappaE " << fieldDir << kDir << ":\n";
+            LOGMORE << deleg.getKappaE(fieldDir,kDir) << "\n";
+            LOG << "AlphaE " << fieldDir << kDir << ":\n";
+            LOGMORE << deleg.getAlphaE(fieldDir,kDir) << "\n";
+            
+            LOG << "SigmaH " << fieldDir << kDir << ":\n";
+            LOGMORE << deleg.getSigmaH(fieldDir,kDir) << "\n";
+            LOG << "KappaH " << fieldDir << kDir << ":\n";
+            LOGMORE << deleg.getKappaH(fieldDir,kDir) << "\n";
+            LOG << "AlphaH " << fieldDir << kDir << ":\n";
+            LOGMORE << deleg.getAlphaH(fieldDir,kDir) << "\n";
+            */
         }
     }
 }
@@ -706,6 +749,7 @@ calcEz()
             
             *fi = *fi + (mDt/Constants::eps0/m_epsr)*
                 ( dHk - dHj );
+            
             
             if (X_ATTEN)
             {

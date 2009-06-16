@@ -398,6 +398,7 @@ public:
 	// modifiers
 	void setPointers(const Map<std::string, GridDescPtr> & gridMap);
 	void omitSide(int nSide);
+    void omitSide(Vector3i dir);
     void cycleCoordinates();
     
     // Common accessors

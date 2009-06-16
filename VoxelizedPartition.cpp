@@ -396,6 +396,7 @@ paintFromHuygensSurfaces(const GridDescription & gridDesc)
 			int bufSize = (bufVol.size(0)+1)*(bufVol.size(1)+1)*
 				(bufVol.size(2)+1); 
 			
+            mNBBuffers[nb].resize(6);
 			for (int ff = 0; ff < 6; ff++)
 			{
 				ostringstream bufferName;
@@ -696,7 +697,7 @@ createSourceDelegates(const std::vector<SourceDescPtr> & sources)
             mSoftSourceDelegates.push_back(
                 SourceFactory::getDelegate(*this, sources[nn]));
         else
-            mSoftSourceDelegates.push_back(
+            mHardSourceDelegates.push_back(
                 SourceFactory::getDelegate(*this, sources[nn]));
     }
 }
