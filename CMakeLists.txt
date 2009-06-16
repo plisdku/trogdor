@@ -54,6 +54,8 @@ FormulaSource.h
 FormulaSource.cpp
 HuygensSurface.h
 HuygensSurface.cpp
+HuygensLink.h
+HuygensLink.cpp
 main.cpp
 MaterialBoss.h
 MaterialBoss.cpp

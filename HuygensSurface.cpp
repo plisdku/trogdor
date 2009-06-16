@@ -1,5 +1,5 @@
 /*
- *  NeighborBuffer.cpp
+ *  HuygensSurface.cpp
  *  TROGDOR
  *
  *  Created by Paul Hansen on 6/16/09.
@@ -7,25 +7,52 @@
  *
  */
 
-#include "NeighborBuffer.h"
+#include "HuygensSurface.h"
+#include "VoxelizedPartition.h"
+#include "SimulationDescription.h"
+#include "Exception.h"
 
-NeighborBufferDelegate::
-NeighborBufferDelegate()
+using namespace std;
+
+HuygensSurfaceDelegatePtr HuygensSurfaceFactory::
+getDelegate(const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
+    const HuygensSurfaceDescPtr & desc)
+{
+    HuygensSurfaceDelegatePtr hs;
+    
+    if (desc->getType() == kLink)
+    {
+    }
+    else if (desc->getType() == kTFSFSource)
+    {
+    }
+    else if (desc->getType() == kCustomTFSFSource)
+    {
+    }
+    else
+        throw(Exception("Unknown HuygensSurface type!"));
+    
+    return hs;
+}
+
+/*
+HuygensSurfaceDelegate::
+HuygensSurfaceDelegate()
 {
     
 }
 
 
 
-NeighborBuffer::
-NeighborBuffer()
+HuygensSurface::
+HuygensSurface()
 {
 }
 
 
 
 
-void NeighborBuffer::
+void HuygensSurface::
 updateE()
 {
     for (int nk = 0; nk < mNumYeeCells[2]; nk++)
@@ -39,7 +66,8 @@ updateE()
 
 
 
-void NeighborBuffer::
+void HuygensSurface::
 updateH()
 {
 }
+*/

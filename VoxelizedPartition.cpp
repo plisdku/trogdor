@@ -48,20 +48,8 @@ VoxelizedPartition(const GridDescription & gridDesc,
     
     mNumAllocHalfCells = mFieldAllocHalfCells.size()+1;
 	
-    //mEHBuffers = EHBufferSetPtr(new EHBufferSet);
-    mEHBuffers.resize(6);
-	mEHBuffers[0] =
-        MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Ex", bufSize));
-	mEHBuffers[1] =
-        MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Ey", bufSize));
-	mEHBuffers[2] =
-        MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Hz", bufSize));
-	mEHBuffers[3] =
-        MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Ez", bufSize));
-	mEHBuffers[4] =
-         MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Hy", bufSize));
-	mEHBuffers[5] =
-        MemoryBufferPtr(new MemoryBuffer(gridDesc.getName()+" Hx", bufSize));
+    initFieldBuffers(gridDesc.getName());
+    
 	
 	mNonPMLHalfCells = gridDesc.getNonPMLHalfCells();
 	mOriginYee = gridDesc.getOriginYee();
@@ -77,7 +65,6 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	paintFromAssembly(gridDesc, voxelizedGrids);
 	calculateHuygensSymmetries(gridDesc); // * NOT MPI FRIENDLY YET
 	paintFromHuygensSurfaces(gridDesc);
-    createNeighborBufferDelegates(gridDesc.getHuygensSurfaces());
 	paintFromCurrentSources(gridDesc);
 	
 	//cout << mVoxels << endl;
@@ -94,6 +81,28 @@ VoxelizedPartition(const GridDescription & gridDesc,
     createOutputDelegates(gridDesc.getOutputs());
     createSourceDelegates(gridDesc.getSources());
 }
+
+void VoxelizedPartition::
+initFieldBuffers(string bufferNamePrefix)
+{
+    mEHBuffers.resize(6);
+	mEHBuffers[0] =
+        MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Ex", bufSize));
+	mEHBuffers[1] =
+        MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Ey", bufSize));
+	mEHBuffers[2] =
+        MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Hz", bufSize));
+	mEHBuffers[3] =
+        MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Ez", bufSize));
+	mEHBuffers[4] =
+         MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Hy", bufSize));
+	mEHBuffers[5] =
+        MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Hx", bufSize));
+        
+    
+    
+}
+
 
 Rect3i VoxelizedPartition::
 getGridYeeCells() const

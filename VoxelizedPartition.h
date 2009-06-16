@@ -143,9 +143,11 @@ public:
     
     void clearVoxelGrid();
     void clearCellCountGrid();
+    
+    void createHuygensSurfaceDelegates();
 	
 private:
-	void initFieldBuffers();
+	void initFieldBuffers(std::string bufferNamePrefix);
 	void paintFromAssembly(const GridDescription & gridDesc,
 		const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids);
 	void paintFromHuygensSurfaces(const GridDescription & gridDesc);
@@ -164,10 +166,12 @@ private:
     
     void createOutputDelegates(const std::vector<OutputDescPtr> & outputs);
     void createSourceDelegates(const std::vector<SourceDescPtr> & sources);
+    /*
     void createNeighborBufferDelegates(
         const std::vector<HuygensSurfaceDescPtr> & surfaces,
         const Map<GridDescPtr, VoxelizedPartitionPtr> & grids);
-	
+	*/
+    
 	VoxelGrid mVoxels;
 	PartitionCellCountPtr mCentralIndices;
 	
