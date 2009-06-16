@@ -52,13 +52,13 @@ FDTDApplication.h
 FDTDApplication.cpp
 FormulaSource.h
 FormulaSource.cpp
+HuygensSurface.h
+HuygensSurface.cpp
 main.cpp
 MaterialBoss.h
 MaterialBoss.cpp
 MemoryUtilities.h
 MemoryUtilities.cpp
-NeighborBuffer.h
-NeighborBuffer.cpp
 OutputBoss.h
 OutputBoss.cpp
 Paint.h
