@@ -110,12 +110,12 @@ load(SimulationDescription & sim) const throw(Exception)
 	}
 	// (i.e. these three calls don't throw exceptions.)
 	sim.setMaterials(loadMaterials(elem));
-	sim.setGrids(loadGrids(elem));
+	sim.setGrids(loadGrids(elem, sim));
 	sim.setAllPointers();
 }
 
 vector<GridDescPtr> XMLParameterFile::
-loadGrids(const TiXmlElement* parent) const
+loadGrids(const TiXmlElement* parent, const SimulationDescription & sim) const
 {
 	assert(parent);
 	vector<GridDescPtr> gridVector;
@@ -131,6 +131,7 @@ loadGrids(const TiXmlElement* parent) const
         Vector3i numHalfCells;
 		Rect3i nonPMLYeeCells;
         Rect3i nonPMLHalfCells, calcRegionHalfCells;
+        Map<Vector3i, Map<string, string> > pmlParams;
 		string name;
 		Vector3i origin;
 		
@@ -161,13 +162,31 @@ loadGrids(const TiXmlElement* parent) const
                     calcRegionHalfCells.p2[mm] = numHalfCells[mm]-1;
             }
 		}
+        
+        const TiXmlElement* pmlParamXML = elem->FirstChildElement("PML");
+        while (pmlParamXML != 0L)
+        {
+            Vector3i direction;
+            Map<string, string> theseParams = sGetAttributes(pmlParamXML);
+            theseParams.erase("direction");
+            
+            if (sTryGetAttribute(elem, "direction", direction))
+                pmlParams[direction] = theseParams;
+            else
+            for (int sideNum = 0; sideNum < 6; sideNum++)
+                pmlParams[cardinalDirection(sideNum)] = theseParams;
+            
+            pmlParamXML = pmlParamXML->NextSiblingElement("PML");
+        }
+        
 		
 		// We need to wrap the constructor errors from GridDescription() to
 		// put XML row/column information in.
 		try {
 			gridDesc = GridDescPtr(new GridDescription(name,
 				numYeeCells, calcRegionHalfCells,
-				nonPMLHalfCells, origin));
+				nonPMLHalfCells, origin, sim.getDxyz(),
+                sim.getDt()));
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
 		}
@@ -179,6 +198,7 @@ loadGrids(const TiXmlElement* parent) const
 		gridDesc->setSources(loadSources(elem));
 		gridDesc->setAssembly(loadAssembly(elem, allGridNames,
 			allMaterialNames));
+        gridDesc->setPMLParams(pmlParams);
 		
 		// half the huygens surfaces come from links, and half from TFSF
 		// sources.
@@ -258,7 +278,9 @@ loadMaterials(const TiXmlElement* parent) const
         string name;
         string inModel;
         Map<string,string> params;
+        Map<Vector3i, Map<string, string> > pmlParams;
         const TiXmlElement* paramXML = elem->FirstChildElement("Params");
+        const TiXmlElement* pmlParamXML;
         // not every material needs params, e.g. PEC/PMC
         if (paramXML != 0L)
             params = sGetAttributes(paramXML);
@@ -266,8 +288,24 @@ loadMaterials(const TiXmlElement* parent) const
         sGetMandatoryAttribute(elem, "name", name);
         sGetMandatoryAttribute(elem, "model", inModel);
         
+        pmlParamXML = elem->FirstChildElement("PML");
+        while (pmlParamXML != 0L)
+        {
+            Vector3i direction;
+            Map<string, string> theseParams = sGetAttributes(pmlParamXML);
+            theseParams.erase("direction");
+            
+            if (sTryGetAttribute(elem, "direction", direction))
+                pmlParams[direction] = theseParams;
+            else
+            for (int sideNum = 0; sideNum < 6; sideNum++)
+                pmlParams[cardinalDirection(sideNum)] = theseParams;
+            
+            pmlParamXML = pmlParamXML->NextSiblingElement("PML");
+        }
+        
         MaterialDescPtr material(new MaterialDescription(name, inModel,
-            params));
+            params, pmlParams));
         materials.push_back(material);
         
         elem = elem->NextSiblingElement("Material");

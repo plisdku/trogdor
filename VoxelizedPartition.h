@@ -153,7 +153,7 @@ private:
 	void calculateHuygensSymmetries(const GridDescription & gridDesc);
 	Vector3i huygensSymmetry(const HuygensSurfaceDescription & surf);
 	
-	void createMaterialDelegates();
+	void createMaterialDelegates(const GridDescription & gridDesc);
 	void loadSpaceVaryingData();
 	void generateRunlines();
 	void genRunlinesInOctant(int octant);
@@ -190,6 +190,8 @@ private:
 	Vector3i mOriginYee;
 		
 	std::vector<Vector3i> mHuygensRegionSymmetries;
+    
+    //Map<Vector3i, Map<std::string, std::string> > mPMLParams;
 	
 	friend std::ostream & operator<< (std::ostream & out,
 		const VoxelizedPartition & grid);

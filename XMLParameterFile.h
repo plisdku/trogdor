@@ -25,7 +25,8 @@ public:
 private:
 	void load(SimulationDescription & sim) const throw(Exception);
 	
-	std::vector<GridDescPtr> loadGrids(const TiXmlElement* parent) const;
+	std::vector<GridDescPtr> loadGrids(const TiXmlElement* parent,
+        const SimulationDescription & sim) const;
 	std::set<std::string> collectGridNames(const TiXmlElement* parent) const;
 	std::set<std::string> collectMaterialNames(const TiXmlElement* parent)
 		const;

@@ -61,13 +61,12 @@ private:
 	int mNumTimesteps;
 };
 
-
 class GridDescription
 {
 public:
 	GridDescription(std::string name, Vector3i numYeeCells,
         Rect3i calcRegionHalf, Rect3i nonPMLHalf,
-		Vector3i originYee)
+		Vector3i originYee, Vector3f mDxyz, float mDt)
 		throw(Exception);
 	
 	// Mutators
@@ -79,7 +78,9 @@ public:
 		const std::vector<HuygensSurfaceDescPtr> & surfaces);
 	void setAssembly(AssemblyDescPtr assembly) {
 		mAssembly = assembly; }
-	
+    void setPMLParams(const Map<Vector3i, Map<std::string, std::string> > & p)
+        { mPMLParams = p; }
+    
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap,
 		const Map<std::string, GridDescPtr> & gridMap);
 	
@@ -93,8 +94,12 @@ public:
 	Rect3i getHalfCellBounds() const;
 	const Rect3i & getCalcHalfCells() const { return mCalcRegionHalf; }
 	const Rect3i & getNonPMLHalfCells() const { return mNonPMLHalf; }
+    const Map<Vector3i, Map<std::string, std::string> > & getPMLParams() const
+        { return mPMLParams; }
 	Vector3i getOriginYee() const { return mOriginYee; }
 	int getNumDimensions() const;
+    Vector3f getDxyz() const { return mDxyz; }
+    float getDt() const { return mDt; }
 	
 	const std::vector<OutputDescPtr> & getOutputs() const { return mOutputs; }
 	const std::vector<SourceDescPtr> & getSources() const { return mSources; }
@@ -113,6 +118,11 @@ private:
 	Vector3i mNumHalfCells;
 	Rect3i mCalcRegionHalf;
 	Rect3i mNonPMLHalf;
+    
+    Vector3f mDxyz;
+    float mDt;
+    
+    Map<Vector3i, Map<std::string, std::string> > mPMLParams;
 	
 	Vector3i mOriginYee;
 	
@@ -483,11 +493,15 @@ class MaterialDescription
 {
 public:
 	MaterialDescription(std::string name, std::string inModelName,
-		const Map<std::string, std::string> & inParams) throw(Exception);
+		const Map<std::string, std::string> & inParams,
+        const Map<Vector3i, Map<std::string, std::string> > & inPMLParams)
+        throw(Exception);
 	
 	std::string getName() const { return mName; }
 	std::string getModelName() const { return mModelName; }
 	const Map<std::string, std::string> & getParams() const { return mParams; }
+    const Map<Vector3i, Map<std::string, std::string> > & getPMLParams() const
+        { return mPMLParams; }
 	
 	void cycleCoordinates();  // rotate x->y, y->z, z->x
 	
@@ -498,6 +512,7 @@ private:
 	std::string mName;
 	std::string mModelName;
 	Map<std::string, std::string> mParams;
+    Map<Vector3i, Map<std::string, std::string> > mPMLParams;
 };
 std::ostream & operator<<(std::ostream & out, const MaterialDescription & mat);
 

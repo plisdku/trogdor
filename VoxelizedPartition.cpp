@@ -31,6 +31,7 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	mFieldAllocHalfCells(expandToYeeRect(allocRegion)),
 	mAuxAllocRegion(allocRegion),
 	mCalcHalfCells(calcRegion)
+    //mPMLParams(gridDesc.getPMLParams())
 {
 	LOG << "VoxelizedPartition()\n";
 	
@@ -85,7 +86,7 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	cout << mVoxels << endl;
 	
 	calculateMaterialIndices();
-	createMaterialDelegates();
+	createMaterialDelegates(gridDesc);
 	loadSpaceVaryingData(); // * grid-scale wraparound
 	generateRunlines(); // * partition wraparound
     
@@ -541,7 +542,7 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 }
 
 void VoxelizedPartition::
-createMaterialDelegates()
+createMaterialDelegates(const GridDescription & gridDesc)
 {
 	set<Paint*> allPaints = mCentralIndices->getCurlBufferParentPaints();
 	
@@ -550,6 +551,8 @@ createMaterialDelegates()
 	for (int nn = 0; nn < 6; nn++)
 		pmlRects.push_back(getPMLHalfCellsOnFace(nn));
 	
+    //cout << *mCentralIndices << endl;
+    
 	LOG << "Iterating over paints...\n";
 	for (set<Paint*>::iterator itr = allPaints.begin(); itr != allPaints.end();
 		itr++)
@@ -558,7 +561,7 @@ createMaterialDelegates()
 		if (mDelegates.count(p) == 0)
 		{
 			mDelegates[p] = MaterialFactory::getDelegate(
-				mVoxels, mCentralIndices, p);
+				mVoxels, mCentralIndices, gridDesc, p);
 		}
 		MaterialDelegate & mat = *mDelegates[p];
 		
@@ -577,7 +580,7 @@ createMaterialDelegates()
         for (int faceNum = 0; faceNum < 6; faceNum++)
         if (partitionHasPML(faceNum))
         {
-            mat.setPMLHalfCells(faceNum, pmlRects[faceNum]);
+            mat.setPMLHalfCells(faceNum, pmlRects[faceNum], gridDesc);
         }
 	}
 }

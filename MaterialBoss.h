@@ -28,12 +28,18 @@ class VoxelizedPartition;
 class MaterialDelegate;
 typedef Pointer<MaterialDelegate> MaterialDelegatePtr;
 
+class GridDescription;
+
 class MaterialFactory
 {
 public:
 	static MaterialDelegatePtr getDelegate(const VoxelGrid & vg,
 		const PartitionCellCountPtr cg,
+        //const Map<Vector3i, Map<std::string, std::string> > & gridPMLParams,
+        const GridDescription & gridDesc,
 		Paint* parentPaint);
+    
+    static Map<Vector3i, Map<std::string, std::string> > defaultPMLParams();
 };
 
 class Material
@@ -62,7 +68,8 @@ public:
 	// Auxiliary variables
     virtual void setNumCellsE(int fieldDir, int numCells);
     virtual void setNumCellsH(int fieldDir, int numCells);
-    virtual void setPMLHalfCells(int pmlDirection, Rect3i halfCellsOnSide);
+    virtual void setPMLHalfCells(int pmlDirection, Rect3i halfCellsOnSide,
+        const GridDescription & gridDesc);
     virtual void setNumCellsOnPMLFaceE(int fieldDir, int faceNum, int numCells);
     virtual void setNumCellsOnPMLFaceH(int fieldDir, int faceNum, int numCells);
 	

@@ -29,6 +29,8 @@ using namespace YeeUtilities;
 
 MaterialDelegatePtr MaterialFactory::
 getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
+    //const Map<Vector3i, Map<string, string> > & gridPMLParams,
+    const GridDescription & gridDesc,
 	Paint* parentPaint)
 {
 	assert(parentPaint != 0L);
@@ -37,13 +39,50 @@ getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	const MaterialDescPtr bulkMaterial = parentPaint->getBulkMaterial();
 	string materialClass(bulkMaterial->getModelName());
 	string materialName(bulkMaterial->getName());
-	
+    const Map<Vector3i, Map<string, string> > & gridPMLParams(
+        gridDesc.getPMLParams());
+    Map<Vector3i, Map<string, string> > pmlParams;
+    
+    //LOG << "Hey, grid pml: \n";
+    //LOGMORE << gridPMLParams << endl;
+    
+    // This creates the map of PML parameters, first consulting the material's
+    // parameters and secondarily the grid's default parameters and the global
+    // default parameters.  In the usual case neither map will have anything,
+    // because I will be confident in the parameters that I build in to the
+    // program.  (-: (-: (-:
+    if (parentPaint->isPML())
+    {
+        pmlParams = defaultPMLParams();
+        const Map<Vector3i, Map<string, string> > & matParams =
+            bulkMaterial->getPMLParams();
+        
+        for (int sideNum = 0; sideNum < 6; sideNum++)
+        {
+            Vector3i dir = cardinalDirection(sideNum);
+            
+            map<string, string>::const_iterator itr;
+            for (itr = pmlParams[dir].begin(); itr != pmlParams[dir].end();
+                itr++)
+            {
+                if (matParams.count(dir) && matParams[dir].count(itr->first))
+                    pmlParams[dir][itr->first] =
+                        matParams[dir][itr->first];
+                else if (gridPMLParams.count(dir) &&
+                    gridPMLParams[dir].count(itr->first))
+                    pmlParams[dir][itr->first] =
+                        gridPMLParams[dir][itr->first];
+            }
+        }
+    }
+    
 	//LOG << "Getting delegate for " << *parentPaint << ".\n"; 
     
 	if (materialClass == "StaticDielectric")
 	{
         if (parentPaint->isPML())
-            matDel = MaterialDelegatePtr(new StaticDielectricPMLDelegate);
+            matDel = MaterialDelegatePtr(new StaticDielectricPMLDelegate(
+                pmlParams));
         else
             matDel = MaterialDelegatePtr(new StaticDielectricDelegate);
 	}
@@ -67,6 +106,30 @@ getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg,
     matDel->setParentPaint(parentPaint);
     
     return matDel;
+}
+
+Map<Vector3i, Map<string, string> > MaterialFactory::
+defaultPMLParams()
+{
+    Map<string, string> allDirectionsDefault;
+    Map<Vector3i, Map<string, string> > params;
+    
+    allDirectionsDefault["sigma"] =
+        "(d^3)*0.8*4/(((mu0/eps0)^0.5)*dx)";
+    allDirectionsDefault["alpha"] =
+        "d*3e8*eps0/(50*dx)";
+    allDirectionsDefault["kappa"] =
+        "1 + (5-1)*(d^3)";
+    /*
+    allDirectionsDefault["kappa"] = "d";
+    allDirectionsDefault["alpha"] = "d";
+    allDirectionsDefault["sigma"] = "d"; // I'll take L to be the PML thickness
+    */
+    
+    for (int sideNum = 0; sideNum < 6; sideNum++)
+        params[cardinalDirection(sideNum)] = allDirectionsDefault;
+    
+    return params;
 }
 
 Material::
@@ -108,7 +171,8 @@ setNumCellsH(int fieldDir, int numCells)
 
 
 void MaterialDelegate::
-setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide)
+setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide,
+    const GridDescription & gridDesc)
 {
 }
 

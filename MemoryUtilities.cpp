@@ -88,6 +88,7 @@ identify(float const * ptr)
     set<MemoryBuffer*>::const_iterator itr;
     for (itr = sAllBuffers.begin(); itr != sAllBuffers.end(); itr++)
     {
+        //LOG << (*itr)->getDescription() << "\n";
         if ((*itr)->includes(ptr))
         {
             ostringstream str;

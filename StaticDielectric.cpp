@@ -26,7 +26,6 @@ StaticDielectricDelegate() :
     
 }
 
-
 MaterialPtr StaticDielectricDelegate::
 makeCalcMaterial(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
@@ -37,7 +36,6 @@ makeCalcMaterial(const VoxelizedPartition & vp,
         cp.getDt()
         ));
 }
-
 
 StaticDielectric::
 StaticDielectric(const StaticDielectricDelegate & deleg,

@@ -17,14 +17,16 @@
 class StaticDielectricPMLDelegate : public SimpleBulkPMLMaterialDelegate
 {
 public:
-    StaticDielectricPMLDelegate();
+    StaticDielectricPMLDelegate(
+        const Map<Vector3i, Map<std::string, std::string> > & pmlParams);
     
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
         
     virtual void setNumCellsE(int fieldDir, int numCells);
     virtual void setNumCellsH(int fieldDir, int numCells);
-    virtual void setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide);
+    virtual void setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide,
+        const GridDescription & gridDesc);
     
     const std::vector<float> & getSigmaE(int fieldDir, int pmlDir) const
         { return mSigmaE[fieldDir][pmlDir]; }
@@ -53,6 +55,8 @@ private:
     MemoryBufferPtr mBufAccumEj[3], mBufAccumEk[3],
         mBufAccumHj[3], mBufAccumHk[3];
     
+    Map<Vector3i, Map<std::string, std::string> > mPMLParams;
+    
     // Indexing is [fieldDir][pmlDir].  The diagonal elements are unused because
     // Ex is not attenuated in the x direction, etc.
     std::vector<float> mSigmaE[3][3];
@@ -73,7 +77,14 @@ public:
     virtual void calcEPhase(int direction);
     virtual void calcHPhase(int direction);
 private:
-    std::vector<SimplePMLRunline> mRunlines[6];
+    void calcEx();
+    void calcEy();
+    void calcEz();
+    void calcHx();
+    void calcHy();
+    void calcHz();
+    
+    std::vector<SimpleAuxPMLRunline> mRunlines[6];
     
     // These vectors are the actual location of the allocated fields and
     // update constants.

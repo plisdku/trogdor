@@ -61,7 +61,7 @@ runNew(string parameterFile)
 	
     trimVoxelizedGrids(voxelizedGrids); // ditch VoxelGrid & PartitionCellCount
     makeCalculationGrids(sim, calculationGrids, voxelizedGrids);
-	voxelizedGrids.clear();
+	voxelizedGrids.clear();  // this will delete the delegates
     allocateAuxBuffers(calculationGrids);
 	
 	// allocate memory that can be postponed
@@ -361,7 +361,9 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 		(gridHalfCells.size() + Vector3i(1,1,1))/2, // num Yee cells
 		gridHalfCells, // calc region
 		nonPMLHalfCells,
-		originYee));
+		originYee,
+        parentGrid->getDxyz(),
+        parentGrid->getDt()));
 	
 	HuygensSurfaceDescPtr hPtr;
 	if (huygensSurface->getType() == kTFSFSource)
@@ -500,7 +502,9 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 		(gridBounds.size() + Vector3i(1,1,1))/2, // num Yee cells
 		gridBounds, // calc region
 		nonPMLRect,
-		origin));
+		origin,
+        parentGrid->getDxyz(),
+        parentGrid->getDt()));
 	
 	vector<HuygensSurfaceDescPtr> huygensSurfaces; // might end up empty!
 	vector<SourceDescPtr> hardSources; // or this will be empty.

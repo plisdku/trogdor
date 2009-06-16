@@ -86,7 +86,8 @@ setDuration(int numT)
 void SimulationDescription::
 cycleCoordinates()
 {
-	m_dxyz = Vector3f(m_dxyz[2], m_dxyz[0], m_dxyz[1]);
+    m_dxyz = cyclicPermute(m_dxyz, 1);
+	//m_dxyz = Vector3f(m_dxyz[2], m_dxyz[0], m_dxyz[1]);
 	unsigned int nn;
 	for (nn = 0; nn < mGrids.size(); nn++)
 		mGrids[nn]->cycleCoordinates();
@@ -98,14 +99,17 @@ cycleCoordinates()
 
 GridDescription::
 GridDescription(string name, Vector3i numYeeCells,
-	Rect3i calcRegionHalf, Rect3i nonPMLHalf, Vector3i originYee)
+	Rect3i calcRegionHalf, Rect3i nonPMLHalf, Vector3i originYee,
+    Vector3f dxyz, float dt)
 	throw(Exception) :
 	mName(name),
 	mNumYeeCells(numYeeCells),
 	mNumHalfCells(2*numYeeCells),
 	mCalcRegionHalf(calcRegionHalf),
 	mNonPMLHalf(nonPMLHalf),
-	mOriginYee(originYee)
+	mOriginYee(originYee),
+    mDxyz(dxyz),
+    mDt(dt)
 {
 	assert(Vector3i(2*mNumYeeCells) == mNumHalfCells); // caller's job...
 	
@@ -173,6 +177,14 @@ cycleCoordinates()
 	for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
 		mHuygensSurfaces[nn]->cycleCoordinates();
 	mAssembly->cycleCoordinates();
+    
+    Map<Vector3i, Map<string, string> > newPMLParams;
+    for (int sideNum = 0; sideNum < 6; sideNum++)
+        newPMLParams[cyclicPermute(cardinalDirection(sideNum), 1)] =
+            mPMLParams[cardinalDirection(sideNum)];
+    mPMLParams = newPMLParams;
+    
+    mDxyz = cyclicPermute(mDxyz, 1);
 }
 
 Rect3i GridDescription::
@@ -939,11 +951,13 @@ cycleCoordinates()
 
 MaterialDescription::
 MaterialDescription(string name, string inModelName,
-	const Map<string,string> & inParams) throw(Exception) :
+	const Map<string,string> & inParams,
+    const Map<Vector3i, Map<string, string> > & inPMLParams) throw(Exception) :
     mCoordinatePermutationNumber(0),
 	mName(name),
 	mModelName(inModelName),
-	mParams(inParams)
+	mParams(inParams),
+    mPMLParams(inPMLParams)
 {
 	cerr << "Warning: MaterialDescription does not validate model name.\n";
 }
@@ -952,6 +966,14 @@ void MaterialDescription::
 cycleCoordinates()
 {
 	mCoordinatePermutationNumber = (mCoordinatePermutationNumber+1)%3;
+    
+    Map<Vector3i, Map<string, string> > newPMLParams;
+    
+    for (int sideNum = 0; sideNum < 6; sideNum++)
+        newPMLParams[cyclicPermute(cardinalDirection(sideNum), 1)] =
+            mPMLParams[cardinalDirection(sideNum)];
+    
+    mPMLParams = newPMLParams;
 }
 
 ostream &

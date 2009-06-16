@@ -56,7 +56,7 @@ getNumCells(Paint* paint, int octant) const
 	assert(octant >= 0 && octant < 8);
 	
 	if (mNumCells[octant].count(paint) != 0)
-		return mNumCells[octant].count(paint);
+		return mNumCells[octant][paint];
 	return 0;
 }
 
