@@ -13,6 +13,7 @@
 #include "SimulationDescriptionPredeclarations.h"
 #include "Pointer.h"
 #include "MemoryUtilities.h"
+#include "Map.h"
 #include <vector>
 
 class HuygensSurfaceDelegate;
@@ -26,6 +27,7 @@ class HuygensSurfaceFactory
 {
 public:
     static HuygensSurfaceDelegatePtr getDelegate(
+        const VoxelizedPartition & vp,
         const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
         const HuygensSurfaceDescPtr & desc);
 private:
@@ -49,19 +51,12 @@ typedef Pointer<HuygensSurfaceDelegate> HuygensSurfaceDelegatePtr;
 class HuygensSurface
 {
 public:
-    HuygensSurface() = 0;
+    HuygensSurface() {}
     virtual ~HuygensSurface() {}
     
     virtual void updateE() {}
     virtual void updateH() {}
 private:
-    /*
-    float* mHeadPointersE[3];
-    float* mHeadPointersH[3];
-    Vector3i mStridesE[3];
-    Vector3i mStridesH[3];
-    Vector3i mNumYeeCells;
-    */
 };
 typedef Pointer<HuygensSurface> HuygensSurfacePtr;
 

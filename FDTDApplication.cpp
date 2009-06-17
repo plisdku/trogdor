@@ -52,8 +52,8 @@ runNew(string parameterFile)
 	SimulationDescPtr sim = loadSimulation(parameterFile);
 	//Mat3i orientation = guessFastestOrientation(*sim);
 	
-	//sim->cycleCoordinates();
-	//sim->cycleCoordinates();
+	sim->cycleCoordinates();
+	sim->cycleCoordinates();
 	voxelizeGrids(sim, voxelizedGrids); // includes setup runlines
 	
 	// in here: do any setup that requires the voxelized grids
@@ -66,11 +66,13 @@ runNew(string parameterFile)
 	
 	// allocate memory that can be postponed
     
+    /*
     set<MemoryBuffer*>::const_iterator itr;
     LOG << "All buffers:\n";
     for (itr = MemoryBuffer::getAllBuffers().begin();
         itr != MemoryBuffer::getAllBuffers().end(); itr++)
         LOGMORE << *(*itr) << endl;
+    */
     
 	// RUN THE SIMULATION hoorah.
     LOG << "Beginning calculation.\n";
@@ -183,7 +185,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		myAllocatedHalfCells.p2[mm] += 2;
 	}
 	
-    
+    /*
     LOG << "Recursing:\n";
 	LOGMORE << "Recursing for grid " << currentGrid->getName() << ".\n";
 	LOGMORE << "I am partition " << thisNode << " of " << numNodes << ".\n";
@@ -191,7 +193,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	LOGMORE << "My partition is " << myPartitionHalfCells << ".\n";
 	LOGMORE << "I allocate fields in " << myAllocatedHalfCells << ".\n";
 	LOGMORE << "My calc region is " << myCalcHalfCells << ".\n";
-	
+	*/
     
 	static const int EXTRUDE_PML = 1;
 	if (EXTRUDE_PML)
@@ -233,11 +235,11 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 			sourceSymm[1]*gridSymm[1] != 0 && gridYeeCells[1] > 1,
 			sourceSymm[2]*gridSymm[2] != 0 && gridYeeCells[2] > 1);
 		
-		LOG << "collapsibleDimensions = " << collapsible << endl;
+		//LOG << "collapsibleDimensions = " << collapsible << endl;
 		
 		if (norm2(collapsible) > 0)
 		{
-			LOG << "Collapsing the grid.\n";
+			//LOG << "Collapsing the grid.\n";
 			
 			ostringstream auxGridName;
 			auxGridName << currentGrid->getName() << "_autoaux_" << nn;
@@ -257,7 +259,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		}
 		else if (currentGrid->getNumDimensions() == 1)
 		{
-			LOG << "Need to create last aux grid.\n";
+			//LOG << "Need to create last aux grid.\n";
 			ostringstream srcGridName;
 			srcGridName << currentGrid->getName() << "_autosrc";
 			
@@ -427,7 +429,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	Vector3i srcDir = huygensSurface->getDirection();
 	Vector3i origin = parentGrid->getOriginYee();
     
-    LOG << omittedSides << "\n";
+    //LOG << omittedSides << "\n";
 	
 	// What does the source grid look like?
 	// Two cases:

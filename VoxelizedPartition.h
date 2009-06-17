@@ -24,6 +24,7 @@
 #include "MaterialBoss.h"
 #include "OutputBoss.h"
 #include "SourceBoss.h"
+#include "HuygensSurface.h"
 #include "MemoryUtilities.h"
 
 #include "SimulationDescriptionPredeclarations.h"
@@ -103,6 +104,19 @@ public:
 	BufferPointer fieldPointer(const NeighborBufferDescPtr & nb,
 		Vector3i halfCell) const;
     
+    // direction      0,1,2 for x,y,z
+    // xi,xj,xk       global Yee cell coordinates
+    // returns        BufferPointer to EM field
+    //BufferPointer getE(int direction, int xi, int xj, int xk) const;
+    //BufferPointer getH(int direction, int xi, int xj, int xk) const;
+    BufferPointer getE(int direction, Vector3i xx) const;
+    BufferPointer getH(int direction, Vector3i xx) const;
+    
+    BufferPointer getE(const NeighborBufferDescPtr & nb, int direction,
+        Vector3i xx) const;
+    BufferPointer getH(const NeighborBufferDescPtr & nb, int direction,
+        Vector3i xx) const;
+    
     // returns      amount to add to float* to go from Ex(here) to Ex(neighbor) 
     Vector3i getFieldStride() const;
 	
@@ -138,16 +152,18 @@ public:
         { return mHardSourceDelegates; }
     
     // returns      the structures that store temp data for setting up NBs
-    const std::vector<NeighborBufferDelegatePtr> & getNeighborBufferDelegates()
-        const { return mNeighborBufferDelegates; }
+    const std::vector<HuygensSurfaceDelegatePtr> & getHuygensSurfaceDelegates()
+        const { return mHuygensSurfaceDelegates; }
     
     void clearVoxelGrid();
     void clearCellCountGrid();
     
-    void createHuygensSurfaceDelegates();
+    void createHuygensSurfaceDelegates(const GridDescPtr & gridDesc,
+        const Map<GridDescPtr, VoxelizedPartitionPtr> & grids);
 	
 private:
-	void initFieldBuffers(std::string bufferNamePrefix);
+	void initFieldBuffers(std::string bufferNamePrefix,
+        const std::vector<HuygensSurfaceDescPtr> & surfaces);
 	void paintFromAssembly(const GridDescription & gridDesc,
 		const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids);
 	void paintFromHuygensSurfaces(const GridDescription & gridDesc);
@@ -183,7 +199,7 @@ private:
 	std::vector<OutputDelegatePtr> mOutputDelegates;
     std::vector<SourceDelegatePtr> mSoftSourceDelegates;
     std::vector<SourceDelegatePtr> mHardSourceDelegates;
-    std::vector<NeighborBufferDelegatePtr> mNeighborBufferDelegates;
+    std::vector<HuygensSurfaceDelegatePtr> mHuygensSurfaceDelegates;
     
     // END OF GRID DENIZEN ZONE
     

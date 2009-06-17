@@ -435,6 +435,8 @@ public:
     // Link accessors
     std::string getSourceGridName() const
         { assert(mType == kLink); return mSourceGridName; }
+    GridDescPtr getSourceGrid() const
+        { assert(mType == kLink); return mSourceGrid; }
     Rect3i getFromHalfCells() const { return mFromHalfCells; }
     
 private:
@@ -480,12 +482,12 @@ public:
 	
 	const Rect3i & getDestHalfRect() const { return mDestHalfRect; }
 	const Rect3i & getBufferHalfRect() const { return mBufferHalfRect; }
-	const Rect3i & getBufferYeeBounds() const { return mBufferYeeBounds; }
+	//const Rect3i & getBufferYeeBounds() const { return mBufferYeeBounds; }
 	
 private:
 	Rect3i mDestHalfRect;
 	Rect3i mBufferHalfRect;
-	Rect3i mBufferYeeBounds;
+	//Rect3i mBufferYeeBounds;
 	std::vector<float> mDestFactors; // per field # 0-5
 	std::vector<float> mSrcFactors;  // per field # 0-5
 };

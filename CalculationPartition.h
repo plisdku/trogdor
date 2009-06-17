@@ -23,6 +23,8 @@ class Output;
 typedef Pointer<Output> OutputPtr;
 class Source;
 typedef Pointer<Source> SourcePtr;
+class HuygensSurface;
+typedef Pointer<HuygensSurface> HuygensSurfacePtr;
 
 class CalculationPartition
 {
@@ -109,6 +111,7 @@ private:
     std::vector<OutputPtr> mOutputs;
     std::vector<SourcePtr> mHardSources;
     std::vector<SourcePtr> mSoftSources;
+    std::vector<HuygensSurfacePtr> mHuygensSurfaces;
     
     //EHBufferSetPtr mEHBuffers;
     std::vector<MemoryBufferPtr> mEHBuffers;

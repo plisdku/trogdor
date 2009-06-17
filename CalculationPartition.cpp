@@ -9,6 +9,7 @@
 
 #include "CalculationPartition.h"
 #include "SimulationDescription.h"
+#include "HuygensSurface.h"
 
 #include "Log.h"
 #include "VoxelizedPartition.h"
@@ -75,6 +76,13 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mHardSources.push_back(hardSrcs[nn]->makeSource(vp, *this));
     }
     
+    const vector<HuygensSurfaceDelegatePtr> & huyg =
+        vp.getHuygensSurfaceDelegates();
+    for (nn = 0; nn < huyg.size(); nn++)
+    {
+        mHuygensSurfaces.push_back(huyg[nn]->makeHuygensSurface());
+    }
+    
     // Prepare helper variables for the field accessors.
     // We cache the head pointers just so they're in a quick order for later.
     for (int dir = 0; dir < 3; dir++)
@@ -83,11 +91,12 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mHeadH[dir] = mEHBuffers[hFieldNumber(dir)]->getHeadPointer();
         mEOffset[dir] = eFieldPosition(dir);
         mHOffset[dir] = hFieldPosition(dir);
-        
+        /*
         LOG << "mHeadE[" << dir << "] is "
             << MemoryBuffer::identify(mHeadE[dir]) << "\n";
         LOG << "mHeadH[" << dir << "] is "
             << MemoryBuffer::identify(mHeadH[dir]) << "\n";
+        */
     }
     mMemStride[0] = mEHBuffers[0]->getStride(); // should be same for all
     mMemStride[1] = mAllocYeeCells[0]*mMemStride[0];
@@ -118,10 +127,14 @@ allocateAuxBuffers()
 void CalculationPartition::
 updateE(int timestep)
 {
+    unsigned int nn;
     // Update Huygens surfaces (add H stuff)
     
+    for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
+        mHuygensSurfaces[nn]->updateH(); // need to update H here before E.
+    
     for (int eNum = 0; eNum < 3; eNum++)
-    for (unsigned int nn = 0; nn < mMaterials.size(); nn++)
+    for (nn = 0; nn < mMaterials.size(); nn++)
         mMaterials[nn]->calcEPhase(eNum);
 }
 
@@ -146,11 +159,14 @@ outputE(int timestep)
 void CalculationPartition::
 updateH(int timestep)
 {
+    unsigned int nn;
+    
     // Update E fields in Huygens surfaces
-    
-    
+    for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
+        mHuygensSurfaces[nn]->updateE(); // need to update E here before H.
+        
     for (int hNum = 0; hNum < 3; hNum++)
-    for (unsigned int nn = 0; nn < mMaterials.size(); nn++)
+    for (nn = 0; nn < mMaterials.size(); nn++)
         mMaterials[nn]->calcHPhase(hNum);
 }
 
@@ -365,7 +381,7 @@ allocate(std::vector<float> & data, vector<MemoryBufferPtr> & buffers)
     
     for (nn = 0; nn < 6; nn++)
         bufsize += buffers[nn]->getLength();
-    LOG << "Bufsize is " << bufsize << endl;
+    //LOG << "Bufsize is " << bufsize << endl;
     data.resize(bufsize);
     
     for (nn = 0; nn < 6; nn++)

@@ -9,6 +9,7 @@
 
 #include "SimulationDescription.h"
 #include "XMLParameterFile.h"
+#include "STLOutput.h"
 
 #include <iostream>
 #include <sstream>
@@ -862,6 +863,8 @@ initTFSFBuffers(float srcFactor)
 	//			for each field (Ex, Ey, Hz, Ez, Hy, Hx)
 	//				add a TF or SF buffer appropriately
 	
+    //LOG << "My omitted sides: \n";
+    //LOGMORE << mOmittedSides << "\n";
 	// For all sides not "omitted" explicitly...
 	for (unsigned int nDir = 0; nDir < 6; nDir++)
 	if (mOmittedSides.count(cardinalDirection(nDir)) == 0)
@@ -897,14 +900,15 @@ NeighborBufferDescription(const Rect3i & destHalfRect, int nSide,
 	else
 		fatBoundary.p2 += cardinalDirection(nSide);
 	
-	// the buffer half rect is the rect in the buffer that maps to the
-	// fat boundary
+	// the buffer half rect is a rect that's the full size of the buffer.
+    // Its origin is 0 and it's one cell thick, but it might not be aligned on
+    // Yee cells.  Not sure what the use of this quantity is!
 	Rect3i bufferHalfRect = fatBoundary - Vector3i(2*(fatBoundary.p1/2));
 	bufferHalfRect.p1[nSide/2] = 0;
 	bufferHalfRect.p2[nSide/2] = 1;
 	
 	mBufferHalfRect = bufferHalfRect;
-	mBufferYeeBounds = rectHalfToYee(bufferHalfRect);
+	//mBufferYeeBounds = rectHalfToYee(bufferHalfRect);
 	
 	for (unsigned int fieldNum = 0; fieldNum < 6; fieldNum++) // on E, H
 	{
@@ -936,7 +940,7 @@ cycleCoordinates()
 	// Rotate the rects
 	mDestHalfRect = permuteForward * mDestHalfRect;
 	mBufferHalfRect = permuteForward * mBufferHalfRect;
-	mBufferYeeBounds = permuteForward * mBufferYeeBounds;
+	//mBufferYeeBounds = permuteForward * mBufferYeeBounds;
 	
 	// Permute the source and destination factors.
 	// This is tricky since the order is (Ex, Ey, Hz, Ez, Hy, Hx).

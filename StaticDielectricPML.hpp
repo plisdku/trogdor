@@ -206,7 +206,7 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
             mAlphaE[fieldDir][faceNum/2][nYee] = 0.0;
             */
         }
-        
+        /*
         LOG << "E: field " << fieldDir << " faceNum " << faceNum << " num "
             << pmlDepthYee << "\n";
         LOGMORE << "Sigma " << sigmaStr << "\n" <<
@@ -215,7 +215,7 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
             mAlphaE[fieldDir][faceNum/2] << endl;
         LOGMORE << "Kappa " << kappaStr << "\n" <<
             mKappaE[fieldDir][faceNum/2] << endl;
-        
+        */
         
         // H field auxiliary constants
         pmlYee = rectHalfToYee(halfCellsOnSide, hOctantNumber(fieldDir));

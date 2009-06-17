@@ -12,16 +12,21 @@
 #include "SimulationDescription.h"
 #include "Exception.h"
 
+#include "HuygensLink.h"
+
 using namespace std;
 
 HuygensSurfaceDelegatePtr HuygensSurfaceFactory::
-getDelegate(const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
+getDelegate(const VoxelizedPartition & vp,
+    const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
     const HuygensSurfaceDescPtr & desc)
 {
     HuygensSurfaceDelegatePtr hs;
     
     if (desc->getType() == kLink)
     {
+        hs = HuygensSurfaceDelegatePtr(new HuygensLinkDelegate(
+            vp, grids, desc));
     }
     else if (desc->getType() == kTFSFSource)
     {
@@ -34,40 +39,3 @@ getDelegate(const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
     
     return hs;
 }
-
-/*
-HuygensSurfaceDelegate::
-HuygensSurfaceDelegate()
-{
-    
-}
-
-
-
-HuygensSurface::
-HuygensSurface()
-{
-}
-
-
-
-
-void HuygensSurface::
-updateE()
-{
-    for (int nk = 0; nk < mNumYeeCells[2]; nk++)
-    for (int nj = 0; nj < mNumYeeCells[1]; nj++)
-    for (int ni = 0; ni < mNumYeeCells[0]; ni++)
-    {
-        
-    }
-}
-
-
-
-
-void HuygensSurface::
-updateH()
-{
-}
-*/

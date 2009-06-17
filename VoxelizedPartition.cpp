@@ -13,6 +13,7 @@
 #include "Log.h"
 #include "YeeUtilities.h"
 #include "MaterialBoss.h"
+#include "STLOutput.h"
 
 #include <sstream>
 
@@ -31,7 +32,6 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	mFieldAllocHalfCells(expandToYeeRect(allocRegion)),
 	mAuxAllocRegion(allocRegion),
 	mCalcHalfCells(calcRegion)
-    //mPMLParams(gridDesc.getPMLParams())
 {
 	LOG << "VoxelizedPartition()\n";
 	
@@ -48,9 +48,8 @@ VoxelizedPartition(const GridDescription & gridDesc,
     
     mNumAllocHalfCells = mFieldAllocHalfCells.size()+1;
 	
-    initFieldBuffers(gridDesc.getName());
+    initFieldBuffers(gridDesc.getName(), gridDesc.getHuygensSurfaces());
     
-	
 	mNonPMLHalfCells = gridDesc.getNonPMLHalfCells();
 	mOriginYee = gridDesc.getOriginYee();
 	
@@ -83,8 +82,11 @@ VoxelizedPartition(const GridDescription & gridDesc,
 }
 
 void VoxelizedPartition::
-initFieldBuffers(string bufferNamePrefix)
+initFieldBuffers(string bufferNamePrefix, 
+    const vector<HuygensSurfaceDescPtr> & surfaces)
 {
+	int bufSize = m_nx*m_ny*m_nz;
+    // Main E and H fields
     mEHBuffers.resize(6);
 	mEHBuffers[0] =
         MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Ex", bufSize));
@@ -98,9 +100,44 @@ initFieldBuffers(string bufferNamePrefix)
          MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Hy", bufSize));
 	mEHBuffers[5] =
         MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Hx", bufSize));
-        
     
-    
+    // Neighbor buffers (E and H fields for TFSF sources, links, etc.)
+	for (unsigned int nn = 0; nn < surfaces.size(); nn++)
+	{
+		const vector<NeighborBufferDescPtr> & nbs = surfaces[nn]->getBuffers();
+		
+        /*
+        LOG << "Surface " << nn << " has omitted sides:\n";
+        LOGMORE << surfaces[nn]->getOmittedSides() << "\n";
+        LOGMORE << "Surface has " << nbs.size() << " neighbor buffers.\n";
+        */
+        assert(nbs.size() == 6);
+		for (unsigned int mm = 0; mm < 6; mm++)
+		if (nbs[mm] != 0L)
+        if (!surfaces[nn]->getOmittedSides().count(cardinalDirection(mm)))
+		{
+			NeighborBufferDescPtr nb = nbs[mm];
+			//const Rect3i & bufVol = nb->getBufferYeeBounds();
+			//int bufSize = (bufVol.size(0)+1)*(bufVol.size(1)+1)*
+			//	(bufVol.size(2)+1);
+            const Rect3i & bufferVolume = nb->getBufferHalfRect();
+            Vector3i numYeeCells = rectHalfToYee(bufferVolume).size()+1;
+            int bufSize = numYeeCells[0]*numYeeCells[1]*numYeeCells[2];
+            
+            //LOG << "NB " << mm << " volume " << bufferVolume << " size " <<
+            //    bufSize << "\n";
+			
+            mNBBuffers[nb].resize(6);
+			for (int ff = 0; ff < 6; ff++)
+			{
+				ostringstream bufferName;
+                bufferName << bufferNamePrefix << " HS " << nn << " NB " <<
+                    mm << " field " << ff;
+				mNBBuffers[nb][ff] = MemoryBufferPtr(
+                    new MemoryBuffer(bufferName.str(), bufSize));
+			}
+		}
+	}
 }
 
 
@@ -277,7 +314,7 @@ linearYeeIndex(const NeighborBufferDescPtr & nb,
 	const Rect3i & halfCellBounds (nb->getDestHalfRect());
     Vector3i halfCells = halfCellBounds.size() + 1;
     
-	Rect3i yeeBounds(rectHalfToYee(halfCellBounds));
+	Rect3i yeeBounds(rectHalfToYee(halfCellBounds, halfCell%2));
 	int nx = yeeBounds.size(0)+1;
 	int ny = yeeBounds.size(1)+1;
 	int nz = yeeBounds.size(2)+1;
@@ -289,7 +326,7 @@ linearYeeIndex(const NeighborBufferDescPtr & nb,
 	int kk = halfCell[2] - halfCellBounds.p1[2];
     
     return ( (ii/2) + nx*(jj/2) + nx*ny*(kk/2) );
-}
+} 
 
 BufferPointer VoxelizedPartition::
 fieldPointer(Vector3i halfCell) const
@@ -307,6 +344,31 @@ fieldPointer(const NeighborBufferDescPtr & nb, Vector3i halfCell) const
 	long index = linearYeeIndex(nb, halfCell);
 	int fieldNum = octantFieldNumber(halfCell);
 	return BufferPointer(*mNBBuffers[nb][fieldNum], index);
+}
+
+
+BufferPointer VoxelizedPartition::
+getE(int direction, Vector3i xx) const
+{
+    return fieldPointer(vecYeeToHalf(xx, eFieldNumber(direction)));
+}
+    
+BufferPointer VoxelizedPartition::
+getH(int direction, Vector3i xx) const
+{
+    return fieldPointer(vecYeeToHalf(xx, hFieldNumber(direction)));
+}
+
+BufferPointer VoxelizedPartition::
+getE(const NeighborBufferDescPtr & nb, int direction, Vector3i xx) const
+{
+    return fieldPointer(nb, vecYeeToHalf(xx, eFieldNumber(direction)));
+}
+    
+BufferPointer VoxelizedPartition::
+getH(const NeighborBufferDescPtr & nb, int direction, Vector3i xx) const
+{
+    return fieldPointer(nb, vecYeeToHalf(xx, hFieldNumber(direction)));
 }
 
 Vector3i VoxelizedPartition::
@@ -332,6 +394,20 @@ clearCellCountGrid()
 {
     //LOG << "Clearing cell count grid.\n";
     mCentralIndices = 0L;
+}
+
+void VoxelizedPartition::
+createHuygensSurfaceDelegates(const GridDescPtr & gridDesc,
+    const Map<GridDescPtr, VoxelizedPartitionPtr> & grids)
+{
+    const vector<HuygensSurfaceDescPtr> & surfaces =
+        gridDesc->getHuygensSurfaces();
+    
+    for (unsigned int nn = 0; nn < surfaces.size(); nn++)
+    {
+        mHuygensSurfaceDelegates.push_back(
+            HuygensSurfaceFactory::getDelegate(*this, grids, surfaces[nn]));
+    }
 }
 
 	
@@ -394,32 +470,9 @@ paintFromHuygensSurfaces(const GridDescription & gridDesc)
 	
 	for (unsigned int nn = 0; nn < surfaces.size(); nn++)
 	{
+        //LOG << "Omitted sides now: \n";
+        //LOGMORE << surfaces[nn]->getOmittedSides() << "\n";
 		mVoxels.overlayHuygensSurface(*surfaces[nn]);
-		
-        // I do not see a reason to do this here.  It's moved down to
-        // createNeighborBufferDelegates().
-        /*
-		const vector<NeighborBufferDescPtr> & nbs = surfaces[nn]->getBuffers();
-		
-		for (unsigned int mm = 0; mm < nbs.size(); mm++)
-		if (nbs[mm] != 0L)
-		{
-			NeighborBufferDescPtr nb = nbs[mm];
-			const Rect3i & bufVol = nb->getBufferYeeBounds();
-			int bufSize = (bufVol.size(0)+1)*(bufVol.size(1)+1)*
-				(bufVol.size(2)+1); 
-			
-            mNBBuffers[nb].resize(6);
-			for (int ff = 0; ff < 6; ff++)
-			{
-				ostringstream bufferName;
-                bufferName << gridDesc.getName() << " HS " << nn << " NB " <<
-                    mm << " field " << ff;
-				mNBBuffers[nb][ff] = MemoryBufferPtr(
-                    new MemoryBuffer(bufferName.str(), bufSize));
-			}
-		}
-        */
 	}
 }
 
@@ -714,36 +767,6 @@ createSourceDelegates(const std::vector<SourceDescPtr> & sources)
                 SourceFactory::getDelegate(*this, sources[nn]));
     }
 }
-
-void VoxelizedPartition::
-createNeighborBufferDelegates(const vector<HuygensSurfaceDescPtr> & surfaces,
-    const Map<GridDescPtr, VoxelizedPartitionPtr> & grids)
-{
-	for (unsigned int nn = 0; nn < surfaces.size(); nn++)
-	{
-		const vector<NeighborBufferDescPtr> & nbs = surfaces[nn]->getBuffers();
-		
-		for (unsigned int mm = 0; mm < nbs.size(); mm++)
-		if (nbs[mm] != 0L)
-		{
-			NeighborBufferDescPtr nb = nbs[mm];
-			const Rect3i & bufVol = nb->getBufferYeeBounds();
-			int bufSize = (bufVol.size(0)+1)*(bufVol.size(1)+1)*
-				(bufVol.size(2)+1); 
-			
-            mNBBuffers[nb].resize(6);
-			for (int ff = 0; ff < 6; ff++)
-			{
-				ostringstream bufferName;
-                bufferName << gridDesc.getName() << " HS " << nn << " NB " <<
-                    mm << " field " << ff;
-				mNBBuffers[nb][ff] = MemoryBufferPtr(
-                    new MemoryBuffer(bufferName.str(), bufSize));
-			}
-		}
-	}
-}
-
 
 std::ostream &
 operator<< (std::ostream & out, const VoxelizedPartition & grid)
