@@ -18,26 +18,28 @@ namespace YeeUtilities
 {
 
 // returns a number from [0,7] telling which octant of the Yee cell v is in
-int halfCellIndex(const Vector3i & v);
+int octant(const Vector3i & v);
 
 // returns a vector with origin at 0 pointing to the given Yee octant
-const Vector3i & halfCellOffset(int halfCellIndex);
+const Vector3i & halfCellOffset(int octant);
 
-const Vector3i & cardinalDirection(int directionIndex);
+const Vector3i & cardinal(int directionIndex);
 
-int halfCellFieldIndex(int fieldIndex);  // returns halfCellIndices of EM fields
-const Vector3i & halfCellFieldOffset(int fieldIndex); // offsets of EM fields
+//int halfCellFieldIndex(int fieldIndex);  // returns halfCellIndices of EM fields
+//const Vector3i & halfCellFieldOffset(int fieldIndex); // offsets of EM fields
 
-int octantFieldNumber(int octant); // returns field indices or -1
-int octantFieldNumber(Vector3i octant); // returns field indices or -1
+//int octantFieldNumber(int octant); // returns field indices or -1
+//int octantFieldNumber(Vector3i octant); // returns field indices or -1
 int octantENumber(int octant); // returns 0,1,2 for Ex,y,z or -1
 int octantHNumber(int octant); // returns 0,1,2 for Hx,y,z or -1
+int octantENumber(Vector3i halfCell);
+int octantHNumber(Vector3i halfCell);
 int octantFieldDirection(int octant); // returns 0 for Ex or Hx, 1 for y, etc.
 int octantFieldDirection(Vector3i octant);
 int eOctantNumber(int directionIndex); // returns octant 1 for dir 0 (Ex), etc.
 int hOctantNumber(int directionIndex); // returns octant 6 for dir 0 (Hx), etc.
-int eFieldNumber(int directionIndex);
-int hFieldNumber(int directionIndex);
+//int eFieldNumber(int directionIndex);
+//int hFieldNumber(int directionIndex);
 
 Vector3f eFieldPosition(int fieldIndex);
 Vector3f hFieldPosition(int fieldIndex);

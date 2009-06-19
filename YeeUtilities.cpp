@@ -67,20 +67,20 @@ static int sEFieldNumbers[3] =
 static int sHFieldNumbers[3] =
     { 5, 4, 2 };
 
-int halfCellIndex(const Vector3i & v)
+int octant(const Vector3i & v)
 {
     assert(vec_ge(v, 0));
 	return v[0]%2 + 2*(v[1]%2) + 4*(v[2]%2);
 }
 
-const Vector3i & halfCellOffset(int halfCellIndex)
+const Vector3i & halfCellOffset(int octant)
 {
-	assert(halfCellIndex >= 0);
-	assert(halfCellIndex < 8);
-	return sOffsets[halfCellIndex];
+	assert(octant >= 0);
+	assert(octant < 8);
+	return sOffsets[octant];
 }
 
-const Vector3i & cardinalDirection(int directionIndex)
+const Vector3i & cardinal(int directionIndex)
 {
 	assert(directionIndex >= 0);
 	assert(directionIndex < 6);
@@ -101,7 +101,7 @@ const Vector3i & halfCellFieldOffset(int fieldIndex)
 	return sFieldOffsets[fieldIndex];
 }
 
-
+/*
 int octantFieldNumber(int octant)
 {
 	assert(octant >= 0);
@@ -111,8 +111,9 @@ int octantFieldNumber(int octant)
 
 int octantFieldNumber(Vector3i octant)
 {
-	return octantFieldNumber(halfCellIndex(octant));
+	return octantFieldNumber(octant(octant));
 }
+*/
 
 int octantENumber(int octant)
 {
@@ -128,6 +129,16 @@ int octantHNumber(int octant)
 	return sOctantHIndices[octant];
 }
 
+int octantENumber(Vector3i halfCell)
+{
+    return octantENumber(octant(halfCell));
+}
+
+int octantHNumber(Vector3i halfCell)
+{
+    return octantHNumber(octant(halfCell));
+}
+
 int octantFieldDirection(int octant)
 {
 	assert(octant >= 0);
@@ -135,9 +146,9 @@ int octantFieldDirection(int octant)
 	return sOctantFieldDirections[octant];
 }
 
-int octantFieldDirection(Vector3i octant)
+int octantFieldDirection(Vector3i halfCell)
 {
-	return octantFieldDirection(halfCellIndex(octant));
+	return octantFieldDirection(octant(halfCell));
 }
 
 int eOctantNumber(int directionIndex)
@@ -149,7 +160,7 @@ int hOctantNumber(int directionIndex)
 {
     return sHFieldOctants[directionIndex];
 }
-
+/*
 int eFieldNumber(int directionIndex)
 {
     return sEFieldNumbers[directionIndex];
@@ -159,7 +170,7 @@ int hFieldNumber(int directionIndex)
 {
     return sHFieldNumbers[directionIndex];
 }
-
+*/
 Vector3f eFieldPosition(int fieldNum)
 {
     Vector3f v(0.0, 0.0, 0.0);
@@ -202,10 +213,10 @@ Vector3i vecYeeToHalf(const Vector3i & yeeCell,
 	return 2*yeeCell + halfCellOffset;
 }
 
-// returns 2*yeeCell + halfCellOffset(halfCellIndex)
-Vector3i vecYeeToHalf(const Vector3i & yeeCell, int halfCellIndex)
+// returns 2*yeeCell + halfCellOffset(octant)
+Vector3i vecYeeToHalf(const Vector3i & yeeCell, int octant)
 {
-	return 2*yeeCell + halfCellOffset(halfCellIndex);
+	return 2*yeeCell + halfCellOffset(octant);
 }
 
 // returns smallest Yee rect containing all points in halfRect
@@ -214,9 +225,9 @@ Rect3i rectHalfToYee(const Rect3i & halfRect)
 	return halfRect/2;
 }
 
-// returns smallest Yee rect containing all points at given halfCellIndex
+// returns smallest Yee rect containing all points at given octant
 // in halfRect
-Rect3i rectHalfToYee(const Rect3i & halfRect, int halfCellIndex)
+Rect3i rectHalfToYee(const Rect3i & halfRect, int octant)
 {
 	// if halfRect.p1%2 == offset%2, then p1 = halfRect.p1/2
 	// else p1 = (halfRect.p1 + 1)/2
@@ -231,7 +242,7 @@ Rect3i rectHalfToYee(const Rect3i & halfRect, int halfCellIndex)
 	// since elementwise != is not defined, I can instead use
 	// (offset%2 != halfRect.p1%2)  equiv to   (offset+halfRect.p1)%2
 	
-	const Vector3i & offset = halfCellOffset(halfCellIndex);
+	const Vector3i & offset = halfCellOffset(octant);
 	return Rect3i( (halfRect.p1 + Vector3i(offset+halfRect.p1)%2)/2,
 		(halfRect.p2 - Vector3i(offset+halfRect.p2)%2)/2 );
 	
@@ -247,10 +258,10 @@ Rect3i rectHalfToYee(const Rect3i & halfRect, const Vector3i & halfCellOffset)
 }
 
 // returns smallest half cell rect containing all points in given Yee rect
-// at given halfCellIndex
-Rect3i rectYeeToHalf(const Rect3i & yeeRect, int halfCellIndex)
+// at given octant
+Rect3i rectYeeToHalf(const Rect3i & yeeRect, int octant)
 {
-	return Rect3i(2*yeeRect + halfCellOffset(halfCellIndex));
+	return Rect3i(2*yeeRect + halfCellOffset(octant));
 }
 
 // returns smallest half cell rect containing all points in given Yee rect

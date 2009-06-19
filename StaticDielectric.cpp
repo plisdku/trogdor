@@ -52,21 +52,37 @@ StaticDielectric(const SetupStaticDielectric & deleg,
     if (descrip.getParams().count("mur"))
         istringstream(descrip.getParams()["mur"]) >> m_mur;
     
-    for (int field = 0; field < 6; field++)
+    int dir;
+    for (dir = 0; dir < 6; dir++)
     {
         const std::vector<SBMRunlinePtr> & setupRunlines =
-            deleg.getRunlines(field);
+            deleg.getRunlinesE(dir);
         
-        mRunlines[field].resize(setupRunlines.size());
+        mRunlinesE[dir].resize(setupRunlines.size());
         
-        LOG << "Printing as we create runlines in field " << field << "\n";
+        LOG << "Printing as we create E " << dir << " runlines\n";
         for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
         {
-            mRunlines[field][nn] = SimpleRunline(*setupRunlines[nn]);
-            LOGMORE << mRunlines[field][nn] << "\n";
+            mRunlinesE[dir][nn] = SimpleRunline(*setupRunlines[nn]);
+            LOGMORE << mRunlinesE[dir][nn] << "\n";
         }
     }
-    //LOG << "Created all runlines.\n";
+    
+    for (dir = 0; dir < 6; dir++)
+    {
+        const std::vector<SBMRunlinePtr> & setupRunlines =
+            deleg.getRunlinesH(dir);
+        
+        mRunlinesH[dir].resize(setupRunlines.size());
+        
+        LOG << "Printing as we create H " << dir << " runlines\n";
+        for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
+        {
+            mRunlinesH[dir][nn] = SimpleRunline(*setupRunlines[nn]);
+            LOGMORE << mRunlinesH[dir][nn] << "\n";
+        }
+    }
+    LOG << "Created all runlines.\n";
 }
 
 void StaticDielectric::
@@ -76,7 +92,7 @@ calcEPhase(int direction)
     //    << eFieldNumber(direction) << "\n";
     // grab the right set of runlines (for Ex, Ey, or Ez)
     vector<SimpleRunline> & rls =
-        mRunlines[eFieldNumber(direction)];
+        mRunlinesE[octantENumber(direction)];
     const int STRIDE = 1;
     
     float dj = mDxyz[(direction+1)%3];  // e.g. dy
@@ -129,7 +145,7 @@ calcHPhase(int direction)
     //    << hFieldNumber(direction) << "\n";
     // grab the right set of runlines (for Hx, Hy, or Hz)
     vector<SimpleRunline> & rls =
-        mRunlines[hFieldNumber(direction)];
+        mRunlinesH[octantHNumber(direction)];
     const int STRIDE = 1;
     
     float dj = mDxyz[(direction+1)%3];  // e.g. dy

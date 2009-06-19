@@ -382,16 +382,24 @@ public:
     HuygensSurfaceDescription(const HuygensSurfaceDescription & parent,
         Rect3i newHalfCells);
     HuygensSurfaceDescription(HuygensSurfaceSourceType type);
-    static HuygensSurfaceDescription* newTFSFTimeSource(SourceFields fields,
+    
+    static HuygensSurfaceDescription*
+    newTFSFTimeSource(SourceFields fields,
         std::string timeFile, Vector3i direction, Rect3i halfCells,
         std::set<Vector3i> omittedSides, bool isTF = 1);
-    static HuygensSurfaceDescription* newTFSFFormulaSource(SourceFields fields,
+        
+    static HuygensSurfaceDescription*
+    newTFSFFormulaSource(SourceFields fields,
         std::string formula, Vector3i direction, Rect3i halfCells,
         std::set<Vector3i> omittedSides, bool isTF = 1);
-    static HuygensSurfaceDescription* newCustomTFSFSource(std::string file,
+    
+    static HuygensSurfaceDescription*
+    newCustomTFSFSource(std::string file,
         Vector3i symmetries, Rect3i halfCells, Duration duration,
         std::set<Vector3i> omittedSides, bool isTF = 1);
-    static HuygensSurfaceDescription* newLink(std::string sourceGrid,
+    
+    static HuygensSurfaceDescription*
+    newLink(std::string sourceGrid,
         Rect3i fromHalfCells, Rect3i toHalfCells,
         std::set<Vector3i> omittedSides, bool isTF = 1);
     

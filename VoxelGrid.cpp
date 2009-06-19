@@ -344,7 +344,7 @@ overlayHuygensSurface(const HuygensSurfaceDescription & surf)
 	int ii, jj, kk;
 	for (int sideNum = 0; sideNum < 6; sideNum++)
 	{
-		Vector3i side(cardinalDirection(sideNum));
+		Vector3i side(cardinal(sideNum));
 		if (!surf.getOmittedSides().count(side))
 		{
 			NeighborBufferDescPtr nb = surf.getBuffers()[sideNum];
@@ -479,7 +479,7 @@ paintHalfCell(Paint* paint, int ii, int jj, int kk)
 	// Now grid-symmetrical paints
 	for (int transDir = 0; transDir < 6; transDir++)
 	{
-		Vector3i translation(cardinalDirection(transDir)*
+		Vector3i translation(cardinal(transDir)*
 			(mGridHalfCells.size(transDir/2)+1));
 		if (mAllocRegion.encloses(ii+translation[0], jj+translation[1],
 			kk+translation[2]))
@@ -518,7 +518,7 @@ paintPML(Vector3i pmlDir, Vector3i pp)
 	// Now grid-symmetrical paints
 	for (int transDir = 0; transDir < 6; transDir++)
 	{
-		Vector3i qq(pp + cardinalDirection(transDir)*
+		Vector3i qq(pp + cardinal(transDir)*
 			(mGridHalfCells.size(transDir/2)+1));
 		
 		if (mAllocRegion.encloses(qq))

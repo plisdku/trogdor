@@ -199,8 +199,8 @@ cycleCoordinates()
     
     Map<Vector3i, Map<string, string> > newPMLParams;
     for (int sideNum = 0; sideNum < 6; sideNum++)
-        newPMLParams[cyclicPermute(cardinalDirection(sideNum), 1)] =
-            mPMLParams[cardinalDirection(sideNum)];
+        newPMLParams[cyclicPermute(cardinal(sideNum), 1)] =
+            mPMLParams[cardinal(sideNum)];
     mPMLParams = newPMLParams;
     
     mDxyz = cyclicPermute(mDxyz, 1);
@@ -715,7 +715,7 @@ setPointers(const Map<string, GridDescPtr> & gridMap)
 void HuygensSurfaceDescription::
 omitSide(int sideNum)
 {
-	Vector3i side = cardinalDirection(sideNum);
+	Vector3i side = cardinal(sideNum);
 	mOmittedSides.insert(side);
 }
 
@@ -901,7 +901,7 @@ initTFSFBuffers(float srcFactor)
     //LOGMORE << mOmittedSides << "\n";
 	// For all sides not "omitted" explicitly...
 	for (unsigned int nDir = 0; nDir < 6; nDir++)
-	if (mOmittedSides.count(cardinalDirection(nDir)) == 0)
+	if (mOmittedSides.count(cardinal(nDir)) == 0)
 	{
 		NeighborBufferDescPtr nb(new NeighborBufferDescription(
 			mHalfCells, nDir, srcFactor));
@@ -920,7 +920,7 @@ initLinkTFSFBuffers(float srcFactor)
     //LOGMORE << mOmittedSides << "\n";
 	// For all sides not "omitted" explicitly...
 	for (unsigned int nDir = 0; nDir < 6; nDir++)
-	if (mOmittedSides.count(cardinalDirection(nDir)) == 0)
+	if (mOmittedSides.count(cardinal(nDir)) == 0)
 	{
 		NeighborBufferDescPtr nb(new NeighborBufferDescription(
 			mFromHalfCells, mHalfCells, nDir, srcFactor));
@@ -984,9 +984,9 @@ getEdgeHalfCells(const Rect3i & halfCells, int nSide)
 	// the fat boundary contains the cells on BOTH sides of the TFSF boundary
 	// in the destination grid
 	if (nSide % 2 == 0) // if this is a low-x, low-y or low-z side
-		outerHalfCells.p1 += cardinalDirection(nSide);
+		outerHalfCells.p1 += cardinal(nSide);
 	else
-		outerHalfCells.p2 += cardinalDirection(nSide);
+		outerHalfCells.p2 += cardinal(nSide);
 	
     return outerHalfCells;
 }
@@ -1075,8 +1075,8 @@ cycleCoordinates()
     Map<Vector3i, Map<string, string> > newPMLParams;
     
     for (int sideNum = 0; sideNum < 6; sideNum++)
-        newPMLParams[cyclicPermute(cardinalDirection(sideNum), 1)] =
-            mPMLParams[cardinalDirection(sideNum)];
+        newPMLParams[cyclicPermute(cardinal(sideNum), 1)] =
+            mPMLParams[cardinal(sideNum)];
     
     mPMLParams = newPMLParams;
 }

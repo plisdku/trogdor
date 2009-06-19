@@ -52,7 +52,8 @@ private:
     
     std::vector<float> mCurrents[3];
     MemoryBufferPtr mCurrentBuffers[3];
-    std::vector<SimpleAuxRunline> mRunlines[6];
+    std::vector<SimpleAuxRunline> mRunlinesE[3];
+    std::vector<SimpleAuxRunline> mRunlinesH[3];
 };
 
 

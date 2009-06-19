@@ -117,12 +117,15 @@ private:
     std::vector<SourcePtr> mSoftSources;
     std::vector<HuygensSurfacePtr> mHuygensSurfaces;
     
-    //EHBufferSetPtr mEHBuffers;
-    std::vector<MemoryBufferPtr> mEHBuffers;
-    std::vector<float> mFields;
+	std::vector<MemoryBufferPtr> mBuffersE;
+	std::vector<MemoryBufferPtr> mBuffersH;
+    std::vector<float> mFieldsE;
+    std::vector<float> mFieldsH;
     
-    Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffers;
-    Map<NeighborBufferDescPtr, std::vector<float> > mNBFields;
+	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffersE;
+	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffersH;
+    Map<NeighborBufferDescPtr, std::vector<float> > mNBFieldsE;
+    Map<NeighborBufferDescPtr, std::vector<float> > mNBFieldsH;
     
 };
 typedef Pointer<CalculationPartition> CalculationPartitionPtr;

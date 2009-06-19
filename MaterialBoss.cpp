@@ -59,7 +59,7 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
         
         for (int sideNum = 0; sideNum < 6; sideNum++)
         {
-            Vector3i dir = cardinalDirection(sideNum);
+            Vector3i dir = cardinal(sideNum);
             
             map<string, string>::const_iterator itr;
             for (itr = pmlParams[dir].begin(); itr != pmlParams[dir].end();
@@ -127,7 +127,7 @@ defaultPMLParams()
     */
     
     for (int sideNum = 0; sideNum < 6; sideNum++)
-        params[cardinalDirection(sideNum)] = allDirectionsDefault;
+        params[cardinal(sideNum)] = allDirectionsDefault;
     
     return params;
 }
@@ -213,7 +213,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	for (nSide = 0; nSide < 6; nSide++)
 	{
 		mStartNeighborIndices[nSide] = vp.linearYeeIndex(
-			vp.wrap(startPos + cardinalDirection(nSide)));
+			vp.wrap(startPos + cardinal(nSide)));
 		
 		if (nSide/2 == fieldDirection)
 			mUsedNeighborIndices[nSide] = 0;
@@ -221,16 +221,16 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		{
 			mUsedNeighborIndices[nSide] = 0;
 			bp[nSide] = vp.fieldPointer(mStartPaint->getCurlBuffer(nSide),
-				mStartPoint+cardinalDirection(nSide));
+				mStartPoint+cardinal(nSide));
             
             LOG << "Buffer on that side is " << bp[nSide] << "\n";
             LOGMORE << "Compare to " << vp.fieldPointer(mStartPoint+
-                cardinalDirection(nSide)) << "\n";
+                cardinal(nSide)) << "\n";
 		}
 		else
 		{
 			mUsedNeighborIndices[nSide] = 1;
-			bp[nSide] = vp.fieldPointer(mStartPoint+cardinalDirection(nSide));
+			bp[nSide] = vp.fieldPointer(mStartPoint+cardinal(nSide));
 		}
 	}
     // WATCH CAREFULLY
@@ -272,7 +272,7 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	if (mUsedNeighborIndices[nSide])
 	{
 		int index = vp.linearYeeIndex(vp.wrap(
-            newPos + cardinalDirection(nSide)));
+            newPos + cardinal(nSide)));
 		if (mStartNeighborIndices[nSide] + mCurrentRunline.length != index)
 			return 0;
 	}
@@ -293,25 +293,49 @@ continueRunline(const Vector3i & newPos)
 void SimpleBulkSetupMaterial::
 endRunline()
 {
-	int field = octantFieldNumber(mStartPoint);
-	mRunlines[field].push_back(SBMRunlinePtr(new SBMRunline(mCurrentRunline)));
+	//int field = octantFieldNumber(mStartPoint);
+    int oct = octant(mStartPoint);
+    if (octantENumber(oct) != -1)
+        mRunlinesE[octantENumber(oct)].push_back(
+            SBMRunlinePtr(new SBMRunline(mCurrentRunline)));
+    else if (octantHNumber(oct) != -1)
+        mRunlinesH[octantHNumber(oct)].push_back(
+            SBMRunlinePtr(new SBMRunline(mCurrentRunline)));
+    else
+        assert(!"Bad octant.");
 }
 
 void SimpleBulkSetupMaterial::
 printRunlines(std::ostream & out) const
 {
-	for (int field = 0; field < 6; field++)
+    int dir;
+    unsigned int rr;
+    for (dir = 0; dir < 3; dir++)
 	{
-		out << "Field " << field << "\n";
-		for (unsigned int rr = 0; rr < mRunlines[field].size(); rr++)
+		out << "E " << dir << "\n";
+		for (rr = 0; rr < mRunlinesE[dir].size(); rr++)
 		{
-			out << rr << ": length " << mRunlines[field][rr]->length <<
-				" aux " << mRunlines[field][rr]->auxIndex << "\n";
-			out << "\t" << mRunlines[field][rr]->f_i << "\n";
-			out << "\t" << mRunlines[field][rr]->f_j[0] << "\n";
-			out << "\t" << mRunlines[field][rr]->f_j[1] << "\n";
-			out << "\t" << mRunlines[field][rr]->f_k[0] << "\n";
-			out << "\t" << mRunlines[field][rr]->f_k[1] << "\n";
+			out << rr << ": length " << mRunlinesE[dir][rr]->length <<
+				" aux " << mRunlinesE[dir][rr]->auxIndex << "\n";
+			out << "\t" << mRunlinesE[dir][rr]->f_i << "\n";
+			out << "\t" << mRunlinesE[dir][rr]->f_j[0] << "\n";
+			out << "\t" << mRunlinesE[dir][rr]->f_j[1] << "\n";
+			out << "\t" << mRunlinesE[dir][rr]->f_k[0] << "\n";
+			out << "\t" << mRunlinesE[dir][rr]->f_k[1] << "\n";
+		}
+	}
+    for (dir = 0; dir < 3; dir++)
+	{
+		out << "H " << dir << "\n";
+		for (rr = 0; rr < mRunlinesH[dir].size(); rr++)
+		{
+			out << rr << ": length " << mRunlinesH[dir][rr]->length <<
+				" aux " << mRunlinesH[dir][rr]->auxIndex << "\n";
+			out << "\t" << mRunlinesH[dir][rr]->f_i << "\n";
+			out << "\t" << mRunlinesH[dir][rr]->f_j[0] << "\n";
+			out << "\t" << mRunlinesH[dir][rr]->f_j[1] << "\n";
+			out << "\t" << mRunlinesH[dir][rr]->f_k[0] << "\n";
+			out << "\t" << mRunlinesH[dir][rr]->f_k[1] << "\n";
 		}
 	}
 }
@@ -353,7 +377,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	for (nSide = 0; nSide < 6; nSide++)
 	{
 		mStartNeighborIndices[nSide] = vp.linearYeeIndex(
-			vp.wrap(startPos + cardinalDirection(nSide)));
+			vp.wrap(startPos + cardinal(nSide)));
 		
 		if (nSide/2 == fieldDirection)
 			mUsedNeighborIndices[nSide] = 0;
@@ -361,12 +385,12 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		{
 			mUsedNeighborIndices[nSide] = 0;
 			bp[nSide] = vp.fieldPointer(mStartPaint->getCurlBuffer(nSide),
-				mStartPoint+cardinalDirection(nSide));
+				mStartPoint+cardinal(nSide));
 		}
 		else
 		{
 			mUsedNeighborIndices[nSide] = 1;
-			bp[nSide] = vp.fieldPointer(mStartPoint+cardinalDirection(nSide));
+			bp[nSide] = vp.fieldPointer(mStartPoint+cardinal(nSide));
 		}
 	}
 	mCurrentRunline.f_i = vp.fieldPointer(startPos);
@@ -384,10 +408,10 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
     assert(vec_eq(vp.getGridHalfCells().p1, 0));
     Vector3i gridNumHalfCells = vp.getGridHalfCells().size() + 1;
     Vector3i wrappedStart = (mStartPoint+gridNumHalfCells) % gridNumHalfCells;
-    assert(halfCellIndex(wrappedStart) == halfCellIndex(mStartPoint));
+    assert(octant(wrappedStart) == octant(mStartPoint));
     Rect3i pmlYeeCells = rectHalfToYee(
         vp.getPMLHalfCells(mStartPaint->getPMLDirections()),
-        halfCellIndex(wrappedStart));
+        octant(wrappedStart));
     mCurrentRunline.pmlDepthIndex = vecHalfToYee(wrappedStart) - pmlYeeCells.p1;
     
     // TODO: test that this gives the correct PML if we wrapped to the far
@@ -436,7 +460,7 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	if (mUsedNeighborIndices[nSide])
 	{
 		int index = vp.linearYeeIndex(vp.wrap(
-            newPos + cardinalDirection(nSide)));
+            newPos + cardinal(nSide)));
 		if (mStartNeighborIndices[nSide] + mCurrentRunline.length != index)
 			return 0;
 	}
@@ -464,32 +488,79 @@ continueRunline(const Vector3i & newPos)
 void SimpleBulkPMLSetupMaterial::
 endRunline()
 {
-	int field = octantFieldNumber(mStartPoint);
-	mRunlines[field].push_back(SBPMRunlinePtr(
-		new SBPMRunline(mCurrentRunline)));
+    int oct = octant(mStartPoint);
+    if (octantENumber(oct) != -1)
+        mRunlinesE[octantENumber(oct)].push_back(
+            SBPMRunlinePtr(new SBPMRunline(mCurrentRunline)));
+    else if (octantHNumber(oct) != -1)
+        mRunlinesH[octantHNumber(oct)].push_back(
+            SBPMRunlinePtr(new SBPMRunline(mCurrentRunline)));
+    else
+        assert(!"Bad octant.");
 }
 
 void SimpleBulkPMLSetupMaterial::
 printRunlines(std::ostream & out) const
 {
-	for (int field = 0; field < 6; field++)
+    int dir;
+    unsigned int rr;
+    for (dir = 0; dir < 3; dir++)
 	{
-		out << "Field " << field << "\n";
-		for (unsigned int rr = 0; rr < mRunlines[field].size(); rr++)
+		out << "E " << dir << "\n";
+		for (rr = 0; rr < mRunlinesE[dir].size(); rr++)
 		{
-			out << rr << ": length " << mRunlines[field][rr]->length <<
-				" aux " << mRunlines[field][rr]->auxIndex <<
+			out << rr << ": length " << mRunlinesE[dir][rr]->length <<
+				" aux " << mRunlinesE[dir][rr]->auxIndex <<
 				" pml depth";
 			for (int nn = 0; nn < 3; nn++)
-				out << " " << mRunlines[field][rr]->pmlDepthIndex[nn];
-			out << "\n";
-			out << "\t" << mRunlines[field][rr]->f_i << "\n";
-			out << "\t" << mRunlines[field][rr]->f_j[0] << "\n";
-			out << "\t" << mRunlines[field][rr]->f_j[1] << "\n";
-			out << "\t" << mRunlines[field][rr]->f_k[0] << "\n";
-			out << "\t" << mRunlines[field][rr]->f_k[1] << "\n";
+				out << " " << mRunlinesE[dir][rr]->pmlDepthIndex[nn];
+			out << rr << ": length " << mRunlinesE[dir][rr]->length <<
+				" aux " << mRunlinesE[dir][rr]->auxIndex << "\n";
+			out << "\t" << mRunlinesE[dir][rr]->f_i << "\n";
+			out << "\t" << mRunlinesE[dir][rr]->f_j[0] << "\n";
+			out << "\t" << mRunlinesE[dir][rr]->f_j[1] << "\n";
+			out << "\t" << mRunlinesE[dir][rr]->f_k[0] << "\n";
+			out << "\t" << mRunlinesE[dir][rr]->f_k[1] << "\n";
 		}
 	}
+    for (dir = 0; dir < 3; dir++)
+	{
+		out << "H " << dir << "\n";
+		for (rr = 0; rr < mRunlinesH[dir].size(); rr++)
+		{
+			out << rr << ": length " << mRunlinesH[dir][rr]->length <<
+				" aux " << mRunlinesH[dir][rr]->auxIndex <<
+				" pml depth";
+			for (int nn = 0; nn < 3; nn++)
+				out << " " << mRunlinesH[dir][rr]->pmlDepthIndex[nn];
+			out << "\t" << mRunlinesH[dir][rr]->f_i << "\n";
+			out << "\t" << mRunlinesH[dir][rr]->f_j[0] << "\n";
+			out << "\t" << mRunlinesH[dir][rr]->f_j[1] << "\n";
+			out << "\t" << mRunlinesH[dir][rr]->f_k[0] << "\n";
+			out << "\t" << mRunlinesH[dir][rr]->f_k[1] << "\n";
+		}
+	}
+    /*
+    int dir;
+	for (dir = 0; dir < 6; dir++)
+	{
+		out << "Dir " << dir << "\n";
+		for (unsigned int rr = 0; rr < mRunlines[dir].size(); rr++)
+		{
+			out << rr << ": length " << mRunlines[dir][rr]->length <<
+				" aux " << mRunlines[dir][rr]->auxIndex <<
+				" pml depth";
+			for (int nn = 0; nn < 3; nn++)
+				out << " " << mRunlines[dir][rr]->pmlDepthIndex[nn];
+			out << "\n";
+			out << "\t" << mRunlines[dir][rr]->f_i << "\n";
+			out << "\t" << mRunlines[dir][rr]->f_j[0] << "\n";
+			out << "\t" << mRunlines[dir][rr]->f_j[1] << "\n";
+			out << "\t" << mRunlines[dir][rr]->f_k[0] << "\n";
+			out << "\t" << mRunlines[dir][rr]->f_k[1] << "\n";
+		}
+	}
+    */
 }
 
 MaterialPtr SimpleBulkPMLSetupMaterial::

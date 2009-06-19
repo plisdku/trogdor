@@ -174,7 +174,7 @@ loadGrids(const TiXmlElement* parent, const SimulationDescription & sim) const
                 pmlParams[direction] = theseParams;
             else
             for (int sideNum = 0; sideNum < 6; sideNum++)
-                pmlParams[cardinalDirection(sideNum)] = theseParams;
+                pmlParams[cardinal(sideNum)] = theseParams;
             
             pmlParamXML = pmlParamXML->NextSiblingElement("PML");
         }
@@ -303,7 +303,7 @@ loadMaterials(const TiXmlElement* parent) const
                 pmlParams[direction] = theseParams;
             else
             for (int sideNum = 0; sideNum < 6; sideNum++)
-                pmlParams[cardinalDirection(sideNum)] = theseParams;
+                pmlParams[cardinal(sideNum)] = theseParams;
             
             pmlParamXML = pmlParamXML->NextSiblingElement("PML");
         }

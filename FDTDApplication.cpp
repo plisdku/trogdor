@@ -345,8 +345,8 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	// warning to the user here...
 	for (nn = 0; nn < 3; nn++)
 	if (bigDimensions[nn] != 0) // only applicable to nontrivial dimensions
-	if (omittedSides.count(cardinalDirection(nn*2)) &&
-		omittedSides.count(cardinalDirection(nn*2+1)))
+	if (omittedSides.count(cardinal(nn*2)) &&
+		omittedSides.count(cardinal(nn*2+1)))
 		cerr << "Warning: Huygens surface facing sides (e.g. +x and -x) are "
 			"both omitted.  This results in arbitrary and possibly incorrect "
 			"behavior.\n";
@@ -355,9 +355,9 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	
 	Rect3i copyFrom(huygensSurface->getHalfCells());
 	for (nn = 0; nn < 3; nn++)
-	if (omittedSides.count(cardinalDirection(nn*2)))
+	if (omittedSides.count(cardinal(nn*2)))
 		copyFrom.p1[nn] = copyFrom.p2[nn];
-	else if (omittedSides.count(cardinalDirection(nn*2+1)))
+	else if (omittedSides.count(cardinal(nn*2+1)))
 		copyFrom.p2[nn] = copyFrom.p1[nn];
 	else if (collapsible[nn] != 0)
 		copyFrom.p1[nn] = copyFrom.p2[nn]; // symmetry: either side is ok here!
@@ -495,17 +495,17 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	// warning to the user here...
 	for (nn = 0; nn < 3; nn++)
 	if (bigDimensions[nn] == 0) // only applicable to nontrivial dimensions
-	if (omittedSides.count(YeeUtilities::cardinalDirection(nn*2)) &&
-		omittedSides.count(YeeUtilities::cardinalDirection(nn*2+1)))
+	if (omittedSides.count(YeeUtilities::cardinal(nn*2)) &&
+		omittedSides.count(YeeUtilities::cardinal(nn*2+1)))
 		cerr << "Warning: Huygens surface facing sides (e.g. +x and -x) are "
 			"both omitted.  This results in arbitrary and possibly incorrect "
 			"behavior.\n";
 	
 	Rect3i copyFrom(huygensSurface->getHalfCells());
 	for (nn = 0; nn < 3; nn++)
-	if (omittedSides.count(YeeUtilities::cardinalDirection(nn*2)))
+	if (omittedSides.count(YeeUtilities::cardinal(nn*2)))
 		copyFrom.p1[nn] = copyFrom.p2[nn];
-	else if (omittedSides.count(YeeUtilities::cardinalDirection(nn*2+1)))
+	else if (omittedSides.count(YeeUtilities::cardinal(nn*2+1)))
 		copyFrom.p2[nn] = copyFrom.p1[nn];
 	Rect3i copyTo(copyFrom);
 	

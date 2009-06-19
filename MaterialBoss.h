@@ -124,11 +124,14 @@ public:
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
     
-    const std::vector<SBMRunlinePtr> & getRunlines(int field) const
-        { return mRunlines[field]; }
+    const std::vector<SBMRunlinePtr> & getRunlinesE(int dir) const
+        { return mRunlinesE[dir]; }
+    const std::vector<SBMRunlinePtr> & getRunlinesH(int dir) const
+        { return mRunlinesH[dir]; }
     Paint* getPaint() const { return mStartPaint; }
 protected:
-	std::vector<SBMRunlinePtr> mRunlines[6];
+	std::vector<SBMRunlinePtr> mRunlinesE[3];
+	std::vector<SBMRunlinePtr> mRunlinesH[3];
 	
 	// Runline generation storage
 	SBMRunline mCurrentRunline;
@@ -169,12 +172,14 @@ public:
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
         
-    const std::vector<SBPMRunlinePtr> & getRunlines(int field) const
-        { return mRunlines[field]; }
+    const std::vector<SBPMRunlinePtr> & getRunlinesE(int dir) const
+        { return mRunlinesE[dir]; }
+    const std::vector<SBPMRunlinePtr> & getRunlinesH(int dir) const
+        { return mRunlinesH[dir]; }
     
 protected:
-	
-	std::vector<SBPMRunlinePtr> mRunlines[6];
+	std::vector<SBPMRunlinePtr> mRunlinesE[3];
+	std::vector<SBPMRunlinePtr> mRunlinesH[3];
 	
 	// Runline generation storage
 	SBPMRunline mCurrentRunline;

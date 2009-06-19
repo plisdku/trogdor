@@ -29,8 +29,10 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     m_numT(numT),
     mAllocOriginYee(vp.getAllocYeeCells().p1),
     mAllocYeeCells(vp.getAllocYeeCells().size() + 1),
-    mEHBuffers(vp.getEHBuffers()),
-    mNBBuffers(vp.getNBBuffers())
+    mBuffersE(vp.getBuffersE()),
+    mBuffersH(vp.getBuffersH()),
+    mNBBuffersE(vp.getNBBuffersE()),
+    mNBBuffersH(vp.getNBBuffersH())
 {
     LOG << "New calc partition.\n";
     unsigned int nn;
@@ -45,10 +47,13 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     }
     else
     {
-        allocate(mFields, mEHBuffers);
+        allocate(mFieldsE, mBuffersE);
+        allocate(mFieldsH, mBuffersH);
         map<NeighborBufferDescPtr, vector<MemoryBufferPtr> >::iterator itr;
-        for (itr = mNBBuffers.begin(); itr != mNBBuffers.end(); itr++)
-            allocate(mNBFields[itr->first], itr->second);
+        for (itr = mNBBuffersE.begin(); itr != mNBBuffersE.end(); itr++)
+            allocate(mNBFieldsE[itr->first], itr->second);
+        for (itr = mNBBuffersH.begin(); itr != mNBBuffersH.end(); itr++)
+            allocate(mNBFieldsH[itr->first], itr->second);
     }
     
     const Map<Paint*, SetupMaterialPtr> & delegs = vp.getDelegates();
@@ -81,8 +86,8 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     // We cache the head pointers just so they're in a quick order for later.
     for (int dir = 0; dir < 3; dir++)
     {
-        mHeadE[dir] = mEHBuffers[eFieldNumber(dir)]->getHeadPointer();
-        mHeadH[dir] = mEHBuffers[hFieldNumber(dir)]->getHeadPointer();
+        mHeadE[dir] = mBuffersE[dir]->getHeadPointer();
+        mHeadH[dir] = mBuffersH[dir]->getHeadPointer();
         mEOffset[dir] = eFieldPosition(dir);
         mHOffset[dir] = hFieldPosition(dir);
         
@@ -92,7 +97,7 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
             << MemoryBuffer::identify(mHeadH[dir]) << "\n";
         
     }
-    mMemStride[0] = mEHBuffers[0]->getStride(); // should be same for all
+    mMemStride[0] = mBuffersE[0]->getStride(); // should be same for all
     mMemStride[1] = mAllocYeeCells[0]*mMemStride[0];
     mMemStride[2] = mAllocYeeCells[1]*mMemStride[1];
 }
@@ -404,12 +409,12 @@ allocate(std::vector<float> & data, vector<MemoryBufferPtr> & buffers)
     int bufsize = 0;
     long offset = 0;
     
-    for (nn = 0; nn < 6; nn++)
+    for (nn = 0; nn < 3; nn++)
         bufsize += buffers[nn]->getLength();
     //LOG << "Bufsize is " << bufsize << endl;
     data.resize(bufsize);
     
-    for (nn = 0; nn < 6; nn++)
+    for (nn = 0; nn < 3; nn++)
     {
         buffers[nn]->setHeadPointer(&(data[offset]));
         offset += buffers[nn]->getLength();

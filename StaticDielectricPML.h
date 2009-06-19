@@ -87,7 +87,8 @@ private:
     void calcHy();
     void calcHz();
     
-    std::vector<SimpleAuxPMLRunline> mRunlines[6];
+    std::vector<SimpleAuxPMLRunline> mRunlinesE[3];
+    std::vector<SimpleAuxPMLRunline> mRunlinesH[3];
     
     // These vectors are the actual location of the allocated fields and
     // update constants.

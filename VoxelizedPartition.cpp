@@ -87,19 +87,20 @@ initFieldBuffers(string bufferNamePrefix,
 {
 	int bufSize = m_nx*m_ny*m_nz;
     // Main E and H fields
-    mEHBuffers.resize(6);
-	mEHBuffers[0] =
+    mBuffersE.resize(3);
+    mBuffersH.resize(3);
+	mBuffersE[0] =
         MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Ex", bufSize));
-	mEHBuffers[1] =
+	mBuffersE[1] =
         MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Ey", bufSize));
-	mEHBuffers[2] =
-        MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Hz", bufSize));
-	mEHBuffers[3] =
+	mBuffersE[2] =
         MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Ez", bufSize));
-	mEHBuffers[4] =
-         MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Hy", bufSize));
-	mEHBuffers[5] =
+	mBuffersH[0] =
         MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Hx", bufSize));
+	mBuffersH[1] =
+         MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Hy", bufSize));
+	mBuffersH[2] =
+        MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" Hz", bufSize));
     
     // Neighbor buffers (E and H fields for TFSF sources, links, etc.)
 	for (unsigned int nn = 0; nn < surfaces.size(); nn++)
@@ -114,7 +115,7 @@ initFieldBuffers(string bufferNamePrefix,
         assert(nbs.size() == 6);
 		for (unsigned int mm = 0; mm < 6; mm++)
 		if (nbs[mm] != 0L)
-        if (!surfaces[nn]->getOmittedSides().count(cardinalDirection(mm)))
+        if (!surfaces[nn]->getOmittedSides().count(cardinal(mm)))
 		{
 			NeighborBufferDescPtr nb = nbs[mm];
             const Rect3i & bufferVolume = nb->getBufferHalfRect();
@@ -124,14 +125,20 @@ initFieldBuffers(string bufferNamePrefix,
             //LOG << "NB " << mm << " volume " << bufferVolume << " size " <<
             //    bufSize << "\n";
 			
-            mNBBuffers[nb].resize(6);
-			for (int ff = 0; ff < 6; ff++)
+            mNBBuffersE[nb].resize(3);
+            mNBBuffersH[nb].resize(3);
+			for (int ff = 0; ff < 3; ff++)
 			{
-				ostringstream bufferName;
-                bufferName << bufferNamePrefix << " HS " << nn << " NB " <<
-                    mm << " field " << ff;
-				mNBBuffers[nb][ff] = MemoryBufferPtr(
-                    new MemoryBuffer(bufferName.str(), bufSize));
+				ostringstream nameE;
+                nameE << bufferNamePrefix << " HS " << nn << " NB " <<
+                    mm << " E " << ff;
+				mNBBuffersE[nb][ff] = MemoryBufferPtr(
+                    new MemoryBuffer(nameE.str(), bufSize));
+				ostringstream nameH;
+                nameH << bufferNamePrefix << " HS " << nn << " NB " <<
+                    mm << " H " << ff;
+				mNBBuffersH[nb][ff] = MemoryBufferPtr(
+                    new MemoryBuffer(nameH.str(), bufSize));
 			}
 		}
 	}
@@ -330,8 +337,11 @@ fieldPointer(Vector3i halfCell) const
 {
     halfCell = wrap(halfCell);
 	long index = linearYeeIndex(halfCell);
-	int fieldNum = octantFieldNumber(halfCell);
-	return BufferPointer(*mEHBuffers[fieldNum], index);
+	//int fieldNum = octantFieldNumber(halfCell);
+    if (octantENumber(halfCell) != -1)
+        return BufferPointer(*mBuffersE[octantENumber(halfCell)], index);
+    else
+        return BufferPointer(*mBuffersH[octantHNumber(halfCell)], index);
 }
 
 BufferPointer VoxelizedPartition::
@@ -339,8 +349,11 @@ fieldPointer(const NeighborBufferDescPtr & nb, Vector3i halfCell) const
 {
     halfCell = wrap(nb, halfCell);
 	long index = linearYeeIndex(nb, halfCell);
-	int fieldNum = octantFieldNumber(halfCell);
-	return BufferPointer(*mNBBuffers[nb][fieldNum], index);
+	//int fieldNum = octantFieldNumber(halfCell);
+    if (octantENumber(halfCell) != -1)
+        return BufferPointer(*mNBBuffersE[nb],octantENumber(halfCell), index);
+    else
+        return BufferPointer(*mNBBuffersH[nb],octantHNumber(halfCell), index);
 }
 
 
@@ -371,10 +384,13 @@ getH(const NeighborBufferDescPtr & nb, int direction, Vector3i xx) const
 Vector3i VoxelizedPartition::
 getFieldStride() const
 {
-    int stride = mEHBuffers[0]->getStride(); // same for all E, H
+    int stride = mBuffersE[0]->getStride(); // same for all E, H
     
-    for (int nn = 0; nn < 6; nn++)
-        assert(mEHBuffers[nn]->getStride() == stride); // but make sure.
+    for (int nn = 0; nn < 3; nn++)
+    {
+        assert(mBuffersE[nn]->getStride() == stride); // but make sure.
+        assert(mBuffersH[nn]->getStride() == stride); // but make sure.
+    }
     
     return Vector3i(stride, stride*m_nx, stride*m_nx*m_ny);
 }
@@ -529,9 +545,9 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 	{
 		int side_j = (side_i+1)%3;
 		int side_k = (side_i+2)%3;
-		Vector3i e1 = -cardinalDirection(2*side_i);
-		Vector3i e2 = -cardinalDirection( (2*side_i+2)%6 );
-		Vector3i e3 = -cardinalDirection( (2*side_i+4)%6 );
+		Vector3i e1 = -cardinal(2*side_i);
+		Vector3i e2 = -cardinal( (2*side_i+2)%6 );
+		Vector3i e3 = -cardinal( (2*side_i+4)%6 );
 		Mat3i m(Mat3i::withColumns(e1,e2,e3));
 		
 		// 1.  Check the "front" and "back" sides (the sides perpendicular
@@ -672,7 +688,7 @@ generateRunlines()
 	{
 		// Remember to set up the buffers here!
 		//LOG << "Runlines for offset " << halfCellFieldOffset(fieldNum) << "\n";
-		genRunlinesInOctant(halfCellIndex(halfCellFieldOffset(fieldNum)));
+		genRunlinesInOctant(octant(halfCellFieldOffset(fieldNum)));
 	}
 	
     /*

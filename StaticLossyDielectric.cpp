@@ -52,15 +52,27 @@ StaticLossyDielectric(const SetupStaticLossyDielectric & deleg,
     if (descrip.getParams().count("sigma"))
         istringstream(descrip.getParams()["sigma"]) >> m_sigma;
     
-    for (int field = 0; field < 6; field++)
+    int dir;
+    for (dir = 0; dir < 6; dir++)
     {
         const std::vector<SBMRunlinePtr> & setupRunlines =
-            deleg.getRunlines(field);
+            deleg.getRunlinesE(dir);
         
-        mRunlines[field].resize(setupRunlines.size());
+        mRunlinesE[dir].resize(setupRunlines.size());
         
         for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
-            mRunlines[field][nn] = SimpleRunline(*setupRunlines[nn]);
+            mRunlinesE[dir][nn] = SimpleRunline(*setupRunlines[nn]);
+    }
+
+    for (dir = 0; dir < 6; dir++)
+    {
+        const std::vector<SBMRunlinePtr> & setupRunlines =
+            deleg.getRunlinesH(dir);
+        
+        mRunlinesH[dir].resize(setupRunlines.size());
+        
+        for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
+            mRunlinesH[dir][nn] = SimpleRunline(*setupRunlines[nn]);
     }
     //LOG << "Created all runlines.\n";
 }

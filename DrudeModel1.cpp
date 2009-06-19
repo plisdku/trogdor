@@ -87,16 +87,27 @@ DrudeModel1(const SetupDrudeModel1 & deleg,
         istringstream(descrip.getParams()["omegap"]) >> m_omegap;
     if (descrip.getParams().count("tauc"))
         istringstream(descrip.getParams()["tauc"]) >> m_tauc;
+    int dir;
     
-    for (int field = 0; field < 6; field++)
+    for (dir = 0; dir < 3; dir++)
     {
         const std::vector<SBMRunlinePtr> & setupRunlines =
-            deleg.getRunlines(field);
+            deleg.getRunlinesE(dir);
         
-        mRunlines[field].resize(setupRunlines.size());
+        mRunlinesE[dir].resize(setupRunlines.size());
         
         for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
-            mRunlines[field][nn] = SimpleAuxRunline(*setupRunlines[nn]);
+            mRunlinesE[dir][nn] = SimpleAuxRunline(*setupRunlines[nn]);
+    }
+    for (dir = 0; dir < 3; dir++)
+    {
+        const std::vector<SBMRunlinePtr> & setupRunlines =
+            deleg.getRunlinesH(dir);
+        
+        mRunlinesH[dir].resize(setupRunlines.size());
+        
+        for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
+            mRunlinesH[dir][nn] = SimpleAuxRunline(*setupRunlines[nn]);
     }
     LOG << "Created all runlines.\n";
     

@@ -40,7 +40,8 @@ private:
     
     float m_epsr;
     float m_mur;
-    std::vector<SimpleRunline> mRunlines[6];
+    std::vector<SimpleRunline> mRunlinesE[3];
+    std::vector<SimpleRunline> mRunlinesH[3];
 };
 
 #endif

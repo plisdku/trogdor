@@ -128,12 +128,16 @@ public:
 		{ return mCentralIndices; }
     
     // returns      the allocation skeleton for fields in this partition
-    const std::vector<MemoryBufferPtr> & getEHBuffers() const
-        { return mEHBuffers; }
+    const std::vector<MemoryBufferPtr> & getBuffersE() const
+        { return mBuffersE; }
+    const std::vector<MemoryBufferPtr> & getBuffersH() const
+        { return mBuffersH; }
     
     // returns      the allocation skeleton for partition's neighbor buffers
     const Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > &
-        getNBBuffers() const { return mNBBuffers; }
+        getNBBuffersE() const { return mNBBuffersE; }
+    const Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > &
+        getNBBuffersH() const { return mNBBuffersH; }
     
     // returns      the structures that store temp data for setting up materials
     const Map<Paint*, SetupMaterialPtr> & getDelegates() const
@@ -192,8 +196,10 @@ private:
 	VoxelGrid mVoxels;
 	PartitionCellCountPtr mCentralIndices;
 	
-	std::vector<MemoryBufferPtr> mEHBuffers;
-	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffers;
+	std::vector<MemoryBufferPtr> mBuffersE;
+	std::vector<MemoryBufferPtr> mBuffersH;
+	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffersE;
+	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffersH;
 	
     // THIS IS WHERE GRID DENIZENS LIVE
 	Map<Paint*, SetupMaterialPtr> mSetupMaterials;
