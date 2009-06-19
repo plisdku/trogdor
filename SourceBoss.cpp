@@ -20,12 +20,12 @@
 
 using namespace std;
 
-SourceDelegatePtr SourceFactory::
-getDelegate(const VoxelizedPartition & vp, const SourceDescPtr & desc)
+SetupSourcePtr SourceFactory::
+newSetupSource(const VoxelizedPartition & vp, const SourceDescPtr & desc)
 {
     
     if (desc->getFormula() != "")
-        return SourceDelegatePtr(new FormulaSourceDelegate(desc));
+        return SetupSourcePtr(new FormulaSetupSource(desc));
     else if (desc->getTimeFile() != "" || desc->getSpaceTimeFile() != "")
     {
         LOG << "File source not supported.\n";
@@ -35,7 +35,7 @@ getDelegate(const VoxelizedPartition & vp, const SourceDescPtr & desc)
     LOG << "Using default (null) source... and crashing.\n";
     exit(1);
     
-    return SourceDelegatePtr(0L);
+    return SetupSourcePtr(0L);
 }
 
 

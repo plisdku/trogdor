@@ -16,24 +16,26 @@
 
 using namespace std;
 
-HuygensSurfaceDelegatePtr HuygensSurfaceFactory::
-getDelegate(const VoxelizedPartition & vp,
+SetupHuygensSurfacePtr HuygensSurfaceFactory::
+newSetupHuygensSurface(const VoxelizedPartition & vp,
     const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
     const HuygensSurfaceDescPtr & desc)
 {
-    HuygensSurfaceDelegatePtr hs;
+    SetupHuygensSurfacePtr hs;
     
     if (desc->getType() == kLink)
     {
-        hs = HuygensSurfaceDelegatePtr(new HuygensLinkDelegate(
+        hs = SetupHuygensSurfacePtr(new SetupHuygensLink(
             vp, grids, desc));
     }
+    /*
     else if (desc->getType() == kTFSFSource)
     {
     }
     else if (desc->getType() == kCustomTFSFSource)
     {
     }
+    */
     else
         throw(Exception("Unknown HuygensSurface type!"));
     

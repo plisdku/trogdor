@@ -17,8 +17,8 @@ class VoxelizedPartition;
 class CalculationPartition;
 typedef Pointer<CalculationPartition> CalculationPartitionPtr;
 
-class OutputDelegate;
-typedef Pointer<OutputDelegate> OutputDelegatePtr;
+class SetupOutput;
+typedef Pointer<SetupOutput> SetupOutputPtr;
 
 class Output;
 typedef Pointer<Output> OutputPtr;
@@ -26,7 +26,7 @@ typedef Pointer<Output> OutputPtr;
 class OutputFactory
 {
 public:
-    static OutputDelegatePtr getDelegate(const VoxelizedPartition & vp,
+    static SetupOutputPtr newSetupOutput(const VoxelizedPartition & vp,
         const OutputDescPtr & desc);
     
 private:
@@ -34,10 +34,10 @@ private:
 };
 
 
-class OutputDelegate
+class SetupOutput
 {
 public:
-    OutputDelegate() {}
+    SetupOutput() {}
     
     // Setting up runtime outputs
     virtual OutputPtr makeOutput(const VoxelizedPartition & vp,

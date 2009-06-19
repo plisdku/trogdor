@@ -16,10 +16,10 @@
 #include "MemoryUtilities.h"
 #include <string>
 
-class DrudeModel1Delegate : public SimpleBulkMaterialDelegate
+class SetupDrudeModel1 : public SimpleBulkSetupMaterial
 {
 public:
-	DrudeModel1Delegate(const MaterialDescPtr & material);
+	SetupDrudeModel1(const MaterialDescPtr & material);
 	
     virtual void setNumCellsE(int fieldDir, int numCells);
     
@@ -36,7 +36,7 @@ private:
 class DrudeModel1 : public Material
 {
 public:
-    DrudeModel1(const DrudeModel1Delegate & deleg,
+    DrudeModel1(const SetupDrudeModel1 & deleg,
         const MaterialDescription & descrip,
         Vector3f dxyz, float dt);
     

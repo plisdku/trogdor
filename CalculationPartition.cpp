@@ -51,37 +51,31 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
             allocate(mNBFields[itr->first], itr->second);
     }
     
-    const Map<Paint*, MaterialDelegatePtr> & delegs = vp.getDelegates();
-    map<Paint*, MaterialDelegatePtr>::const_iterator itr;
+    const Map<Paint*, SetupMaterialPtr> & delegs = vp.getDelegates();
+    map<Paint*, SetupMaterialPtr>::const_iterator itr;
     for (itr = delegs.begin(); itr != delegs.end(); itr++)
     {
         //LOG << "Dealing with paint " << *itr->first << endl;
         mMaterials.push_back(itr->second->makeCalcMaterial(vp, *this));
     }
     
-    const vector<OutputDelegatePtr> & outs = vp.getOutputDelegates();
+    const vector<SetupOutputPtr> & outs = vp.getSetupOutputs();
     for (nn = 0; nn < outs.size(); nn++)
         mOutputs.push_back(outs[nn]->makeOutput(vp,
             *this));
     
-    const vector<SourceDelegatePtr> & softSrcs = vp.getSoftSourceDelegates();
+    const vector<SetupSourcePtr> & softSrcs = vp.getSoftSetupSources();
     for (nn = 0; nn < softSrcs.size(); nn++)
     {
         mSoftSources.push_back(softSrcs[nn]->makeSource(vp, *this));
     }
     
-    const vector<SourceDelegatePtr> & hardSrcs = vp.getHardSourceDelegates();
+    const vector<SetupSourcePtr> & hardSrcs = vp.getHardSetupSources();
     for (nn = 0; nn < hardSrcs.size(); nn++)
     {
         mHardSources.push_back(hardSrcs[nn]->makeSource(vp, *this));
     }
     
-    const vector<HuygensSurfaceDelegatePtr> & huyg =
-        vp.getHuygensSurfaceDelegates();
-    for (nn = 0; nn < huyg.size(); nn++)
-    {
-        mHuygensSurfaces.push_back(huyg[nn]->makeHuygensSurface());
-    }
     
     // Prepare helper variables for the field accessors.
     // We cache the head pointers just so they're in a quick order for later.
@@ -91,12 +85,12 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mHeadH[dir] = mEHBuffers[hFieldNumber(dir)]->getHeadPointer();
         mEOffset[dir] = eFieldPosition(dir);
         mHOffset[dir] = hFieldPosition(dir);
-        /*
+        
         LOG << "mHeadE[" << dir << "] is "
             << MemoryBuffer::identify(mHeadE[dir]) << "\n";
         LOG << "mHeadH[" << dir << "] is "
             << MemoryBuffer::identify(mHeadH[dir]) << "\n";
-        */
+        
     }
     mMemStride[0] = mEHBuffers[0]->getStride(); // should be same for all
     mMemStride[1] = mAllocYeeCells[0]*mMemStride[0];
@@ -130,6 +124,8 @@ updateE(int timestep)
     unsigned int nn;
     // Update Huygens surfaces (add H stuff)
     
+    //LOG << "Update E " << timestep << "\n";
+    
     for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
         mHuygensSurfaces[nn]->updateH(); // need to update H here before E.
     
@@ -141,6 +137,7 @@ updateE(int timestep)
 void CalculationPartition::
 sourceE(int timestep)
 {
+    //LOG << "Source E " << timestep << "\n";
     int nn;
     for (nn = 0; nn < mSoftSources.size(); nn++)
         mSoftSources[nn]->sourceEPhase(*this, timestep);
@@ -151,14 +148,18 @@ sourceE(int timestep)
 void CalculationPartition::
 outputE(int timestep)
 {
+    //LOG << "Output E " << timestep << "\n";
     int nn;
     for (nn = 0; nn < mOutputs.size(); nn++)
         mOutputs[nn]->outputEPhase(*this, timestep);
+    
+    printFields(cout, eOctantNumber(2), 1.0);
 }
 
 void CalculationPartition::
 updateH(int timestep)
 {
+    //LOG << "Update H " << timestep << "\n";
     unsigned int nn;
     
     // Update E fields in Huygens surfaces
@@ -173,6 +174,7 @@ updateH(int timestep)
 void CalculationPartition::
 sourceH(int timestep)
 {
+    //LOG << "Source H " << timestep << "\n";
     int nn;
     for (nn = 0; nn < mSoftSources.size(); nn++)
         mSoftSources[nn]->sourceHPhase(*this, timestep);
@@ -183,68 +185,13 @@ sourceH(int timestep)
 void CalculationPartition::
 outputH(int timestep)
 {
+    //LOG << "Output H " << timestep << "\n";
     int nn;
     for (nn = 0; nn < mOutputs.size(); nn++)
         mOutputs[nn]->outputHPhase(*this, timestep);
 }
 
 
-
-/*
-void CalculationPartition::
-calcE()
-{
-    for (int eNum = 0; eNum < 3; eNum++)
-    for (unsigned int nn = 0; nn < mMaterials.size(); nn++)
-        mMaterials[nn]->calcEPhase(eNum);
-}
-
-void CalculationPartition::
-calcBeforeE(int timestep)
-{
-    unsigned int nn;
-    
-    for (nn = 0; nn < mSoftSources.size(); nn++)
-        mSoftSources[nn]->sourceEPhase(*this, timestep);
-    for (nn = 0; nn < mHardSources.size(); nn++)
-        mHardSources[nn]->sourceEPhase(*this, timestep);
-    for (nn = 0; nn < mOutputs.size(); nn++)
-        mOutputs[nn]->outputEPhase(*this, timestep);
-}
-
-void CalculationPartition::
-calcAfterE(int timestep)
-{
-    unsigned int nn;
-}
-
-void CalculationPartition::
-calcH()
-{
-    for (int hNum = 0; hNum < 3; hNum++)
-    for (unsigned int nn = 0; nn < mMaterials.size(); nn++)
-        mMaterials[nn]->calcHPhase(hNum);
-}
-
-void CalculationPartition::
-calcBeforeH(int timestep)
-{
-    unsigned int nn;
-    
-    for (nn = 0; nn < mSoftSources.size(); nn++)
-        mSoftSources[nn]->sourceHPhase(*this, timestep);
-    for (nn = 0; nn < mHardSources.size(); nn++)
-        mHardSources[nn]->sourceHPhase(*this, timestep);
-    for (nn = 0; nn < mOutputs.size(); nn++)
-        mOutputs[nn]->outputHPhase(*this, timestep);
-}
-
-void CalculationPartition::
-calcAfterH(int timestep)
-{
-    unsigned int nn;
-}
-*/
 
 float CalculationPartition::
 getE(int direction, int xi, int xj, int xk) const
@@ -369,6 +316,84 @@ setH(int direction, int xi, int xj, int xk, float val)
         xk*mMemStride[2] ] = val;
     //LOG << MemoryBuffer::identify(&mHeadH[direction][xi*mMemStride[0] + xj*mMemStride[1] +
     //    xk*mMemStride[2]]);
+}
+
+
+void CalculationPartition::
+printFields(std::ostream & str, int field, float scale)
+{
+    float spaceMax = 0.2*scale;
+    float periodMax = 0.5*scale;
+    int direction;
+    bool isE = (octantENumber(field) != -1);
+    Rect3i r(mAllocOriginYee, mAllocOriginYee+mAllocYeeCells-1);
+    
+    int ni, nj, nk;
+    
+    if (isE)
+    {
+        direction = octantENumber(field);
+        assert(direction != -1);
+        for (nk = r.p1[2]; nk <= r.p2[2]; nk++)
+        {
+            str << "+";
+            for (ni = r.p1[0]; ni <= r.p2[0]; ni++)
+                str << "-";
+            str << "+\n";
+            for (nj = r.p2[1]; nj >= r.p1[1]; nj--)
+            {
+                str << "|";
+                for (ni = r.p1[0]; ni <= r.p2[0]; ni++)
+                {
+                    float field = fabs(getE(direction, ni, nj, nk));
+                    if (field < spaceMax)
+                        str << " ";
+                    else if (field < periodMax)
+                        str << ".";
+                    else
+                        str << "•";
+                }
+                str << "|\n";
+            }
+            str << "+";
+            for (ni = r.p1[0]; ni <= r.p2[0]; ni++)
+                str << "-";
+            str << "+\n";
+        }
+    }
+    else
+    {
+        direction = octantHNumber(field);
+        assert(direction != -1);
+        for (int nk = r.p1[2]; nk <= r.p2[2]; nk++)
+        {
+            for (int nj = r.p2[1]; nj >= r.p1[1]; nj--)
+            {
+                for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
+                {
+                    float field = fabs(getH(direction, ni, nj, nk));
+                    if (field < spaceMax)
+                        str << " ";
+                    else if (field < periodMax)
+                        str << ".";
+                    else
+                        str << "•";
+                }
+                str << "\n";
+            }
+        }
+    }
+}
+
+void CalculationPartition::
+createHuygensSurfaces(const VoxelizedPartition & vp)
+{
+    const vector<SetupHuygensSurfacePtr> & huyg =
+        vp.getSetupHuygensSurfaces();
+    for (unsigned int nn = 0; nn < huyg.size(); nn++)
+    {
+        mHuygensSurfaces.push_back(huyg[nn]->makeHuygensSurface());
+    }
 }
 
 

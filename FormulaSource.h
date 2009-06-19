@@ -17,10 +17,10 @@
 #include "calc.hh"
 #include <vector>
 
-class FormulaSourceDelegate : public SourceDelegate
+class FormulaSetupSource : public SetupSource
 {
 public:
-    FormulaSourceDelegate(const SourceDescPtr & desc);
+    FormulaSetupSource(const SourceDescPtr & desc);
     
     virtual SourcePtr makeSource(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;

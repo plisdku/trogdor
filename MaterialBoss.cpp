@@ -27,15 +27,15 @@
 using namespace std;
 using namespace YeeUtilities;
 
-MaterialDelegatePtr MaterialFactory::
-getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
+SetupMaterialPtr MaterialFactory::
+newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
     //const Map<Vector3i, Map<string, string> > & gridPMLParams,
     const GridDescription & gridDesc,
 	Paint* parentPaint)
 {
 	assert(parentPaint != 0L);
     
-    MaterialDelegatePtr matDel;
+    SetupMaterialPtr matDel;
 	const MaterialDescPtr bulkMaterial = parentPaint->getBulkMaterial();
 	string materialClass(bulkMaterial->getModelName());
 	string materialName(bulkMaterial->getName());
@@ -81,27 +81,27 @@ getDelegate(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	if (materialClass == "StaticDielectric")
 	{
         if (parentPaint->isPML())
-            matDel = MaterialDelegatePtr(new StaticDielectricPMLDelegate(
+            matDel = SetupMaterialPtr(new SetupStaticDielectricPML(
                 pmlParams));
         else
-            matDel = MaterialDelegatePtr(new StaticDielectricDelegate);
+            matDel = SetupMaterialPtr(new SetupStaticDielectric);
 	}
     else if (materialClass == "StaticLossyDielectric")
     {
-        matDel = MaterialDelegatePtr(new StaticLossyDielectricDelegate);
+        matDel = SetupMaterialPtr(new SetupStaticLossyDielectric);
     }
 	else if (materialClass == "DrudeMetal")
 	{
-        matDel = MaterialDelegatePtr(new DrudeModel1Delegate(bulkMaterial));
+        matDel = SetupMaterialPtr(new SetupDrudeModel1(bulkMaterial));
 	}
 	else if (materialClass == "PerfectConductor")
 	{
-        matDel = MaterialDelegatePtr(new PerfectConductorDelegate);
+        matDel = SetupMaterialPtr(new SetupPerfectConductor);
 	}
 	else
     {
         LOG << "Using default (silly) delegate.\n";
-        matDel = MaterialDelegatePtr(new SimpleBulkMaterialDelegate);
+        matDel = SetupMaterialPtr(new SimpleBulkSetupMaterial);
     }
     matDel->setParentPaint(parentPaint);
     
@@ -147,53 +147,53 @@ allocateAuxBuffers()
 {
 }
 
-MaterialDelegate::
-MaterialDelegate()
+SetupMaterial::
+SetupMaterial()
 {
 }
 
-MaterialDelegate::
-~MaterialDelegate()
+SetupMaterial::
+~SetupMaterial()
 {
 }
 
 
 
-void MaterialDelegate::
+void SetupMaterial::
 setNumCellsE(int fieldDir, int numCells)
 {
 }
 
-void MaterialDelegate::
+void SetupMaterial::
 setNumCellsH(int fieldDir, int numCells)
 {
 }
 
 
-void MaterialDelegate::
+void SetupMaterial::
 setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide,
     const GridDescription & gridDesc)
 {
 }
 
-void MaterialDelegate::
+void SetupMaterial::
 setNumCellsOnPMLFaceE(int fieldDir, int faceNum, int numCells)
 {
 }
-void MaterialDelegate::
+void SetupMaterial::
 setNumCellsOnPMLFaceH(int fieldDir, int faceNum, int numCells)
 {
 }
 
 #pragma mark *** Simple Bulk Material ***
 
-SimpleBulkMaterialDelegate::
-SimpleBulkMaterialDelegate() :
-	MaterialDelegate()
+SimpleBulkSetupMaterial::
+SimpleBulkSetupMaterial() :
+	SetupMaterial()
 {
 }
 
-void SimpleBulkMaterialDelegate::
+void SimpleBulkSetupMaterial::
 startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 {
 	int nSide;
@@ -222,6 +222,10 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 			mUsedNeighborIndices[nSide] = 0;
 			bp[nSide] = vp.fieldPointer(mStartPaint->getCurlBuffer(nSide),
 				mStartPoint+cardinalDirection(nSide));
+            
+            LOG << "Buffer on that side is " << bp[nSide] << "\n";
+            LOGMORE << "Compare to " << vp.fieldPointer(mStartPoint+
+                cardinalDirection(nSide)) << "\n";
 		}
 		else
 		{
@@ -257,10 +261,13 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	*/
 }
 
-bool SimpleBulkMaterialDelegate::
+bool SimpleBulkSetupMaterial::
 canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	const Vector3i & newPos, Paint* newPaint) const
 {
+    if (newPaint != mStartPaint)
+        return 0;
+    
 	for (int nSide = 0; nSide < 6; nSide++)
 	if (mUsedNeighborIndices[nSide])
 	{
@@ -277,20 +284,20 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	return 1;
 }
 
-void SimpleBulkMaterialDelegate::
+void SimpleBulkSetupMaterial::
 continueRunline(const Vector3i & newPos)
 {
 	mCurrentRunline.length++;
 }
 
-void SimpleBulkMaterialDelegate::
+void SimpleBulkSetupMaterial::
 endRunline()
 {
 	int field = octantFieldNumber(mStartPoint);
 	mRunlines[field].push_back(SBMRunlinePtr(new SBMRunline(mCurrentRunline)));
 }
 
-void SimpleBulkMaterialDelegate::
+void SimpleBulkSetupMaterial::
 printRunlines(std::ostream & out) const
 {
 	for (int field = 0; field < 6; field++)
@@ -309,7 +316,7 @@ printRunlines(std::ostream & out) const
 	}
 }
 
-MaterialPtr SimpleBulkMaterialDelegate::
+MaterialPtr SimpleBulkSetupMaterial::
 makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
@@ -320,13 +327,13 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
 
 #pragma mark *** Simple Bulk PML Material ***
 
-SimpleBulkPMLMaterialDelegate::
-SimpleBulkPMLMaterialDelegate() :
-	MaterialDelegate()
+SimpleBulkPMLSetupMaterial::
+SimpleBulkPMLSetupMaterial() :
+	SetupMaterial()
 {
 }
 
-void SimpleBulkPMLMaterialDelegate::
+void SimpleBulkPMLSetupMaterial::
 startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 {
 	int nSide;
@@ -418,10 +425,13 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	*/
 }
 
-bool SimpleBulkPMLMaterialDelegate::
+bool SimpleBulkPMLSetupMaterial::
 canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	const Vector3i & newPos, Paint* newPaint) const
 {
+    if (newPaint != mStartPaint)
+        return 0;
+    
 	for (int nSide = 0; nSide < 6; nSide++)
 	if (mUsedNeighborIndices[nSide])
 	{
@@ -445,13 +455,13 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	return 1;
 }
 
-void SimpleBulkPMLMaterialDelegate::
+void SimpleBulkPMLSetupMaterial::
 continueRunline(const Vector3i & newPos)
 {
 	mCurrentRunline.length++;
 }
 
-void SimpleBulkPMLMaterialDelegate::
+void SimpleBulkPMLSetupMaterial::
 endRunline()
 {
 	int field = octantFieldNumber(mStartPoint);
@@ -459,7 +469,7 @@ endRunline()
 		new SBPMRunline(mCurrentRunline)));
 }
 
-void SimpleBulkPMLMaterialDelegate::
+void SimpleBulkPMLSetupMaterial::
 printRunlines(std::ostream & out) const
 {
 	for (int field = 0; field < 6; field++)
@@ -482,7 +492,7 @@ printRunlines(std::ostream & out) const
 	}
 }
 
-MaterialPtr SimpleBulkPMLMaterialDelegate::
+MaterialPtr SimpleBulkPMLSetupMaterial::
 makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {

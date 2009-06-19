@@ -19,16 +19,16 @@
 
 class MaterialDescription;
 
-class SimpleEHOutputDelegate;
-typedef Pointer<SimpleEHOutputDelegate> SimpleEHOutputDelegatePtr;
+class SimpleEHSetupOutput;
+typedef Pointer<SimpleEHSetupOutput> SimpleEHSetupOutputPtr;
 
 class SimpleEHOutput;
 typedef Pointer<SimpleEHOutput> SimpleEHOutputPtr;
 
-class SimpleEHOutputDelegate : public OutputDelegate
+class SimpleEHSetupOutput : public SetupOutput
 {
 public:
-    SimpleEHOutputDelegate(const OutputDescPtr & desc);
+    SimpleEHSetupOutput(const OutputDescPtr & desc);
     
     virtual OutputPtr makeOutput(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;

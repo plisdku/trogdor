@@ -19,14 +19,14 @@ using namespace std;
 
 #pragma mark *** Delegate ***
 
-FormulaSourceDelegate::
-FormulaSourceDelegate(const SourceDescPtr & desc) :
-    SourceDelegate(),
+FormulaSetupSource::
+FormulaSetupSource(const SourceDescPtr & desc) :
+    SetupSource(),
     mDesc(desc)
 {
 }
 
-SourcePtr FormulaSourceDelegate::
+SourcePtr FormulaSetupSource::
 makeSource(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
@@ -121,6 +121,7 @@ sourceHPhase(CalculationPartition & cp, int timestep)
 void FormulaSource::
 uniformSourceE(CalculationPartition & cp, int timestep)
 {
+    //LOG << "Source E\n";
     float val;
     
 	mCalculator.set("n", timestep);
@@ -159,6 +160,7 @@ uniformSourceE(CalculationPartition & cp, int timestep)
 void FormulaSource::
 uniformSourceH(CalculationPartition & cp, int timestep)
 {
+    //LOG << "Source H\n";
     float val;
     
 	mCalculator.set("n", timestep);

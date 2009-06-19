@@ -142,7 +142,7 @@ allocateAuxiliaryDataSpace(const VoxelGrid & grid)
 	//
 	// So based on the Paints in the VoxelGrid, and I imagine also on the basis
 	// of the internal material count here, and lastly on the basis of the
-	// material delegate (whatever it is that informs us here of how much space
+	// setup material (whatever it is that informs us here of how much space
 	// will be needed for a material), we can allocate data arrays.  This is not
 	// the same as setting up MemoryBuffers, which is the job of the parent
 	// VoxelizedPartition (or whatever it will be called).

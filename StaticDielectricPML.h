@@ -14,10 +14,10 @@
 #include "SimulationDescription.h"
 #include "MaterialBoss.h"
 
-class StaticDielectricPMLDelegate : public SimpleBulkPMLMaterialDelegate
+class SetupStaticDielectricPML : public SimpleBulkPMLSetupMaterial
 {
 public:
-    StaticDielectricPMLDelegate(
+    SetupStaticDielectricPML(
         const Map<Vector3i, Map<std::string, std::string> > & pmlParams);
     
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
@@ -51,6 +51,7 @@ public:
     MemoryBufferPtr getBufAccumHk(int fieldDir) const
         { return mBufAccumHk[fieldDir]; }
     
+    
 private:
     MemoryBufferPtr mBufAccumEj[3], mBufAccumEk[3],
         mBufAccumHj[3], mBufAccumHk[3];
@@ -71,11 +72,13 @@ template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
 class StaticDielectricPML : public Material
 {
 public:
-    StaticDielectricPML(const StaticDielectricPMLDelegate & deleg,
+    StaticDielectricPML(const SetupStaticDielectricPML & deleg,
         Vector3f dxyz, float dt);
     
     virtual void calcEPhase(int direction);
     virtual void calcHPhase(int direction);
+    
+    virtual void allocateAuxBuffers();
 private:
     void calcEx();
     void calcEy();
@@ -96,6 +99,10 @@ private:
     std::vector<float> mC_MjE[3], mC_MkE[3],
         mC_PsijE[3], mC_PsikE[3],
         mC_PsijM[3], mC_PsikM[3];
+    
+    MemoryBufferPtr mBufAccumEj[3], mBufAccumEk[3],
+        mBufAccumHj[3], mBufAccumHk[3];
+    Vector3i mPMLDirection;
     
     Vector3f mDxyz;
     float mDt;

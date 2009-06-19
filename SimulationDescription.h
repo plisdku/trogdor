@@ -79,7 +79,7 @@ public:
 	void setAssembly(AssemblyDescPtr assembly) {
 		mAssembly = assembly; }
     void setPMLParams(const Map<Vector3i, Map<std::string, std::string> > & p)
-        { mPMLParams = p; }
+        throw(Exception);
     
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap,
 		const Map<std::string, GridDescPtr> & gridMap);
@@ -400,6 +400,8 @@ public:
 	void omitSide(int nSide);
     void omitSide(Vector3i dir);
     void cycleCoordinates();
+    void becomeLink(GridDescPtr sourceGrid,
+        const Rect3i & sourceHalfCells);
     
     // Common accessors
     HuygensSurfaceSourceType getType() const { return mType; }
@@ -442,6 +444,7 @@ public:
 private:
     // buffer maker
 	void initTFSFBuffers(float srcFactor); // 1 adds, -1 subtracts
+	void initLinkTFSFBuffers(float srcFactor); // 1 adds, -1 subtracts
 	void initFloquetBuffers();
     
     // Common data
@@ -475,16 +478,31 @@ class NeighborBufferDescription
 {
 public:
 	// add constructors for things like Floquet boundaries
-	NeighborBufferDescription(const Rect3i & destHalfRect, int nSide,
+	NeighborBufferDescription(const Rect3i & huygensDestHalfCells, int nSide,
 		float incidentFieldFactor);
+    NeighborBufferDescription(const Rect3i & huygensSourceHalfCells,
+        const Rect3i & huygensDestHalfCells, int nSide,
+        float incidentFieldFactor);
 	
 	void cycleCoordinates();  // rotate x->y, y->z, z->x
 	
+    const Rect3i & getSourceHalfRect() const { return mSourceHalfRect; }
 	const Rect3i & getDestHalfRect() const { return mDestHalfRect; }
 	const Rect3i & getBufferHalfRect() const { return mBufferHalfRect; }
 	//const Rect3i & getBufferYeeBounds() const { return mBufferYeeBounds; }
+    
+    const std::vector<float> & getDestFactors() const { return mDestFactors; }
+    const std::vector<float> & getSourceFactors() const
+        { return mSrcFactors; }
+    
+    void setSourceRects(const Rect3i & sourceHalfCells, int nSide);
 	
 private:
+    Rect3i getEdgeHalfCells(const Rect3i & halfCells, int nSide);
+    void initFactors(const Rect3i & huygensDestHalfCells, int nSide,
+        float incFieldFactor);
+    
+    Rect3i mSourceHalfRect; // only used for links of course
 	Rect3i mDestHalfRect;
 	Rect3i mBufferHalfRect;
 	//Rect3i mBufferYeeBounds;

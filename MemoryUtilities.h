@@ -75,7 +75,7 @@ public:
 	
 	unsigned long getOffset() const { return mOffset; }
 	const MemoryBuffer * getBuffer() const { return mBuffer; }
-    float* getPointer() const { return mBuffer->getHeadPointer() + mOffset; }
+    float* getPointer() const;// { return mBuffer->getHeadPointer() + mOffset; }
 	
 	void setOffset(unsigned long offset);
 	

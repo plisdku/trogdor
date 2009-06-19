@@ -25,17 +25,16 @@ typedef Pointer<CalculationPartition> CalculationPartitionPtr;
 
 class VoxelizedPartition;
 
-class MaterialDelegate;
-typedef Pointer<MaterialDelegate> MaterialDelegatePtr;
+class SetupMaterial;
+typedef Pointer<SetupMaterial> SetupMaterialPtr;
 
 class GridDescription;
 
 class MaterialFactory
 {
 public:
-	static MaterialDelegatePtr getDelegate(const VoxelGrid & vg,
+	static SetupMaterialPtr newSetupMaterial(const VoxelGrid & vg,
 		const PartitionCellCountPtr cg,
-        //const Map<Vector3i, Map<std::string, std::string> > & gridPMLParams,
         const GridDescription & gridDesc,
 		Paint* parentPaint);
     
@@ -59,11 +58,11 @@ typedef Pointer<Material> MaterialPtr;
 
 // This is that rare thing—a class in Trogdor which doesn't observe RAII.
 // Initializing it just has too darned many parameters.
-class MaterialDelegate
+class SetupMaterial
 {
 public:
-	MaterialDelegate();
-	virtual ~MaterialDelegate();
+	SetupMaterial();
+	virtual ~SetupMaterial();
 	
 	// Auxiliary variables
     virtual void setNumCellsE(int fieldDir, int numCells);
@@ -94,7 +93,7 @@ public:
 private:
     Paint* mParentPaint;
 };
-typedef Pointer<MaterialDelegate> MaterialDelegatePtr;
+typedef Pointer<SetupMaterial> SetupMaterialPtr;
 
 struct SBMRunline
 {
@@ -106,10 +105,10 @@ struct SBMRunline
 };
 typedef Pointer<SBMRunline> SBMRunlinePtr;
 
-class SimpleBulkMaterialDelegate : public MaterialDelegate
+class SimpleBulkSetupMaterial : public SetupMaterial
 {
 public:
-	SimpleBulkMaterialDelegate();
+	SimpleBulkSetupMaterial();
 	
 	// Runline handling
 	virtual void startRunline(const VoxelizedPartition & vp,
@@ -151,10 +150,10 @@ struct SBPMRunline
 };
 typedef Pointer<SBPMRunline> SBPMRunlinePtr;
     
-class SimpleBulkPMLMaterialDelegate : public MaterialDelegate
+class SimpleBulkPMLSetupMaterial : public SetupMaterial
 {
 public:
-	SimpleBulkPMLMaterialDelegate();
+	SimpleBulkPMLSetupMaterial();
 	
 	// Runline handling
 	virtual void startRunline(const VoxelizedPartition & vp,

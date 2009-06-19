@@ -16,15 +16,15 @@
 
 using namespace std;
 
-PerfectConductorDelegate::
-PerfectConductorDelegate() :
-	SimpleBulkMaterialDelegate()
+SetupPerfectConductor::
+SetupPerfectConductor() :
+	SimpleBulkSetupMaterial()
 {
     
 }
 
 
-MaterialPtr PerfectConductorDelegate::
+MaterialPtr SetupPerfectConductor::
 makeCalcMaterial(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
 {

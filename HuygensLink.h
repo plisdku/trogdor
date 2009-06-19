@@ -17,10 +17,10 @@
 struct LinkNeighborBufferDeleg;
 struct LinkNeighborBuffer;
 
-class HuygensLinkDelegate : public HuygensSurfaceDelegate
+class SetupHuygensLink : public SetupHuygensSurface
 {
 public:
-    HuygensLinkDelegate(
+    SetupHuygensLink(
         const VoxelizedPartition & vp,
         const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
         const HuygensSurfaceDescPtr & desc);

@@ -22,19 +22,19 @@
 using namespace std;
 
 
-OutputDelegatePtr OutputFactory::
-getDelegate(const VoxelizedPartition & vp, const OutputDescPtr & desc)
+SetupOutputPtr OutputFactory::
+newSetupOutput(const VoxelizedPartition & vp, const OutputDescPtr & desc)
 {
     Vector3i threeFalses(0,0,0);
     
     if (desc->getWhichJ() == threeFalses && desc->getWhichP() == threeFalses &&
         desc->getWhichP() == threeFalses && desc->getWhichM() == threeFalses)
-        return OutputDelegatePtr(new SimpleEHOutputDelegate(desc));
+        return SetupOutputPtr(new SimpleEHSetupOutput(desc));
     
     LOG << "Using default (null) output... and crashing.\n";
     exit(1);
     
-    return OutputDelegatePtr(0L);
+    return SetupOutputPtr(0L);
 }
 
 

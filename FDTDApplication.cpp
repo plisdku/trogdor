@@ -52,8 +52,8 @@ runNew(string parameterFile)
 	SimulationDescPtr sim = loadSimulation(parameterFile);
 	//Mat3i orientation = guessFastestOrientation(*sim);
 	
-	sim->cycleCoordinates();
-	sim->cycleCoordinates();
+	//sim->cycleCoordinates();
+	//sim->cycleCoordinates();
 	voxelizeGrids(sim, voxelizedGrids); // includes setup runlines
 	
 	// in here: do any setup that requires the voxelized grids
@@ -61,7 +61,7 @@ runNew(string parameterFile)
 	
     trimVoxelizedGrids(voxelizedGrids); // delete VoxelGrid & PartitionCellCount
     makeCalculationGrids(sim, calculationGrids, voxelizedGrids);
-	voxelizedGrids.clear();  // this will delete the delegates
+	voxelizedGrids.clear();  // this will delete the setup objects
     allocateAuxBuffers(calculationGrids);
 	
 	// allocate memory that can be postponed
@@ -146,11 +146,13 @@ voxelizeGrids(const SimulationDescPtr sim,
 		//voxelizeGridRecursor(voxelizedGrids, sim->getGrids()[0], myPartition,
 		//	myCalcRegion);
 	}
-	
+	GridDescPtr g;
+    unsigned int ii;
+    
 	LOG << "Voxelizing the grids.\n";
-	for (unsigned int ii = 0; ii < sim->getGrids().size(); ii++)
+	for (ii = 0; ii < sim->getGrids().size(); ii++)
 	{
-		GridDescPtr g = sim->getGrids()[ii];
+		g = sim->getGrids()[ii];
 		
 		// the recursor paints the setup grid and creates new grids as needed
 		// to implement all TFSF sources.
@@ -166,6 +168,14 @@ voxelizeGrids(const SimulationDescPtr sim,
 		voxelizeGridRecursor(voxelizedGrids, g, numNodes, thisNode,
 			partitionWallsHalf);
 	}
+    
+    map<GridDescPtr, VoxelizedPartitionPtr>::iterator itr;
+    for (itr = voxelizedGrids.begin(); itr != voxelizedGrids.end(); itr++)
+    {
+        itr->second->createSetupHuygensSurfaces(
+            itr->first->getHuygensSurfaces(),
+            voxelizedGrids);
+    }
 }
 
 void FDTDApplication::
@@ -305,6 +315,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	
 	Rect3i tfHalfCells(collapser*huygensSurface->getHalfCells());
 	tfHalfCells.p2 = vec_max(tfHalfCells.p2, Vector3i(1,1,1));
+    Rect3i linkSourceHalfCells(tfHalfCells);
 	
 	Vector3i bigDimensions(!collapsible[0], !collapsible[1], !collapsible[2]);
     for (nn = 0; nn < 3; nn++)
@@ -359,7 +370,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	originYee = originYee - vecHalfToYee(gridHalfCells.p1);
 	gridHalfCells = gridHalfCells - gridHalfCells.p1;
 
-	GridDescPtr gPtr(new GridDescription(auxGridName,
+	GridDescPtr childGrid(new GridDescription(auxGridName,
 		(gridHalfCells.size() + Vector3i(1,1,1))/2, // num Yee cells
 		gridHalfCells, // calc region
 		nonPMLHalfCells,
@@ -367,7 +378,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
         parentGrid->getDxyz(),
         parentGrid->getDt()));
 	
-	HuygensSurfaceDescPtr hPtr;
+	HuygensSurfaceDescPtr childSource;
 	if (huygensSurface->getType() == kTFSFSource)
 	{
 		//	Omitting the "back side" is harmless in aux grids, and desirable
@@ -375,7 +386,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 		set<Vector3i> newSourceOmittedSides(omittedSides);
 		newSourceOmittedSides.insert(huygensSurface->getDirection());
         if (huygensSurface->getFormula() != "")
-            hPtr = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
+            childSource = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
                 newTFSFFormulaSource(huygensSurface->getSourceFields(),
                     huygensSurface->getFormula(),
                     huygensSurface->getDirection(),
@@ -384,7 +395,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
                     newSourceOmittedSides,
                     huygensSurface->isTotalField()));
         else
-            hPtr = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
+            childSource = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
                 newTFSFTimeSource(huygensSurface->getSourceFields(),
                     huygensSurface->getTimeFile(),
                     huygensSurface->getDirection(),
@@ -395,7 +406,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
     }
 	else if (huygensSurface->getType() == kCustomTFSFSource)
 	{
-		hPtr = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
+		childSource = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
             newCustomTFSFSource(
 			huygensSurface->getFile(),
 			huygensSurface->getSymmetries(),
@@ -412,10 +423,13 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	assemblyStuff.push_back(extendThisRegion);
 	AssemblyDescPtr assembly(new AssemblyDescription(assemblyStuff));
 	
-	gPtr->setHuygensSurfaces(vector<HuygensSurfaceDescPtr>(1,hPtr));
-	gPtr->setAssembly(assembly);
+	childGrid->setHuygensSurfaces(vector<HuygensSurfaceDescPtr>(1,childSource));
+	childGrid->setAssembly(assembly);
+    
+    // And last of all, turn the parent source into a link to the child grid.
+    huygensSurface->becomeLink(childGrid, linkSourceHalfCells);
 	
-	return gPtr;
+	return childGrid;
 }
 
 GridDescPtr FDTDApplication::
@@ -445,6 +459,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	for (nn = 0; nn < 3; nn++)
 	if (tfRect.size(nn) == 1)
 		bigDimensions[nn] = 0;
+    Rect3i linkSourceHalfCells(tfRect);
 	
 	// Collapse the total-field rect if the TFSF boundary has an omitted side
 	// along the direction of propagation.
@@ -502,7 +517,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	origin = origin - YeeUtilities::vecHalfToYee(gridBounds.p1);
 	gridBounds = gridBounds - gridBounds.p1;
 
-	GridDescPtr gPtr(new GridDescription(srcGridName,
+	GridDescPtr childGrid(new GridDescription(srcGridName,
 		(gridBounds.size() + Vector3i(1,1,1))/2, // num Yee cells
 		gridBounds, // calc region
 		nonPMLRect,
@@ -554,11 +569,14 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	assemblyStuff.push_back(extendThisRegion);
 	AssemblyDescPtr assembly(new AssemblyDescription(assemblyStuff));
 	
-	gPtr->setSources(hardSources);
-	gPtr->setHuygensSurfaces(huygensSurfaces);
-	gPtr->setAssembly(assembly);
+	childGrid->setSources(hardSources);
+	childGrid->setHuygensSurfaces(huygensSurfaces);
+	childGrid->setAssembly(assembly);
+    
+    // And last of all, turn the parent source into a link to the child grid.
+    huygensSurface->becomeLink(childGrid, linkSourceHalfCells);
 	
-	return gPtr;
+	return childGrid;
 }
 
 
@@ -587,6 +605,12 @@ makeCalculationGrids(const SimulationDescPtr sim,
             new CalculationPartition(*itr->second,
                 sim->getDxyz(), sim->getDt(), sim->getDuration()));
         calcs[itr->first->getName()] = calcPart;
+    }
+    
+    // Second pass handles cross-linked stuff (TFSF links)
+    for (itr = voxParts.begin(); itr != voxParts.end(); itr++)
+    {
+        calcs[itr->first->getName()]->createHuygensSurfaces(*itr->second);
     }
 }
 

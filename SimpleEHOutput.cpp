@@ -24,14 +24,14 @@ using namespace YeeUtilities;
 
 #pragma mark *** Delegate ***
 
-SimpleEHOutputDelegate::
-SimpleEHOutputDelegate(const OutputDescPtr & desc) :
-    OutputDelegate(),
+SimpleEHSetupOutput::
+SimpleEHSetupOutput(const OutputDescPtr & desc) :
+    SetupOutput(),
     mDesc(desc)
 {
 }
 
-OutputPtr SimpleEHOutputDelegate::
+OutputPtr SimpleEHSetupOutput::
 makeOutput(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {

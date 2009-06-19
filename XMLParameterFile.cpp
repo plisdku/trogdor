@@ -198,7 +198,11 @@ loadGrids(const TiXmlElement* parent, const SimulationDescription & sim) const
 		gridDesc->setSources(loadSources(elem));
 		gridDesc->setAssembly(loadAssembly(elem, allGridNames,
 			allMaterialNames));
-        gridDesc->setPMLParams(pmlParams);
+        try {
+            gridDesc->setPMLParams(pmlParams);
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
 		
 		// half the huygens surfaces come from links, and half from TFSF
 		// sources.
@@ -304,9 +308,13 @@ loadMaterials(const TiXmlElement* parent) const
             pmlParamXML = pmlParamXML->NextSiblingElement("PML");
         }
         
-        MaterialDescPtr material(new MaterialDescription(name, inModel,
-            params, pmlParams));
-        materials.push_back(material);
+        try {
+            MaterialDescPtr material(new MaterialDescription(name, inModel,
+                params, pmlParams));
+            materials.push_back(material);
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
         
         elem = elem->NextSiblingElement("Material");
     }

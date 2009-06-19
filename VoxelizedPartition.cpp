@@ -73,12 +73,12 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	cout << mVoxels << endl;
 	
 	calculateMaterialIndices();
-	createMaterialDelegates(gridDesc);
+	createSetupMaterials(gridDesc);
 	loadSpaceVaryingData(); // * grid-scale wraparound
 	generateRunlines(); // * partition wraparound
     
-    createOutputDelegates(gridDesc.getOutputs());
-    createSourceDelegates(gridDesc.getSources());
+    createSetupOutputs(gridDesc.getOutputs());
+    createSetupSources(gridDesc.getSources());
 }
 
 void VoxelizedPartition::
@@ -117,9 +117,6 @@ initFieldBuffers(string bufferNamePrefix,
         if (!surfaces[nn]->getOmittedSides().count(cardinalDirection(mm)))
 		{
 			NeighborBufferDescPtr nb = nbs[mm];
-			//const Rect3i & bufVol = nb->getBufferYeeBounds();
-			//int bufSize = (bufVol.size(0)+1)*(bufVol.size(1)+1)*
-			//	(bufVol.size(2)+1);
             const Rect3i & bufferVolume = nb->getBufferHalfRect();
             Vector3i numYeeCells = rectHalfToYee(bufferVolume).size()+1;
             int bufSize = numYeeCells[0]*numYeeCells[1]*numYeeCells[2];
@@ -350,25 +347,25 @@ fieldPointer(const NeighborBufferDescPtr & nb, Vector3i halfCell) const
 BufferPointer VoxelizedPartition::
 getE(int direction, Vector3i xx) const
 {
-    return fieldPointer(vecYeeToHalf(xx, eFieldNumber(direction)));
+    return fieldPointer(vecYeeToHalf(xx, eOctantNumber(direction)));
 }
     
 BufferPointer VoxelizedPartition::
 getH(int direction, Vector3i xx) const
 {
-    return fieldPointer(vecYeeToHalf(xx, hFieldNumber(direction)));
+    return fieldPointer(vecYeeToHalf(xx, hOctantNumber(direction)));
 }
 
 BufferPointer VoxelizedPartition::
 getE(const NeighborBufferDescPtr & nb, int direction, Vector3i xx) const
 {
-    return fieldPointer(nb, vecYeeToHalf(xx, eFieldNumber(direction)));
+    return fieldPointer(nb, vecYeeToHalf(xx, eOctantNumber(direction)));
 }
     
 BufferPointer VoxelizedPartition::
 getH(const NeighborBufferDescPtr & nb, int direction, Vector3i xx) const
 {
-    return fieldPointer(nb, vecYeeToHalf(xx, hFieldNumber(direction)));
+    return fieldPointer(nb, vecYeeToHalf(xx, hOctantNumber(direction)));
 }
 
 Vector3i VoxelizedPartition::
@@ -397,16 +394,16 @@ clearCellCountGrid()
 }
 
 void VoxelizedPartition::
-createHuygensSurfaceDelegates(const GridDescPtr & gridDesc,
+createSetupHuygensSurfaces(const vector<HuygensSurfaceDescPtr> & surfaces,
     const Map<GridDescPtr, VoxelizedPartitionPtr> & grids)
-{
-    const vector<HuygensSurfaceDescPtr> & surfaces =
-        gridDesc->getHuygensSurfaces();
-    
+{   
+    LOG << "I am making " << surfaces.size() << " setup Huygens surfaces.\n";
+    LOGMORE << "I am " << mGridHalfCells << " half cells across.\n";
     for (unsigned int nn = 0; nn < surfaces.size(); nn++)
     {
-        mHuygensSurfaceDelegates.push_back(
-            HuygensSurfaceFactory::getDelegate(*this, grids, surfaces[nn]));
+        mSetupHuygensSurfaces.push_back(
+            HuygensSurfaceFactory::newSetupHuygensSurface(*this, grids,
+                surfaces[nn]));
     }
 }
 
@@ -610,7 +607,7 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 }
 
 void VoxelizedPartition::
-createMaterialDelegates(const GridDescription & gridDesc)
+createSetupMaterials(const GridDescription & gridDesc)
 {
 	set<Paint*> allPaints = mCentralIndices->getCurlBufferParentPaints();
 	
@@ -626,12 +623,12 @@ createMaterialDelegates(const GridDescription & gridDesc)
 		itr++)
 	{
 		Paint* p = *itr;
-		if (mMaterialDelegates.count(p) == 0)
+		if (mSetupMaterials.count(p) == 0)
 		{
-			mMaterialDelegates[p] = MaterialFactory::getDelegate(
+			mSetupMaterials[p] = MaterialFactory::newSetupMaterial(
 				mVoxels, mCentralIndices, gridDesc, p);
 		}
-		MaterialDelegate & mat = *mMaterialDelegates[p];
+		SetupMaterial & mat = *mSetupMaterials[p];
 		
         int fieldDir;
         long cells;
@@ -656,7 +653,7 @@ createMaterialDelegates(const GridDescription & gridDesc)
 void VoxelizedPartition::
 loadSpaceVaryingData()
 {
-	LOG << "Material delegates need to provide temporary space!\n";
+	LOG << "Setup materials need to provide temporary space!\n";
 	LOGMORE << "Not loading anything yet.\n";
 }
 
@@ -680,8 +677,8 @@ generateRunlines()
 	
     /*
 	LOG << "Printing runlines.\n";
-	map<Paint*, MaterialDelegatePtr>::iterator itr;
-	for (itr = mMaterialDelegates.begin(); itr != mMaterialDelegates.end(); itr++)
+	map<Paint*, SetupMaterialPtr>::iterator itr;
+	for (itr = mSetupMaterials.begin(); itr != mSetupMaterials.end(); itr++)
 	{
 		cout << *(itr->first) << "\n";
 		itr->second->printRunlines(cout);
@@ -702,10 +699,10 @@ genRunlinesInOctant(int octant)
 	//LOG << "Calc region " << mCalcHalfCells << endl;
 	//LOG << "Runlines in octant " << octant << " at start " << p1 << endl;
 	
-	MaterialDelegate* material; // unsafe pointer for speed in this case.
+	SetupMaterial* material; // unsafe pointer for speed in this case.
 	
 	// If there is a current runline
-	//	Ask the MaterialDelegate whether the current cell belongs to it
+	//	Ask the SetupMaterial whether the current cell belongs to it
 	//	YES: keep on loopin'
 	//	NO: end runline and begin new runline
 	//
@@ -735,7 +732,7 @@ genRunlinesInOctant(int octant)
 		}
 		if (needNewRunline)
 		{
-			material = mMaterialDelegates[xParentPaint];
+			material = mSetupMaterials[xParentPaint];
 			material->startRunline(*this, x);
 			needNewRunline = 0;
 		}
@@ -747,24 +744,24 @@ genRunlinesInOctant(int octant)
 
 
 void VoxelizedPartition::
-createOutputDelegates(const std::vector<OutputDescPtr> & outputs)
+createSetupOutputs(const std::vector<OutputDescPtr> & outputs)
 {
     for (unsigned int nn = 0; nn < outputs.size(); nn++)
-        mOutputDelegates.push_back(
-            OutputFactory::getDelegate(*this, outputs[nn]));
+        mSetupOutputs.push_back(
+            OutputFactory::newSetupOutput(*this, outputs[nn]));
 }
 
 void VoxelizedPartition::
-createSourceDelegates(const std::vector<SourceDescPtr> & sources)
+createSetupSources(const std::vector<SourceDescPtr> & sources)
 {
     for (unsigned int nn = 0; nn < sources.size(); nn++)
     {
         if (sources[nn]->isSoftSource())
-            mSoftSourceDelegates.push_back(
-                SourceFactory::getDelegate(*this, sources[nn]));
+            mSoftSetupSources.push_back(
+                SourceFactory::newSetupSource(*this, sources[nn]));
         else
-            mHardSourceDelegates.push_back(
-                SourceFactory::getDelegate(*this, sources[nn]));
+            mHardSetupSources.push_back(
+                SourceFactory::newSetupSource(*this, sources[nn]));
     }
 }
 

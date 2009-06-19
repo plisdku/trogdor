@@ -16,8 +16,8 @@
 class VoxelizedPartition;
 class CalculationPartition;
 
-class SourceDelegate;
-typedef Pointer<SourceDelegate> SourceDelegatePtr;
+class SetupSource;
+typedef Pointer<SetupSource> SetupSourcePtr;
 
 class Source;
 typedef Pointer<Source> SourcePtr;
@@ -25,7 +25,7 @@ typedef Pointer<Source> SourcePtr;
 class SourceFactory
 {
 public:
-    static SourceDelegatePtr getDelegate(const VoxelizedPartition & vp,
+    static SetupSourcePtr newSetupSource(const VoxelizedPartition & vp,
         const SourceDescPtr & desc);
     
 private:
@@ -33,10 +33,10 @@ private:
 };
 
 
-class SourceDelegate
+class SetupSource
 {
 public:
-    SourceDelegate() {}
+    SetupSource() {}
     
     // Setting up runtime outputs
     virtual SourcePtr makeSource(const VoxelizedPartition & vp,

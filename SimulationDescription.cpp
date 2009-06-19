@@ -11,6 +11,9 @@
 #include "XMLParameterFile.h"
 #include "STLOutput.h"
 
+// This is included just in order to validate PML formulae
+#include "calc.hh"
+
 #include <iostream>
 #include <sstream>
 
@@ -19,10 +22,11 @@
 
 #include "YeeUtilities.h"
 using namespace YeeUtilities;
+using namespace std;
 
 static Vector3i sConvertColor(const Magick::Color & inColor);
-
-using namespace std;
+static bool sValidPMLParams(const Map<Vector3i, Map<string, string> > & p,
+    string & outProblem);
 
 SimulationDescription::
 SimulationDescription(const XMLParameterFile & file) throw(Exception) :
@@ -144,6 +148,20 @@ setHuygensSurfaces(const vector<HuygensSurfaceDescPtr> & surfaces)
 	}
 }
 
+void GridDescription::
+setPMLParams(const Map<Vector3i, Map<string, string> > & p)
+    throw(Exception)
+{
+    string errorString;
+    bool validParams;
+    
+    validParams = sValidPMLParams(p, errorString);
+    
+    if (!validParams)
+        throw(Exception(errorString));
+    
+    mPMLParams = p;
+}
 
 void GridDescription::
 setPointers(const Map<string, MaterialDescPtr> & materialMap,
@@ -742,6 +760,22 @@ cycleCoordinates()
     mCoordinatePermutationNumber %= 3;
 }
 
+void HuygensSurfaceDescription::
+becomeLink(GridDescPtr sourceGrid, const Rect3i & sourceHalfCells)
+{
+    mType = kLink;
+    mFromHalfCells = sourceHalfCells;
+    mSourceGrid = sourceGrid;
+    mSourceGridName = sourceGrid->getName();
+    
+    LOG << "Source half cells " << sourceHalfCells << "\n";
+    LOG << "Dest half cells " << mHalfCells << "\n";
+    
+    for (int nn = 0; nn < 6; nn++)
+    if (mBuffers[nn] != 0L)
+        mBuffers[nn]->setSourceRects(sourceHalfCells, nn);
+}
+
 HuygensSurfaceDescription* HuygensSurfaceDescription::
 newTFSFTimeSource(SourceFields fields, string timeFile, Vector3i direction,
     Rect3i halfCells, set<Vector3i> omittedSides, bool isTF)
@@ -848,9 +882,9 @@ newLink(string sourceGrid, Rect3i fromHalfCells, Rect3i toHalfCells,
     hs2->mIsTotalField = isTF;
     
 	if (isTF)
-		hs2->initTFSFBuffers(1.0);
+		hs2->initLinkTFSFBuffers(1.0);
 	else
-		hs2->initTFSFBuffers(-1.0);
+		hs2->initLinkTFSFBuffers(-1.0);
     
     return hs2;
 }
@@ -874,6 +908,25 @@ initTFSFBuffers(float srcFactor)
 		mBuffers[nDir] = nb;
 	}
 }
+void HuygensSurfaceDescription::
+initLinkTFSFBuffers(float srcFactor)
+{
+	// The function works as:
+	//		for each side of each link
+	//			for each field (Ex, Ey, Hz, Ez, Hy, Hx)
+	//				add a TF or SF buffer appropriately
+	
+    //LOG << "My omitted sides: \n";
+    //LOGMORE << mOmittedSides << "\n";
+	// For all sides not "omitted" explicitly...
+	for (unsigned int nDir = 0; nDir < 6; nDir++)
+	if (mOmittedSides.count(cardinalDirection(nDir)) == 0)
+	{
+		NeighborBufferDescPtr nb(new NeighborBufferDescription(
+			mFromHalfCells, mHalfCells, nDir, srcFactor));
+		mBuffers[nDir] = nb;
+	}
+}
 
 void HuygensSurfaceDescription::
 initFloquetBuffers()
@@ -884,31 +937,65 @@ initFloquetBuffers()
 #pragma mark *** NeighborBuffer ***
 
 NeighborBufferDescription::
-NeighborBufferDescription(const Rect3i & destHalfRect, int nSide, 
+NeighborBufferDescription(const Rect3i & huygensDestHalfCells,
+    int nSide, 
 	float incidentFieldFactor) :
-	mDestHalfRect(destHalfRect),
 	mDestFactors(6),
 	mSrcFactors(6)
 {
-	Rect3i outerTotalField = edgeOfRect(mDestHalfRect, nSide);
+    mDestHalfRect = getEdgeHalfCells(huygensDestHalfCells, nSide);
+    mBufferHalfRect = mDestHalfRect - mDestHalfRect.p1;
+	mBufferHalfRect.p1[nSide/2] = 0;
+	mBufferHalfRect.p2[nSide/2] = 1;
+    
+    initFactors(huygensDestHalfCells, nSide, incidentFieldFactor);
+}
+
+NeighborBufferDescription::
+NeighborBufferDescription(const Rect3i & huygensSourceHalfCells,
+    const Rect3i & huygensDestHalfCells,
+    int nSide, 
+	float incidentFieldFactor) :
+	mDestFactors(6),
+	mSrcFactors(6)
+{
+    mSourceHalfRect = getEdgeHalfCells(huygensSourceHalfCells, nSide);
+    mDestHalfRect = getEdgeHalfCells(huygensDestHalfCells, nSide);
+    mBufferHalfRect = mDestHalfRect - mDestHalfRect.p1;
+	mBufferHalfRect.p1[nSide/2] = 0;
+	mBufferHalfRect.p2[nSide/2] = 1;
+    
+    initFactors(huygensDestHalfCells, nSide, incidentFieldFactor);
+}
+
+void NeighborBufferDescription::
+setSourceRects(const Rect3i & sourceHalfCells, int nSide)
+{
+    mSourceHalfRect = getEdgeHalfCells(sourceHalfCells, nSide);
+    
+    LOG << "Source " << mSourceHalfRect << " dest " << mDestHalfRect << "\n";
+}
+
+Rect3i NeighborBufferDescription::
+getEdgeHalfCells(const Rect3i & halfCells, int nSide)
+{
+	Rect3i outerHalfCells = edgeOfRect(halfCells, nSide);
 	
 	// the fat boundary contains the cells on BOTH sides of the TFSF boundary
 	// in the destination grid
-	Rect3i fatBoundary = outerTotalField;
 	if (nSide % 2 == 0) // if this is a low-x, low-y or low-z side
-		fatBoundary.p1 += cardinalDirection(nSide);
+		outerHalfCells.p1 += cardinalDirection(nSide);
 	else
-		fatBoundary.p2 += cardinalDirection(nSide);
+		outerHalfCells.p2 += cardinalDirection(nSide);
 	
-	// the buffer half rect is a rect that's the full size of the buffer.
-    // Its origin is 0 and it's one cell thick, but it might not be aligned on
-    // Yee cells.  Not sure what the use of this quantity is!
-	Rect3i bufferHalfRect = fatBoundary - Vector3i(2*(fatBoundary.p1/2));
-	bufferHalfRect.p1[nSide/2] = 0;
-	bufferHalfRect.p2[nSide/2] = 1;
-	
-	mBufferHalfRect = bufferHalfRect;
-	//mBufferYeeBounds = rectHalfToYee(bufferHalfRect);
+    return outerHalfCells;
+}
+
+void NeighborBufferDescription::
+initFactors(const Rect3i & huygensDestHalfCells, int nSide,
+    float incFieldFactor)
+{
+	Rect3i outerTotalField = edgeOfRect(huygensDestHalfCells, nSide);
 	
 	for (unsigned int fieldNum = 0; fieldNum < 6; fieldNum++) // on E, H
 	{
@@ -920,16 +1007,17 @@ NeighborBufferDescription(const Rect3i & destHalfRect, int nSide,
 		{
 			// total-field buffer
 			mDestFactors[fieldNum] = 1.0f;
-			mSrcFactors[fieldNum] = 1.0f * incidentFieldFactor;
+			mSrcFactors[fieldNum] = 1.0f * incFieldFactor;
 		}
 		else
 		{
 			// scattered-field buffer
 			mDestFactors[fieldNum] = 1.0f;
-			mSrcFactors[fieldNum] = -1.0f * incidentFieldFactor;
+			mSrcFactors[fieldNum] = -1.0f * incFieldFactor;
 		}
 	}
 }
+
 
 void NeighborBufferDescription::
 cycleCoordinates()
@@ -970,6 +1058,13 @@ MaterialDescription(string name, string inModelName,
     mPMLParams(inPMLParams)
 {
 	cerr << "Warning: MaterialDescription does not validate model name.\n";
+    
+    string errorString;
+    bool validParams;
+    
+    validParams = sValidPMLParams(inPMLParams, errorString);
+    if (!validParams)
+        throw(Exception(errorString));
 }
 
 void MaterialDescription::
@@ -1417,5 +1512,36 @@ static Vector3i sConvertColor(const Magick::Color & inColor)
     return outColor;
 }
 
+static bool sValidPMLParams(const Map<Vector3i, Map<string, string> > & p,
+    string & outProblem)
+{
+    bool parseError;
+    calc_defs::Calculator<float> calculator;
+    calculator.set("eps0", 1);
+    calculator.set("mu0", 1);
+    calculator.set("L", 1);
+    calculator.set("dx", 1);
+    calculator.set("d", 1);
+    
+    map<string,string>::const_iterator itr2;
+    map<Vector3i, Map<string,string> >::const_iterator itr;
+    for (itr = p.begin(); itr != p.end(); itr++)
+    for (itr2 = itr->second.begin(); itr2 != itr->second.end(); itr2++)
+    {
+        string parameter = itr2->first;
+        string formula = itr2->second;
+        parseError = calculator.parse(formula);
+        if (parseError)
+        {
+            ostringstream errorString;
+            errorString << "Could not parse PML formula " << parameter << ","
+                " '" << formula << "'.  Reason: ";
+            calculator.report_error(errorString);
+            outProblem = errorString.str();
+            return false;
+        }
+    }
+    return true;
+}
 
 

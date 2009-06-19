@@ -16,15 +16,15 @@
 
 using namespace std;
 
-StaticLossyDielectricDelegate::
-StaticLossyDielectricDelegate() :
-	SimpleBulkMaterialDelegate()
+SetupStaticLossyDielectric::
+SetupStaticLossyDielectric() :
+	SimpleBulkSetupMaterial()
 {
     
 }
 
 
-MaterialPtr StaticLossyDielectricDelegate::
+MaterialPtr SetupStaticLossyDielectric::
 makeCalcMaterial(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
 {
@@ -37,7 +37,7 @@ makeCalcMaterial(const VoxelizedPartition & vp,
 
 
 StaticLossyDielectric::
-StaticLossyDielectric(const StaticLossyDielectricDelegate & deleg,
+StaticLossyDielectric(const SetupStaticLossyDielectric & deleg,
     const MaterialDescription & descrip,
     Vector3f dxyz, float dt) :
     Material(),

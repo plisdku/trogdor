@@ -66,7 +66,7 @@ public:
     
     
     // These field accessors exist solely for the convenience of the Output
-    // classes.  To improve speed a little, the OutputDelegate can prepare in
+    // classes.  To improve speed a little, the SetupOutput can prepare in
     // advance using VoxelizedPartition::fieldPointer.
     
     // direction      0,1,2 for x,y,z
@@ -88,6 +88,10 @@ public:
     
     void setE(int direction, int xi, int xj, int xk, float val);
     void setH(int direction, int xi, int xj, int xk, float val);
+    
+    void printFields(std::ostream & str, int field, float scale);
+    
+    void createHuygensSurfaces(const VoxelizedPartition & vp);
 
 private:
     Vector3f m_dxyz;

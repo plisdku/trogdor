@@ -13,10 +13,10 @@
 #include "SimulationDescription.h"
 #include "MaterialBoss.h"
 
-class StaticLossyDielectricDelegate : public SimpleBulkMaterialDelegate
+class SetupStaticLossyDielectric : public SimpleBulkSetupMaterial
 {
 public:
-	StaticLossyDielectricDelegate();
+	SetupStaticLossyDielectric();
     
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
@@ -28,7 +28,7 @@ private:
 class StaticLossyDielectric : public Material
 {
 public:
-    StaticLossyDielectric(const StaticLossyDielectricDelegate & deleg,
+    StaticLossyDielectric(const SetupStaticLossyDielectric & deleg,
         const MaterialDescription & descrip,
         Vector3f dxyz, float dt);
         

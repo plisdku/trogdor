@@ -19,14 +19,14 @@
 using namespace std;
 using namespace YeeUtilities;
 
-StaticDielectricDelegate::
-StaticDielectricDelegate() :
-	SimpleBulkMaterialDelegate()
+SetupStaticDielectric::
+SetupStaticDielectric() :
+	SimpleBulkSetupMaterial()
 {
     
 }
 
-MaterialPtr StaticDielectricDelegate::
+MaterialPtr SetupStaticDielectric::
 makeCalcMaterial(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
 {
@@ -38,7 +38,7 @@ makeCalcMaterial(const VoxelizedPartition & vp,
 }
 
 StaticDielectric::
-StaticDielectric(const StaticDielectricDelegate & deleg,
+StaticDielectric(const SetupStaticDielectric & deleg,
     const MaterialDescription & descrip,
     Vector3f dxyz, float dt) :
     Material(),
@@ -59,11 +59,11 @@ StaticDielectric(const StaticDielectricDelegate & deleg,
         
         mRunlines[field].resize(setupRunlines.size());
         
-        //LOG << "Printing as we create runlines in field " << field << "\n";
+        LOG << "Printing as we create runlines in field " << field << "\n";
         for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
         {
             mRunlines[field][nn] = SimpleRunline(*setupRunlines[nn]);
-            //LOGMORE << mRunlines[field][nn] << "\n";
+            LOGMORE << mRunlines[field][nn] << "\n";
         }
     }
     //LOG << "Created all runlines.\n";

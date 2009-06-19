@@ -69,15 +69,15 @@ calcC_PhiJ(const vector<float> & kappa,
 }
 
 
-StaticDielectricPMLDelegate::
-StaticDielectricPMLDelegate(
+SetupStaticDielectricPML::
+SetupStaticDielectricPML(
     const Map<Vector3i, Map<string, string> > & pmlParams) :
-    SimpleBulkPMLMaterialDelegate(),
+    SimpleBulkPMLSetupMaterial(),
     mPMLParams(pmlParams)
 {
 }
 
-void StaticDielectricPMLDelegate::
+void SetupStaticDielectricPML::
 setNumCellsE(int fieldDir, int numCells)
 {
     const int STRIDE = 1;
@@ -99,7 +99,7 @@ setNumCellsE(int fieldDir, int numCells)
     }
 }
 
-void StaticDielectricPMLDelegate::
+void SetupStaticDielectricPML::
 setNumCellsH(int fieldDir, int numCells)
 {
     const int STRIDE = 1;
@@ -121,7 +121,7 @@ setNumCellsH(int fieldDir, int numCells)
     }
 }
 
-void StaticDielectricPMLDelegate::
+void SetupStaticDielectricPML::
 setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
     const GridDescription & gridDesc)
 {
@@ -282,7 +282,7 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
         LOG << "Warning: ONE is not 1.\n";
 }
 
-MaterialPtr StaticDielectricPMLDelegate::
+MaterialPtr SetupStaticDielectricPML::
 makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
@@ -341,9 +341,10 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
 StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
+StaticDielectricPML(const SetupStaticDielectricPML & deleg, Vector3f dxyz,
     float dt) :
     Material(),
+    mPMLDirection(deleg.getParentPaint()->getPMLDirections()),
     mDxyz(dxyz),
     mDt(dt),
     m_epsr(1.0),
@@ -380,47 +381,25 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
     }
     
     // PML STUFF HERE
-    Vector3i pmlDir = deleg.getParentPaint()->getPMLDirections();
-    //LOG << "------- " << pmlDir << "\n";
     
-    // Allocate auxiliary variables
-    MemoryBufferPtr p;
-    for (fieldDir = 0; fieldDir < 3; fieldDir++)
+    // Grab memory buffers; we'll use these later to allocate the real fields.
+    for (int nn = 0; nn < 3; nn++)
     {
-        jDir = (fieldDir+1)%3;
-        kDir = (fieldDir+2)%3;
-        
-        if (pmlDir[jDir] != 0)
-        {
-            p = deleg.getBufAccumEj(fieldDir);
-            mAccumEj[fieldDir].resize(p->getLength());
-            p->setHeadPointer(&(mAccumEj[fieldDir][0]));
-            
-            p = deleg.getBufAccumHj(fieldDir);
-            mAccumHj[fieldDir].resize(p->getLength());
-            p->setHeadPointer(&(mAccumHj[fieldDir][0]));
-        }
-        
-        if (pmlDir[kDir] != 0)
-        {
-            p = deleg.getBufAccumEk(fieldDir);
-            mAccumEk[fieldDir].resize(p->getLength());
-            p->setHeadPointer(&(mAccumEk[fieldDir][0]));
-            
-            p = deleg.getBufAccumHk(fieldDir);
-            mAccumHk[fieldDir].resize(p->getLength());
-            p->setHeadPointer(&(mAccumHk[fieldDir][0]));
-        }
+        mBufAccumEj[nn] = deleg.getBufAccumEj(nn);
+        mBufAccumEk[nn] = deleg.getBufAccumEk(nn);
+        mBufAccumHj[nn] = deleg.getBufAccumHj(nn);
+        mBufAccumHk[nn] = deleg.getBufAccumHk(nn);
     }
     
-    // Allocate and calculate update constants
-    for (fieldDir = 0; fieldDir < 3; fieldDir++)
+    //LOG << "------- " << pmlDir << "\n";
+        
+    // Allocate and calculate update constants.
+    for (int fieldDir = 0; fieldDir < 3; fieldDir++)
     {
+        int jDir = (fieldDir+1)%3;
+        int kDir = (fieldDir+2)%3;
         
-        jDir = (fieldDir+1)%3;
-        kDir = (fieldDir+2)%3;
-        
-        if (pmlDir[jDir] != 0)
+        if (mPMLDirection[jDir] != 0)
         {
             mC_JjH[fieldDir] = calcC_JH(deleg.getKappaE(fieldDir,jDir),
                 deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
@@ -461,7 +440,7 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
             */
         }
         
-        if (pmlDir[kDir] != 0)
+        if (mPMLDirection[kDir] != 0)
         {
             mC_JkH[fieldDir] = calcC_JH(deleg.getKappaE(fieldDir,kDir),
                 deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
@@ -502,6 +481,42 @@ StaticDielectricPML(const StaticDielectricPMLDelegate & deleg, Vector3f dxyz,
         }
     }
 }
+
+template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
+void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
+allocateAuxBuffers()
+{
+    // Allocate auxiliary variables
+    MemoryBufferPtr p;
+    for (int fieldDir = 0; fieldDir < 3; fieldDir++)
+    {
+        int jDir = (fieldDir+1)%3;
+        int kDir = (fieldDir+2)%3;
+        
+        if (mPMLDirection[jDir] != 0)
+        {
+            p = mBufAccumEj[fieldDir];
+            mAccumEj[fieldDir].resize(p->getLength());
+            p->setHeadPointer(&(mAccumEj[fieldDir][0]));
+            
+            p = mBufAccumHj[fieldDir];
+            mAccumHj[fieldDir].resize(p->getLength());
+            p->setHeadPointer(&(mAccumHj[fieldDir][0]));
+        }
+        
+        if (mPMLDirection[kDir] != 0)
+        {
+            p = mBufAccumEk[fieldDir];
+            mAccumEk[fieldDir].resize(p->getLength());
+            p->setHeadPointer(&(mAccumEk[fieldDir][0]));
+            
+            p = mBufAccumHk[fieldDir];
+            mAccumHk[fieldDir].resize(p->getLength());
+            p->setHeadPointer(&(mAccumHk[fieldDir][0]));
+        }
+    }
+}
+
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
 void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::

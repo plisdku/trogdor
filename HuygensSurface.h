@@ -16,8 +16,8 @@
 #include "Map.h"
 #include <vector>
 
-class HuygensSurfaceDelegate;
-typedef Pointer<HuygensSurfaceDelegate> HuygensSurfaceDelegatePtr;
+class SetupHuygensSurface;
+typedef Pointer<SetupHuygensSurface> SetupHuygensSurfacePtr;
 class HuygensSurface;
 typedef Pointer<HuygensSurface> HuygensSurfacePtr;
 class VoxelizedPartition;
@@ -26,7 +26,7 @@ typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
 class HuygensSurfaceFactory
 {
 public:
-    static HuygensSurfaceDelegatePtr getDelegate(
+    static SetupHuygensSurfacePtr newSetupHuygensSurface(
         const VoxelizedPartition & vp,
         const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
         const HuygensSurfaceDescPtr & desc);
@@ -34,11 +34,11 @@ private:
     HuygensSurfaceFactory() {}
 };
 
-class HuygensSurfaceDelegate
+class SetupHuygensSurface
 {
 public:
-    HuygensSurfaceDelegate() {}
-    virtual ~HuygensSurfaceDelegate() {}
+    SetupHuygensSurface() {}
+    virtual ~SetupHuygensSurface() {}
     //const std::vector<MemoryBufferPtr> & getBuffers() const { return mBuffers; }
     
     virtual HuygensSurfacePtr makeHuygensSurface() const = 0;
@@ -46,7 +46,7 @@ public:
 private:
     //std::vector<MemoryBufferPtr> mBuffers;
 };
-typedef Pointer<HuygensSurfaceDelegate> HuygensSurfaceDelegatePtr;
+typedef Pointer<SetupHuygensSurface> SetupHuygensSurfacePtr;
 
 class HuygensSurface
 {

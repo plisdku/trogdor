@@ -138,7 +138,15 @@ BufferPointer(const BufferPointer & copyMe) :
 	mBuffer(copyMe.mBuffer),
 	mOffset(copyMe.mOffset)
 {
-    assert(mOffset >= 0 && mOffset < mBuffer->getLength());
+    if (mBuffer != 0)
+        assert(mOffset >= 0 && mOffset < mBuffer->getLength());
+}
+
+float* BufferPointer::
+getPointer() const
+{
+    assert(mBuffer->getHeadPointer() != 0L);
+    return mBuffer->getHeadPointer() + mOffset;
 }
 
 void BufferPointer::

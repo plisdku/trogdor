@@ -13,10 +13,10 @@
 #include "SimulationDescription.h"
 #include "MaterialBoss.h"
 
-class PerfectConductorDelegate : public SimpleBulkMaterialDelegate
+class SetupPerfectConductor : public SimpleBulkSetupMaterial
 {
 public:
-	PerfectConductorDelegate();
+	SetupPerfectConductor();
     
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;

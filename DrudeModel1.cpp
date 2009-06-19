@@ -18,15 +18,15 @@
 using namespace YeeUtilities;
 using namespace std;
 
-DrudeModel1Delegate::
-DrudeModel1Delegate(const MaterialDescPtr & material) :
-	SimpleBulkMaterialDelegate(),
+SetupDrudeModel1::
+SetupDrudeModel1(const MaterialDescPtr & material) :
+	SimpleBulkSetupMaterial(),
     mDesc(material)
 {
 }
 
 
-void DrudeModel1Delegate::
+void SetupDrudeModel1::
 setNumCellsE(int fieldDir, int number)
 {
     const int STRIDE = 1;
@@ -39,7 +39,7 @@ setNumCellsE(int fieldDir, int number)
 
 
 /*
-void DrudeModel1Delegate::
+void SetupDrudeModel1::
 setNumCells(int octant, int number)
 {
 	const int STRIDE = 1;
@@ -56,7 +56,7 @@ setNumCells(int octant, int number)
 }
 */
 
-MaterialPtr DrudeModel1Delegate::
+MaterialPtr SetupDrudeModel1::
 makeCalcMaterial(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
 {
@@ -70,7 +70,7 @@ makeCalcMaterial(const VoxelizedPartition & vp,
 
 
 DrudeModel1::
-DrudeModel1(const DrudeModel1Delegate & deleg,
+DrudeModel1(const SetupDrudeModel1 & deleg,
     const MaterialDescription & descrip,
     Vector3f dxyz, float dt) :
     Material(),

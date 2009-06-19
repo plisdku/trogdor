@@ -136,29 +136,30 @@ public:
         getNBBuffers() const { return mNBBuffers; }
     
     // returns      the structures that store temp data for setting up materials
-    const Map<Paint*, MaterialDelegatePtr> & getDelegates() const
-        { return mMaterialDelegates; }
+    const Map<Paint*, SetupMaterialPtr> & getDelegates() const
+        { return mSetupMaterials; }
     
     // returns      the structures that store temp data for setting up outputs
-    const std::vector<OutputDelegatePtr> & getOutputDelegates() const
-        { return mOutputDelegates; }
+    const std::vector<SetupOutputPtr> & getSetupOutputs() const
+        { return mSetupOutputs; }
     
     // returns      the structures that store temp data for setting up sources
-    const std::vector<SourceDelegatePtr> & getSoftSourceDelegates() const
-        { return mSoftSourceDelegates; }
+    const std::vector<SetupSourcePtr> & getSoftSetupSources() const
+        { return mSoftSetupSources; }
     
     // returns      the structures that store temp data for setting up sources
-    const std::vector<SourceDelegatePtr> & getHardSourceDelegates() const
-        { return mHardSourceDelegates; }
+    const std::vector<SetupSourcePtr> & getHardSetupSources() const
+        { return mHardSetupSources; }
     
     // returns      the structures that store temp data for setting up NBs
-    const std::vector<HuygensSurfaceDelegatePtr> & getHuygensSurfaceDelegates()
-        const { return mHuygensSurfaceDelegates; }
+    const std::vector<SetupHuygensSurfacePtr> & getSetupHuygensSurfaces()
+        const { return mSetupHuygensSurfaces; }
     
     void clearVoxelGrid();
     void clearCellCountGrid();
     
-    void createHuygensSurfaceDelegates(const GridDescPtr & gridDesc,
+    void createSetupHuygensSurfaces(
+        const std::vector<HuygensSurfaceDescPtr> & surfaces,
         const Map<GridDescPtr, VoxelizedPartitionPtr> & grids);
 	
 private:
@@ -175,13 +176,13 @@ private:
 	void calculateHuygensSymmetries(const GridDescription & gridDesc);
 	Vector3i huygensSymmetry(const HuygensSurfaceDescription & surf);
 	
-	void createMaterialDelegates(const GridDescription & gridDesc);
+	void createSetupMaterials(const GridDescription & gridDesc);
 	void loadSpaceVaryingData();
 	void generateRunlines();
 	void genRunlinesInOctant(int octant);
     
-    void createOutputDelegates(const std::vector<OutputDescPtr> & outputs);
-    void createSourceDelegates(const std::vector<SourceDescPtr> & sources);
+    void createSetupOutputs(const std::vector<OutputDescPtr> & outputs);
+    void createSetupSources(const std::vector<SourceDescPtr> & sources);
     /*
     void createNeighborBufferDelegates(
         const std::vector<HuygensSurfaceDescPtr> & surfaces,
@@ -195,11 +196,11 @@ private:
 	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffers;
 	
     // THIS IS WHERE GRID DENIZENS LIVE
-	Map<Paint*, MaterialDelegatePtr> mMaterialDelegates;
-	std::vector<OutputDelegatePtr> mOutputDelegates;
-    std::vector<SourceDelegatePtr> mSoftSourceDelegates;
-    std::vector<SourceDelegatePtr> mHardSourceDelegates;
-    std::vector<HuygensSurfaceDelegatePtr> mHuygensSurfaceDelegates;
+	Map<Paint*, SetupMaterialPtr> mSetupMaterials;
+	std::vector<SetupOutputPtr> mSetupOutputs;
+    std::vector<SetupSourcePtr> mSoftSetupSources;
+    std::vector<SetupSourcePtr> mHardSetupSources;
+    std::vector<SetupHuygensSurfacePtr> mSetupHuygensSurfaces;
     
     // END OF GRID DENIZEN ZONE
     
