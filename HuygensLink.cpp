@@ -21,76 +21,103 @@ SetupHuygensLink(const VoxelizedPartition & vp,
     const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
     const HuygensSurfaceDescPtr & desc)
 {
-    const Map<NeighborBufferDescPtr, vector<MemoryBufferPtr> > & memBufs =
-        vp.getNBBuffers();
+    const Map<NeighborBufferDescPtr, vector<MemoryBufferPtr> > & memBufsE =
+        vp.getNBBuffersE();
+    const Map<NeighborBufferDescPtr, vector<MemoryBufferPtr> > & memBufsH =
+        vp.getNBBuffersH();
     const vector<NeighborBufferDescPtr> & buffers = desc->getBuffers();
     GridDescPtr srcGrid = desc->getSourceGrid();
     VoxelizedPartitionPtr srcVP = grids[srcGrid];
-    /*
+    Rect3i destYee, srcYee;
+    
     LOG << "Setup!  Buffer sourcing from " << srcGrid->getName() << "\n";
-    LOGMORE << "Membufs size " << memBufs.size() << "\n";
+    //LOGMORE << "Membufs size " << memBufs.size() << "\n";
     LOGMORE << "Buffers size " << buffers.size() << "\n";
-    */
+    
     //LOGMORE << "Contents of buffers: " << "\n";
     //LOGMORE << buffers << "\n";
-    
-    for (int nn = 0; nn < 6; nn++)
-    if (memBufs.count(buffers[nn]) != 0)
+    int dir;
+    for (int sideNum = 0; sideNum < 3; sideNum++)
+    if (memBufsE.count(buffers[sideNum]) != 0)
     {
+        assert(memBufsH.count(buffers[sideNum]) != 0);
         LinkNeighborBufferDeleg b;
         
-        //assert(memBufs.count(buffers[nn]) != 0);
-        const vector<MemoryBufferPtr> & mbs = memBufs[buffers[nn]];
-        
-        for (int fieldDir = 0; fieldDir < 3; fieldDir++)
+        LOG << "New E buffers:\n";
+        for (dir = 0; dir < 3; dir++)
         {
-            Rect3i destYee = rectHalfToYee(buffers[nn]->getDestHalfRect(),
-                eOctantNumber(fieldDir));
-            Rect3i srcYee = rectHalfToYee(buffers[nn]->getSourceHalfRect(),
-                eOctantNumber(fieldDir));
+        
+            destYee = rectHalfToYee(buffers[sideNum]->getDestHalfRect(),
+                eOctantNumber(dir));
+            srcYee = rectHalfToYee(buffers[sideNum]->getSourceHalfRect(),
+                eOctantNumber(dir));
             
-            LOG << "E src " << srcYee << " dest " << destYee << "\n";
+            LOGMORE << "E" << dir << " src " << srcYee << " dest " << destYee
+                << "\n";
+            LOGMORE << "From half cells " <<
+                buffers[sideNum]->getSourceHalfRect() << " and " << 
+                buffers[sideNum]->getDestHalfRect() << "\n";
             
-            b.mDestEHeadPtr[fieldDir] = vp.getE(fieldDir, destYee.p1);
-            b.mSrcEHeadPtr[fieldDir] = srcVP->getE(fieldDir, srcYee.p1);
-            b.mBufEHeadPtr[fieldDir] = vp.getE(buffers[nn], fieldDir,
+            b.mDestEHeadPtr[dir] = vp.getE(dir, destYee.p1);
+            b.mSrcEHeadPtr[dir] = srcVP->getE(dir, srcYee.p1);
+            b.mBufEHeadPtr[dir] = vp.getE(buffers[sideNum], dir,
                 destYee.p1);
             
-            LOG << "H src " << srcYee << " dest " << destYee << "\n";
+            b.mSrcFactorsE[dir] =
+                buffers[sideNum]->getSourceFactorsE()[dir];
+            b.mDestFactorsE[dir] =
+                buffers[sideNum]->getDestFactorsE()[dir];
             
-            destYee = rectHalfToYee(buffers[nn]->getDestHalfRect(),
-                hOctantNumber(fieldDir));
-            srcYee = rectHalfToYee(buffers[nn]->getSourceHalfRect(),
-                hOctantNumber(fieldDir));
+            LOGMORE << b.mSrcEHeadPtr[dir] << "\n";
+            LOGMORE << b.mDestEHeadPtr[dir] << "\n";
+            LOGMORE << b.mBufEHeadPtr[dir] << "\n";
+        }
+        
+        LOG << "New H buffers:\n";
+        
+        for (dir = 0; dir < 3; dir++)
+        {
+            destYee = rectHalfToYee(buffers[sideNum]->getDestHalfRect(),
+                hOctantNumber(dir));
+            srcYee = rectHalfToYee(buffers[sideNum]->getSourceHalfRect(),
+                hOctantNumber(dir));
             
-            b.mDestHHeadPtr[fieldDir] = vp.getH(fieldDir, destYee.p1);
-            b.mSrcHHeadPtr[fieldDir] = srcVP->getH(fieldDir, srcYee.p1);
-            b.mBufHHeadPtr[fieldDir] = vp.getH(buffers[nn], fieldDir,
+            b.mDestHHeadPtr[dir] = vp.getH(dir, destYee.p1);
+            b.mSrcHHeadPtr[dir] = srcVP->getH(dir, srcYee.p1);
+            b.mBufHHeadPtr[dir] = vp.getH(buffers[sideNum], dir,
                 destYee.p1);
             
-            b.mSrcFactorsE[fieldDir] = buffers[nn]->getSourceFactors()
-                [eOctantNumber(fieldDir)];
-            b.mSrcFactorsH[fieldDir] = buffers[nn]->getSourceFactors()
-                [hOctantNumber(fieldDir)];
-            b.mDestFactorsE[fieldDir] = buffers[nn]->getDestFactors()
-                [eOctantNumber(fieldDir)];
-            b.mDestFactorsH[fieldDir] = buffers[nn]->getDestFactors()
-                [hOctantNumber(fieldDir)];
-            /*
-            LOG << "What the buffer?\n";
-            LOGMORE << b.mSrcEHeadPtr[fieldDir] << "\n";
-            LOGMORE << b.mDestEHeadPtr[fieldDir] << "\n";
-            LOGMORE << b.mBufEHeadPtr[fieldDir] << "\n";
-            LOGMORE << b.mSrcHHeadPtr[fieldDir] << "\n";
-            LOGMORE << b.mDestHHeadPtr[fieldDir] << "\n";
-            LOGMORE << b.mBufHHeadPtr[fieldDir] << "\n";
-            */
+            b.mSrcFactorsH[dir] =
+                buffers[sideNum]->getSourceFactorsH()[dir];
+            b.mDestFactorsH[dir] =
+                buffers[sideNum]->getDestFactorsH()[dir];
+            
+            LOGMORE << b.mSrcHHeadPtr[dir] << "\n";
+            LOGMORE << b.mDestHHeadPtr[dir] << "\n";
+            LOGMORE << b.mBufHHeadPtr[dir] << "\n";
         }
         
         b.mSourceStride = srcVP->getFieldStride();
         b.mDestStride = vp.getFieldStride();
         
-        Rect3i nbYeeRect = rectHalfToYee(buffers[nn]->getBufferHalfRect());
+        // this calculation is based on VoxelizedPartition::getFieldStride
+        int stride = memBufsE[buffers[sideNum]][0]->getStride();
+        Vector3i bufDims = rectHalfToYee(buffers[sideNum]->getBufferHalfRect())
+            .size() + 1;
+            
+        Vector3i stride3d(stride, stride*bufDims[0],
+            stride*bufDims[0]*bufDims[1]);
+        if (bufDims[0] == 1)
+            stride3d[0] = 0;
+        if (bufDims[1] == 1)
+            stride3d[1] = 0;
+        if (bufDims[2] == 1)
+            stride3d[2] = 0;
+        b.mStride = stride3d;
+        
+        LOG << "Buffer stride " << b.mStride << "\n";
+        
+        Rect3i nbYeeRect = rectHalfToYee(buffers[sideNum]->getBufferHalfRect());
         b.mNumYeeCells = nbYeeRect.size()+1; 
         mNBs.push_back(b);
     }
@@ -113,7 +140,7 @@ HuygensLink(const vector<LinkNeighborBufferDeleg> & nbs)
         LinkNeighborBuffer b;
         for (mm = 0; mm < 3; mm++)
         {
-            //LOG << "nn = " << nn << " mm = " << mm << "\n";
+//            LOG << "nn = " << nn << " mm = " << mm << "\n";
             b.mDestEHeadPtr[mm] = nbs[nn].mDestEHeadPtr[mm].getPointer();
             b.mDestHHeadPtr[mm] = nbs[nn].mDestHHeadPtr[mm].getPointer();
             b.mSrcEHeadPtr[mm] = nbs[nn].mSrcEHeadPtr[mm].getPointer();
@@ -135,6 +162,7 @@ HuygensLink(const vector<LinkNeighborBufferDeleg> & nbs)
         }
         b.mSourceStride = nbs[nn].mSourceStride;
         b.mDestStride = nbs[nn].mDestStride;
+        b.mStride = nbs[nn].mStride;
         b.mNumYeeCells = nbs[nn].mNumYeeCells;
         b.mSrcFactorsE = nbs[nn].mSrcFactorsE;
         b.mSrcFactorsH = nbs[nn].mSrcFactorsH;
@@ -159,6 +187,7 @@ updateE()
     {
         const Vector3i srcStride(mNBs[bufNum].mSourceStride);
         const Vector3i destStride(mNBs[bufNum].mDestStride);
+        const Vector3i bufStride(mNBs[bufNum].mStride);
         for (int fieldNum = 0; fieldNum < 3; fieldNum++)
         {
             srcStart2 = mNBs[bufNum].mSrcEHeadPtr[fieldNum];
@@ -189,23 +218,27 @@ updateE()
                     {
                         //LOG << "src " << *srcPtr << " dest " << *destPtr
                         //    << "\n";
+                        
+                        /*
                         LOG << MemoryBuffer::identify(srcPtr) << "\n"
                             << MemoryBuffer::identify(destPtr) << "\n"
                             << MemoryBuffer::identify(bufPtr) << "\n";
                         LOGMORE << "src " << srcFactor << " dest " << destFactor
                             << "\n";
+                        */
+                        
                         *bufPtr = *srcPtr*srcFactor + *destPtr*destFactor;
                         srcPtr += srcStride[0];
                         destPtr += destStride[0];
-                        bufPtr += destStride[0];
+                        bufPtr += bufStride[0];
                     }
                     srcStart1 += srcStride[1];
                     destStart1 += destStride[1];
-                    bufStart1 += destStride[1];
+                    bufStart1 += bufStride[1];
                 }
                 srcStart2 += srcStride[2];
                 destStart2 += destStride[2];
-                bufStart2 += destStride[2];
+                bufStart2 += bufStride[2];
             }
         }
     }
@@ -223,6 +256,7 @@ updateH()
     {
         const Vector3i srcStride(mNBs[bufNum].mSourceStride);
         const Vector3i destStride(mNBs[bufNum].mDestStride);
+        const Vector3i bufStride(mNBs[bufNum].mStride);
         for (int fieldNum = 0; fieldNum < 3; fieldNum++)
         {
             srcStart2 = mNBs[bufNum].mSrcHHeadPtr[fieldNum];
@@ -253,23 +287,27 @@ updateH()
                     {
                         //LOG << "src " << *srcPtr << " dest " << *destPtr
                         //    << "\n";
+                        
+                        /*
                         LOG << MemoryBuffer::identify(srcPtr) << "\n"
                             << MemoryBuffer::identify(destPtr) << "\n"
                             << MemoryBuffer::identify(bufPtr) << "\n";
                         LOGMORE << "src " << srcFactor << " dest " << destFactor
                             << "\n";
+                        */
+                        
                         *bufPtr = *srcPtr*srcFactor + *destPtr*destFactor;
                         srcPtr += srcStride[0];
                         destPtr += destStride[0];
-                        bufPtr += destStride[0];
+                        bufPtr += bufStride[0];
                     }
                     srcStart1 += srcStride[1];
                     destStart1 += destStride[1];
-                    bufStart1 += destStride[1];
+                    bufStart1 += bufStride[1];
                 }
                 srcStart2 += srcStride[2];
                 destStart2 += destStride[2];
-                bufStart2 += destStride[2];
+                bufStart2 += bufStride[2];
             }
         }
     }

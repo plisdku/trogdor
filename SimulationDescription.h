@@ -499,9 +499,14 @@ public:
 	const Rect3i & getBufferHalfRect() const { return mBufferHalfRect; }
 	//const Rect3i & getBufferYeeBounds() const { return mBufferYeeBounds; }
     
-    const std::vector<float> & getDestFactors() const { return mDestFactors; }
-    const std::vector<float> & getSourceFactors() const
-        { return mSrcFactors; }
+    const std::vector<float> & getDestFactorsE() const
+        { return mDestFactorsE; }
+    const std::vector<float> & getSourceFactorsE() const
+        { return mSrcFactorsE; }
+    const std::vector<float> & getDestFactorsH() const
+        { return mDestFactorsH; }
+    const std::vector<float> & getSourceFactorsH() const
+        { return mSrcFactorsH; }
     
     void setSourceRects(const Rect3i & sourceHalfCells, int nSide);
 	
@@ -514,8 +519,10 @@ private:
 	Rect3i mDestHalfRect;
 	Rect3i mBufferHalfRect;
 	//Rect3i mBufferYeeBounds;
-	std::vector<float> mDestFactors; // per field # 0-5
-	std::vector<float> mSrcFactors;  // per field # 0-5
+	std::vector<float> mDestFactorsE;
+	std::vector<float> mSrcFactorsE;
+	std::vector<float> mDestFactorsH;
+	std::vector<float> mSrcFactorsH;
 };
 
 class MaterialDescription
@@ -613,6 +620,7 @@ class Instruction
 public:
 	Instruction(InstructionType inType);
 	InstructionType getType() const { return mType; }
+    virtual ~Instruction() {}
 	
 	virtual void cycleCoordinates();  // rotate x->y, y->z, z->x
 protected:

@@ -33,7 +33,7 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	mAuxAllocRegion(allocRegion),
 	mCalcHalfCells(calcRegion)
 {
-	LOG << "VoxelizedPartition()\n";
+	//LOG << "VoxelizedPartition()\n";
 	
     m_nnx = mFieldAllocHalfCells.size(0)+1;
     m_nny = mFieldAllocHalfCells.size(1)+1;
@@ -53,6 +53,7 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	mNonPMLHalfCells = gridDesc.getNonPMLHalfCells();
 	mOriginYee = gridDesc.getOriginYee();
 	
+    /*
     LOG << "Partition geometry:\n";
 	LOGMORE << "nonPML " << mNonPMLHalfCells << "\n";
 	LOGMORE << "alloc region " << mAuxAllocRegion << "\n";
@@ -60,7 +61,8 @@ VoxelizedPartition(const GridDescription & gridDesc,
 		<< mFieldAllocHalfCells << "\n";
 	LOGMORE << "calc " << mCalcHalfCells << "\n";
 	LOGMORE << "origin " << mOriginYee << "\n";
-	
+	*/
+    
 	paintFromAssembly(gridDesc, voxelizedGrids);
 	calculateHuygensSymmetries(gridDesc); // * NOT MPI FRIENDLY YET
 	paintFromHuygensSurfaces(gridDesc);
@@ -351,9 +353,9 @@ fieldPointer(const NeighborBufferDescPtr & nb, Vector3i halfCell) const
 	long index = linearYeeIndex(nb, halfCell);
 	//int fieldNum = octantFieldNumber(halfCell);
     if (octantENumber(halfCell) != -1)
-        return BufferPointer(*mNBBuffersE[nb],octantENumber(halfCell), index);
+        return BufferPointer(*mNBBuffersE[nb][octantENumber(halfCell)], index);
     else
-        return BufferPointer(*mNBBuffersH[nb],octantHNumber(halfCell), index);
+        return BufferPointer(*mNBBuffersH[nb][octantHNumber(halfCell)], index);
 }
 
 
@@ -392,7 +394,16 @@ getFieldStride() const
         assert(mBuffersH[nn]->getStride() == stride); // but make sure.
     }
     
-    return Vector3i(stride, stride*m_nx, stride*m_nx*m_ny);
+    Vector3i stride3d(stride, stride*m_nx, stride*m_nx*m_ny);
+    if (m_nx == 1)
+        stride3d[0] = 0;
+    if (m_ny == 1)
+        stride3d[1] = 0;
+    if (m_nz == 1)
+        stride3d[2] = 0;
+    
+    return stride3d;
+    //return Vector3i(stride, stride*m_nx, stride*m_nx*m_ny);
 }
 
 void VoxelizedPartition::
@@ -634,7 +645,7 @@ createSetupMaterials(const GridDescription & gridDesc)
 	
     //cout << *mCentralIndices << endl;
     
-	LOG << "Iterating over paints...\n";
+	//LOG << "Iterating over paints...\n";
 	for (set<Paint*>::iterator itr = allPaints.begin(); itr != allPaints.end();
 		itr++)
 	{
@@ -684,12 +695,21 @@ generateRunlines()
 	LOG << "Check it out, we're sticking to the calc region.  I'm not sure "
 		"yet precisely how to use this in the MPI context—work it out later.\n";
 	
+    LOG << "Warning: about to use some magic numbers (0 and 7 are unused"
+        " octants.\n";
+    for (int octantNum = 1; octantNum <= 6; octantNum++)
+    {
+        genRunlinesInOctant(octantNum);
+    }
+    /*
 	for (int fieldNum = 0; fieldNum < 6; fieldNum++)
 	{
 		// Remember to set up the buffers here!
 		//LOG << "Runlines for offset " << halfCellFieldOffset(fieldNum) << "\n";
+        
 		genRunlinesInOctant(octant(halfCellFieldOffset(fieldNum)));
 	}
+    */
 	
     /*
 	LOG << "Printing runlines.\n";

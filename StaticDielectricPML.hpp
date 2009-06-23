@@ -360,7 +360,7 @@ StaticDielectricPML(const SetupStaticDielectricPML & deleg, Vector3f dxyz,
     
     // Make the runlines
     int dir;
-    for (dir = 0; dir < 6; dir++)
+    for (dir = 0; dir < 3; dir++)
     {
         //LOG << "Printing as we create runlines in field " << field << "\n";
         const std::vector<SBPMRunlinePtr> & setupRunlines =
@@ -380,7 +380,7 @@ StaticDielectricPML(const SetupStaticDielectricPML & deleg, Vector3f dxyz,
             //LOGMORE << mRunlines[field][nn] << "\n";
         }
     }
-    for (dir = 0; dir < 6; dir++)
+    for (dir = 0; dir < 3; dir++)
     {
         //LOG << "Printing as we create runlines in field " << field << "\n";
         const std::vector<SBPMRunlinePtr> & setupRunlines =
@@ -593,7 +593,7 @@ calcEx()
     // grab the right set of runlines (for Ex, Ey, or Ez)
     const int DIRECTION = 0;
     const int STRIDE = 1;
-    vector<SimpleAuxPMLRunline> & rls = mRunlinesE[octantENumber(DIRECTION)];
+    vector<SimpleAuxPMLRunline> & rls = mRunlinesE[DIRECTION];
     
     float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
     float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
@@ -679,7 +679,7 @@ calcEy()
     // grab the right set of runlines (for Ex, Ey, or Ez)
     const int DIRECTION = 1;
     const int STRIDE = 1;
-    vector<SimpleAuxPMLRunline> & rls = mRunlinesE[octantENumber(DIRECTION)];
+    vector<SimpleAuxPMLRunline> & rls = mRunlinesE[DIRECTION];
     
     float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
     float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
@@ -761,7 +761,7 @@ calcEz()
     // grab the right set of runlines (for Ex, Ey, or Ez)
     const int DIRECTION = 2;
     const int STRIDE = 1;
-    vector<SimpleAuxPMLRunline> & rls = mRunlinesE[octantENumber(DIRECTION)];
+    vector<SimpleAuxPMLRunline> & rls = mRunlinesE[DIRECTION];
     
     float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
     float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
@@ -844,7 +844,7 @@ calcHx()
     // grab the right set of runlines (for Hx, Hy, or Hz)
     const int DIRECTION = 0;
     const int STRIDE = 1;
-    vector<SimpleAuxPMLRunline> & rls = mRunlinesH[octantHNumber(DIRECTION)];
+    vector<SimpleAuxPMLRunline> & rls = mRunlinesH[DIRECTION];
     
     float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
     float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
@@ -923,7 +923,7 @@ calcHy()
     // grab the right set of runlines (for Hx, Hy, or Hz)
     const int DIRECTION = 1;
     const int STRIDE = 1;
-    vector<SimpleAuxPMLRunline> & rls = mRunlinesH[octantHNumber(DIRECTION)];
+    vector<SimpleAuxPMLRunline> & rls = mRunlinesH[DIRECTION];
     
     float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
     float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
@@ -1005,7 +1005,7 @@ calcHz()
     // grab the right set of runlines (for Hx, Hy, or Hz)
     const int DIRECTION = 2;
     const int STRIDE = 1;
-    vector<SimpleAuxPMLRunline> & rls = mRunlinesH[octantHNumber(DIRECTION)];
+    vector<SimpleAuxPMLRunline> & rls = mRunlinesH[DIRECTION];
     
     float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
     float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz

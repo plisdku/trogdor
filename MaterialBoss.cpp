@@ -222,10 +222,11 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 			mUsedNeighborIndices[nSide] = 0;
 			bp[nSide] = vp.fieldPointer(mStartPaint->getCurlBuffer(nSide),
 				mStartPoint+cardinal(nSide));
-            
+            /*
             LOG << "Buffer on that side is " << bp[nSide] << "\n";
             LOGMORE << "Compare to " << vp.fieldPointer(mStartPoint+
                 cardinal(nSide)) << "\n";
+            */
 		}
 		else
 		{
@@ -636,11 +637,11 @@ operator<<(std::ostream & str, const SimpleRunline & rl)
         << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.length;
     */
     
-    str << hex << rl.fi << ": " << MemoryBuffer::identify(rl.fi) << "\n";
-    str << hex << rl.gj[0] << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
-    str << hex << rl.gj[1] << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
-    str << hex << rl.gk[0] << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
-    str << hex << rl.gk[1] << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
+    str << hex << rl.fi << dec << ": " << MemoryBuffer::identify(rl.fi) << "\n";
+    str << hex << rl.gj[0] << dec << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
+    str << hex << rl.gj[1] << dec << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
+    str << hex << rl.gk[0] << dec << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
+    str << hex << rl.gk[1] << dec << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
     return str;
 }
 
@@ -653,11 +654,11 @@ operator<<(std::ostream & str, const SimplePMLRunline & rl)
         << " " << rl.pmlIndex[1] << " " << rl.pmlIndex[2] << " " << rl.length;
     */
     
-    str << hex << rl.fi << ": " << MemoryBuffer::identify(rl.fi) << "\n";
-    str << hex << rl.gj[0] << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
-    str << hex << rl.gj[1] << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
-    str << hex << rl.gk[0] << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
-    str << hex << rl.gk[1] << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
+    str << hex << rl.fi << dec << ": " << MemoryBuffer::identify(rl.fi) << "\n";
+    str << hex << rl.gj[0] << dec << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
+    str << hex << rl.gj[1] << dec << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
+    str << hex << rl.gk[0] << dec << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
+    str << hex << rl.gk[1] << dec << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
     str << dec << rl.pmlIndex[0] << ", " << rl.pmlIndex[1] << ", "
         << rl.pmlIndex[2] << " length " << rl.length << "\n";
     return str;

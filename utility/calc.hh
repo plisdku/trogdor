@@ -814,7 +814,7 @@ namespace calc_defs {
         return res ; // assign value
       }
     }
-  
+    
     ptr = bf_ptr ; // restore pointer
     token_string = name ;
     token_type   = token ;

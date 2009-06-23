@@ -54,6 +54,7 @@ struct LinkNeighborBufferDeleg
     std::vector<BufferPointer> mBufHHeadPtr;
     Vector3i mSourceStride;
     Vector3i mDestStride;
+    Vector3i mStride;
     Vector3i mNumYeeCells;
     std::vector<float> mSrcFactorsE;
     std::vector<float> mDestFactorsE;
@@ -72,6 +73,7 @@ struct LinkNeighborBuffer
     std::vector<float*> mBufHHeadPtr;
     Vector3i mSourceStride;
     Vector3i mDestStride;
+    Vector3i mStride;
     Vector3i mNumYeeCells;
     std::vector<float> mSrcFactorsE;
     std::vector<float> mDestFactorsE;

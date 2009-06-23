@@ -53,7 +53,7 @@ StaticDielectric(const SetupStaticDielectric & deleg,
         istringstream(descrip.getParams()["mur"]) >> m_mur;
     
     int dir;
-    for (dir = 0; dir < 6; dir++)
+    for (dir = 0; dir < 3; dir++)
     {
         const std::vector<SBMRunlinePtr> & setupRunlines =
             deleg.getRunlinesE(dir);
@@ -68,7 +68,7 @@ StaticDielectric(const SetupStaticDielectric & deleg,
         }
     }
     
-    for (dir = 0; dir < 6; dir++)
+    for (dir = 0; dir < 3; dir++)
     {
         const std::vector<SBMRunlinePtr> & setupRunlines =
             deleg.getRunlinesH(dir);
@@ -91,8 +91,7 @@ calcEPhase(int direction)
     //LOG << "direction " << direction << " number "
     //    << eFieldNumber(direction) << "\n";
     // grab the right set of runlines (for Ex, Ey, or Ez)
-    vector<SimpleRunline> & rls =
-        mRunlinesE[octantENumber(direction)];
+    vector<SimpleRunline> & rls = mRunlinesE[direction];
     const int STRIDE = 1;
     
     float dj = mDxyz[(direction+1)%3];  // e.g. dy
@@ -144,8 +143,7 @@ calcHPhase(int direction)
     //LOG << "direction " << direction << " number "
     //    << hFieldNumber(direction) << "\n";
     // grab the right set of runlines (for Hx, Hy, or Hz)
-    vector<SimpleRunline> & rls =
-        mRunlinesH[octantHNumber(direction)];
+    vector<SimpleRunline> & rls = mRunlinesH[direction];
     const int STRIDE = 1;
     
     float dj = mDxyz[(direction+1)%3];  // e.g. dy
@@ -153,7 +151,7 @@ calcHPhase(int direction)
     
     for (int nRL = 0; nRL < rls.size(); nRL++)
     {
-        SimpleRunline & rl(rls[nRL]);
+        SimpleRunline & rl(rls.at(nRL));
         float* fi(rl.fi);               // e.g. Hx
         const float* gjLow(rl.gj[0]);   // e.g. Ey(z-1/2)
         const float* gjHigh(rl.gj[1]);  // e.g. Ey(z+1/2)

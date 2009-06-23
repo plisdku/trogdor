@@ -699,6 +699,11 @@ HuygensSurfaceDescription(const HuygensSurfaceDescription & parent,
 {
     *this = parent;
     mHalfCells = newHalfCells;
+    
+	if (mIsTotalField)
+		initTFSFBuffers(1.0);
+	else
+		initTFSFBuffers(-1.0);
 }
 
 void HuygensSurfaceDescription::
@@ -795,6 +800,8 @@ newTFSFTimeSource(SourceFields fields, string timeFile, Vector3i direction,
     hs2->mHalfCells = halfCells;
     hs2->mOmittedSides = omittedSides;
     hs2->mIsTotalField = isTF;
+    
+    LOG << "Half cells " << halfCells << "\n";
 	
 	if (isTF)
 		hs2->initTFSFBuffers(1.0);
@@ -825,6 +832,8 @@ newTFSFFormulaSource(SourceFields fields, string formula, Vector3i direction,
     hs2->mHalfCells = halfCells;
     hs2->mOmittedSides = omittedSides;
     hs2->mIsTotalField = isTF;
+    
+    LOG << "Half cells " << halfCells << "\n";
 	
 	if (isTF)
 		hs2->initTFSFBuffers(1.0);
@@ -907,6 +916,8 @@ initTFSFBuffers(float srcFactor)
 			mHalfCells, nDir, srcFactor));
 		mBuffers[nDir] = nb;
 	}
+    
+    LOG << "Half cells " << mHalfCells << "\n";
 }
 void HuygensSurfaceDescription::
 initLinkTFSFBuffers(float srcFactor)
@@ -926,6 +937,7 @@ initLinkTFSFBuffers(float srcFactor)
 			mFromHalfCells, mHalfCells, nDir, srcFactor));
 		mBuffers[nDir] = nb;
 	}
+    LOG << "Half cells " << mHalfCells << "\n";
 }
 
 void HuygensSurfaceDescription::
@@ -940,13 +952,17 @@ NeighborBufferDescription::
 NeighborBufferDescription(const Rect3i & huygensDestHalfCells,
     int nSide, 
 	float incidentFieldFactor) :
-	mDestFactors(6),
-	mSrcFactors(6)
+	mDestFactorsE(3),
+	mSrcFactorsE(3),
+	mDestFactorsH(3),
+	mSrcFactorsH(3)
 {
     mDestHalfRect = getEdgeHalfCells(huygensDestHalfCells, nSide);
     mBufferHalfRect = mDestHalfRect - mDestHalfRect.p1;
 	mBufferHalfRect.p1[nSide/2] = 0;
 	mBufferHalfRect.p2[nSide/2] = 1;
+    
+    LOG << "Huygens dest " << huygensDestHalfCells << "\n";
     
     initFactors(huygensDestHalfCells, nSide, incidentFieldFactor);
 }
@@ -956,14 +972,18 @@ NeighborBufferDescription(const Rect3i & huygensSourceHalfCells,
     const Rect3i & huygensDestHalfCells,
     int nSide, 
 	float incidentFieldFactor) :
-	mDestFactors(6),
-	mSrcFactors(6)
+	mDestFactorsE(3),
+	mSrcFactorsE(3),
+	mDestFactorsH(3),
+	mSrcFactorsH(3)
 {
     mSourceHalfRect = getEdgeHalfCells(huygensSourceHalfCells, nSide);
     mDestHalfRect = getEdgeHalfCells(huygensDestHalfCells, nSide);
     mBufferHalfRect = mDestHalfRect - mDestHalfRect.p1;
 	mBufferHalfRect.p1[nSide/2] = 0;
 	mBufferHalfRect.p2[nSide/2] = 1;
+    
+    LOG << "Huygens dest " << huygensDestHalfCells << "\n";
     
     initFactors(huygensDestHalfCells, nSide, incidentFieldFactor);
 }
@@ -996,26 +1016,44 @@ initFactors(const Rect3i & huygensDestHalfCells, int nSide,
     float incFieldFactor)
 {
 	Rect3i outerTotalField = edgeOfRect(huygensDestHalfCells, nSide);
-	
-	for (unsigned int fieldNum = 0; fieldNum < 6; fieldNum++) // on E, H
-	{
-		Vector3i fieldOffset = halfCellFieldOffset(fieldNum);
-		Vector3i p1Offset = outerTotalField.p1 % 2;
-		
-		// Figure out if the given yee octant lies in the TF region or SF region
-		if (fieldOffset[nSide/2] == p1Offset[nSide/2])
-		{
-			// total-field buffer
-			mDestFactors[fieldNum] = 1.0f;
-			mSrcFactors[fieldNum] = 1.0f * incFieldFactor;
-		}
-		else
-		{
-			// scattered-field buffer
-			mDestFactors[fieldNum] = 1.0f;
-			mSrcFactors[fieldNum] = -1.0f * incFieldFactor;
-		}
-	}
+	unsigned int dir;
+    Vector3i fieldOffset, p1Offset;
+    
+    for (dir = 0; dir < 3; dir++)
+    {
+        // E fields
+        fieldOffset = eFieldOffset(dir);
+        p1Offset = outerTotalField.p1%2;
+        
+        // if we're in the total-field region, SUBTRACT the field here to
+        // prevent the incident field from moving out to the scattered field
+        // zone.
+        if (fieldOffset[nSide/2] == p1Offset[nSide/2])
+        {
+            mDestFactorsE[dir] = 1.0f;
+            mSrcFactorsE[dir] = -1.0f*incFieldFactor;
+        }
+        else
+        {
+            mDestFactorsE[dir] = 1.0f;
+            mSrcFactorsE[dir] = 1.0f * incFieldFactor;
+        }
+        
+        // H fields
+        fieldOffset = hFieldOffset(dir);
+        p1Offset = outerTotalField.p1%2;
+        
+        if (fieldOffset[nSide/2] == p1Offset[nSide/2])
+        {
+            mDestFactorsH[dir] = 1.0f;
+            mSrcFactorsH[dir] = -1.0f*incFieldFactor;
+        }
+        else
+        {
+            mDestFactorsH[dir] = 1.0f;
+            mSrcFactorsH[dir] = 1.0f * incFieldFactor;
+        }
+    }
 }
 
 
@@ -1030,7 +1068,27 @@ cycleCoordinates()
 	mBufferHalfRect = permuteForward * mBufferHalfRect;
 	//mBufferYeeBounds = permuteForward * mBufferYeeBounds;
 	
+    vector<float> newDestFactors(3);
+    vector<float> newSrcFactors(3);
+    
+    for (int ii = 0; ii < 3; ii++)
+    {
+        newDestFactors[(ii+1)%3] = mDestFactorsE[ii];
+        newSrcFactors[(ii+1)%3] = mSrcFactorsE[ii];
+    }
+    mDestFactorsE = newDestFactors;
+    mSrcFactorsE = newSrcFactors;
+    
+    for (int ii = 0; ii < 3; ii++)
+    {
+        newDestFactors[(ii+1)%3] = mDestFactorsH[ii];
+        newSrcFactors[(ii+1)%3] = mSrcFactorsH[ii];
+    }
+    mDestFactorsH = newDestFactors;
+    mSrcFactorsH = newSrcFactors;
+    
 	// Permute the source and destination factors.
+    /*
 	// This is tricky since the order is (Ex, Ey, Hz, Ez, Hy, Hx).
 	// Might as well do it by hand (should I revisit this design later?)
 	int permuteOrder[] = {3,0,4,1,5,2}; // Ex was Ez, Ey was Ex, etc.
@@ -1043,6 +1101,7 @@ cycleCoordinates()
 	}
 	mDestFactors = newDestFactors;
 	mSrcFactors = newSrcFactors;
+    */
 }
 
 #pragma mark *** Material ***

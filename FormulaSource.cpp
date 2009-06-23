@@ -127,7 +127,9 @@ uniformSourceE(CalculationPartition & cp, int timestep)
 	mCalculator.set("n", timestep);
 	mCalculator.set("t", mDt*timestep);
 	mCalculator.parse(mFormula);
+    
 	val = mCalculator.get_value();
+    
     //LOG << "Writing " << val << "\n";
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
@@ -143,6 +145,8 @@ uniformSourceE(CalculationPartition & cp, int timestep)
                 for (int ii = rect.p1[0]; ii <= rect.p2[0]; ii++)
                 {
                     cp.setE(dir, ii, jj, kk, val);
+                    //LOG << "Writing at " << ii << " " << jj << " " << kk
+                    //    << "\n";
                     //LOG << "E is now " << cp.getE(dir, ii, jj, kk) << "\n";
                 }
             }

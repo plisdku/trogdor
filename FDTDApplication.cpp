@@ -368,6 +368,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	tfHalfCells = tfHalfCells - gridHalfCells.p1;
 	copyTo = copyTo - gridHalfCells.p1;
 	originYee = originYee - vecHalfToYee(gridHalfCells.p1);
+    linkSourceHalfCells = linkSourceHalfCells - gridHalfCells.p1;
 	gridHalfCells = gridHalfCells - gridHalfCells.p1;
 
 	GridDescPtr childGrid(new GridDescription(auxGridName,
@@ -515,6 +516,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	tfRect = tfRect - gridBounds.p1;
 	copyTo = copyTo - gridBounds.p1;
 	origin = origin - YeeUtilities::vecHalfToYee(gridBounds.p1);
+    linkSourceHalfCells = linkSourceHalfCells - gridBounds.p1;
 	gridBounds = gridBounds - gridBounds.p1;
 
 	GridDescPtr childGrid(new GridDescription(srcGridName,
@@ -536,7 +538,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 				
 		Rect3i yeeTFRect = YeeUtilities::rectHalfToYee(tfRect);
 		Vector3i srcYeeCell = clip(yeeTFRect, Vector3i(1000000*srcDir));
-		srcYeeCell -= srcDir;
+		srcYeeCell -= 2*srcDir;
 		
         vector<Region> regions(1, Region(Rect3i(srcYeeCell,srcYeeCell)));
         

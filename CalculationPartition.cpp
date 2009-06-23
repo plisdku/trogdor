@@ -90,11 +90,12 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mHeadH[dir] = mBuffersH[dir]->getHeadPointer();
         mEOffset[dir] = eFieldPosition(dir);
         mHOffset[dir] = hFieldPosition(dir);
-        
+        /*
         LOG << "mHeadE[" << dir << "] is "
             << MemoryBuffer::identify(mHeadE[dir]) << "\n";
         LOG << "mHeadH[" << dir << "] is "
             << MemoryBuffer::identify(mHeadH[dir]) << "\n";
+        */
         
     }
     mMemStride[0] = mBuffersE[0]->getStride(); // should be same for all
