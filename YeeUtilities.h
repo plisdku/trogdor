@@ -25,21 +25,12 @@ const Vector3i & halfCellOffset(int octant);
 
 const Vector3i & cardinal(int directionIndex);
 
-//int halfCellFieldIndex(int fieldIndex);  // returns halfCellIndices of EM fields
-//const Vector3i & halfCellFieldOffset(int fieldIndex); // offsets of EM fields
+int xyz(int octant);
+bool isE(int octant);
+bool isH(int octant);
 
-//int octantFieldNumber(int octant); // returns field indices or -1
-//int octantFieldNumber(Vector3i octant); // returns field indices or -1
-int octantENumber(int octant); // returns 0,1,2 for Ex,y,z or -1
-int octantHNumber(int octant); // returns 0,1,2 for Hx,y,z or -1
-int octantENumber(Vector3i halfCell);
-int octantHNumber(Vector3i halfCell);
-int octantFieldDirection(int octant); // returns 0 for Ex or Hx, 1 for y, etc.
-int octantFieldDirection(Vector3i octant);
-int eOctantNumber(int directionIndex); // returns octant 1 for dir 0 (Ex), etc.
-int hOctantNumber(int directionIndex); // returns octant 6 for dir 0 (Hx), etc.
-//int eFieldNumber(int directionIndex);
-//int hFieldNumber(int directionIndex);
+int octantE(int directionIndex); // returns octant 1 for dir 0 (Ex), etc.
+int octantH(int directionIndex); // returns octant 6 for dir 0 (Hx), etc.
 
 Vector3f eFieldPosition(int fieldIndex);
 Vector3f hFieldPosition(int fieldIndex);
@@ -47,7 +38,7 @@ Vector3i eFieldOffset(int directionIndex);
 Vector3i hFieldOffset(int directionIndex);
 
 // returns halfCell/2
-Vector3i vecHalfToYee(const Vector3i & halfCell);
+Vector3i halfToYee(const Vector3i & halfCell);
 
 // returns  2*yeeCell + halfCellOffset
 Vector3i vecYeeToHalf(const Vector3i & yeeCell,
@@ -57,15 +48,15 @@ Vector3i vecYeeToHalf(const Vector3i & yeeCell,
 Vector3i vecYeeToHalf(const Vector3i & yeeCell, int halfCellIndex);
 
 // returns smallest Yee rect containing all points in halfRect
-Rect3i rectHalfToYee(const Rect3i & halfRect);
+Rect3i halfToYee(const Rect3i & halfRect);
 
 // returns smallest Yee rect containing all points at given halfCellIndex
 // in halfRect
-Rect3i rectHalfToYee(const Rect3i & halfRect, int halfCellIndex);
+Rect3i halfToYee(const Rect3i & halfRect, int halfCellIndex);
 
 // returns smallest Yee rect containing all points at given halfCellOffset
 // in halfRect
-Rect3i rectHalfToYee(const Rect3i & halfRect, const Vector3i & halfCellOffset);
+Rect3i halfToYee(const Rect3i & halfRect, const Vector3i & halfCellOffset);
 
 // returns smallest half cell rect containing all points in given Yee rect
 // at given halfCellIndex

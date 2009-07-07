@@ -204,7 +204,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	mStartPaint = voxelGrid(startPos);
 	
 	// Set the mask (which directions to check)
-	int fieldDirection = octantFieldDirection(startPos);
+	int fieldDirection = xyz(octant(startPos));
 	int dir_j = (fieldDirection+1)%3;
 	int dir_k = (fieldDirection+2)%3;
 	
@@ -296,11 +296,11 @@ endRunline()
 {
 	//int field = octantFieldNumber(mStartPoint);
     int oct = octant(mStartPoint);
-    if (octantENumber(oct) != -1)
-        mRunlinesE[octantENumber(oct)].push_back(
+    if (isE(oct))
+        mRunlinesE[xyz(oct)].push_back(
             SBMRunlinePtr(new SBMRunline(mCurrentRunline)));
-    else if (octantHNumber(oct) != -1)
-        mRunlinesH[octantHNumber(oct)].push_back(
+    else if (isH(oct))
+        mRunlinesH[xyz(oct)].push_back(
             SBMRunlinePtr(new SBMRunline(mCurrentRunline)));
     else
         assert(!"Bad octant.");
@@ -369,7 +369,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	mStartPaint = voxelGrid(startPos);
 	
 	// Set the mask (which directions to check)
-	int fieldDirection = octantFieldDirection(startPos);
+	int fieldDirection = xyz(octant(startPos));
 	int dir_j = (fieldDirection+1)%3;
 	int dir_k = (fieldDirection+2)%3;
 	
@@ -410,10 +410,10 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
     Vector3i gridNumHalfCells = vp.getGridHalfCells().size() + 1;
     Vector3i wrappedStart = (mStartPoint+gridNumHalfCells) % gridNumHalfCells;
     assert(octant(wrappedStart) == octant(mStartPoint));
-    Rect3i pmlYeeCells = rectHalfToYee(
+    Rect3i pmlYeeCells = halfToYee(
         vp.getPMLHalfCells(mStartPaint->getPMLDirections()),
         octant(wrappedStart));
-    mCurrentRunline.pmlDepthIndex = vecHalfToYee(wrappedStart) - pmlYeeCells.p1;
+    mCurrentRunline.pmlDepthIndex = halfToYee(wrappedStart) - pmlYeeCells.p1;
     
     // TODO: test that this gives the correct PML if we wrapped to the far
     // side of the grid somehow.  (What am I talking about???)
@@ -490,11 +490,11 @@ void SimpleBulkPMLSetupMaterial::
 endRunline()
 {
     int oct = octant(mStartPoint);
-    if (octantENumber(oct) != -1)
-        mRunlinesE[octantENumber(oct)].push_back(
+    if (isE(oct))
+        mRunlinesE[xyz(oct)].push_back(
             SBPMRunlinePtr(new SBPMRunline(mCurrentRunline)));
-    else if (octantHNumber(oct) != -1)
-        mRunlinesH[octantHNumber(oct)].push_back(
+    else if (isH(oct))
+        mRunlinesH[xyz(oct)].push_back(
             SBPMRunlinePtr(new SBPMRunline(mCurrentRunline)));
     else
         assert(!"Bad octant.");

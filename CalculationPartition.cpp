@@ -159,7 +159,7 @@ outputE(int timestep)
     for (nn = 0; nn < mOutputs.size(); nn++)
         mOutputs[nn]->outputEPhase(*this, timestep);
     
-    printFields(cout, eOctantNumber(2), 1.0);
+    printFields(cout, octantE(2), 1.0);
 }
 
 void CalculationPartition::
@@ -331,14 +331,14 @@ printFields(std::ostream & str, int field, float scale)
     float spaceMax = 0.2*scale;
     float periodMax = 0.5*scale;
     int direction;
-    bool isE = (octantENumber(field) != -1);
+    bool isEHere = isE(field);
     Rect3i r(mAllocOriginYee, mAllocOriginYee+mAllocYeeCells-1);
     
     int ni, nj, nk;
     
-    if (isE)
+    if (isEHere)
     {
-        direction = octantENumber(field);
+        direction = xyz(field);
         assert(direction != -1);
         for (nk = r.p1[2]; nk <= r.p2[2]; nk++)
         {
@@ -369,7 +369,7 @@ printFields(std::ostream & str, int field, float scale)
     }
     else
     {
-        direction = octantHNumber(field);
+        direction = xyz(field);
         assert(direction != -1);
         for (int nk = r.p1[2]; nk <= r.p2[2]; nk++)
         {

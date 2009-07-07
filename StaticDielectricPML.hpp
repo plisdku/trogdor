@@ -152,7 +152,7 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
     if (fieldDir != faceNum/2)
     {
         // E field auxiliary constants
-        pmlYee = rectHalfToYee(halfCellsOnSide, eOctantNumber(fieldDir));
+        pmlYee = halfToYee(halfCellsOnSide, octantE(fieldDir));
         pmlDepthYee = pmlYee.size(faceNum/2)+1;
         mSigmaE[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
         mAlphaE[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
@@ -160,7 +160,7 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
         
         // the first half cell of the current octant.  we jump through hoops
         // to make sure that it has the right half cell offset.
-        nHalf0 = rectYeeToHalf(pmlYee, eOctantNumber(fieldDir)).p1[faceNum/2];
+        nHalf0 = rectYeeToHalf(pmlYee, octantE(fieldDir)).p1[faceNum/2];
         
         alphaStr = mPMLParams[cardinal(faceNum)]["alpha"];
         kappaStr = mPMLParams[cardinal(faceNum)]["kappa"];
@@ -218,13 +218,13 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
         */
         
         // H field auxiliary constants
-        pmlYee = rectHalfToYee(halfCellsOnSide, hOctantNumber(fieldDir));
+        pmlYee = halfToYee(halfCellsOnSide, octantH(fieldDir));
         pmlDepthYee = pmlYee.size(faceNum/2)+1;
         mSigmaH[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
         mAlphaH[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
         mKappaH[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
         
-        nHalf0 = rectYeeToHalf(pmlYee, hOctantNumber(fieldDir)).p1[faceNum/2];
+        nHalf0 = rectYeeToHalf(pmlYee, octantH(fieldDir)).p1[faceNum/2];
         
         for (nYee = 0, nHalf=nHalf0; nYee < pmlDepthYee; nYee++, nHalf+=2)
         {

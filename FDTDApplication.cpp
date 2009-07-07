@@ -327,7 +327,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	tfHalfCells.p2 += bigDimensions*2;
 	
     // make nonPMLHalfCells be full Yee cells in size
-	Rect3i nonPMLHalfCells(rectYeeToHalf(rectHalfToYee(tfHalfCells)));
+	Rect3i nonPMLHalfCells(rectYeeToHalf(halfToYee(tfHalfCells)));
 	nonPMLHalfCells.p1 -= bigDimensions*4;
 	nonPMLHalfCells.p2 += bigDimensions*4; // two Yee cells of spacing
 	
@@ -367,7 +367,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	nonPMLHalfCells = nonPMLHalfCells - gridHalfCells.p1;
 	tfHalfCells = tfHalfCells - gridHalfCells.p1;
 	copyTo = copyTo - gridHalfCells.p1;
-	originYee = originYee - vecHalfToYee(gridHalfCells.p1);
+	originYee = originYee - halfToYee(gridHalfCells.p1);
     linkSourceHalfCells = linkSourceHalfCells - gridHalfCells.p1;
 	gridHalfCells = gridHalfCells - gridHalfCells.p1;
 
@@ -478,7 +478,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	tfRect.p2 += bigDimensions*2;
 	
 	Rect3i nonPMLRect(YeeUtilities::rectYeeToHalf(
-		YeeUtilities::rectHalfToYee(tfRect)));   // now it lies on Yee bounds
+		YeeUtilities::halfToYee(tfRect)));   // now it lies on Yee bounds
 	nonPMLRect.p1 -= bigDimensions*4;
 	nonPMLRect.p2 += bigDimensions*4; // two yee cells of spacing
 	
@@ -515,7 +515,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	nonPMLRect = nonPMLRect - gridBounds.p1;
 	tfRect = tfRect - gridBounds.p1;
 	copyTo = copyTo - gridBounds.p1;
-	origin = origin - YeeUtilities::vecHalfToYee(gridBounds.p1);
+	origin = origin - YeeUtilities::halfToYee(gridBounds.p1);
     linkSourceHalfCells = linkSourceHalfCells - gridBounds.p1;
 	gridBounds = gridBounds - gridBounds.p1;
 
@@ -536,7 +536,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
         const int SIGNIFIESHARDSOURCE = 0;
         const int SIGNIFIESSOFTSOURCE = 1;
 				
-		Rect3i yeeTFRect = YeeUtilities::rectHalfToYee(tfRect);
+		Rect3i yeeTFRect = YeeUtilities::halfToYee(tfRect);
 		Vector3i srcYeeCell = clip(yeeTFRect, Vector3i(1000000*srcDir));
 		srcYeeCell -= 2*srcDir;
 		

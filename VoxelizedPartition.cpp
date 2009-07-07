@@ -121,7 +121,7 @@ initFieldBuffers(string bufferNamePrefix,
 		{
 			NeighborBufferDescPtr nb = nbs[mm];
             const Rect3i & bufferVolume = nb->getBufferHalfRect();
-            Vector3i numYeeCells = rectHalfToYee(bufferVolume).size()+1;
+            Vector3i numYeeCells = halfToYee(bufferVolume).size()+1;
             int bufSize = numYeeCells[0]*numYeeCells[1]*numYeeCells[2];
             
             //LOG << "NB " << mm << " volume " << bufferVolume << " size " <<
@@ -150,13 +150,13 @@ initFieldBuffers(string bufferNamePrefix,
 Rect3i VoxelizedPartition::
 getGridYeeCells() const
 {
-    return rectHalfToYee(mGridHalfCells);
+    return halfToYee(mGridHalfCells);
 }
 
 Rect3i VoxelizedPartition::
 getAllocYeeCells() const
 {
-    return rectHalfToYee(mFieldAllocHalfCells);
+    return halfToYee(mFieldAllocHalfCells);
 }
 
 bool VoxelizedPartition::
@@ -320,7 +320,7 @@ linearYeeIndex(const NeighborBufferDescPtr & nb,
 	const Rect3i & halfCellBounds (nb->getDestHalfRect());
     Vector3i halfCells = halfCellBounds.size() + 1;
     
-	Rect3i yeeBounds(rectHalfToYee(halfCellBounds, halfCell%2));
+	Rect3i yeeBounds(halfToYee(halfCellBounds, halfCell%2));
 	int nx = yeeBounds.size(0)+1;
 	int ny = yeeBounds.size(1)+1;
 	int nz = yeeBounds.size(2)+1;
@@ -340,10 +340,10 @@ fieldPointer(Vector3i halfCell) const
     halfCell = wrap(halfCell);
 	long index = linearYeeIndex(halfCell);
 	//int fieldNum = octantFieldNumber(halfCell);
-    if (octantENumber(halfCell) != -1)
-        return BufferPointer(*mBuffersE[octantENumber(halfCell)], index);
+    if (isE(octant(halfCell)))
+        return BufferPointer(*mBuffersE[xyz(octant(halfCell))], index);
     else
-        return BufferPointer(*mBuffersH[octantHNumber(halfCell)], index);
+        return BufferPointer(*mBuffersH[xyz(octant(halfCell))], index);
 }
 
 BufferPointer VoxelizedPartition::
@@ -352,35 +352,35 @@ fieldPointer(const NeighborBufferDescPtr & nb, Vector3i halfCell) const
     halfCell = wrap(nb, halfCell);
 	long index = linearYeeIndex(nb, halfCell);
 	//int fieldNum = octantFieldNumber(halfCell);
-    if (octantENumber(halfCell) != -1)
-        return BufferPointer(*mNBBuffersE[nb][octantENumber(halfCell)], index);
+    if (isE(octant(halfCell)))
+        return BufferPointer(*mNBBuffersE[nb][xyz(octant(halfCell))], index);
     else
-        return BufferPointer(*mNBBuffersH[nb][octantHNumber(halfCell)], index);
+        return BufferPointer(*mNBBuffersH[nb][xyz(octant(halfCell))], index);
 }
 
 
 BufferPointer VoxelizedPartition::
 getE(int direction, Vector3i xx) const
 {
-    return fieldPointer(vecYeeToHalf(xx, eOctantNumber(direction)));
+    return fieldPointer(vecYeeToHalf(xx, octantE(direction)));
 }
     
 BufferPointer VoxelizedPartition::
 getH(int direction, Vector3i xx) const
 {
-    return fieldPointer(vecYeeToHalf(xx, hOctantNumber(direction)));
+    return fieldPointer(vecYeeToHalf(xx, octantH(direction)));
 }
 
 BufferPointer VoxelizedPartition::
 getE(const NeighborBufferDescPtr & nb, int direction, Vector3i xx) const
 {
-    return fieldPointer(nb, vecYeeToHalf(xx, eOctantNumber(direction)));
+    return fieldPointer(nb, vecYeeToHalf(xx, octantE(direction)));
 }
     
 BufferPointer VoxelizedPartition::
 getH(const NeighborBufferDescPtr & nb, int direction, Vector3i xx) const
 {
-    return fieldPointer(nb, vecYeeToHalf(xx, hOctantNumber(direction)));
+    return fieldPointer(nb, vecYeeToHalf(xx, octantH(direction)));
 }
 
 Vector3i VoxelizedPartition::
@@ -661,9 +661,9 @@ createSetupMaterials(const GridDescription & gridDesc)
         long cells;
         for (fieldDir = 0; fieldDir < 3; fieldDir++)
         {
-            cells = mCentralIndices->getNumCells(p, eOctantNumber(fieldDir));
+            cells = mCentralIndices->getNumCells(p, octantE(fieldDir));
             mat.setNumCellsE(fieldDir, cells);            
-            cells = mCentralIndices->getNumCells(p, hOctantNumber(fieldDir));
+            cells = mCentralIndices->getNumCells(p, octantH(fieldDir));
             mat.setNumCellsH(fieldDir, cells);
         }
         

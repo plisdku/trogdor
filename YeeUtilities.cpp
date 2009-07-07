@@ -115,48 +115,37 @@ int octantFieldNumber(Vector3i octant)
 }
 */
 
-int octantENumber(int octant)
+
+int xyz(int octant)
 {
-	assert(octant >= 0);
-	assert(octant < 8);
-	return sOctantEIndices[octant];
+    return sOctantFieldDirections[octant];
 }
 
-int octantHNumber(int octant)
+int xyz(const Vector3i & halfCell)
 {
-	assert(octant >= 0);
-	assert(octant < 8);
-	return sOctantHIndices[octant];
+    return xyz(octant(halfCell));
 }
 
-int octantENumber(Vector3i halfCell)
+bool isE(int octant)
 {
-    return octantENumber(octant(halfCell));
+    return (octant == sEFieldOctants[0] ||
+        octant == sEFieldOctants[1] ||
+        octant == sEFieldOctants[2]);
 }
 
-int octantHNumber(Vector3i halfCell)
+bool isH(int octant)
 {
-    return octantHNumber(octant(halfCell));
+    return (octant == sHFieldOctants[0] ||
+        octant == sHFieldOctants[1] ||
+        octant == sHFieldOctants[2]);
 }
 
-int octantFieldDirection(int octant)
-{
-	assert(octant >= 0);
-	assert(octant < 8);
-	return sOctantFieldDirections[octant];
-}
-
-int octantFieldDirection(Vector3i halfCell)
-{
-	return octantFieldDirection(octant(halfCell));
-}
-
-int eOctantNumber(int directionIndex)
+int octantE(int directionIndex)
 {
     return sEFieldOctants[directionIndex];
 }
 
-int hOctantNumber(int directionIndex)
+int octantH(int directionIndex)
 {
     return sHFieldOctants[directionIndex];
 }
@@ -201,7 +190,7 @@ Vector3i hFieldOffset(int fieldNum)
 
 
 // returns halfCell/2
-Vector3i vecHalfToYee(const Vector3i & halfCell)
+Vector3i halfToYee(const Vector3i & halfCell)
 {
 	return halfCell/2;
 }
@@ -220,14 +209,14 @@ Vector3i vecYeeToHalf(const Vector3i & yeeCell, int octant)
 }
 
 // returns smallest Yee rect containing all points in halfRect
-Rect3i rectHalfToYee(const Rect3i & halfRect)
+Rect3i halfToYee(const Rect3i & halfRect)
 {
 	return halfRect/2;
 }
 
 // returns smallest Yee rect containing all points at given octant
 // in halfRect
-Rect3i rectHalfToYee(const Rect3i & halfRect, int octant)
+Rect3i halfToYee(const Rect3i & halfRect, int octant)
 {
 	// if halfRect.p1%2 == offset%2, then p1 = halfRect.p1/2
 	// else p1 = (halfRect.p1 + 1)/2
@@ -250,7 +239,7 @@ Rect3i rectHalfToYee(const Rect3i & halfRect, int octant)
 
 // returns smallest Yee rect containing all points at given halfCellOffset
 // in halfRect
-Rect3i rectHalfToYee(const Rect3i & halfRect, const Vector3i & halfCellOffset)
+Rect3i halfToYee(const Rect3i & halfRect, const Vector3i & halfCellOffset)
 {
 	// see above
 	return Rect3i( (halfRect.p1 + Vector3i(halfCellOffset+halfRect.p1)%2)/2,
@@ -279,7 +268,7 @@ Rect3i rectYeeToHalf(const Rect3i & yeeRect)
 
 Rect3i expandToYeeRect(const Rect3i & halfRect)
 {
-	return rectYeeToHalf(rectHalfToYee(halfRect));
+	return rectYeeToHalf(halfToYee(halfRect));
 }
 
 
