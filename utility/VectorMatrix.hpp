@@ -330,6 +330,12 @@ bool operator>=(const Vector3<T> & lhs, const Vector3<T> & rhs)
     return !(lhs < rhs);
 }
 
+template<typename T>
+Vector3<T> operator!(const Vector3<T> & v)
+{
+    return Vector3<T>(!v[0], !v[1], !v[2]);
+}
+
 
 template<typename T>
 T dot(const Vector3<T> & lhs, const Vector3<T> & rhs)

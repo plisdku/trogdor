@@ -301,11 +301,9 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	HuygensSurfaceDescPtr huygensSurface, string auxGridName)
 {
 	int nn;
-	Mat3i collapser(Mat3i::eye());
-	collapser(0,0) = !collapsible[0];
-	collapser(1,1) = !collapsible[1];
-	collapser(2,2) = !collapsible[2];
-	Vector3i originYee(collapser*parentGrid->getOriginYee());
+    //Mat3i collapser(Mat3i::diagonal(1-collapsible));
+    Mat3i collapser(Mat3i::diagonal(!collapsible));
+    Vector3i originYee(collapser*parentGrid->getOriginYee());
 	
 	const set<Vector3i> & omittedSides = huygensSurface->getOmittedSides();
 	
@@ -317,7 +315,8 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	tfHalfCells.p2 = vec_max(tfHalfCells.p2, Vector3i(1,1,1));
     Rect3i linkSourceHalfCells(tfHalfCells);
 	
-	Vector3i bigDimensions(!collapsible[0], !collapsible[1], !collapsible[2]);
+	//Vector3i bigDimensions(!collapsible[0], !collapsible[1], !collapsible[2]);
+    Vector3i bigDimensions(!collapsible);
     for (nn = 0; nn < 3; nn++)
 	if (tfHalfCells.size(nn) == 1)
 		bigDimensions[nn] = 0;
@@ -326,8 +325,9 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	tfHalfCells.p1 -= bigDimensions*2; // expand TF rect by one cell
 	tfHalfCells.p2 += bigDimensions*2;
 	
-    // make nonPMLHalfCells be full Yee cells in size
-	Rect3i nonPMLHalfCells(rectYeeToHalf(halfToYee(tfHalfCells)));
+    // make nonPMLHalfCells be full Yee cells in size.
+    // This line does something!
+	Rect3i nonPMLHalfCells(yeeToHalf(halfToYee(tfHalfCells)));
 	nonPMLHalfCells.p1 -= bigDimensions*4;
 	nonPMLHalfCells.p2 += bigDimensions*4; // two Yee cells of spacing
 	
@@ -477,7 +477,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	tfRect.p1 -= bigDimensions*2; // expand TF rect by one cell
 	tfRect.p2 += bigDimensions*2;
 	
-	Rect3i nonPMLRect(YeeUtilities::rectYeeToHalf(
+	Rect3i nonPMLRect(YeeUtilities::yeeToHalf(
 		YeeUtilities::halfToYee(tfRect)));   // now it lies on Yee bounds
 	nonPMLRect.p1 -= bigDimensions*4;
 	nonPMLRect.p2 += bigDimensions*4; // two yee cells of spacing

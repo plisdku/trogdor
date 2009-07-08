@@ -37,36 +37,37 @@ SetupHuygensLink(const VoxelizedPartition & vp,
     //LOGMORE << "Contents of buffers: " << "\n";
     //LOGMORE << buffers << "\n";
     int dir;
-    for (int sideNum = 0; sideNum < 3; sideNum++)
-    if (memBufsE.count(buffers[sideNum]) != 0)
+    //for (int sideNum = 0; sideNum < 3; sideNum++)
+    for (vector<NeighborBufferDescPtr>::const_iterator itr = buffers.begin();
+        itr != buffers.end(); itr++)
+    if (memBufsE.count(*itr) != 0)
     {
-        assert(memBufsH.count(buffers[sideNum]) != 0);
+        assert(memBufsH.count(*itr) != 0);
         LinkNeighborBufferDeleg b;
         
         LOG << "New E buffers:\n";
         for (dir = 0; dir < 3; dir++)
         {
-        
-            destYee = halfToYee(buffers[sideNum]->getDestHalfRect(),
+            destYee = halfToYee((*itr)->getDestHalfRect(),
                 octantE(dir));
-            srcYee = halfToYee(buffers[sideNum]->getSourceHalfRect(),
+            srcYee = halfToYee((*itr)->getSourceHalfRect(),
                 octantE(dir));
             
             LOGMORE << "E" << dir << " src " << srcYee << " dest " << destYee
                 << "\n";
             LOGMORE << "From half cells " <<
-                buffers[sideNum]->getSourceHalfRect() << " and " << 
-                buffers[sideNum]->getDestHalfRect() << "\n";
+                (*itr)->getSourceHalfRect() << " and " << 
+                (*itr)->getDestHalfRect() << "\n";
             
             b.mDestEHeadPtr[dir] = vp.getE(dir, destYee.p1);
             b.mSrcEHeadPtr[dir] = srcVP->getE(dir, srcYee.p1);
-            b.mBufEHeadPtr[dir] = vp.getE(buffers[sideNum], dir,
+            b.mBufEHeadPtr[dir] = vp.getE(*itr, dir,
                 destYee.p1);
             
             b.mSrcFactorsE[dir] =
-                buffers[sideNum]->getSourceFactorsE()[dir];
+                (*itr)->getSourceFactorsE()[dir];
             b.mDestFactorsE[dir] =
-                buffers[sideNum]->getDestFactorsE()[dir];
+                (*itr)->getDestFactorsE()[dir];
             
             LOGMORE << b.mSrcEHeadPtr[dir] << "\n";
             LOGMORE << b.mDestEHeadPtr[dir] << "\n";
@@ -77,20 +78,20 @@ SetupHuygensLink(const VoxelizedPartition & vp,
         
         for (dir = 0; dir < 3; dir++)
         {
-            destYee = halfToYee(buffers[sideNum]->getDestHalfRect(),
+            destYee = halfToYee((*itr)->getDestHalfRect(),
                 octantH(dir));
-            srcYee = halfToYee(buffers[sideNum]->getSourceHalfRect(),
+            srcYee = halfToYee((*itr)->getSourceHalfRect(),
                 octantH(dir));
             
             b.mDestHHeadPtr[dir] = vp.getH(dir, destYee.p1);
             b.mSrcHHeadPtr[dir] = srcVP->getH(dir, srcYee.p1);
-            b.mBufHHeadPtr[dir] = vp.getH(buffers[sideNum], dir,
+            b.mBufHHeadPtr[dir] = vp.getH(*itr, dir,
                 destYee.p1);
             
             b.mSrcFactorsH[dir] =
-                buffers[sideNum]->getSourceFactorsH()[dir];
+                (*itr)->getSourceFactorsH()[dir];
             b.mDestFactorsH[dir] =
-                buffers[sideNum]->getDestFactorsH()[dir];
+                (*itr)->getDestFactorsH()[dir];
             
             LOGMORE << b.mSrcHHeadPtr[dir] << "\n";
             LOGMORE << b.mDestHHeadPtr[dir] << "\n";
@@ -101,8 +102,8 @@ SetupHuygensLink(const VoxelizedPartition & vp,
         b.mDestStride = vp.getFieldStride();
         
         // this calculation is based on VoxelizedPartition::getFieldStride
-        int stride = memBufsE[buffers[sideNum]][0]->getStride();
-        Vector3i bufDims = halfToYee(buffers[sideNum]->getBufferHalfRect())
+        int stride = memBufsE[*itr][0]->getStride();
+        Vector3i bufDims = halfToYee((*itr)->getBufferHalfRect())
             .size() + 1;
             
         Vector3i stride3d(stride, stride*bufDims[0],
@@ -117,7 +118,7 @@ SetupHuygensLink(const VoxelizedPartition & vp,
         
         LOG << "Buffer stride " << b.mStride << "\n";
         
-        Rect3i nbYeeRect = halfToYee(buffers[sideNum]->getBufferHalfRect());
+        Rect3i nbYeeRect = halfToYee((*itr)->getBufferHalfRect());
         b.mNumYeeCells = nbYeeRect.size()+1; 
         mNBs.push_back(b);
     }

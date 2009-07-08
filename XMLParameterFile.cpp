@@ -144,7 +144,7 @@ loadGrids(const TiXmlElement* parent, const SimulationDescription & sim) const
         numHalfCells = 2*numYeeCells;
         
         sGetMandatoryAttribute(elem, "nonPML", nonPMLYeeCells);
-        nonPMLHalfCells = rectYeeToHalf(nonPMLYeeCells);
+        nonPMLHalfCells = yeeToHalf(nonPMLYeeCells);
 		
         // The calc region should stop a half cell short of the boundary
         // when there is PML, to prevent leakage around the edge of the sim.
@@ -633,7 +633,7 @@ loadTFSFSources(const TiXmlElement* parent, const set<string> & allGridNames)
             duration = loadADuration(durationXML);
         
         if (sTryGetAttribute(elem, "yeeCells", temp))
-            halfCells = rectYeeToHalf(temp);
+            halfCells = yeeToHalf(temp);
         else if (!sTryGetAttribute(elem, "halfCells", halfCells))
             throw(Exception(sErr("TFSFSource needs yeeCells or halfCells "
                 "attribute", elem)));
@@ -702,7 +702,7 @@ loadCustomSources(const TiXmlElement* parent) const
         sGetMandatoryAttribute(elem, "symmetries", symmetries);
         sGetOptionalAttribute(elem, "tfsfType", tfsfType, string("TF"));
         if (sTryGetAttribute(elem, "yeeCells", yeeCells))
-            halfCells = rectYeeToHalf(yeeCells);
+            halfCells = yeeToHalf(yeeCells);
         else if (!sTryGetAttribute(elem, "halfCells", halfCells))
             throw(Exception(sErr("CustomTFSFSSource needs yeeCells or "
                 "halfCells attribute.", elem)));
@@ -751,12 +751,12 @@ loadLinks(const TiXmlElement* parent, const set<string> & allGridNames) const
 		sGetOptionalAttribute(elem, "type", linkTypeStr, string("TF"));
 		sGetMandatoryAttribute(elem, "sourceGrid", sourceGridName);
         if (sTryGetAttribute(elem, "fromYeeCells", temp))
-            fromHalfCells = rectYeeToHalf(temp);
+            fromHalfCells = yeeToHalf(temp);
         else if (!sTryGetAttribute(elem, "fromHalfCells", fromHalfCells))
             throw(Exception(sErr("Link needs fromYeeCells or fromHalfCells "
                 "attribute.", elem)));
         if (sTryGetAttribute(elem, "toYeeCells", temp))
-            toHalfCells = rectYeeToHalf(temp);
+            toHalfCells = yeeToHalf(temp);
         else if (!sTryGetAttribute(elem, "toHalfCells", toHalfCells))
             throw(Exception(sErr("Link needs toYeeCells or toHalfCells "
                 "attribute.", elem)));
@@ -1067,7 +1067,7 @@ loadACopyFrom(const TiXmlElement* elem, const set<string> & allGridNames) const
 	
 	try {
 		copyFrom = InstructionPtr(
-			new CopyFrom(rectYeeToHalf(sourceRect), rectYeeToHalf(destRect),
+			new CopyFrom(yeeToHalf(sourceRect), yeeToHalf(destRect),
                 sourceGridName));
 	} catch (Exception & e) {
 		throw(Exception(sErr(e.what(), elem)));

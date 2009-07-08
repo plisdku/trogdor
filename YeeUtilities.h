@@ -41,11 +41,11 @@ Vector3i hFieldOffset(int directionIndex);
 Vector3i halfToYee(const Vector3i & halfCell);
 
 // returns  2*yeeCell + halfCellOffset
-Vector3i vecYeeToHalf(const Vector3i & yeeCell,
+Vector3i yeeToHalf(const Vector3i & yeeCell,
 	const Vector3i & halfCellOffset);
 
 // returns 2*yeeCell + halfCellOffset(halfCellIndex)
-Vector3i vecYeeToHalf(const Vector3i & yeeCell, int halfCellIndex);
+Vector3i yeeToHalf(const Vector3i & yeeCell, int halfCellIndex);
 
 // returns smallest Yee rect containing all points in halfRect
 Rect3i halfToYee(const Rect3i & halfRect);
@@ -60,16 +60,16 @@ Rect3i halfToYee(const Rect3i & halfRect, const Vector3i & halfCellOffset);
 
 // returns smallest half cell rect containing all points in given Yee rect
 // at given halfCellIndex
-Rect3i rectYeeToHalf(const Rect3i & yeeRect, int halfCellIndex);
+Rect3i yeeToHalf(const Rect3i & yeeRect, int halfCellIndex);
 
 // returns smallest half cell rect containing all points in given Yee rect
 // at given half cell offset
-Rect3i rectYeeToHalf(const Rect3i & yeeRect, const Vector3i & halfCellOffset);
+Rect3i yeeToHalf(const Rect3i & yeeRect, const Vector3i & halfCellOffset);
 
 // returns smallest Yee rect containing all points in given Yee rect
-Rect3i rectYeeToHalf(const Rect3i & yeeRect);
+Rect3i yeeToHalf(const Rect3i & yeeRect);
 
-// equivalent to rectYeeToHalf(rectHalftoYee(halfRect))
+// equivalent to yeeToHalf(rectHalftoYee(halfRect))
 Rect3i expandToYeeRect(const Rect3i & halfRect);
 
 // returns the last layer of the rect on the side with normal along sideIndex

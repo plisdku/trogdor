@@ -117,6 +117,8 @@ template<typename T>
 bool operator<=(const Vector3<T> & lhs, const Vector3<T> & rhs);
 template<typename T>
 bool operator>=(const Vector3<T> & lhs, const Vector3<T> & rhs);
+template<typename T>
+Vector3<T> operator!(const Vector3<T> & v);
 
 template<typename T>
 T dot(const Vector3<T> & lhs, const Vector3<T> & rhs);

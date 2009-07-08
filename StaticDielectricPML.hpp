@@ -160,7 +160,7 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
         
         // the first half cell of the current octant.  we jump through hoops
         // to make sure that it has the right half cell offset.
-        nHalf0 = rectYeeToHalf(pmlYee, octantE(fieldDir)).p1[faceNum/2];
+        nHalf0 = yeeToHalf(pmlYee, octantE(fieldDir)).p1[faceNum/2];
         
         alphaStr = mPMLParams[cardinal(faceNum)]["alpha"];
         kappaStr = mPMLParams[cardinal(faceNum)]["kappa"];
@@ -224,7 +224,7 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
         mAlphaH[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
         mKappaH[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
         
-        nHalf0 = rectYeeToHalf(pmlYee, octantH(fieldDir)).p1[faceNum/2];
+        nHalf0 = yeeToHalf(pmlYee, octantH(fieldDir)).p1[faceNum/2];
         
         for (nYee = 0, nHalf=nHalf0; nYee < pmlDepthYee; nYee++, nHalf+=2)
         {

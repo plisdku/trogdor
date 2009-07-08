@@ -362,25 +362,25 @@ fieldPointer(const NeighborBufferDescPtr & nb, Vector3i halfCell) const
 BufferPointer VoxelizedPartition::
 getE(int direction, Vector3i xx) const
 {
-    return fieldPointer(vecYeeToHalf(xx, octantE(direction)));
+    return fieldPointer(yeeToHalf(xx, octantE(direction)));
 }
     
 BufferPointer VoxelizedPartition::
 getH(int direction, Vector3i xx) const
 {
-    return fieldPointer(vecYeeToHalf(xx, octantH(direction)));
+    return fieldPointer(yeeToHalf(xx, octantH(direction)));
 }
 
 BufferPointer VoxelizedPartition::
 getE(const NeighborBufferDescPtr & nb, int direction, Vector3i xx) const
 {
-    return fieldPointer(nb, vecYeeToHalf(xx, octantE(direction)));
+    return fieldPointer(nb, yeeToHalf(xx, octantE(direction)));
 }
     
 BufferPointer VoxelizedPartition::
 getH(const NeighborBufferDescPtr & nb, int direction, Vector3i xx) const
 {
-    return fieldPointer(nb, vecYeeToHalf(xx, octantH(direction)));
+    return fieldPointer(nb, yeeToHalf(xx, octantH(direction)));
 }
 
 Vector3i VoxelizedPartition::
