@@ -174,6 +174,72 @@ HuygensLink(const vector<LinkNeighborBufferDeleg> & nbs)
     }
 }
 
+/*
+void HuygensLink::
+updateE()
+{
+    //LOG << "Update E.\n";
+    
+    for (int bufNum = 0; bufNum < mNBs.size(); bufNum++)
+    {
+        for (int fieldDirection = 0; fieldDirection < 3; fieldDirection++)
+        {
+            Rect3i srcYeeCells;
+            Rect3i destYeeCells;
+            Rect3i bufferYeeCells;
+            const float srcFactor = mNBs[bufNum].mSrcFactorsE[fieldDirection];
+            const float destFactor = mNBs[bufNum].mDestFactorsE[fieldDirection];
+            
+            float srcField, destField, bufField;
+            Vector3i yee;
+            for (yee[2] = 0; yee[2] < bufferYeeCells.size(2)+1; yee[2]++)
+            for (yee[1] = 0; yee[1] < bufferYeeCells.size(1)+1; yee[1]++)
+            for (yee[0] = 0; yee[0] < bufferYeeCells.size(0)+1; yee[0]++)
+            {
+                srcField = srcGrid.getWrappedE(fieldDirection,
+                    yee+srcYeeCells.p1);
+                destField = destGrid.getWrappedE(fieldDirection,
+                    yee+destYeeCells.p1);
+                bufField = srcFactor*srcField + destFactor*destField;
+                mNBs[bufNum].setE(fieldDirection, yee, bufField);
+            }
+        }
+    }
+}
+
+void HuygensLink::
+updateH()
+{
+    //LOG << "Update H.\n";
+    
+    for (int bufNum = 0; bufNum < mNBs.size(); bufNum++)
+    {
+        for (int fieldDirection = 0; fieldDirection < 3; fieldDirection++)
+        {
+            Rect3i srcYeeCells;
+            Rect3i destYeeCells;
+            Rect3i bufferYeeCells;
+            const float srcFactor = mNBs[bufNum].mSrcFactorsH[fieldDirection];
+            const float destFactor = mNBs[bufNum].mDestFactorsH[fieldDirection];
+
+            float srcField, destField, bufField;
+            Vector3i yee;
+            for (yee[2] = 0; yee[2] < bufferYeeCells.size(2)+1; yee[2]++)
+            for (yee[1] = 0; yee[1] < bufferYeeCells.size(1)+1; yee[1]++)
+            for (yee[0] = 0; yee[0] < bufferYeeCells.size(0)+1; yee[0]++)
+            {
+                srcField = srcGrid.getWrappedH(fieldDirection,
+                    yee+srcYeeCells.p1);
+                destField = destGrid.getWrappedH(fieldDirection,
+                    yee+destYeeCells.p1);
+                bufField = srcFactor*srcField + destFactor*destField;
+                mNBs[bufNum].setH(fieldDirection, yee, bufField);
+            }
+        }
+    }
+}
+*/
+
 
 void HuygensLink::
 updateE()
@@ -194,13 +260,7 @@ updateE()
             srcStart2 = mNBs[bufNum].mSrcEHeadPtr[fieldNum];
             destStart2 = mNBs[bufNum].mDestEHeadPtr[fieldNum];
             bufStart2 = mNBs[bufNum].mBufEHeadPtr[fieldNum];
-            /*
-            LOG << "bufNum = " << bufNum << " fieldNum = " << fieldNum << "\n";
-            LOG << srcStart2 << " is " << 
-                MemoryBuffer::identify(srcStart2) << "\n";
-            LOG << MemoryBuffer::identify(destStart2) << "\n";
-            LOG << MemoryBuffer::identify(bufStart2) << "\n";
-            */
+            
             const float srcFactor = mNBs[bufNum].mSrcFactorsE[fieldNum];
             const float destFactor = mNBs[bufNum].mDestFactorsE[fieldNum];
             const Vector3i numYeeCells = mNBs[bufNum].mNumYeeCells;
@@ -217,17 +277,6 @@ updateE()
                     bufPtr = bufStart1;
                     for (int ni = 0; ni < numYeeCells[0]; ni++)
                     {
-                        //LOG << "src " << *srcPtr << " dest " << *destPtr
-                        //    << "\n";
-                        
-                        /*
-                        LOG << MemoryBuffer::identify(srcPtr) << "\n"
-                            << MemoryBuffer::identify(destPtr) << "\n"
-                            << MemoryBuffer::identify(bufPtr) << "\n";
-                        LOGMORE << "src " << srcFactor << " dest " << destFactor
-                            << "\n";
-                        */
-                        
                         *bufPtr = *srcPtr*srcFactor + *destPtr*destFactor;
                         srcPtr += srcStride[0];
                         destPtr += destStride[0];
@@ -263,13 +312,7 @@ updateH()
             srcStart2 = mNBs[bufNum].mSrcHHeadPtr[fieldNum];
             destStart2 = mNBs[bufNum].mDestHHeadPtr[fieldNum];
             bufStart2 = mNBs[bufNum].mBufHHeadPtr[fieldNum];
-            /*
-            LOG << "bufNum = " << bufNum << " fieldNum = " << fieldNum << "\n";
-            LOG << srcStart2 << " is " <<
-                MemoryBuffer::identify(srcStart2) << "\n";
-            LOG << MemoryBuffer::identify(destStart2) << "\n";
-            LOG << MemoryBuffer::identify(bufStart2) << "\n";
-            */
+            
             const float srcFactor = mNBs[bufNum].mSrcFactorsH[fieldNum];
             const float destFactor = mNBs[bufNum].mDestFactorsH[fieldNum];
             const Vector3i numYeeCells = mNBs[bufNum].mNumYeeCells;
@@ -286,17 +329,6 @@ updateH()
                     bufPtr = bufStart1;
                     for (int ni = 0; ni < numYeeCells[0]; ni++)
                     {
-                        //LOG << "src " << *srcPtr << " dest " << *destPtr
-                        //    << "\n";
-                        
-                        /*
-                        LOG << MemoryBuffer::identify(srcPtr) << "\n"
-                            << MemoryBuffer::identify(destPtr) << "\n"
-                            << MemoryBuffer::identify(bufPtr) << "\n";
-                        LOGMORE << "src " << srcFactor << " dest " << destFactor
-                            << "\n";
-                        */
-                        
                         *bufPtr = *srcPtr*srcFactor + *destPtr*destFactor;
                         srcPtr += srcStride[0];
                         destPtr += destStride[0];

@@ -149,7 +149,7 @@ voxelizeGrids(const SimulationDescPtr sim,
 	GridDescPtr g;
     unsigned int ii;
     
-	LOG << "Voxelizing the grids.\n";
+	LOG << "Stage 1: paint in the structure and recurse for aux grids.\n";
 	for (ii = 0; ii < sim->getGrids().size(); ii++)
 	{
 		g = sim->getGrids()[ii];
@@ -169,12 +169,18 @@ voxelizeGrids(const SimulationDescPtr sim,
 			partitionWallsHalf);
 	}
     
+    LOG << "Stage 2: Create setup Huygens surfaces and paint them in.\n";
     map<GridDescPtr, VoxelizedPartitionPtr>::iterator itr;
     for (itr = voxelizedGrids.begin(); itr != voxelizedGrids.end(); itr++)
     {
-        itr->second->createSetupHuygensSurfaces(
-            itr->first->getHuygensSurfaces(),
+        itr->second->createSetupHuygensSurfaces(itr->first,
             voxelizedGrids);
+    }
+    
+    LOG << "Stage 3: make the runlines.\n";
+    for (itr = voxelizedGrids.begin(); itr != voxelizedGrids.end(); itr++)
+    {
+        itr->second->calculateRunlines();
     }
 }
 

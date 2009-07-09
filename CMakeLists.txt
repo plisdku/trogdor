@@ -56,6 +56,8 @@ HuygensSurface.h
 HuygensSurface.cpp
 HuygensLink.h
 HuygensLink.cpp
+InterleavedLattice.h
+InterleavedLattice.cpp
 main.cpp
 MaterialBoss.h
 MaterialBoss.cpp

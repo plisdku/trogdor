@@ -34,6 +34,8 @@
 #include <vector>
 #include <string>
 
+class InterleavedLattice;
+typedef Pointer<InterleavedLattice> InterleavedLatticePtr;
 
 class VoxelizedPartition;
 typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
@@ -109,13 +111,13 @@ public:
     // returns        BufferPointer to EM field
     //BufferPointer getE(int direction, int xi, int xj, int xk) const;
     //BufferPointer getH(int direction, int xi, int xj, int xk) const;
-    BufferPointer getE(int direction, Vector3i xx) const;
-    BufferPointer getH(int direction, Vector3i xx) const;
+    BufferPointer getE(int direction, Vector3i yeeCell) const;
+    BufferPointer getH(int direction, Vector3i yeeCell) const;
     
     BufferPointer getE(const NeighborBufferDescPtr & nb, int direction,
-        Vector3i xx) const;
+        Vector3i yeeCell) const;
     BufferPointer getH(const NeighborBufferDescPtr & nb, int direction,
-        Vector3i xx) const;
+        Vector3i yeeCell) const;
     
     // returns      amount to add to float* to go from Ex(here) to Ex(neighbor) 
     Vector3i getFieldStride() const;
@@ -127,11 +129,15 @@ public:
 	const PartitionCellCountPtr & getIndices() const
 		{ return mCentralIndices; }
     
+    InterleavedLatticePtr getLattice() const { return mLattice; }
+    
     // returns      the allocation skeleton for fields in this partition
+    /*
     const std::vector<MemoryBufferPtr> & getBuffersE() const
         { return mBuffersE; }
     const std::vector<MemoryBufferPtr> & getBuffersH() const
         { return mBuffersH; }
+    */
     
     // returns      the allocation skeleton for partition's neighbor buffers
     const Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > &
@@ -163,8 +169,10 @@ public:
     void clearCellCountGrid();
     
     void createSetupHuygensSurfaces(
-        const std::vector<HuygensSurfaceDescPtr> & surfaces,
+        const GridDescPtr & gridDescription,
         const Map<GridDescPtr, VoxelizedPartitionPtr> & grids);
+    
+    void calculateRunlines();
 	
 private:
 	void initFieldBuffers(std::string bufferNamePrefix,
@@ -196,8 +204,11 @@ private:
 	VoxelGrid mVoxels;
 	PartitionCellCountPtr mCentralIndices;
 	
+    InterleavedLatticePtr mLattice;
+    /*
 	std::vector<MemoryBufferPtr> mBuffersE;
 	std::vector<MemoryBufferPtr> mBuffersH;
+    */
 	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffersE;
 	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffersH;
 	

@@ -26,6 +26,9 @@ typedef Pointer<Source> SourcePtr;
 class HuygensSurface;
 typedef Pointer<HuygensSurface> HuygensSurfacePtr;
 
+class InterleavedLattice;
+typedef Pointer<InterleavedLattice> InterleavedLatticePtr;
+
 class CalculationPartition
 {
 public:
@@ -117,8 +120,11 @@ private:
     std::vector<SourcePtr> mSoftSources;
     std::vector<HuygensSurfacePtr> mHuygensSurfaces;
     
+    InterleavedLatticePtr mLattice;
+    /*
 	std::vector<MemoryBufferPtr> mBuffersE;
 	std::vector<MemoryBufferPtr> mBuffersH;
+    */
     std::vector<float> mFieldsE;
     std::vector<float> mFieldsH;
     
