@@ -1,6 +1,6 @@
 project( TROGDOR )
 
-INCLUDE(CPack)
+#INCLUDE(CPack)
 
 EXECUTE_PROCESS(COMMAND Magick++-config --libs
 	OUTPUT_VARIABLE mlibs)
@@ -110,4 +110,10 @@ ${magDepLibs}
 
 add_subdirectory( utility )
 add_subdirectory( tinyxml )
+
+
+add_subdirectory( tests )
+enable_testing() # only need to do this once, but
+add_test(test1 tests/tester) # this once per test
+
 
