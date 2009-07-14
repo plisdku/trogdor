@@ -173,7 +173,7 @@ voxelizeGrids(const SimulationDescPtr sim,
     map<GridDescPtr, VoxelizedPartitionPtr>::iterator itr;
     for (itr = voxelizedGrids.begin(); itr != voxelizedGrids.end(); itr++)
     {
-        itr->second->createSetupHuygensSurfaces(itr->first,
+        itr->second->createHuygensSurfaces(itr->first,
             voxelizedGrids);
     }
     
@@ -614,12 +614,13 @@ makeCalculationGrids(const SimulationDescPtr sim,
                 sim->getDxyz(), sim->getDt(), sim->getDuration()));
         calcs[itr->first->getName()] = calcPart;
     }
-    
+    /*
     // Second pass handles cross-linked stuff (TFSF links)
     for (itr = voxParts.begin(); itr != voxParts.end(); itr++)
     {
         calcs[itr->first->getName()]->createHuygensSurfaces(*itr->second);
     }
+    */
 }
 
 void FDTDApplication::

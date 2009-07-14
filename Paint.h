@@ -34,6 +34,7 @@
 
 #include "SimulationDescriptionPredeclarations.h"
 
+//#include "HuygensSurface.h"
 #include "geometry.h"
 #include <vector>
 #include <iostream>
@@ -46,6 +47,9 @@ enum PaintType
 
 class Paint;
 typedef Pointer<Paint> PaintPtr;
+
+class NeighborBuffer;
+typedef Pointer<NeighborBuffer> NeighborBufferPtr;
 
 class Paint
 {
@@ -65,7 +69,8 @@ public:
 	Paint* withoutModifications() const { return mBasePaint; }
 	Paint* withoutCurlBuffers() const { return mBaseUpdatePaint; }
 	Paint* withPML(Vector3i pmlDir) const;
-	Paint* withCurlBuffer(int side, NeighborBufferDescPtr & curlBuffer) const;
+	//Paint* withCurlBuffer(int side, NeighborBufferDescPtr & curlBuffer) const;
+    Paint* withCurlBuffer(int side, NeighborBufferPtr & curlBuffer) const;
 	Paint* withCurrentSource(int currentSource) const;
 	
 	static const Map<Paint, PaintPtr> & getPalette() {
@@ -75,7 +80,8 @@ public:
 	
 	PaintType getType() const { return mType; }
 	Vector3i getPMLDirections() const { return mPMLDirections; }
-	const NeighborBufferDescPtr & getCurlBuffer(int side) const;
+	//const NeighborBufferDescPtr & getCurlBuffer(int side) const;
+    const NeighborBufferPtr & getCurlBuffer(int side) const;
 	const MaterialDescPtr getBulkMaterial() const { return mBulkMaterial; }
 	
 	bool equivalentUpdateTo(const Paint & rhs) const;
@@ -91,7 +97,8 @@ private:
 	
 	PaintType mType;
 	Vector3i mPMLDirections;
-	std::vector<NeighborBufferDescPtr> mCurlBuffers;
+	//std::vector<NeighborBufferDescPtr> mCurlBuffers;
+    std::vector<NeighborBufferPtr> mCurlBuffers;
 	int mCurrentBufferIndex;
 	
 	// for BulkPaint

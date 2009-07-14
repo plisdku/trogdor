@@ -15,6 +15,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include "Pointer.h"
 
 class InterleavedLattice
 {
@@ -25,6 +26,8 @@ public:
     Vector3i nonZeroDimensions() const { return mNonZeroDimensions; }
     
     const Rect3i & halfCells() const { return mHalfCells; }
+    const Vector3i & numHalfCells() const { return mNumHalfCells; }
+    const Vector3i & numYeeCells() const { return mNumYeeCells; }
     
     // On all nonzero dimensions, halfCell is wrapped to the interior.
     // The component in the null dimension is unchanged.
@@ -60,22 +63,26 @@ public:
     void printH(std::ostream & str, int fieldDirection, float scale) const;
     
 private:
+    static const int STRIDE = 1;
+    
     Rect3i mHalfCells;
     Vector3i mNonZeroDimensions;
-    Vector3i mNumYeeCells;    
+    Vector3i mNumYeeCells;
     Vector3i mNumHalfCells; // == 2*mNumYeeCells
-    Vector3i mAllocOriginYeeE[3]; // cached halfToYee(mHalfCells.p1, octant)
-    Vector3i mAllocOriginYeeH[3];
+    Vector3i mOriginYeeE[3]; // cached halfToYee(mHalfCells.p1, octant)
+    Vector3i mOriginYeeH[3];
     
-    std::vector<MemoryBufferPtr> mBuffersE;
-    std::vector<MemoryBufferPtr> mBuffersH;
+    std::vector<MemoryBufferPtr> mBuffersE; // 3
+    std::vector<MemoryBufferPtr> mBuffersH; // 3
+    std::vector<MemoryBufferPtr> mOctantBuffers; // 8
     
+    bool mFieldsAreAllocated;
     float* mHeadE[3];
     float* mHeadH[3];
     Vector3i mMemStride;
     std::vector<float> mData;
 };
-
+typedef Pointer<InterleavedLattice> InterleavedLatticePtr;
 
 
 

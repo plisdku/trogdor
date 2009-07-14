@@ -270,6 +270,7 @@ Rect3i edgeOfRect(const Rect3i & rect, int sideIndex)
 		retval.p2[sideIndex/2] = retval.p1[sideIndex/2];
 	else
 		retval.p1[sideIndex/2] = retval.p2[sideIndex/2];
+    
 	return retval;
 }
 

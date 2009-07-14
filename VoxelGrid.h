@@ -13,6 +13,9 @@
 #include "SimulationDescriptionPredeclarations.h"
 #include "Paint.h"
 #include "Exception.h"
+//#include "HuygensSurface.h"
+
+class HuygensSurface;
 
 class VoxelGrid
 {
@@ -48,7 +51,8 @@ public:
 	void paintExtrude(const GridDescription & gridDesc,
 		const Extrude & instruction);
 	
-	void overlayHuygensSurface(const HuygensSurfaceDescription & surf);
+	//void overlayHuygensSurface(const HuygensSurfaceDescription & surf);
+	void overlayHuygensSurface(const HuygensSurface & surf);
 	void overlayCurrentSource(const int & currentSource);
 	void overlayPML();
 	

@@ -24,7 +24,7 @@
 #include "MaterialBoss.h"
 #include "OutputBoss.h"
 #include "SourceBoss.h"
-#include "HuygensSurface.h"
+//#include "HuygensSurface.h"
 #include "MemoryUtilities.h"
 
 #include "SimulationDescriptionPredeclarations.h"
@@ -39,6 +39,9 @@ typedef Pointer<InterleavedLattice> InterleavedLatticePtr;
 
 class VoxelizedPartition;
 typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
+
+class HuygensSurface;
+typedef Pointer<HuygensSurface> HuygensSurfacePtr;
 
 class VoxelizedPartition
 {
@@ -88,14 +91,6 @@ public:
 	//long linearYeeIndex(int ii, int jj, int kk) const;
 	long linearYeeIndex(const Vector3i & halfCell) const;
 	
-    // nb           partition's neighbor buffer
-    // ii,jj,kk     global half-cell coordinates, inside the alloc region
-    // returns      index into partition's neighbor buffer
-	//long linearYeeIndex(const NeighborBufferDescPtr & nb,
-	//	int ii, int jj, int kk) const;
-	long linearYeeIndex(const NeighborBufferDescPtr & nb,
-		const Vector3i & halfCell) const;
-	
     // halfCell     global half-cell coordinate, possibly outside alloc region
     // returns      linearYeeIndex into the correct field
 	BufferPointer fieldPointer(Vector3i halfCell) const;
@@ -113,12 +108,7 @@ public:
     //BufferPointer getH(int direction, int xi, int xj, int xk) const;
     BufferPointer getE(int direction, Vector3i yeeCell) const;
     BufferPointer getH(int direction, Vector3i yeeCell) const;
-    
-    BufferPointer getE(const NeighborBufferDescPtr & nb, int direction,
-        Vector3i yeeCell) const;
-    BufferPointer getH(const NeighborBufferDescPtr & nb, int direction,
-        Vector3i yeeCell) const;
-    
+        
     // returns      amount to add to float* to go from Ex(here) to Ex(neighbor) 
     Vector3i getFieldStride() const;
 	
@@ -130,20 +120,6 @@ public:
 		{ return mCentralIndices; }
     
     InterleavedLatticePtr getLattice() const { return mLattice; }
-    
-    // returns      the allocation skeleton for fields in this partition
-    /*
-    const std::vector<MemoryBufferPtr> & getBuffersE() const
-        { return mBuffersE; }
-    const std::vector<MemoryBufferPtr> & getBuffersH() const
-        { return mBuffersH; }
-    */
-    
-    // returns      the allocation skeleton for partition's neighbor buffers
-    const Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > &
-        getNBBuffersE() const { return mNBBuffersE; }
-    const Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > &
-        getNBBuffersH() const { return mNBBuffersH; }
     
     // returns      the structures that store temp data for setting up materials
     const Map<Paint*, SetupMaterialPtr> & getDelegates() const
@@ -162,21 +138,19 @@ public:
         { return mHardSetupSources; }
     
     // returns      the structures that store temp data for setting up NBs
-    const std::vector<SetupHuygensSurfacePtr> & getSetupHuygensSurfaces()
-        const { return mSetupHuygensSurfaces; }
+    const std::vector<HuygensSurfacePtr> & getHuygensSurfaces()
+        const { return mHuygensSurfaces; }
     
     void clearVoxelGrid();
     void clearCellCountGrid();
     
-    void createSetupHuygensSurfaces(
+    void createHuygensSurfaces(
         const GridDescPtr & gridDescription,
         const Map<GridDescPtr, VoxelizedPartitionPtr> & grids);
     
     void calculateRunlines();
 	
 private:
-	void initFieldBuffers(std::string bufferNamePrefix,
-        const std::vector<HuygensSurfaceDescPtr> & surfaces);
 	void paintFromAssembly(const GridDescription & gridDesc,
 		const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids);
 	void paintFromHuygensSurfaces(const GridDescription & gridDesc);
@@ -195,29 +169,19 @@ private:
     
     void createSetupOutputs(const std::vector<OutputDescPtr> & outputs);
     void createSetupSources(const std::vector<SourceDescPtr> & sources);
-    /*
-    void createNeighborBufferDelegates(
-        const std::vector<HuygensSurfaceDescPtr> & surfaces,
-        const Map<GridDescPtr, VoxelizedPartitionPtr> & grids);
-	*/
     
 	VoxelGrid mVoxels;
 	PartitionCellCountPtr mCentralIndices;
 	
     InterleavedLatticePtr mLattice;
-    /*
-	std::vector<MemoryBufferPtr> mBuffersE;
-	std::vector<MemoryBufferPtr> mBuffersH;
-    */
-	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffersE;
-	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffersH;
 	
     // THIS IS WHERE GRID DENIZENS LIVE
 	Map<Paint*, SetupMaterialPtr> mSetupMaterials;
 	std::vector<SetupOutputPtr> mSetupOutputs;
     std::vector<SetupSourcePtr> mSoftSetupSources;
     std::vector<SetupSourcePtr> mHardSetupSources;
-    std::vector<SetupHuygensSurfacePtr> mSetupHuygensSurfaces;
+    
+    std::vector<HuygensSurfacePtr> mHuygensSurfaces;
     
     // END OF GRID DENIZEN ZONE
     
@@ -234,8 +198,6 @@ private:
 	Vector3i mOriginYee;
 		
 	std::vector<Vector3i> mHuygensRegionSymmetries;
-    
-    //Map<Vector3i, Map<std::string, std::string> > mPMLParams;
 	
 	friend std::ostream & operator<< (std::ostream & out,
 		const VoxelizedPartition & grid);

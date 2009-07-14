@@ -11,27 +11,29 @@
 #define _HUYGENSSURFACE_
 
 #include "SimulationDescriptionPredeclarations.h"
+#include "InterleavedLattice.h"
 #include "Pointer.h"
 #include "MemoryUtilities.h"
 #include "Map.h"
+#include "geometry.h"
 #include <vector>
 
-class SetupHuygensSurface;
-typedef Pointer<SetupHuygensSurface> SetupHuygensSurfacePtr;
 class HuygensSurface;
 typedef Pointer<HuygensSurface> HuygensSurfacePtr;
 class VoxelizedPartition;
 typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
 
-class SetupNeighborBuffer;
-typedef Pointer<SetupNeighborBuffer> SetupNeighborBufferPtr;
 class NeighborBuffer;
 typedef Pointer<NeighborBuffer> NeighborBufferPtr;
+
+class HuygensUpdate;
+typedef Pointer<HuygensUpdate> HuygensUpdatePtr;
 
 class HuygensSurfaceFactory
 {
 public:
-    static SetupHuygensSurfacePtr newSetupHuygensSurface(
+    static HuygensSurfacePtr newHuygensSurface(
+        std::string namePrefix,
         const VoxelizedPartition & vp,
         const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
         const HuygensSurfaceDescPtr & desc);
@@ -39,119 +41,80 @@ private:
     HuygensSurfaceFactory() {}
 };
 
-class SetupHuygensSurface
-{
-public:
-    SetupHuygensSurface();
-    virtual ~SetupHuygensSurface() {}
-    //const std::vector<MemoryBufferPtr> & getBuffers() const { return mBuffers; }
-    
-    virtual HuygensSurfacePtr makeHuygensSurface() const = 0;
-    
-    /*
-    bool hasBuffer(int side)
-        { return mNeighborBuffers.at(side) != 0L; }
-    SetupNeighborBufferPtr & getNeighborBuffer(int side)
-        { return mNeighborBuffers.at(side); }
-    */
-    
-protected:
-    //std::vector<SetupNeighborBufferPtr> mNeighborBuffers;
-};
-typedef Pointer<SetupHuygensSurface> SetupHuygensSurfacePtr;
-
 class HuygensSurface
 {
 public:
-    HuygensSurface();
-    virtual ~HuygensSurface() {}
+    HuygensSurface(std::string namePrefix, const VoxelizedPartition & vp,
+        const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
+        const HuygensSurfaceDescPtr & desc);
     
-    virtual void updateE() {}
-    virtual void updateH() {}
-    /*
-    bool hasBuffer(int side)
-        { return mNeighborBuffers.at(side) != 0L; }
-    NeighborBufferPtr & getNeighborBuffer(int side)
+    const Rect3i & halfCells() const { return mHalfCells; }
+    bool hasBuffer(int side) const { return mNeighborBuffers.at(side) != 0L; }
+    NeighborBufferPtr buffer(int side) const
         { return mNeighborBuffers.at(side); }
-    */
+    const std::vector<NeighborBufferPtr> & getNeighborBuffers() const
+        { return mNeighborBuffers; }
+    
+    InterleavedLatticePtr getDestLattice() const { return mDestLattice; }
+    InterleavedLatticePtr getSourceLattice() const { return mSourceLattice; }
+    void allocate();
+    
+    void setUpdater(HuygensUpdatePtr update) { mUpdate = update; }
+    void updateE();
+    void updateH();
 private:
-    //std::vector<NeighborBufferPtr> mNeighborBuffers;
-};
-typedef Pointer<HuygensSurface> HuygensSurfacePtr;
-
-/*
-struct NeighborBufferInfo
-{
-    int side;
-    Rect3i destHalfRect;
-    Vector3i numYeeCells;
-    Vector3i nonZeroDimensions;
-	std::vector<float> destFactorsE;
-	std::vector<float> srcFactorsE;
-	std::vector<float> destFactorsH;
-	std::vector<float> srcFactorsH;
-    std::vector<MemoryBufferPtr> buffersE;
-    std:::vector<MemoryBufferPtr> buffersH;
+    Rect3i mHalfCells;
+    HuygensUpdatePtr mUpdate;
+    std::vector<NeighborBufferPtr> mNeighborBuffers;
+    InterleavedLatticePtr mDestLattice;
+    InterleavedLatticePtr mSourceLattice;
 };
 
-class SetupNeighborBuffer
+class HuygensUpdate
 {
 public:
-    SetupNeighborBuffer(int side);
+    HuygensUpdate() {}
+    virtual ~HuygensUpdate() {}
     
-    const Rect3i & getDestRect() const
-        { return mInfo.destHalfRect; }
-    float getDestFactorE(int fieldDirection) const
-        { return mInfo.destFactorsE[fieldDirection]; }
-    float getDestFactorH(int fieldDirection) const;
-        { return mInfo.destFactorsH[fieldDirection]; }
-    float getSourceFactorE(int fieldDirection) const;
-        { return mInfo.sourceFactorsE[fieldDirection]; }
-    float getSourceFactorH(int fieldDirection) const;
-        { return mInfo.sourceFactorsH[fieldDirection]; }
-    
-    BufferPointer getE(int fieldDirection, const Vector3i & yeeCell) const;
-    BufferPointer getH(int fieldDirection, const Vector3i & yeeCell) const;
-    
-    const NeighborBufferInfo & getInfo() const { return mInfo; }
-private:
-    NeighborBufferInfo mInfo;
+    virtual void updateE(HuygensSurface & hs) {}
+    virtual void updateH(HuygensSurface & hs) {}
 };
 
 class NeighborBuffer
 {
 public:
-    NeighborBuffer(const SetupNeighborBuffer & setupNB);
+    NeighborBuffer(std::string prefix,
+        const Rect3i & huygensHalfCells, int sideNum,
+        float incidentFieldFactor);
+    NeighborBuffer(std::string prefix,
+        const Rect3i & huygensHalfCells, 
+        const Rect3i & sourceHalfCells,
+        int sideNum,
+        float incidentFieldFactor);
     
-    const Rect3i & getDestRect() const
-        { return mInfo.destHalfRect; }
-    float getDestFactorE(int fieldDirection) const
-        { return mInfo.destFactorsE[fieldDirection]; }
+    const Rect3i & getDestHalfCells() const;
+    const Rect3i & getSourceHalfCells() const;
+    float getDestFactorE(int fieldDirection) const;
     float getDestFactorH(int fieldDirection) const;
-        { return mInfo.destFactorsH[fieldDirection]; }
     float getSourceFactorE(int fieldDirection) const;
-        { return mInfo.sourceFactorsE[fieldDirection]; }
     float getSourceFactorH(int fieldDirection) const;
-        { return mInfo.sourceFactorsH[fieldDirection]; }
     
-    float getE(int fieldDirection, const Vector3i & yeeCell) const;
-    float getH(int fieldDirection, const Vector3i & yeeCell) const;
-    void setE(int fieldDirection, const Vector3i & yeeCell, float value);
-    void setH(int fieldDirection, const Vector3i & yeeCell, float value);
-    
-    const NeighborBufferInfo & getInfo() const { return mInfo; }
+    InterleavedLatticePtr getLattice() const { return mLattice; }
 private:
-    float* mHeadE[3];
-    float* mHeadH[3];
-    Vector3i mMemStride;
-    Vector3f mEOffset[3];
-    Vector3f mHOffset[3];
+    Rect3i getEdgeHalfCells(const Rect3i & halfCells, int nSide);
+    void initFactors(const Rect3i & huygensHalfCells, int sideNum,
+        float incidentFieldFactor);
     
-    std::vector<float> mFields;
+    int side;
+    InterleavedLatticePtr mLattice;
     
-    NeighborBufferInfo mInfo;
+    Rect3i mSourceHalfCells; // not always used
+    
+    std::vector<float> mDestFactorsE;
+	std::vector<float> mSourceFactorsE;
+	std::vector<float> mDestFactorsH;
+	std::vector<float> mSourceFactorsH;
 };
-*/
 
 
 #endif

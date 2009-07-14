@@ -114,17 +114,29 @@ calcEPhase(int direction)
             *fi = *fi + (mDt/Constants::eps0/m_epsr)*
                 ( (*gkHigh-*gkLow)/dj - (*gjHigh - *gjLow)/dk );
             /*
-            if (*fi != fiOld)
-                LOG << mm << " diff " << *fi - fiOld << "\n";
+            if (mm == 0)
+            {
+                LOG << "**" << MemoryBuffer::identify(fi) << " is " << *fi << "\n";
+                LOG << MemoryBuffer::identify(gjLow) << " is " << *gjLow << "\n";
+                LOG << MemoryBuffer::identify(gjHigh) << " is " << *gjHigh << "\n";
+                LOG << MemoryBuffer::identify(gkLow) << " is " << *gkLow << " \n";
+                LOG << MemoryBuffer::identify(gkHigh) << " is " << *gkHigh << "\n";
+            }
+            */
             
+            /*
+            //if (*fi != fiOld)
+            //    LOG << mm << " diff " << *fi - fiOld << "\n";
+            if (*fi != 0)
+                LOG << "**" << MemoryBuffer::identify(fi) << " is " << *fi << "\n";
             if (*gjLow != 0)
-                LOG << MemoryBuffer::identify(gjLow) << "\n";
+                LOG << MemoryBuffer::identify(gjLow) << " is " << *gjLow << "\n";
             if (*gjHigh != 0)
-                LOG << MemoryBuffer::identify(gjHigh) << "\n";
+                LOG << MemoryBuffer::identify(gjHigh) << " is " << *gjHigh << "\n";
             if (*gkLow != 0)
-                LOG << MemoryBuffer::identify(gkLow) << "\n";
+                LOG << MemoryBuffer::identify(gkLow) << " is " << *gkLow << " \n";
             if (*gkHigh != 0)
-                LOG << MemoryBuffer::identify(gkHigh) << "\n";
+                LOG << MemoryBuffer::identify(gkHigh) << " is " << *gkHigh << "\n";
             */
             
             //*fi = *fi * 0.9 + 0.025*(*gjLow + *gjHigh + *gkLow + *gkHigh);
@@ -166,6 +178,16 @@ calcHPhase(int direction)
                 ( (*gkHigh-*gkLow)/dj - (*gjHigh - *gjLow)/dk );
             //LOG << "neighbors " << *gkLow << " " << *gkHigh << "\n";
             //*fi = *fi * 0.9 + 0.025*(*gjLow + *gjHigh + *gkLow + *gkHigh);
+            
+            if (mm == 0)
+            {
+                LOG << "**" << MemoryBuffer::identify(fi) << " is " << *fi << "\n";
+                LOG << MemoryBuffer::identify(gjLow) << " is " << *gjLow << "\n";
+                LOG << MemoryBuffer::identify(gjHigh) << " is " << *gjHigh << "\n";
+                LOG << MemoryBuffer::identify(gkLow) << " is " << *gkLow << " \n";
+                LOG << MemoryBuffer::identify(gkHigh) << " is " << *gkHigh << "\n";
+            }
+            
             /*
             if (*fi != fiOld)
                 LOG << mm << " diff " << *fi - fiOld << "\n";

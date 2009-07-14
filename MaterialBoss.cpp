@@ -17,6 +17,7 @@
 #include "Log.h"
 #include "YeeUtilities.h"
 #include "CalculationPartition.h"
+#include "HuygensSurface.h"
 
 #include "StaticDielectric.h"
 #include "StaticDielectricPML.h"
@@ -220,8 +221,13 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		else if (mStartPaint->hasCurlBuffer(nSide))
 		{
 			mUsedNeighborIndices[nSide] = 0;
+            bp[nSide] = mStartPaint->getCurlBuffer(nSide)->
+                getLattice()->wrappedPointer(mStartPoint+cardinal(nSide));
+            /*
 			bp[nSide] = vp.fieldPointer(mStartPaint->getCurlBuffer(nSide),
 				mStartPoint+cardinal(nSide));
+            */
+            
             /*
             LOG << "Buffer on that side is " << bp[nSide] << "\n";
             LOGMORE << "Compare to " << vp.fieldPointer(mStartPoint+
@@ -385,8 +391,8 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		else if (mStartPaint->hasCurlBuffer(nSide))
 		{
 			mUsedNeighborIndices[nSide] = 0;
-			bp[nSide] = vp.fieldPointer(mStartPaint->getCurlBuffer(nSide),
-				mStartPoint+cardinal(nSide));
+			bp[nSide] = mStartPaint->getCurlBuffer(nSide)->getLattice()->
+                wrappedPointer(mStartPoint+cardinal(nSide));
 		}
 		else
 		{

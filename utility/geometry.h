@@ -32,8 +32,13 @@ public:
 	Rect(const Vector3<T> & p0, const Vector3<T> & p1);
 	Rect(const Rect<T> & copyMe);
 	
+    // size is calculated as p2-p1
 	T size(unsigned int dim) const;
 	Vector3<T> size() const;
+    
+    // num is calculated as p2-p1+1 (so, "inclusive" size suitable for ints)
+    T num(unsigned int dim) const;
+    Vector3<T> num() const;
 	
 	bool
 	encloses(const Rect<T> & inRect) const;

@@ -30,11 +30,8 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     m_numT(numT),
     mAllocOriginYee(vp.getAllocYeeCells().p1),
     mAllocYeeCells(vp.getAllocYeeCells().size() + 1),
-    //mBuffersE(vp.getBuffersE()),
-    //mBuffersH(vp.getBuffersH()),
-    mLattice(vp.getLattice()),
-    mNBBuffersE(vp.getNBBuffersE()),
-    mNBBuffersH(vp.getNBBuffersH())
+    mHuygensSurfaces(vp.getHuygensSurfaces()),
+    mLattice(vp.getLattice())
 {
     LOG << "New calc partition.\n";
     unsigned int nn;
@@ -47,18 +44,13 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         LOG << "Not going to do this yet.\n";
         exit(1);
     }
-    else
-    {
-        //allocate(mFieldsE, mBuffersE);
-        //allocate(mFieldsH, mBuffersH);
-        mLattice->allocate();
-        map<NeighborBufferDescPtr, vector<MemoryBufferPtr> >::iterator itr;
-        for (itr = mNBBuffersE.begin(); itr != mNBBuffersE.end(); itr++)
-            allocate(mNBFieldsE[itr->first], itr->second);
-        for (itr = mNBBuffersH.begin(); itr != mNBBuffersH.end(); itr++)
-            allocate(mNBFieldsH[itr->first], itr->second);
-    }
     
+    // Allocate memory, both main grid and Huygens surfaces
+    mLattice->allocate();
+    for (int nn = 0; nn < mHuygensSurfaces.size(); nn++)
+        mHuygensSurfaces.at(nn)->allocate();
+    
+    // Fill out other denizens.
     const Map<Paint*, SetupMaterialPtr> & delegs = vp.getDelegates();
     map<Paint*, SetupMaterialPtr>::const_iterator itr;
     for (itr = delegs.begin(); itr != delegs.end(); itr++)
@@ -83,22 +75,6 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     {
         mHardSources.push_back(hardSrcs[nn]->makeSource(vp, *this));
     }
-    
-    
-    // Prepare helper variables for the field accessors.
-    // We cache the head pointers just so they're in a quick order for later.
-    /*
-    for (int dir = 0; dir < 3; dir++)
-    {
-        mHeadE[dir] = mBuffersE[dir]->getHeadPointer();
-        mHeadH[dir] = mBuffersH[dir]->getHeadPointer();
-        mEOffset[dir] = eFieldPosition(dir);
-        mHOffset[dir] = hFieldPosition(dir);
-    }
-    mMemStride[0] = mBuffersE[0]->getStride(); // should be same for all
-    mMemStride[1] = mAllocYeeCells[0]*mMemStride[0];
-    mMemStride[2] = mAllocYeeCells[1]*mMemStride[1];
-    */
 }
 
 CalculationPartition::
@@ -200,58 +176,24 @@ outputH(int timestep)
 float CalculationPartition::
 getE(int direction, int xi, int xj, int xk) const
 {
-    /*
-    // wrap coordinates within alloc region (this handles periodic boundaries
-    // when there's only one partition, e.g. non-MPI).
-    xi = (xi - mAllocOriginYee[0] + mAllocYeeCells[0])%mAllocYeeCells[0];
-    xj = (xj - mAllocOriginYee[1] + mAllocYeeCells[1])%mAllocYeeCells[1];
-    xk = (xk - mAllocOriginYee[2] + mAllocYeeCells[2])%mAllocYeeCells[2];
-    
-    return mHeadE[direction][xi*mMemStride[0] + xj*mMemStride[1] +
-        xk*mMemStride[2] ];
-    */
     return mLattice->getWrappedE(direction, Vector3i(xi, xj, xk));
 }
     
 float CalculationPartition::
 getH(int direction, int xi, int xj, int xk) const
 {
-    /*
-    // wrap coordinates within alloc region (this handles periodic boundaries
-    // when there's only one partition, e.g. non-MPI).
-    xi = (xi - mAllocOriginYee[0] + mAllocYeeCells[0])%mAllocYeeCells[0];
-    xj = (xj - mAllocOriginYee[1] + mAllocYeeCells[1])%mAllocYeeCells[1];
-    xk = (xk - mAllocOriginYee[2] + mAllocYeeCells[2])%mAllocYeeCells[2];
-    
-    return mHeadH[direction][xi*mMemStride[0] + xj*mMemStride[1] +
-        xk*mMemStride[2] ];
-    */
     return mLattice->getWrappedH(direction, Vector3i(xi, xj, xk));
 }
 
 float CalculationPartition::
 getE(int direction, Vector3i xx) const
 {
-    /*
-    // wrap coordinates within alloc region (this handles periodic boundaries
-    // when there's only one partition, e.g. non-MPI).
-    xx = (xx - mAllocOriginYee + mAllocYeeCells)%mAllocYeeCells;
-    
-    return mHeadE[direction][dot(xx, mMemStride)];
-    */
     return mLattice->getWrappedE(direction, xx);
 }
     
 float CalculationPartition::
 getH(int direction, Vector3i xx) const
 {
-    /*
-    // wrap coordinates within alloc region (this handles periodic boundaries
-    // when there's only one partition, e.g. non-MPI).
-    xx = (xx - mAllocOriginYee + mAllocYeeCells)%mAllocYeeCells;
-    
-    return mHeadH[direction][dot(xx, mMemStride)];
-    */
     return mLattice->getWrappedH(direction, xx);
 }
 
@@ -311,33 +253,13 @@ getH(int direction, Vector3f xx) const
 void CalculationPartition::
 setE(int direction, int xi, int xj, int xk, float val)
 {
-    /*
-    xi = (xi - mAllocOriginYee[0] + mAllocYeeCells[0])%mAllocYeeCells[0];
-    xj = (xj - mAllocOriginYee[1] + mAllocYeeCells[1])%mAllocYeeCells[1];
-    xk = (xk - mAllocOriginYee[2] + mAllocYeeCells[2])%mAllocYeeCells[2];
-    
-    mHeadE[direction][xi*mMemStride[0] + xj*mMemStride[1] +
-        xk*mMemStride[2] ] = val;
-    */
     mLattice->setE(direction, Vector3i(xi,xj,xk), val);
-    //LOG << MemoryBuffer::identify(&mHeadE[direction][xi*mMemStride[0] + xj*mMemStride[1] +
-    //    xk*mMemStride[2]]);
 }
 
 void CalculationPartition::
 setH(int direction, int xi, int xj, int xk, float val)
 {
-    /*
-    xi = (xi - mAllocOriginYee[0] + mAllocYeeCells[0])%mAllocYeeCells[0];
-    xj = (xj - mAllocOriginYee[1] + mAllocYeeCells[1])%mAllocYeeCells[1];
-    xk = (xk - mAllocOriginYee[2] + mAllocYeeCells[2])%mAllocYeeCells[2];
-    
-    mHeadH[direction][xi*mMemStride[0] + xj*mMemStride[1] +
-        xk*mMemStride[2] ] = val;
-    */
     mLattice->setH(direction, Vector3i(xi, xj, xk), val);
-    //LOG << MemoryBuffer::identify(&mHeadH[direction][xi*mMemStride[0] + xj*mMemStride[1] +
-    //    xk*mMemStride[2]]);
 }
 
 
@@ -406,38 +328,5 @@ printFields(std::ostream & str, int field, float scale)
         }
     }
 }
-
-void CalculationPartition::
-createHuygensSurfaces(const VoxelizedPartition & vp)
-{
-    const vector<SetupHuygensSurfacePtr> & huyg =
-        vp.getSetupHuygensSurfaces();
-    for (unsigned int nn = 0; nn < huyg.size(); nn++)
-    {
-        mHuygensSurfaces.push_back(huyg[nn]->makeHuygensSurface());
-    }
-}
-
-
-void CalculationPartition::
-allocate(std::vector<float> & data, vector<MemoryBufferPtr> & buffers)
-{
-    int nn;
-    int bufsize = 0;
-    long offset = 0;
-    
-    for (nn = 0; nn < 3; nn++)
-        bufsize += buffers[nn]->getLength();
-    //LOG << "Bufsize is " << bufsize << endl;
-    data.resize(bufsize);
-    
-    for (nn = 0; nn < 3; nn++)
-    {
-        buffers[nn]->setHeadPointer(&(data[offset]));
-        offset += buffers[nn]->getLength();
-    }
-}
-
-
 
 

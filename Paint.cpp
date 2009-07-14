@@ -86,7 +86,7 @@ withPML(Vector3i pmlDir) const
 }
 
 Paint* Paint::
-withCurlBuffer(int side, NeighborBufferDescPtr & curlBuffer) const
+withCurlBuffer(int side, NeighborBufferPtr & curlBuffer) const
 {
 	assert(mCurlBuffers[side] == 0L);
 	PaintPtr p(new Paint(*this));
@@ -150,7 +150,7 @@ hasCurlBuffer(int side) const
 	return (mCurlBuffers[side] != 0L);
 }
 
-const NeighborBufferDescPtr & Paint::
+const NeighborBufferPtr & Paint::
 getCurlBuffer(int side) const
 {
 	assert(side >= 0);

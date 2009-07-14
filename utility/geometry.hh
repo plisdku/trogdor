@@ -51,7 +51,19 @@ T Rect<T>::size(unsigned int dim) const
 template<typename T>
 Vector3<T> Rect<T>::size() const
 {
-	return p2 - p1;
+	return p2 - p1 ;
+}
+
+template<typename T>
+T Rect<T>::num(unsigned int dim) const
+{
+	return p2[dim] - p1[dim] + 1;
+}
+
+template<typename T>
+Vector3<T> Rect<T>::num() const
+{
+	return p2 - p1 + 1;
 }
 
 template<typename T>

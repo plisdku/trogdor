@@ -9,6 +9,7 @@
 
 #include "VoxelGrid.h"
 #include "SimulationDescription.h"
+#include "HuygensSurface.h"
 
 #include "Map.h"
 #include <vector>
@@ -337,7 +338,7 @@ paintExtrude(const GridDescription & gridDesc, const Extrude & instruction)
 }
 
 #pragma mark *** Overlay methods ***
-
+/*
 void VoxelGrid::
 overlayHuygensSurface(const HuygensSurfaceDescription & surf)
 {
@@ -353,6 +354,50 @@ overlayHuygensSurface(const HuygensSurfaceDescription & surf)
 			Rect3i innerHalfRect = edgeOfRect(
 				surf.getHalfCells(), sideNum);
 			Rect3i outerHalfRect = (innerHalfRect + side);
+			
+			// Paint the inside
+			for (kk = innerHalfRect.p1[2]; kk <= innerHalfRect.p2[2]; kk++)
+			for (jj = innerHalfRect.p1[1]; jj <= innerHalfRect.p2[1]; jj++)
+			for (ii = innerHalfRect.p1[0]; ii <= innerHalfRect.p2[0]; ii++)
+			{
+				Paint* p = (*this)(ii,jj,kk)->withCurlBuffer(sideNum, nb);
+				paintHalfCell(p, ii, jj, kk);
+				//(*this)(ii,jj,kk) = p;
+			}
+			
+			//LOG << "Huygens inner " << innerHalfRect << "\n";
+			
+			// Paint the outside
+			int oppositeSideNum = (sideNum % 2) ? (sideNum-1) : (sideNum+1);
+			for (kk = outerHalfRect.p1[2]; kk <= outerHalfRect.p2[2]; kk++)
+			for (jj = outerHalfRect.p1[1]; jj <= outerHalfRect.p2[1]; jj++)
+			for (ii = outerHalfRect.p1[0]; ii <= outerHalfRect.p2[0]; ii++)
+			{
+				Paint* q = (*this)(ii,jj,kk)->withCurlBuffer(oppositeSideNum,
+					nb);
+				paintHalfCell(q, ii, jj, kk);
+				//(*this)(ii,jj,kk) = q;
+			}
+			
+			//LOG << "Huygens outer " << outerHalfRect << "\n"; 
+
+		}
+	}
+}*/
+
+void VoxelGrid::
+overlayHuygensSurface(const HuygensSurface & surf)
+{
+	int ii, jj, kk;
+	for (int sideNum = 0; sideNum < 6; sideNum++)
+	{
+        if (surf.hasBuffer(sideNum))
+		{
+			NeighborBufferPtr nb = surf.buffer(sideNum);
+			assert(nb != 0L);
+			
+			Rect3i innerHalfRect = edgeOfRect(surf.halfCells(), sideNum);
+			Rect3i outerHalfRect = (innerHalfRect + cardinal(sideNum));
 			
 			// Paint the inside
 			for (kk = innerHalfRect.p1[2]; kk <= innerHalfRect.p2[2]; kk++)

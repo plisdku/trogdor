@@ -14,71 +14,13 @@
 #include "geometry.h"
 #include <vector>
 
-struct LinkNeighborBufferDeleg;
-struct LinkNeighborBuffer;
-
-class SetupHuygensLink : public SetupHuygensSurface
+class HuygensLink : public HuygensUpdate
 {
 public:
-    SetupHuygensLink(
-        const VoxelizedPartition & vp,
-        const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
-        const HuygensSurfaceDescPtr & desc);
+    HuygensLink(const HuygensSurface & hs);
     
-    virtual HuygensSurfacePtr makeHuygensSurface() const;
-private:
-    std::vector<LinkNeighborBufferDeleg> mNBs;
-};
-
-
-class HuygensLink : public HuygensSurface
-{
-public:
-    HuygensLink(const std::vector<LinkNeighborBufferDeleg> & nbs);
-    
-    virtual void updateE();
-    virtual void updateH();
-private:
-    std::vector<LinkNeighborBuffer> mNBs;
-};
-
-
-struct LinkNeighborBufferDeleg
-{
-    LinkNeighborBufferDeleg();
-    std::vector<BufferPointer> mDestEHeadPtr;
-    std::vector<BufferPointer> mDestHHeadPtr;
-    std::vector<BufferPointer> mSrcEHeadPtr;
-    std::vector<BufferPointer> mSrcHHeadPtr;
-    std::vector<BufferPointer> mBufEHeadPtr;
-    std::vector<BufferPointer> mBufHHeadPtr;
-    Vector3i mSourceStride;
-    Vector3i mDestStride;
-    Vector3i mStride;
-    Vector3i mNumYeeCells;
-    std::vector<float> mSrcFactorsE;
-    std::vector<float> mDestFactorsE;
-    std::vector<float> mSrcFactorsH;
-    std::vector<float> mDestFactorsH;
-};
-
-struct LinkNeighborBuffer
-{
-    LinkNeighborBuffer();
-    std::vector<float*> mDestEHeadPtr;
-    std::vector<float*> mDestHHeadPtr;
-    std::vector<float*> mSrcEHeadPtr;
-    std::vector<float*> mSrcHHeadPtr;
-    std::vector<float*> mBufEHeadPtr;
-    std::vector<float*> mBufHHeadPtr;
-    Vector3i mSourceStride;
-    Vector3i mDestStride;
-    Vector3i mStride;
-    Vector3i mNumYeeCells;
-    std::vector<float> mSrcFactorsE;
-    std::vector<float> mDestFactorsE;
-    std::vector<float> mSrcFactorsH;
-    std::vector<float> mDestFactorsH;
+    virtual void updateE(HuygensSurface & hs);
+    virtual void updateH(HuygensSurface & hs);
 };
 
 #endif

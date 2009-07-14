@@ -49,24 +49,12 @@ public:
     // returns        number of timesteps in simulation, including initial cond.
     long getDuration() const { return m_numT; }
     
-    /*
-    // update E fields
-    void calcE();
-    void calcBeforeE(int timestep);
-    void calcAfterE(int timestep);
-    
-    // update H fields
-    void calcH();
-    void calcBeforeH(int timestep);
-    void calcAfterH(int timestep);
-    */
     void updateE(int timestep);
     void sourceE(int timestep);
     void outputE(int timestep);
     void updateH(int timestep);
     void sourceH(int timestep);
     void outputH(int timestep);
-    
     
     // These field accessors exist solely for the convenience of the Output
     // classes.  To improve speed a little, the SetupOutput can prepare in
@@ -94,7 +82,7 @@ public:
     
     void printFields(std::ostream & str, int field, float scale);
     
-    void createHuygensSurfaces(const VoxelizedPartition & vp);
+    //void createHuygensSurfaces(const VoxelizedPartition & vp);
 
 private:
     Vector3f m_dxyz;
@@ -102,17 +90,10 @@ private:
     long m_numT;
     
     // All the variables in this section are used for getting field values.
-    float* mHeadE[3];
-    float* mHeadH[3];
     Vector3i mAllocOriginYee;
     Vector3i mAllocYeeCells;
-    Vector3i mMemStride;
     Vector3f mEOffset[3];
     Vector3f mHOffset[3];
-    // end of field accessor vars
-    
-    void allocate(std::vector<float> & data,
-        std::vector<MemoryBufferPtr> & buffers);
     
     std::vector<MaterialPtr> mMaterials;
     std::vector<OutputPtr> mOutputs;
@@ -121,18 +102,6 @@ private:
     std::vector<HuygensSurfacePtr> mHuygensSurfaces;
     
     InterleavedLatticePtr mLattice;
-    /*
-	std::vector<MemoryBufferPtr> mBuffersE;
-	std::vector<MemoryBufferPtr> mBuffersH;
-    */
-    std::vector<float> mFieldsE;
-    std::vector<float> mFieldsH;
-    
-	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffersE;
-	Map<NeighborBufferDescPtr, std::vector<MemoryBufferPtr> > mNBBuffersH;
-    Map<NeighborBufferDescPtr, std::vector<float> > mNBFieldsE;
-    Map<NeighborBufferDescPtr, std::vector<float> > mNBFieldsH;
-    
 };
 typedef Pointer<CalculationPartition> CalculationPartitionPtr;
 

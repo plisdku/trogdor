@@ -11,136 +11,249 @@
 #include "VoxelizedPartition.h"
 #include "SimulationDescription.h"
 #include "Exception.h"
+#include "YeeUtilities.h"
+#include "STLOutput.h"
 
 #include "HuygensLink.h"
-
+#include <sstream>
 using namespace std;
+using namespace YeeUtilities;
 
-SetupHuygensSurfacePtr HuygensSurfaceFactory::
-newSetupHuygensSurface(const VoxelizedPartition & vp,
+HuygensSurfacePtr HuygensSurfaceFactory::
+newHuygensSurface(string namePrefix,
+    const VoxelizedPartition & vp,
     const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
     const HuygensSurfaceDescPtr & desc)
 {
-    SetupHuygensSurfacePtr hs;
+    HuygensSurfacePtr hs(new HuygensSurface(namePrefix, vp, grids, desc));
+    HuygensUpdatePtr update;
     
     if (desc->getType() == kLink)
     {
-        hs = SetupHuygensSurfacePtr(new SetupHuygensLink(
-            vp, grids, desc));
+        update = HuygensUpdatePtr(new HuygensLink(*hs));
+        hs->setUpdater(update);
     }
-    /*
-    else if (desc->getType() == kTFSFSource)
-    {
-    }
-    else if (desc->getType() == kCustomTFSFSource)
-    {
-    }
-    */
     else
         throw(Exception("Unknown HuygensSurface type!"));
     
     return hs;
 }
 
-SetupHuygensSurface::
-SetupHuygensSurface()
-    //mNeighborBuffers(6)
-{
-}
-
 HuygensSurface::
-HuygensSurface()
-    //mNeighborBuffers(6)
+HuygensSurface(string namePrefix, const VoxelizedPartition & vp,
+    const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
+    const HuygensSurfaceDescPtr & surfaceDescription) :
+    mNeighborBuffers(6),
+    mHalfCells(surfaceDescription->getHalfCells()),
+    mDestLattice(vp.getLattice())
 {
-}
-/*
-SetupNeighborBuffer::
-SetupNeighborBuffer(int side) 
-{
-    assert(side >= 0 && side <= 5);
-    mInfo.side = side;
-    mInfo.nonZeroDimensions = Vector3i(1,1,1);
-    mInfo.nonZeroDimensions[side/2] = 0;
-}
-
-
-BufferPointer SetupNeighborBuffer::
-getE(int fieldDirection, const Vector3i & yeeCell) const
-{
-    Vector3i p1Yee = halfToYee(mInfo.destHalfRect.p1);
-    Vector3i displacement = yeeCell - p1Yee;
-    displacement[mInfo.side/2] = 0;
+    static const Rect3i UNUSED_SOURCE_RECT_ARGUMENT(0,0,0,0,0,0);
+    Rect3i sourceHalfCells(UNUSED_SOURCE_RECT_ARGUMENT);
     
-    int index = displacement[0] + mInfo.numYeeCells[0]*displacement[1]
-        + mInfo.numYeeCells[0]*mInfo.numYeeCells[1]*displacement[2];
+    if (surfaceDescription->getSourceGrid() != 0L)
+    {
+        mSourceLattice =  grids[surfaceDescription->getSourceGrid()]->
+            getLattice();
+        sourceHalfCells = surfaceDescription->getFromHalfCells();
+    }
     
-    return BufferPointer(*mInfo.buffersE[fieldDirection], index);
-}
-
-
-BufferPointer SetupNeighborBuffer::
-getH(int fieldDirection, const Vector3i & yeeCell) const
-{
-    Vector3i p1Yee = halfToYee(mInfo.destHalfRect.p1);
-    Vector3i displacement = yeeCell - p1Yee;
-    displacement[mInfo.side/2] = 0;
+    for (int sideNum = 0; sideNum < 6; sideNum++)
+    {
+        ostringstream bufPrefix;
+        bufPrefix << namePrefix << " side " << sideNum;
+        Vector3i sideVector(cardinal(sideNum));
+        if (!surfaceDescription->getOmittedSides().count(sideVector))
+        {
+            float incidentFieldFactor =
+                surfaceDescription->isTotalField() ? 1.0 : -1.0;
+            NeighborBufferPtr p(new NeighborBuffer(
+                bufPrefix.str(),
+                surfaceDescription->getHalfCells(),
+                sourceHalfCells,
+                sideNum,
+                incidentFieldFactor));
+            mNeighborBuffers[sideNum] = p;
+        }
+    }
     
-    int index = displacement[0] + mInfo.numYeeCells[0]*displacement[1]
-        + mInfo.numYeeCells[0]*mInfo.numYeeCells[1]*displacement[2];
-    
-    return BufferPointer(*mInfo.buffersH[fieldDirection], index);
 }
 
+void HuygensSurface::
+allocate()
+{
+    for (int nn = 0; nn < 6; nn++)
+    if (hasBuffer(nn))
+    {
+        mNeighborBuffers.at(nn)->getLattice()->allocate();
+    }
+}
+
+void HuygensSurface::
+updateE()
+{
+    assert(mUpdate != 0L);
+    mUpdate->updateE(*this);
+}
+
+void HuygensSurface::
+updateH()
+{
+    assert(mUpdate != 0L);
+    mUpdate->updateH(*this);
+}
 
 NeighborBuffer::
-NeighborBuffer(const SetupNeighborBuffer & setupNB) :
-    mInfo(setupNB.getInfo())
+NeighborBuffer(string prefix,
+    const Rect3i & huygensHalfCells, int sideNum,
+    float incidentFieldFactor) :
+    mDestFactorsE(3),
+    mSourceFactorsE(3),
+    mDestFactorsH(3),
+    mSourceFactorsH(3)
 {
-    mFields.resize(6*mInfo.buffersE[0]->
+    Rect3i destHalfRect(getEdgeHalfCells(huygensHalfCells, sideNum));
+    initFactors(huygensHalfCells, sideNum, incidentFieldFactor);
+    
+    mLattice = InterleavedLatticePtr(new InterleavedLattice(
+        prefix, destHalfRect));
 }
 
-
-float NeighborBuffer::
-getE(int fieldDirection, const Vector3i & yeeCell) const
+NeighborBuffer::
+NeighborBuffer(string prefix,
+    const Rect3i & huygensHalfCells, const Rect3i & sourceHalfCells,
+    int sideNum,
+    float incidentFieldFactor) :
+    mDestFactorsE(3),
+    mSourceFactorsE(3),
+    mDestFactorsH(3),
+    mSourceFactorsH(3)
 {
-    Vector3i p1Yee = halfToYee(mInfo.destHalfRect.p1);
-    Vector3i displacement(yeeCell-p1Yee);
-    displacement[mInfo.side/2] = 0;
-    int index = dot(displacement, mMemStride);
+    Rect3i destHalfRect(getEdgeHalfCells(huygensHalfCells, sideNum));
+    mSourceHalfCells = getEdgeHalfCells(sourceHalfCells, sideNum);
     
-    return mHeadE[fieldDirection][index];
+    initFactors(huygensHalfCells, sideNum, incidentFieldFactor);
+    
+    mLattice = InterleavedLatticePtr(new InterleavedLattice(
+        prefix, destHalfRect));
+        
+    LOG << "Source " << mSourceHalfCells << " dest " << destHalfRect << "\n";
+    LOG << "Source factors: \n";
+    LOGMORE << mSourceFactorsE << "\n";
+    LOGMORE << mSourceFactorsH << "\n";
+    LOG << "Dest factors: \n";
+    LOGMORE << mDestFactorsE << "\n";
+    LOGMORE << mDestFactorsH << "\n";
+}
+
+const Rect3i & NeighborBuffer::
+getDestHalfCells() const
+{
+    return mLattice->halfCells();
+}
+
+const Rect3i & NeighborBuffer::
+getSourceHalfCells() const
+{
+    return mSourceHalfCells;
 }
 
 float NeighborBuffer::
-getH(int fieldDirection, const Vector3i & yeeCell) const
+getDestFactorE(int fieldDirection) const
 {
-    Vector3i p1Yee = halfToYee(mInfo.destHalfRect.p1);
-    Vector3i displacement(yeeCell-p1Yee);
-    displacement[mInfo.side/2] = 0;
-    int index = dot(displacement, mMemStride);
-    
-    return mHeadH[fieldDirection][index];
+    return mDestFactorsE.at(fieldDirection);
+}
+
+float NeighborBuffer::
+getDestFactorH(int fieldDirection) const
+{
+    return mDestFactorsH.at(fieldDirection);
+}
+
+float NeighborBuffer::
+getSourceFactorE(int fieldDirection) const
+{
+    return mSourceFactorsE.at(fieldDirection);
+}
+
+float NeighborBuffer::
+getSourceFactorH(int fieldDirection) const
+{
+    return mSourceFactorsH.at(fieldDirection);
+}
+
+Rect3i NeighborBuffer::
+getEdgeHalfCells(const Rect3i & halfCells, int nSide)
+{
+	Rect3i outerHalfCells = edgeOfRect(halfCells, nSide);
+	
+	// the fat boundary contains the cells on BOTH sides of the TFSF boundary
+	// in the destination grid
+	if (nSide % 2 == 0) // if this is a low-x, low-y or low-z side
+		outerHalfCells.p1 += cardinal(nSide);
+	else
+		outerHalfCells.p2 += cardinal(nSide);
+	
+    return outerHalfCells;
 }
 
 void NeighborBuffer::
-setE(int fieldDirection, const Vector3i & yeeCell, float value)
+initFactors(const Rect3i & huygensHalfCells, int sideNum,
+    float incidentFieldFactor)
 {
-    Vector3i p1Yee = halfToYee(mInfo.destHalfRect.p1);
-    Vector3i displacement(yeeCell-p1Yee);
-    displacement[mInfo.side/2] = 0;
-    int index = dot(displacement, mMemStride);
-    mHeadE[fieldDirection][index] = value;
+	Rect3i outerTotalField = edgeOfRect(huygensHalfCells, sideNum);
+	unsigned int dir;
+    Vector3i fieldOffset, p1Offset;
+    
+    LOG << "For side number " << sideNum << " (outer " << outerTotalField
+        << "):\n";
+    
+    for (dir = 0; dir < 3; dir++)
+    {
+        bool eFieldIsWithinTotalField, hFieldIsWithinTotalField;
+        
+        // E fields
+        fieldOffset = eFieldOffset(dir);
+        p1Offset = outerTotalField.p1%2;
+        
+        // if we're in the total-field region, SUBTRACT the field here to
+        // prevent the incident field from moving out to the scattered field
+        // zone.
+        
+        eFieldIsWithinTotalField = (fieldOffset[sideNum/2] == p1Offset[sideNum/2]);
+        
+        if (eFieldIsWithinTotalField)
+        {
+            LOG << "E" << char('x'+dir) << " is TOTAL FIELD\n";
+            mDestFactorsE[dir] = 1.0f;
+            mSourceFactorsE[dir] = -1.0f*incidentFieldFactor;
+        }
+        else
+        {
+            LOG << "E" << char('x'+dir) << " is SCATTERED FIELD\n";
+            mDestFactorsE[dir] = 1.0f;
+            mSourceFactorsE[dir] = 1.0f * incidentFieldFactor;
+        }
+        
+        // H fields
+        fieldOffset = hFieldOffset(dir);
+        p1Offset = outerTotalField.p1%2;
+        hFieldIsWithinTotalField = (fieldOffset[sideNum/2] == p1Offset[sideNum/2]);
+        
+        if (hFieldIsWithinTotalField)
+        {
+            LOG << "H" << char('x'+dir) << " is TOTAL FIELD\n";
+            mDestFactorsH[dir] = 1.0f;
+            mSourceFactorsH[dir] = -1.0f*incidentFieldFactor;
+        }
+        else
+        {
+            LOG << "H" << char('x'+dir) << " is SCATTERED FIELD\n";
+            mDestFactorsH[dir] = 1.0f;
+            mSourceFactorsH[dir] = 1.0f * incidentFieldFactor;
+        }
+    }
 }
 
-void NeighborBuffer::
-setH(int fieldDirection, const Vector3i & yeeCell, float value)
-{
-    Vector3i p1Yee = halfToYee(mInfo.destHalfRect.p1);
-    Vector3i displacement(yeeCell-p1Yee);
-    displacement[mInfo.side/2] = 0;
-    int index = dot(displacement, mMemStride);
-    mHeadH[fieldDirection][index] = value;
-}
-*/
+
 
 

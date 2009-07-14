@@ -1,169 +1,246 @@
-// testmain.cpp
+// Test interleaved lattice.cpp
 
 // these two defines tell Boost to provide a main() function.  GRRRRR WHY
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-
-#define BOOST_TEST_MODULE MyClass test
+#define BOOST_TEST_MODULE Test InterleavedLattice
 
 // my main() is defined in boost/test/unit_test.hpp.
 #include <boost/test/unit_test.hpp>
-using boost::unit_test_framework::test_suite;
-using boost::unit_test_framework::test_case;
 
-#include "MyClass.h"
+#include "InterleavedLattice.h"
+#include "YeeUtilities.h"
 #include <iostream>
-#include <cassert>
+#include <string>
 
-// Two tasks may need to be carried out before testing:
-//  1. The test tree needs to be built; alternatively I can use automated
-//      unit test registration (like BOOST_AUTO_TEST_CASE?)
-//  2.  Custom test module initialization.  This includes initialization of 
-//      the code under test as needed; it also includes some boost.test things
-//      like redirection of output streams, according to the documentation...
-//
-//  For many test modules, no tree is necessary.  (This is a clue about how
-//  large the scope of a "module" ought to be.  This documentation is awful!)
+using namespace YeeUtilities;
+using namespace std;
 
-// I can either perform test setup and teardown by implementing a function
-// (the "test module initialization function") or, in a more granular way
-// (maybe) using "fixtures" which are a sort of unified pattern for setup and
-// teardown.  A fixture is just a struct with a constructor and destructor that
-// perform setup and teardown.  Nice.
-//
+static const int L = 10;
 
-// REALITY: EITHER
-// -- Use "global fixtures"
-// -- write one of two initialization functions (prolly don't need to bother)
-// -- define BOOST_TEST_MAIN (my approach) to do the default initialization 
-
-
-BOOST_AUTO_TEST_SUITE( Suite1 )
-
-BOOST_AUTO_TEST_CASE(AnotherTest)
-{
-    assert(false);
-    BOOST_REQUIRE(false);
-}
-
-BOOST_AUTO_TEST_CASE(Test1)
-{
-    BOOST_CHECK(true);
-    BOOST_CHECK(false);
-    BOOST_REQUIRE(1 == 0);
-    BOOST_REQUIRE(false);
-}
-
-BOOST_AUTO_TEST_SUITE_END()
-
-
-/*
-class TestClass
+class TestData
 {
 public:
-    TestClass() {}
+    TestData();
     
-    void testFive()
+    ~TestData()
     {
-        BOOST_REQUIRE(mTestMe.returnFive() == 5);
+        BOOST_TEST_MESSAGE("Tearing down.");
     }
     
-    void testSix()
-    {
-        BOOST_REQUIRE(mTestMe.returnSix() == 6);
+    InterleavedLatticePtr lattice1d;
+    InterleavedLatticePtr lattice2d;
+    InterleavedLatticePtr lattice3d;
+};
+
+TestData::
+TestData()
+{
+    //BOOST_TEST_MESSAGE("Setting up.");
+    lattice1d = InterleavedLatticePtr(new InterleavedLattice(
+        string("1D"), Rect3i(0,0,0,L-1,1,1)));
+    lattice2d = InterleavedLatticePtr(new InterleavedLattice(
+        string("2D"), Rect3i(-L+1, -L+1, 0, 0, 0, 1)));
+    lattice3d = InterleavedLatticePtr(new InterleavedLattice(
+        string("3D"), Rect3i(0,0,0,2*L-1,2*L-1,2*L-1)));
+}
+
+BOOST_AUTO_TEST_CASE(checkLIsEven)
+{
+    BOOST_CHECK_EQUAL( (L/2)*2, L );
+}
+
+BOOST_FIXTURE_TEST_CASE(wrap, TestData)
+{
+    Vector3i halfCell1(L+2,2,4);
+    Vector3i halfCell2(L+3,1,5);
+    Vector3i halfCell3(-1,0,5*L+1);
+    
+    BOOST_CHECK_EQUAL(lattice1d->halfCells().size(), Vector3i(L-1,1,1));
+    BOOST_CHECK_EQUAL(lattice1d->wrap(halfCell1), Vector3i(2,0,0));
+    BOOST_CHECK_EQUAL(lattice1d->wrap(halfCell2), Vector3i(3,1,1));
+    BOOST_CHECK_EQUAL(lattice1d->wrap(halfCell3), Vector3i(L-1,0,1));
+    
+    BOOST_CHECK_EQUAL(lattice2d->halfCells().size(), Vector3i(L-1,L-1,1));
+    BOOST_CHECK_EQUAL(lattice2d->wrap(halfCell1), Vector3i(-L+2, -L+2, 0));
+    BOOST_CHECK_EQUAL(lattice2d->wrap(halfCell2), Vector3i(-L+3, -L+1, 1));
+    BOOST_CHECK_EQUAL(lattice2d->wrap(halfCell3), Vector3i(-1,0,1));
+    
+    BOOST_CHECK_EQUAL(lattice3d->halfCells().size(),
+        Vector3i(2*L-1,2*L-1,2*L-1));
+    BOOST_CHECK_EQUAL(lattice3d->wrap(halfCell1), Vector3i(L+2,2,4));
+    BOOST_CHECK_EQUAL(lattice3d->wrap(halfCell2), Vector3i(L+3,1,5));
+    BOOST_CHECK_EQUAL(lattice3d->wrap(halfCell3), Vector3i(2*L-1,0,L+1));
+}
+
+BOOST_AUTO_TEST_CASE(setAndGet)
+{
+    Vector3i v;
+    InterleavedLattice l(string("Temp"), Rect3i(0,0,0,L-1,L-1,L-1));
+    l.allocate();
+    
+    for (int fieldDir = 0; fieldDir < 3; fieldDir++)
+    {        
+        for (v[2] = 0; v[2] < L/2; v[2]++)
+        for (v[1] = 0; v[1] < L/2; v[1]++)
+        for (v[0] = 0; v[0] < L/2; v[0]++)
+        {
+            l.setE(fieldDir, v, fieldDir+100*v[2] + 10000*v[1] + 1000000*v[0]);
+            l.setH(fieldDir, v, -(fieldDir+100*v[2] + 10000*v[1] + 1000000*v[0]));
+        }
     }
-private:
-    MyClass mTestMe;
-};
-
-class TestSuite : public test_suite
-{
-public:
-   TestSuite() : test_suite("Test Suite A: Hypernion Quatarnian II: The Matrix")
-   {
-        // create an instance of the test cases class
-        boost::shared_ptr<TestClass> instance(new TestClass());
+    for (int fieldDir = 0; fieldDir < 3; fieldDir++)
+    {
+        for (v[2] = 0; v[2] < L/2; v[2]++)
+        for (v[1] = 0; v[1] < L/2; v[1]++)
+        for (v[0] = 0; v[0] < L/2; v[0]++)
+        {
+            BOOST_CHECK_EQUAL(l.getE(fieldDir, v),
+                fieldDir+100*v[2] + 10000*v[1] + 1000000*v[0]);
+            
+            BOOST_CHECK_EQUAL(l.getH(fieldDir, v),
+                -(fieldDir+100*v[2] + 10000*v[1] + 1000000*v[0]) );
+        }
         
-        // create the test cases
-        test_case* fiveTestCase = BOOST_CLASS_TEST_CASE(
-          &TestClass::testFive, instance );
-        test_case* sixTestCase = BOOST_CLASS_TEST_CASE(
-          &TestClass::testSix, instance );
+        BOOST_CHECK_EQUAL(l.getWrappedE(fieldDir, Vector3i(L/2, L/2, L/2)),
+            l.getE(fieldDir, Vector3i(0,0,0)));
+        BOOST_CHECK_EQUAL(l.getWrappedH(fieldDir, Vector3i(L/2+4, L/2, 0)),
+            l.getH(fieldDir, Vector3i(4, 0, 0)));
+        BOOST_CHECK_EQUAL(l.getWrappedH(fieldDir, Vector3i(4,0,0)),
+            l.getH(fieldDir, Vector3i(4, 0, 0)));
+    }
+}
+
+BOOST_AUTO_TEST_CASE(pointerSetterGetter)
+{
+    Vector3i v;
+    for (int fieldDir = 0; fieldDir < 3; fieldDir++)
+    {
+        InterleavedLattice l(string("Temp"), Rect3i(0,0,0,L-1,L-1,L-1));
+        l.allocate();
         
-        // add the test cases to the test suite
-        add(fiveTestCase);
-        add(sixTestCase);
-   }
-private:
-};
-*/
-
-// Check it out: if I define BOOST_TEST_ALTERNATIVE_API then I use
-// bool init_test_func()
-// else I use
-// test_suite* init_unit_test_suite(int argc, char** argv).
-// Happily this is ALL AVOIDABLE if I define BOOST_TEST_MAIN, which I do.
-// THIS DOCUMENTATION SUCKS ARRGGGGHHH WHY IS IT SO BAD!!!!!!!!111
-
-
-/*
-// The original unit test framework (UTF) required the programmer (me!) to
-// implement this function as the test program entry point.  The return value
-// USED to be the master test suite.  However the master suite is now managed
-// by the UTF itself, and it's actually recommended now to just return NULL from
-// this function and use the regular test suite add interface (whatever that
-// is!) to add tests to that master suite.
-// Although this function is a way to access the command-line arguments, they
-// can also be reached through the UTF's master test suite facilities.
-test_suite* init_unit_test_suite(int argc, char** argv)
-{
-    // create the top test suite
-    test_suite* top_test_suite(BOOST_TEST_SUITE("Master test suite"));
-    
-    // add test suites to the top test suite (uh, two of them... identical...)
-    top_test_suite->add(new TestSuite());
-    top_test_suite->add(new TestSuite());
-    
-    return top_test_suite;
+        for (v[2] = 0; v[2] < L/2; v[2]++)
+        for (v[1] = 0; v[1] < L/2; v[1]++)
+        for (v[0] = 0; v[0] < L/2; v[0]++)
+        {
+            BufferPointer ePtr = l.pointerE(fieldDir, v);
+            *(ePtr.getPointer()) = v[2] + 100*v[1] + 10000*v[0];
+            
+            BufferPointer hPtr = l.pointerH(fieldDir, v);
+            *(hPtr.getPointer()) = -( v[2] + 100*v[1] + 10000*v[0] );
+            
+            BOOST_CHECK_EQUAL(*(ePtr.getPointer()),
+                l.getE(fieldDir, v));
+            
+            BOOST_CHECK_EQUAL(*(hPtr.getPointer()),
+                l.getH(fieldDir, v));
+        }
+    }
 }
 
-// The better way, using the master suite, is
-
-test_suite* init_unit_test_suite(int argc, char** argv)
+BOOST_AUTO_TEST_CASE(halfCellPtr)
 {
-    framework::master_test_suite().
-        add( BOOST_TEST_CASE( &free_test_function ) );
-    return 0;
+    Vector3i v;
+    for (int fieldDir = 0; fieldDir < 3; fieldDir++)
+    {
+        InterleavedLattice l(string("Temp"), Rect3i(0,0,0,L-1,L-1,L-1));
+        l.allocate();
+        
+        for (v[2] = 0; v[2] < L/2; v[2]++)
+        for (v[1] = 0; v[1] < L/2; v[1]++)
+        for (v[0] = 0; v[0] < L/2; v[0]++)
+        {
+            BufferPointer ePtr = l.pointer(yeeToHalf(v, octantE(fieldDir)));
+            *(ePtr.getPointer()) = v[2] + 100*v[1] + 10000*v[0];
+            BufferPointer hPtr = l.pointer(yeeToHalf(v, octantH(fieldDir)));
+            *(hPtr.getPointer()) = -( v[2] + 100*v[1] + 10000*v[0] );
+                
+            BOOST_CHECK_EQUAL(*(ePtr.getPointer()),
+                l.getE(fieldDir, v));
+            
+            BOOST_CHECK_EQUAL(*(hPtr.getPointer()),
+                l.getH(fieldDir, v));
+        }
+    }
 }
 
-*/
-
-// The alternative initialization (alternative to init_unit_test_suite) is to 
-// implement this little guy, init_unit_test().  Return true if init worked.
-// I kinda think this is the alternative to fixtures: either do setup and
-// teardown with fixtures or with this function.
-/*
-bool init_unit_test()
+BOOST_AUTO_TEST_CASE(using3dstride)
 {
+    Vector3i v;
+    for (int fieldDir = 0; fieldDir < 3; fieldDir++)
+    {
+        InterleavedLattice l(string("Temp"), Rect3i(0,0,0,L-1,L-1,L-1));
+        l.allocate();
+        
+        for (v[2] = 0; v[2] < L/2; v[2]++)
+        for (v[1] = 0; v[1] < L/2; v[1]++)
+        for (v[0] = 0; v[0] < L/2; v[0]++)
+        {
+            l.setE(fieldDir, v, v[2] + 100*v[1] + 10000*v[0]);
+            l.setH(fieldDir, v, -(v[2] + 100*v[1] + 10000*v[0]));
+        }
+        
+        
+        Vector3i centerPt(L/4, L/4, L/4);
+        Vector3i stride(l.fieldStride());
+        
+        BufferPointer p0e = l.pointerE(fieldDir, centerPt);
+        BufferPointer p0h = l.pointerH(fieldDir, centerPt);
+        
+        BOOST_CHECK_EQUAL(*(p0e.getPointer()), l.getE(fieldDir, centerPt));
+        BOOST_CHECK_EQUAL(*(p0e.getPointer()+stride[0]),
+            l.getE(fieldDir, centerPt+Vector3i(1,0,0)));
+        BOOST_CHECK_EQUAL(*(p0e.getPointer()+stride[1]),
+            l.getE(fieldDir, centerPt+Vector3i(0,1,0)));
+        BOOST_CHECK_EQUAL(*(p0e.getPointer()+stride[2]),
+            l.getE(fieldDir, centerPt+Vector3i(0,0,1)));
+            
+        BOOST_CHECK_EQUAL(*(p0h.getPointer()), l.getH(fieldDir, centerPt));
+        BOOST_CHECK_EQUAL(*(p0h.getPointer()+stride[0]),
+            l.getH(fieldDir, centerPt+Vector3i(1,0,0)));
+        BOOST_CHECK_EQUAL(*(p0h.getPointer()+stride[1]),
+            l.getH(fieldDir, centerPt+Vector3i(0,1,0)));
+        BOOST_CHECK_EQUAL(*(p0h.getPointer()+stride[2]),
+            l.getH(fieldDir, centerPt+Vector3i(0,0,1)));
+    }
 }
-*/
 
-/*
-int main(int argc, char** argv)
+// This is my first regression test! july 10 '09
+BOOST_AUTO_TEST_CASE(zeroStride)
 {
-    MyClass mine;
+    InterleavedLattice l1d(string(),Rect3i(0,0,0,10,1,1));
     
-    bool success = 1;
-    
-    if (mine.returnFive() != 5)
-        success = 0;
-    if (mine.returnSix() != 6)
-        success = 0;
-    
-    if (success)
-        std::cout << "Yay\n";
-    
-    return 1;
-    return !success; // that's how it's done
+    BOOST_CHECK_EQUAL(l1d.fieldStride()[1], 0);
+    BOOST_CHECK_EQUAL(l1d.fieldStride()[2], 0);
 }
-*/
+
+BOOST_AUTO_TEST_CASE(yeeCellCalculations)
+{
+    for (int fieldDir = 0; fieldDir < 3; fieldDir++)
+    {
+        InterleavedLattice l(string("Temp"), Rect3i(0,0,0,L-1,L-1,L-1));
+        l.allocate();
+        
+        Vector3i centerYee(L/4, L/4, L/4);
+        
+        l.setE(fieldDir, centerYee, 1.0);
+        l.setH(fieldDir, centerYee, -1.0);
+        
+        BOOST_REQUIRE(l.halfCells().encloses(
+            yeeToHalf(centerYee, octantE(fieldDir))));
+        BOOST_REQUIRE(l.halfCells().encloses(
+            yeeToHalf(centerYee, octantH(fieldDir))));
+        
+        BufferPointer pE = l.pointer(yeeToHalf(centerYee, octantE(fieldDir)));
+        BufferPointer pH = l.pointer(yeeToHalf(centerYee, octantH(fieldDir)));
+        
+        BOOST_CHECK_EQUAL(*(pE.getPointer()), 1.0);
+        BOOST_CHECK_EQUAL(*(pE.getPointer()), l.getE(fieldDir, centerYee));
+        BOOST_CHECK_EQUAL(*(pH.getPointer()), -1.0);
+        BOOST_CHECK_EQUAL(*(pH.getPointer()), l.getH(fieldDir, centerYee));
+    }
+}
+
+
+
+
