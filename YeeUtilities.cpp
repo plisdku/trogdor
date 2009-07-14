@@ -14,6 +14,18 @@
 namespace YeeUtilities
 {
 
+// mod2abs(n) = abs(n)%2.
+static int mod2abs(int n)
+{
+    return n >= 0 ? n%2 : (-n)%2;
+}
+
+static Vector3i mod2abs(const Vector3i & v)
+{
+    return Vector3i(mod2abs(v[0]), mod2abs(v[1]), mod2abs(v[2]));
+}
+
+
 static Vector3i sCardinals[6] =
 	{ Vector3i(-1,0,0),
 	  Vector3i(1,0,0),
@@ -69,8 +81,7 @@ static int sHFieldNumbers[3] =
 
 int octant(const Vector3i & v)
 {
-    assert(vec_ge(v, 0));
-	return v[0]%2 + 2*(v[1]%2) + 4*(v[2]%2);
+	return mod2abs(v[0]) + 2*mod2abs(v[1]) + 4*mod2abs(v[2]);
 }
 
 const Vector3i & halfCellOffset(int octant)
@@ -222,8 +233,13 @@ Rect3i halfToYee(const Rect3i & halfRect, int octant)
 	// (offset%2 != halfRect.p1%2)  equiv to   (offset+halfRect.p1)%2
 	
 	const Vector3i & offset = halfCellOffset(octant);
+    
+    return Rect3i( (halfRect.p1 + mod2abs(offset+halfRect.p1))/2,
+        (halfRect.p2 - mod2abs(offset+halfRect.p2))/2 );
+    /*
 	return Rect3i( (halfRect.p1 + Vector3i(offset+halfRect.p1)%2)/2,
 		(halfRect.p2 - Vector3i(offset+halfRect.p2)%2)/2 );
+    */
 	
 }
 
@@ -232,8 +248,8 @@ Rect3i halfToYee(const Rect3i & halfRect, int octant)
 Rect3i halfToYee(const Rect3i & halfRect, const Vector3i & halfCellOffset)
 {
 	// see above
-	return Rect3i( (halfRect.p1 + Vector3i(halfCellOffset+halfRect.p1)%2)/2,
-		(halfRect.p2 - Vector3i(halfCellOffset+halfRect.p2)%2)/2 );	
+	return Rect3i( (halfRect.p1 + mod2abs(halfCellOffset+halfRect.p1))/2,
+		(halfRect.p2 - mod2abs(halfCellOffset+halfRect.p2))/2 );	
 }
 
 // returns smallest half cell rect containing all points in given Yee rect

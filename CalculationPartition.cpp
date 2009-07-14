@@ -264,8 +264,13 @@ setH(int direction, int xi, int xj, int xk, float val)
 
 
 void CalculationPartition::
-printFields(std::ostream & str, int field, float scale)
+printFields(std::ostream & str, int octant, float scale)
 {
+    if (isH(octant))
+        mLattice->printH(str, xyz(octant), scale);
+    else if (isE(octant))
+        mLattice->printE(str, xyz(octant), scale);
+    /*
     float spaceMax = 0.2*scale;
     float periodMax = 0.5*scale;
     int direction;
@@ -326,7 +331,7 @@ printFields(std::ostream & str, int field, float scale)
                 str << "\n";
             }
         }
-    }
+    }*/
 }
 
 

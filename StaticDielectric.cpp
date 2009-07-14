@@ -178,7 +178,7 @@ calcHPhase(int direction)
                 ( (*gkHigh-*gkLow)/dj - (*gjHigh - *gjLow)/dk );
             //LOG << "neighbors " << *gkLow << " " << *gkHigh << "\n";
             //*fi = *fi * 0.9 + 0.025*(*gjLow + *gjHigh + *gkLow + *gkHigh);
-            
+            /*
             if (mm == 0)
             {
                 LOG << "**" << MemoryBuffer::identify(fi) << " is " << *fi << "\n";
@@ -187,6 +187,7 @@ calcHPhase(int direction)
                 LOG << MemoryBuffer::identify(gkLow) << " is " << *gkLow << " \n";
                 LOG << MemoryBuffer::identify(gkHigh) << " is " << *gkHigh << "\n";
             }
+            */
             
             /*
             if (*fi != fiOld)

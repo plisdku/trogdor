@@ -180,7 +180,6 @@ BOOST_AUTO_TEST_CASE(using3dstride)
             l.setH(fieldDir, v, -(v[2] + 100*v[1] + 10000*v[0]));
         }
         
-        
         Vector3i centerPt(L/4, L/4, L/4);
         Vector3i stride(l.fieldStride());
         
@@ -208,7 +207,7 @@ BOOST_AUTO_TEST_CASE(using3dstride)
 // This is my first regression test! july 10 '09
 BOOST_AUTO_TEST_CASE(zeroStride)
 {
-    InterleavedLattice l1d(string(),Rect3i(0,0,0,10,1,1));
+    InterleavedLattice l1d(string(),Rect3i(0,0,0,11,1,1));
     
     BOOST_CHECK_EQUAL(l1d.fieldStride()[1], 0);
     BOOST_CHECK_EQUAL(l1d.fieldStride()[2], 0);

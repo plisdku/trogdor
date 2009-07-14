@@ -15,7 +15,6 @@ using namespace std;
 using namespace YeeUtilities;
 
 
-
 InterleavedLattice::
 InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
     Vector3i nonZeroDimensions) :
@@ -28,7 +27,10 @@ InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
 {
     if (mHalfCells.num()%2 != Vector3i(0,0,0))
         throw(Exception("Interleaved lattice must span full Yee cells!"));
-    mNumYeeCells = 2*halfToYee(mHalfCells).num();
+    mNumYeeCells = mHalfCells.num()/2;
+    mNumHalfCells = mHalfCells.num();
+    
+    //LOG << "Rect " << halfCellBounds << " yee " << mNumYeeCells << "\n";
     
     // Cache the origins.  This saves cycles in all the accessor functions.
     for (int nn = 0; nn < 3; nn++)
@@ -57,7 +59,7 @@ InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
     mMemStride[2] = mNumYeeCells[1]*mMemStride[1];
     
     for (int nn = 0; nn < 3; nn++)
-    if (mNonZeroDimensions[nn] == 0)
+    if (mNonZeroDimensions[nn] == 0 || mNumYeeCells[nn] == 1)
         mMemStride[nn] = 0;
     
     for (int nn = 0; nn < 3; nn++)
@@ -72,7 +74,7 @@ InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
 Vector3i InterleavedLattice::
 wrap(const Vector3i & halfCell) const
 {
-    assert(mNumHalfCells = 2*mNumYeeCells); // so num half cells is even.
+    assert(mNumHalfCells == 2*mNumYeeCells); // so num half cells is even.
     
     Vector3i wrappedHalfCell;
     
@@ -93,7 +95,6 @@ wrap(const Vector3i & halfCell) const
         
         assert(wrappedHalfCell[nn] >= mHalfCells.p1[nn]);
         assert(wrappedHalfCell[nn] <= mHalfCells.p2[nn]);
-        assert(wrappedHalfCell[nn]%2 == halfCell[nn]%2);
     }
     else
         wrappedHalfCell[nn] = halfCell[nn]; // for null dimensions, nothing done
@@ -244,7 +245,7 @@ getWrappedE(int direction, const Vector3i & yeeCell) const
     float* ptr;
     ptr = mHeadE[direction] +
         dot( (yeeCell-mOriginYeeE[direction]+mNumYeeCells)%mNumYeeCells,
-            mMemStride)
+            mMemStride);
     assert(mBuffersE[direction]->includes(ptr));
     
     return *ptr;
@@ -263,7 +264,7 @@ getWrappedH(int direction, const Vector3i & yeeCell) const
     float* ptr;
     ptr = mHeadH[direction] +
         dot( (yeeCell-mOriginYeeH[direction]+mNumYeeCells)%mNumYeeCells,
-            mMemStride)
+            mMemStride);
     assert(mBuffersH[direction]->includes(ptr));
     
     return *ptr;
@@ -282,6 +283,8 @@ setE(int direction, const Vector3i & yeeCell, float value)
     
     float* ptr;
     ptr = mHeadE[direction] + dot(yeeCell-mOriginYeeE[direction], mMemStride);
+    
+    //LOG << MemoryBuffer::identify(ptr) << "\n";
     
     assert(mBuffersE[direction]->includes(ptr));
     
@@ -323,7 +326,7 @@ printE(std::ostream & str, int fieldDirection, float scale) const
     for (int nk = r.p1[2]; nk <= r.p2[2]; nk++)
     {
         str << "+";
-        for (ni = r.p1[0]; ni <= r.p2[0]; ni++)
+        for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
             str << "-";
         str << "+\n";
         for (int nj = r.p2[1]; nj >= r.p1[1]; nj--)
@@ -331,7 +334,7 @@ printE(std::ostream & str, int fieldDirection, float scale) const
             str << "|";
             for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
             {
-                float field = fabs(getE(direction, ni, nj, nk));
+                float field = fabs(getE(fieldDirection, Vector3i(ni, nj, nk)));
                 if (field < spaceMax)
                     str << " ";
                 else if (field < periodMax)
@@ -342,7 +345,7 @@ printE(std::ostream & str, int fieldDirection, float scale) const
             str << "|\n";
         }
         str << "+";
-        for (ni = r.p1[0]; ni <= r.p2[0]; ni++)
+        for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
             str << "-";
         str << "+\n";
     }
@@ -359,7 +362,7 @@ printH(std::ostream & str, int fieldDirection, float scale) const
     for (int nk = r.p1[2]; nk <= r.p2[2]; nk++)
     {
         str << "+";
-        for (ni = r.p1[0]; ni <= r.p2[0]; ni++)
+        for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
             str << "-";
         str << "+\n";
         for (int nj = r.p2[1]; nj >= r.p1[1]; nj--)
@@ -367,7 +370,7 @@ printH(std::ostream & str, int fieldDirection, float scale) const
             str << "|";
             for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
             {
-                float field = fabs(getH(direction, ni, nj, nk));
+                float field = fabs(getH(fieldDirection, Vector3i(ni, nj, nk)));
                 if (field < spaceMax)
                     str << " ";
                 else if (field < periodMax)
@@ -378,7 +381,7 @@ printH(std::ostream & str, int fieldDirection, float scale) const
             str << "|\n";
         }
         str << "+";
-        for (ni = r.p1[0]; ni <= r.p2[0]; ni++)
+        for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
             str << "-";
         str << "+\n";
     }

@@ -68,6 +68,7 @@ updateE(HuygensSurface & hs)
                 
                 bufferLattice->setE(fieldDirection,
                     yee+destYeeCells.p1, bufField);
+                /*
                 float tempval = bufferLattice->getWrappedE(fieldDirection,
                     yee+destYeeCells.p1);
                     
@@ -96,7 +97,7 @@ updateE(HuygensSurface & hs)
                     if (bufField != *(buf.getPointer()))
                         assert(bufField == *(buf.getPointer()));
                 }
-                
+                */
             }
         }
     }
@@ -148,7 +149,7 @@ updateH(HuygensSurface & hs)
                 
                 bufferLattice->setH(fieldDirection,
                     yee+destYeeCells.p1, bufField);
-                
+                /*
                 if (bufField != 0)
                 {
                     BufferPointer buf = bufferLattice->wrappedPointerH(
@@ -167,7 +168,7 @@ updateH(HuygensSurface & hs)
                     LOG << "Source " << sourceYeeCells.p1+yee << " dest "
                         << destYeeCells.p1+yee << "\n";
                 }
-                
+                */
             }
         }
     }

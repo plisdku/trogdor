@@ -80,7 +80,7 @@ public:
     void setE(int direction, int xi, int xj, int xk, float val);
     void setH(int direction, int xi, int xj, int xk, float val);
     
-    void printFields(std::ostream & str, int field, float scale);
+    void printFields(std::ostream & str, int octant, float scale);
     
     //void createHuygensSurfaces(const VoxelizedPartition & vp);
 
