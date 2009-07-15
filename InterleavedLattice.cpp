@@ -115,6 +115,17 @@ linearYeeIndex(const Vector3i & halfCell) const
     return index;
 }
 
+long InterleavedLattice::
+wrappedLinearYeeIndex(const Vector3i & halfCell) const
+{
+    Vector3i displacement(wrap(halfCell) - mHalfCells.p1);
+    int index = dot(displacement/2, mMemStride); // mMemStride == 0 for null dims
+    assert(index >= 0);
+    assert(index < mNumYeeCells[0]*mNumYeeCells[1]*mNumYeeCells[2]);
+    
+    return index;
+}
+
 // Access to allocation skeleton
 BufferPointer InterleavedLattice::
 pointer(const Vector3i & halfCell) const
@@ -249,11 +260,6 @@ getWrappedE(int direction, const Vector3i & yeeCell) const
     assert(mBuffersE[direction]->includes(ptr));
     
     return *ptr;
-    /*
-    return mHeadE[direction][
-        dot( (yeeCell-mAllocOriginYeeE[direction]+mNumYeeCells)%mNumYeeCells,
-        mMemStride)];
-    */
 }
 
 float InterleavedLattice::
@@ -268,12 +274,50 @@ getWrappedH(int direction, const Vector3i & yeeCell) const
     assert(mBuffersH[direction]->includes(ptr));
     
     return *ptr;
-    /*
-    return mHeadH[direction][
-        dot( (yeeCell-mAllocOriginYeeH[direction]+mNumYeeCells)%mNumYeeCells,
-        mMemStride)];
-    */
 }
+
+float InterleavedLattice::
+getInterpolatedE(int direction, const Vector3f & position) const
+{
+    Vector3f x = position - eFieldPosition(direction);
+    const int ilow(floor(x[0])), jlow(floor(x[1])), klow(floor(x[2]));
+    const int ihigh(ilow+1), jhigh(jlow+1), khigh(klow+1);
+    const float dx(x[0]-floor(x[0])),
+        dy(x[1]-floor(x[1])),
+        dz(x[2]-floor(x[2]));
+    
+    return dx*dy*dz*getE(direction, Vector3i(ihigh, jhigh, khigh)) +
+        (1.0f-dx)*dy*dz*getE(direction, Vector3i(ilow, jhigh, khigh)) +
+        dx*(1.0f-dy)*dz*getE(direction, Vector3i(ihigh, jlow, khigh)) +
+        (1.0f-dx)*(1.0f-dy)*dz*getE(direction, Vector3i(ilow, jlow, khigh)) +
+        dx*dy*(1.0f-dz)*getE(direction, Vector3i(ihigh, jhigh, klow)) +
+        (1.0f-dx)*dy*(1.0f-dz)*getE(direction, Vector3i(ilow, jhigh, klow)) +
+        dx*(1.0f-dy)*(1.0f-dz)*getE(direction, Vector3i(ihigh, jlow, klow)) +
+        (1.0f-dx)*(1.0f-dy)*(1.0f-dz)*getE(direction, Vector3i(ilow, jlow, klow)
+        );
+}
+
+float InterleavedLattice::
+getInterpolatedH(int direction, const Vector3f & position) const
+{
+    Vector3f x = position - hFieldPosition(direction);
+    const int ilow(floor(x[0])), jlow(floor(x[1])), klow(floor(x[2]));
+    const int ihigh(ilow+1), jhigh(jlow+1), khigh(klow+1);
+    const float dx(x[0]-floor(x[0])),
+        dy(x[1]-floor(x[1])),
+        dz(x[2]-floor(x[2]));
+    
+    return dx*dy*dz*getH(direction, Vector3i(ihigh, jhigh, khigh)) +
+        (1.0f-dx)*dy*dz*getH(direction, Vector3i(ilow, jhigh, khigh)) +
+        dx*(1.0f-dy)*dz*getH(direction, Vector3i(ihigh, jlow, khigh)) +
+        (1.0f-dx)*(1.0f-dy)*dz*getH(direction, Vector3i(ilow, jlow, khigh)) +
+        dx*dy*(1.0f-dz)*getH(direction, Vector3i(ihigh, jhigh, klow)) +
+        (1.0f-dx)*dy*(1.0f-dz)*getH(direction, Vector3i(ilow, jhigh, klow)) +
+        dx*(1.0f-dy)*(1.0f-dz)*getH(direction, Vector3i(ihigh, jlow, klow)) +
+        (1.0f-dx)*(1.0f-dy)*(1.0f-dz)*getH(direction, Vector3i(ilow, jlow, klow)
+        );
+}
+
 
 float InterleavedLattice::
 setE(int direction, const Vector3i & yeeCell, float value)
@@ -320,8 +364,7 @@ printE(std::ostream & str, int fieldDirection, float scale) const
 {
     float spaceMax = 0.2*scale;
     float periodMax = 0.5*scale;
-    Rect3i r(mOriginYeeE[fieldDirection],
-        mOriginYeeE[fieldDirection]+mNumYeeCells);
+    Rect3i r(halfToYee(mHalfCells, octantE(fieldDirection)));
     
     for (int nk = r.p1[2]; nk <= r.p2[2]; nk++)
     {
@@ -356,8 +399,7 @@ printH(std::ostream & str, int fieldDirection, float scale) const
 {
     float spaceMax = 0.2*scale;
     float periodMax = 0.5*scale;
-    Rect3i r(mOriginYeeH[fieldDirection],
-        mOriginYeeH[fieldDirection]+mNumYeeCells);
+    Rect3i r(halfToYee(mHalfCells, octantH(fieldDirection)));
     
     for (int nk = r.p1[2]; nk <= r.p2[2]; nk++)
     {

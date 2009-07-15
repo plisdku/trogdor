@@ -20,11 +20,8 @@
 #include "geometry.h"
 #include "Map.h"
 #include "VoxelGrid.h"
-#include "PartitionCellCount.h"
-#include "MaterialBoss.h"
 #include "OutputBoss.h"
 #include "SourceBoss.h"
-//#include "HuygensSurface.h"
 #include "MemoryUtilities.h"
 
 #include "SimulationDescriptionPredeclarations.h"
@@ -34,6 +31,9 @@
 #include <vector>
 #include <string>
 
+class SetupMaterial;
+typedef Pointer<SetupMaterial> SetupMaterialPtr;
+
 class InterleavedLattice;
 typedef Pointer<InterleavedLattice> InterleavedLatticePtr;
 
@@ -42,6 +42,9 @@ typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
 
 class HuygensSurface;
 typedef Pointer<HuygensSurface> HuygensSurfacePtr;
+
+class PartitionCellCount;
+typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
 
 class VoxelizedPartition
 {
@@ -62,56 +65,7 @@ public:
 	Rect3i getPMLHalfCellsOnFace(int faceNum) const;
 	Rect3i getPartitionPMLHalfCellsOnFace(int faceNum) const;
 	Rect3i getPMLHalfCells(Vector3i pmlDir) const;
-	
-    // v            global half-cell coordinate, possibly outside alloc region
-    // returns      a vector inside the alloc region, offset from v by integer
-    //              multiples of the alloc half cells in each dimension.
-    Vector3i wrap(Vector3i vv) const;
     
-    // ii,jj,kk     global half-cell coordinate, possibly outside alloc region
-    // returns      a vector inside the alloc region, offset from v by integer
-    //              multiples of the alloc half cells in each dimension.
-    Vector3i wrap(int ii, int jj, int kk) const;
-    
-    // nb           partition's neighbor buffer
-    // v            global half-cell coordinate, possibly outside alloc region
-    // returns      a vector inside the alloc region, offset from v by integer
-    //              multiples of the alloc half cells in each dimension.
-    Vector3i wrap(const NeighborBufferDescPtr & nb, Vector3i vv) const;
-    
-    // nb           partition's neighbor buffer
-    // ii,jj,kk     global half-cell coordinate, possibly outside alloc region
-    // returns      a vector inside the alloc region, offset from v by integer
-    //              multiples of the alloc half cells in each dimension.
-    //Vector3i wrap(const NeighborBufferDescPtr & nb, int ii, int jj, int kk)
-    //    const;
-    
-    // ii,jj,kk     global half-cell coordinates, inside the alloc region
-    // returns      index into partition's alloc region
-	//long linearYeeIndex(int ii, int jj, int kk) const;
-	long linearYeeIndex(const Vector3i & halfCell) const;
-	
-    // halfCell     global half-cell coordinate, possibly outside alloc region
-    // returns      linearYeeIndex into the correct field
-	BufferPointer fieldPointer(Vector3i halfCell) const;
-    
-    // nb           partition's neighbor buffer
-    // halfCell     global half-cell coordinate, possibly outside alloc region
-    // returns      linearYeeIndex into partition's neighbor buffer
-	BufferPointer fieldPointer(const NeighborBufferDescPtr & nb,
-		Vector3i halfCell) const;
-    
-    // direction      0,1,2 for x,y,z
-    // xi,xj,xk       global Yee cell coordinates
-    // returns        BufferPointer to EM field
-    //BufferPointer getE(int direction, int xi, int xj, int xk) const;
-    //BufferPointer getH(int direction, int xi, int xj, int xk) const;
-    BufferPointer getE(int direction, Vector3i yeeCell) const;
-    BufferPointer getH(int direction, Vector3i yeeCell) const;
-        
-    // returns      amount to add to float* to go from Ex(here) to Ex(neighbor) 
-    Vector3i getFieldStride() const;
-	
     // returns      which material goes in which cell in this partition
 	const VoxelGrid & getVoxelGrid() const { return mVoxels; }
     

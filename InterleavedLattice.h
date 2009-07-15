@@ -33,6 +33,7 @@ public:
     // The component in the null dimension is unchanged.
     Vector3i wrap(const Vector3i & halfCell) const;
     long linearYeeIndex(const Vector3i & halfCell) const;
+    long wrappedLinearYeeIndex(const Vector3i & halfCell) const;
     
     // Access to allocation skeleton
     BufferPointer pointer(const Vector3i & halfCell) const;
@@ -55,6 +56,8 @@ public:
     float getH(int direction, const Vector3i & yeeCell) const;
     float getWrappedE(int direction, const Vector3i & yeeCell) const;
     float getWrappedH(int direction, const Vector3i & yeeCell) const;
+    float getInterpolatedE(int direction, const Vector3f & position) const;
+    float getInterpolatedH(int direction, const Vector3f & position) const;
     
     float setE(int direction, const Vector3i & yeeCell, float value);
     float setH(int direction, const Vector3i & yeeCell, float value);

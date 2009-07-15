@@ -16,6 +16,7 @@
 #include "STLOutput.h"
 #include "InterleavedLattice.h"
 #include "HuygensSurface.h"
+#include "PartitionCellCount.h"
 
 #include <sstream>
 
@@ -167,90 +168,6 @@ getPMLHalfCells(Vector3i pmlDir) const
 		}
 	}
 	return pml;
-}
-
-Vector3i VoxelizedPartition::
-wrap(Vector3i vv) const
-{
-    vv = vv - mFieldAllocHalfCells.p1;
-    
-    if (vv[0] >= 0)
-        vv[0] = m_nnx0 + vv[0]%m_nnx;
-    else
-        vv[0] = m_nnx0 + (m_nnx-1)-(-vv[0]-1)%m_nnx;
-    
-    if (vv[1] >= 0)
-        vv[1] = m_nny0 + vv[1]%m_nny;
-    else
-        vv[1] = m_nny0 + (m_nny-1)-(-vv[1]-1)%m_nny;
-    
-    if (vv[2] >= 0)
-        vv[2] = m_nnz0 + vv[2]%m_nnz;
-    else
-        vv[2] = m_nnz0 + (m_nnz-1)-(-vv[2]-1)%m_nnz;
-    
-    assert(mFieldAllocHalfCells.encloses(vv));
-    
-    return vv;
-}
-
-Vector3i VoxelizedPartition::
-wrap(const NeighborBufferDescPtr & nb, Vector3i vv) const
-{
-	const Rect3i & halfCellBounds(nb->getDestHalfRect());
-    const Vector3i & p1 = halfCellBounds.p1;
-    Vector3i halfCells = halfCellBounds.size() + 1;
-    
-    vv = vv - p1;
-    
-    if (vv[0] >= 0)
-        vv[0] = p1[0] + vv[0]%halfCells[0];
-    else
-        vv[0] = p1[0] + (halfCells[0]-1)-(-vv[0]-1)%halfCells[0];
-    
-    if (vv[1] >= 0)
-        vv[1] = p1[1] + vv[1]%halfCells[1];
-    else
-        vv[1] = p1[1] + (halfCells[1]-1)-(-vv[1]-1)%halfCells[1];
-    
-    if (vv[2] >= 0)
-        vv[2] = p1[2] + vv[2]%halfCells[2];
-    else
-        vv[2] = p1[2] + (halfCells[2]-1)-(-vv[2]-1)%halfCells[2];
-    
-    assert(halfCellBounds.encloses(vv));
-    
-    return vv;
-}
-
-long VoxelizedPartition::
-linearYeeIndex(const Vector3i & halfCell) const
-{
-    return mLattice->linearYeeIndex(halfCell);
-}
-
-BufferPointer VoxelizedPartition::
-fieldPointer(Vector3i halfCell) const
-{
-    return mLattice->wrappedPointer(halfCell);
-}
-
-BufferPointer VoxelizedPartition::
-getE(int direction, Vector3i yeeCell) const
-{
-    return mLattice->wrappedPointerE(direction, yeeCell);
-}
-    
-BufferPointer VoxelizedPartition::
-getH(int direction, Vector3i yeeCell) const
-{
-    return mLattice->wrappedPointerH(direction, yeeCell);
-}
-
-Vector3i VoxelizedPartition::
-getFieldStride() const
-{
-    return mLattice->fieldStride();
 }
 
 void VoxelizedPartition::

@@ -36,6 +36,8 @@ public:
         Vector3f dxyz, float dt, long numT);
     ~CalculationPartition();
     
+    InterleavedLatticePtr getLattice() const { return mLattice; }
+    
     // instruct all materials and outputs to allocate space for extra fields
     // and accumulation variables (e.g. for output interpolation, currents...)
     void allocateAuxBuffers();
@@ -56,44 +58,12 @@ public:
     void sourceH(int timestep);
     void outputH(int timestep);
     
-    // These field accessors exist solely for the convenience of the Output
-    // classes.  To improve speed a little, the SetupOutput can prepare in
-    // advance using VoxelizedPartition::fieldPointer.
-    
-    // direction      0,1,2 for x,y,z
-    // xi,xj,xk       global Yee cell coordinates
-    // returns        EM field in cell, with partition wraparound
-    float getE(int direction, int xi, int xj, int xk) const;
-    float getH(int direction, int xi, int xj, int xk) const;
-    float getE(int direction, Vector3i xx) const;
-    float getH(int direction, Vector3i xx) const;
-    
-    // direction      0,1,2 for x,y,z
-    // xi,xj,xk       global coordinates in meters (!)
-    // returns        appropriate trilinearly interpolated field value
-    //                (this takes into account the Yee cell offsets)
-    float getE(int direction, float xi, float xj, float xk) const;
-    float getH(int direction, float xi, float xj, float xk) const;
-    float getE(int direction, Vector3f xx) const;
-    float getH(int direction, Vector3f xx) const;
-    
-    void setE(int direction, int xi, int xj, int xk, float val);
-    void setH(int direction, int xi, int xj, int xk, float val);
-    
     void printFields(std::ostream & str, int octant, float scale);
     
-    //void createHuygensSurfaces(const VoxelizedPartition & vp);
-
 private:
     Vector3f m_dxyz;
     float m_dt;
     long m_numT;
-    
-    // All the variables in this section are used for getting field values.
-    Vector3i mAllocOriginYee;
-    Vector3i mAllocYeeCells;
-    Vector3f mEOffset[3];
-    Vector3f mHOffset[3];
     
     std::vector<MaterialPtr> mMaterials;
     std::vector<OutputPtr> mOutputs;

@@ -23,6 +23,7 @@
 #include "StaticDielectricPML.h"
 #include "StaticLossyDielectric.h"
 #include "DrudeModel1.h"
+#include "DrudeModel1PML.h"
 #include "PerfectConductor.h"
 
 using namespace std;
@@ -30,7 +31,6 @@ using namespace YeeUtilities;
 
 SetupMaterialPtr MaterialFactory::
 newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
-    //const Map<Vector3i, Map<string, string> > & gridPMLParams,
     const GridDescription & gridDesc,
 	Paint* parentPaint)
 {
@@ -38,8 +38,6 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
     
     SetupMaterialPtr matDel;
 	const MaterialDescPtr bulkMaterial = parentPaint->getBulkMaterial();
-	string materialClass(bulkMaterial->getModelName());
-	string materialName(bulkMaterial->getName());
     const Map<Vector3i, Map<string, string> > & gridPMLParams(
         gridDesc.getPMLParams());
     Map<Vector3i, Map<string, string> > pmlParams;
@@ -79,7 +77,7 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
     
 	//LOG << "Getting delegate for " << *parentPaint << ".\n"; 
     
-	if (materialClass == "StaticDielectric")
+	if (bulkMaterial->getModelName() == "StaticDielectric")
 	{
         if (parentPaint->isPML())
             matDel = SetupMaterialPtr(new SetupStaticDielectricPML(
@@ -87,15 +85,19 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
         else
             matDel = SetupMaterialPtr(new SetupStaticDielectric);
 	}
-    else if (materialClass == "StaticLossyDielectric")
+    else if (bulkMaterial->getModelName() == "StaticLossyDielectric")
     {
         matDel = SetupMaterialPtr(new SetupStaticLossyDielectric);
     }
-	else if (materialClass == "DrudeMetal")
+	else if (bulkMaterial->getModelName() == "DrudeMetal")
 	{
-        matDel = SetupMaterialPtr(new SetupDrudeModel1(bulkMaterial));
+        //if (parentPaint->isPML())
+        //    matDel = SetupMaterialPtr(new SetupDrudeModel1PML(
+        //        bulkMaterial, pmlParams));
+        //else
+            matDel = SetupMaterialPtr(new SetupDrudeModel1(bulkMaterial));
 	}
-	else if (materialClass == "PerfectConductor")
+	else if (bulkMaterial->getModelName() == "PerfectConductor")
 	{
         matDel = SetupMaterialPtr(new SetupPerfectConductor);
 	}
@@ -200,6 +202,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	int nSide;
 	const VoxelGrid & voxelGrid(vp.getVoxelGrid());
 	const PartitionCellCount & cellCountGrid(*vp.getIndices());
+    InterleavedLatticePtr mainLattice(vp.getLattice());
 	
 	mStartPoint = startPos;
 	mStartPaint = voxelGrid(startPos);
@@ -213,8 +216,11 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	BufferPointer bp[6]; // we won't fill all of these, but it makes things easy
 	for (nSide = 0; nSide < 6; nSide++)
 	{
-		mStartNeighborIndices[nSide] = vp.linearYeeIndex(
-			vp.wrap(startPos + cardinal(nSide)));
+        mStartNeighborIndices[nSide] = mainLattice->wrappedLinearYeeIndex(
+            startPos+cardinal(nSide));
+        
+		//mStartNeighborIndices[nSide] = vp.linearYeeIndex(
+		//	vp.wrap(startPos + cardinal(nSide)));
 		
 		if (nSide/2 == fieldDirection)
 			mUsedNeighborIndices[nSide] = 0;
@@ -223,21 +229,11 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 			mUsedNeighborIndices[nSide] = 0;
             bp[nSide] = mStartPaint->getCurlBuffer(nSide)->
                 getLattice()->wrappedPointer(mStartPoint+cardinal(nSide));
-            /*
-			bp[nSide] = vp.fieldPointer(mStartPaint->getCurlBuffer(nSide),
-				mStartPoint+cardinal(nSide));
-            */
-            
-            /*
-            LOG << "Buffer on that side is " << bp[nSide] << "\n";
-            LOGMORE << "Compare to " << vp.fieldPointer(mStartPoint+
-                cardinal(nSide)) << "\n";
-            */
 		}
 		else
 		{
 			mUsedNeighborIndices[nSide] = 1;
-			bp[nSide] = vp.fieldPointer(mStartPoint+cardinal(nSide));
+			bp[nSide] = mainLattice->wrappedPointer(mStartPoint+cardinal(nSide));
 		}
 	}
     // WATCH CAREFULLY
@@ -245,7 +241,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
     // f_j will be Hy
     // f_k will be Hz
     // 
-	mCurrentRunline.f_i = vp.fieldPointer(startPos);
+	mCurrentRunline.f_i = mainLattice->pointer(startPos);
 	mCurrentRunline.f_j[0] = bp[2*dir_k];
 	mCurrentRunline.f_j[1] = bp[2*dir_k+1];
 	mCurrentRunline.f_k[0] = bp[2*dir_j];
@@ -274,12 +270,13 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 {
     if (newPaint != mStartPaint)
         return 0;
+    InterleavedLatticePtr mainLattice(vp.getLattice());
     
 	for (int nSide = 0; nSide < 6; nSide++)
 	if (mUsedNeighborIndices[nSide])
 	{
-		int index = vp.linearYeeIndex(vp.wrap(
-            newPos + cardinal(nSide)));
+		int index = mainLattice->wrappedLinearYeeIndex(
+            newPos + cardinal(nSide));
 		if (mStartNeighborIndices[nSide] + mCurrentRunline.length != index)
 			return 0;
 	}
@@ -370,6 +367,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	int nSide;
 	const VoxelGrid & voxelGrid(vp.getVoxelGrid());
 	const PartitionCellCount & cellCountGrid(*vp.getIndices());
+    InterleavedLatticePtr mainLattice(vp.getLattice());
 	
 	mStartPoint = startPos;
 	mStartPaint = voxelGrid(startPos);
@@ -383,8 +381,11 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	BufferPointer bp[6]; // we won't fill all of these, but it makes things easy
 	for (nSide = 0; nSide < 6; nSide++)
 	{
-		mStartNeighborIndices[nSide] = vp.linearYeeIndex(
-			vp.wrap(startPos + cardinal(nSide)));
+        mStartNeighborIndices[nSide] = mainLattice->wrappedLinearYeeIndex(
+            startPos+cardinal(nSide));
+        
+		//mStartNeighborIndices[nSide] = vp.linearYeeIndex(
+		//	vp.wrap(startPos + cardinal(nSide)));
 		
 		if (nSide/2 == fieldDirection)
 			mUsedNeighborIndices[nSide] = 0;
@@ -397,10 +398,11 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		else
 		{
 			mUsedNeighborIndices[nSide] = 1;
-			bp[nSide] = vp.fieldPointer(mStartPoint+cardinal(nSide));
+			bp[nSide] = mainLattice->wrappedPointer(
+                mStartPoint+cardinal(nSide));
 		}
 	}
-	mCurrentRunline.f_i = vp.fieldPointer(startPos);
+	mCurrentRunline.f_i = mainLattice->pointer(startPos);
 	mCurrentRunline.f_j[0] = bp[2*dir_k];    // for Ex, Hy is the z neighbor.
 	mCurrentRunline.f_j[1] = bp[2*dir_k+1];
 	mCurrentRunline.f_k[0] = bp[2*dir_j];
@@ -424,28 +426,6 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
     // TODO: test that this gives the correct PML if we wrapped to the far
     // side of the grid somehow.  (What am I talking about???)
     
-    /*
-	// PML aux stuff
-	Rect3i gridHalfCells = vp.getGridHalfCells();
-    assert(vec_eq(gridHalfCells.p1, 0));  // never hurts to be sure.
-	Vector3i gridSize = gridHalfCells.size() + Vector3i(1,1,1);
-	Vector3i pmlDir = mStartPaint->getPMLDirections();
-	mPMLRect = vp.getPMLHalfCells(pmlDir);
-	
-    // The start point of the runline *may* be outside the grid, *if* we are
-    // performing calculations on ghost points!  This may happen in data-push
-    // adjoint update equations.  In any case, usually the wrap does nothing.
-	Vector3i wrappedStartPoint = Vector3i(mStartPoint + gridSize) % gridSize;
-	mCurrentRunline.pmlDepthIndex = wrappedStartPoint/2 - mPMLRect.p1/2;
-    
-    // IF THE PML IS ON A NEGATIVE (e.g. left or bottom) SIDE:
-    //  the pml depth index is 0 at the highest-conductivity point
-    // IF THE PML IS ON A POSITIVE (e.g. right or top) SIDE:
-    //  the pml depth index is 0 at the lowest-conductivity point, which is
-    //  considered to be a physical distance of dx or dx/2 into the PML.
-    // This index is in Yee cells.
-    */
-    
 	/*
 	LOG << "runline for PML in " << mPMLRect << "\n";
 	LOGMORE << "dir " << pmlDir << "\n";
@@ -460,14 +440,15 @@ bool SimpleBulkPMLSetupMaterial::
 canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	const Vector3i & newPos, Paint* newPaint) const
 {
+    InterleavedLatticePtr mainLattice(vp.getLattice());
     if (newPaint != mStartPaint)
         return 0;
     
 	for (int nSide = 0; nSide < 6; nSide++)
 	if (mUsedNeighborIndices[nSide])
 	{
-		int index = vp.linearYeeIndex(vp.wrap(
-            newPos + cardinal(nSide)));
+		int index = mainLattice->wrappedLinearYeeIndex(
+            newPos + cardinal(nSide));
 		if (mStartNeighborIndices[nSide] + mCurrentRunline.length != index)
 			return 0;
 	}

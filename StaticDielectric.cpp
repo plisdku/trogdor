@@ -110,7 +110,7 @@ calcEPhase(int direction)
         //LOGMORE << rl << "\n";
         for (int mm = 0; mm < len; mm++)
         {
-            float fiOld = *fi;
+            //float fiOld = *fi;
             *fi = *fi + (mDt/Constants::eps0/m_epsr)*
                 ( (*gkHigh-*gkLow)/dj - (*gjHigh - *gjLow)/dk );
             /*
@@ -173,7 +173,7 @@ calcHPhase(int direction)
         
         for (int mm = 0; mm < len; mm++)
         {
-            float fiOld = *fi;
+            //float fiOld = *fi;
             *fi = *fi - (mDt/Constants::mu0/m_mur)*
                 ( (*gkHigh-*gkLow)/dj - (*gjHigh - *gjLow)/dk );
             //LOG << "neighbors " << *gkLow << " " << *gkHigh << "\n";

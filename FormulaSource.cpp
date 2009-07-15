@@ -12,6 +12,7 @@
 #include "SimulationDescription.h"
 #include "CalculationPartition.h"
 #include "VoxelizedPartition.h"
+#include "InterleavedLattice.h"
 #include <cstdlib>
 #include <iostream>
 
@@ -123,6 +124,7 @@ uniformSourceE(CalculationPartition & cp, int timestep)
 {
     //LOG << "Source E\n";
     float val;
+    InterleavedLatticePtr lattice(cp.getLattice());
     
 	mCalculator.set("n", timestep);
 	mCalculator.set("t", mDt*timestep);
@@ -138,13 +140,14 @@ uniformSourceE(CalculationPartition & cp, int timestep)
         for (int dir = 0; dir < 3; dir++)
         if (mFields.getWhichE()[dir] != 0)
         {
+            Vector3i xx;
             if (!mIsSoft)
             {
-                for (int kk = rect.p1[2]; kk <= rect.p2[2]; kk++)
-                for (int jj = rect.p1[1]; jj <= rect.p2[1]; jj++)
-                for (int ii = rect.p1[0]; ii <= rect.p2[0]; ii++)
+                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
+                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
+                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
                 {
-                    cp.setE(dir, ii, jj, kk, val);
+                    lattice->setE(dir, xx, val);
                     //LOG << "Writing at " << ii << " " << jj << " " << kk
                     //    << "\n";
                     //LOG << "E is now " << cp.getE(dir, ii, jj, kk) << "\n";
@@ -152,10 +155,10 @@ uniformSourceE(CalculationPartition & cp, int timestep)
             }
             else
             {
-                for (int kk = rect.p1[2]; kk <= rect.p2[2]; kk++)
-                for (int jj = rect.p1[1]; jj <= rect.p2[1]; jj++)
-                for (int ii = rect.p1[0]; ii <= rect.p2[0]; ii++)
-                    cp.setE(dir, ii, jj, kk, cp.getE(dir, ii,jj,kk)+val);
+                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
+                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
+                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
+                    lattice->setE(dir, xx, lattice->getE(dir, xx)+val);
             }
         }
     }
@@ -166,6 +169,7 @@ uniformSourceH(CalculationPartition & cp, int timestep)
 {
     //LOG << "Source H\n";
     float val;
+    InterleavedLatticePtr lattice(cp.getLattice());
     
 	mCalculator.set("n", timestep);
 	mCalculator.set("t", mDt*(0.5f + timestep));
@@ -178,19 +182,20 @@ uniformSourceH(CalculationPartition & cp, int timestep)
         for (int dir = 0; dir < 3; dir++)
         if (mFields.getWhichH()[dir] != 0)
         {
+            Vector3i xx;
             if (!mIsSoft)
             {
-                for (int kk = rect.p1[2]; kk <= rect.p2[2]; kk++)
-                for (int jj = rect.p1[1]; jj <= rect.p2[1]; jj++)
-                for (int ii = rect.p1[0]; ii <= rect.p2[0]; ii++)
-                    cp.setH(dir, ii, jj, kk, val);
+                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
+                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
+                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
+                    lattice->setH(dir, xx, val);
             }
             else
             {
-                for (int kk = rect.p1[2]; kk <= rect.p2[2]; kk++)
-                for (int jj = rect.p1[1]; jj <= rect.p2[1]; jj++)
-                for (int ii = rect.p1[0]; ii <= rect.p2[0]; ii++)
-                    cp.setH(dir, ii, jj, kk, cp.getH(dir, ii,jj,kk)+val);
+                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
+                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
+                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
+                    lattice->setH(dir, xx, lattice->getH(dir, xx)+val);
             }
         }
     }

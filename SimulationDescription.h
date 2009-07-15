@@ -417,8 +417,6 @@ public:
     const std::set<Vector3i> & getOmittedSides() const { return mOmittedSides; }
     bool isTotalField() const { return mIsTotalField; }
     bool isScatteredField() const { return !mIsTotalField; }
-	const std::vector<NeighborBufferDescPtr> & getBuffers() const
-        { return mBuffers; }
     
     // TFSFSource accessors
     SourceFields getSourceFields() const
@@ -450,15 +448,9 @@ public:
     Rect3i getFromHalfCells() const { return mFromHalfCells; }
     
 private:
-    // buffer maker
-	void initTFSFBuffers(float srcFactor); // 1 adds, -1 subtracts
-	void initLinkTFSFBuffers(float srcFactor); // 1 adds, -1 subtracts
-	void initFloquetBuffers();
-    
     // Common data
     int mCoordinatePermutationNumber;
     HuygensSurfaceSourceType mType;
-	std::vector<NeighborBufferDescPtr> mBuffers; // one per side, 0-5
     Rect3i mHalfCells;
     std::set<Vector3i> mOmittedSides;
     bool mIsTotalField;
@@ -481,7 +473,7 @@ private:
     GridDescPtr mSourceGrid;
     Rect3i mFromHalfCells;
 };
-
+/*
 class NeighborBufferDescription
 {
 public:
@@ -524,6 +516,7 @@ private:
 	std::vector<float> mDestFactorsH;
 	std::vector<float> mSrcFactorsH;
 };
+*/
 
 class MaterialDescription
 {

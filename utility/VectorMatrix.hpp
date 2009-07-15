@@ -472,6 +472,12 @@ Vector3<T> vec_min(const Vector3<T> & lhs, T rhs)
     return Vector3<T>(smin(lhs[0], rhs), smin(lhs[1], rhs), smin(lhs[2], rhs));
 }
 
+template<typename T>
+Vector3<T> vec_floor(const Vector3<T> & lhs)
+{
+    return Vector3<T>(floor(lhs[0]), floor(lhs[1]), floor(lhs[2]));
+}
+
 
 
 

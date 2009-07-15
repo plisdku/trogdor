@@ -48,6 +48,8 @@ ConvertOldXML.h
 ConvertOldXML.cpp
 DrudeModel1.h
 DrudeModel1.cpp
+DrudeModel1PML.h
+DrudeModel1PML.hpp
 FDTDApplication.h
 FDTDApplication.cpp
 FormulaSource.h

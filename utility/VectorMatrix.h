@@ -164,7 +164,8 @@ Vector3<T> vec_max(const Vector3<T> & lhs, T rhs);
 template<typename T>
 Vector3<T> vec_min(const Vector3<T> & lhs, T rhs); 
 
-
+template<typename T>
+Vector3<T> vec_floor(const Vector3<T> & lhs);
 
 template<typename T>
 std::ostream & operator<<(std::ostream & str, const Vector3<T> & rhs);

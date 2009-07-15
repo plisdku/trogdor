@@ -28,22 +28,11 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     m_dxyz(dxyz),
     m_dt(dt),
     m_numT(numT),
-    mAllocOriginYee(vp.getAllocYeeCells().p1),
-    mAllocYeeCells(vp.getAllocYeeCells().size() + 1),
     mHuygensSurfaces(vp.getHuygensSurfaces()),
     mLattice(vp.getLattice())
 {
     LOG << "New calc partition.\n";
     unsigned int nn;
-    
-    // This allocates all the main fields and all the neighbor buffer fields.
-    // This does not allocate any material aux variables.
-    const int INTERLEAVE = 0;
-    if (INTERLEAVE)
-    {
-        LOG << "Not going to do this yet.\n";
-        exit(1);
-    }
     
     // Allocate memory, both main grid and Huygens surfaces
     mLattice->allocate();
@@ -171,98 +160,6 @@ outputH(int timestep)
         mOutputs[nn]->outputHPhase(*this, timestep);
 }
 
-
-
-float CalculationPartition::
-getE(int direction, int xi, int xj, int xk) const
-{
-    return mLattice->getWrappedE(direction, Vector3i(xi, xj, xk));
-}
-    
-float CalculationPartition::
-getH(int direction, int xi, int xj, int xk) const
-{
-    return mLattice->getWrappedH(direction, Vector3i(xi, xj, xk));
-}
-
-float CalculationPartition::
-getE(int direction, Vector3i xx) const
-{
-    return mLattice->getWrappedE(direction, xx);
-}
-    
-float CalculationPartition::
-getH(int direction, Vector3i xx) const
-{
-    return mLattice->getWrappedH(direction, xx);
-}
-
-float CalculationPartition::
-getE(int direction, float xi, float xj, float xk) const
-{
-    xi = xi - mEOffset[direction][0];
-    xj = xj - mEOffset[direction][1];
-    xk = xk - mEOffset[direction][2];
-    const int ilow(floor(xi)), jlow(floor(xj)), klow(floor(xk));
-    const int ihigh(ilow+1), jhigh(jlow+1), khigh(klow+1);
-    const float dx(xi-floor(xi)), dy(xj-floor(xj)), dz(xk-floor(xk));
-    
-    return dx*dy*dz*getE(direction, ihigh, jhigh, khigh) +
-        (1.0f-dx)*dy*dz*getE(direction, ilow, jhigh, khigh) +
-        dx*(1.0f-dy)*dz*getE(direction, ihigh, jlow, khigh) +
-        (1.0f-dx)*(1.0f-dy)*dz*getE(direction, ilow, jlow, khigh) +
-        dx*dy*(1.0f-dz)*getE(direction, ihigh, jhigh, klow) +
-        (1.0f-dx)*dy*(1.0f-dz)*getE(direction, ilow, jhigh, klow) +
-        dx*(1.0f-dy)*(1.0f-dz)*getE(direction, ihigh, jlow, klow) +
-        (1.0f-dx)*(1.0f-dy)*(1.0f-dz)*getE(direction, ilow, jlow, klow);
-}
-
-float CalculationPartition::
-getH(int direction, float xi, float xj, float xk) const
-{
-    xi = xi - mHOffset[direction][0];
-    xj = xj - mHOffset[direction][1];
-    xk = xk - mHOffset[direction][2];
-    const int ilow(floor(xi)), jlow(floor(xj)), klow(floor(xk));
-    const int ihigh(ilow+1), jhigh(jlow+1), khigh(klow+1);
-    const float dx(xi-floor(xi)), dy(xj-floor(xj)), dz(xk-floor(xk));
-    
-    return dx*dy*dz*getH(direction, ihigh, jhigh, khigh) +
-        (1.0f-dx)*dy*dz*getH(direction, ilow, jhigh, khigh) +
-        dx*(1.0f-dy)*dz*getH(direction, ihigh, jlow, khigh) +
-        (1.0f-dx)*(1.0f-dy)*dz*getH(direction, ilow, jlow, khigh) +
-        dx*dy*(1.0f-dz)*getH(direction, ihigh, jhigh, klow) +
-        (1.0f-dx)*dy*(1.0f-dz)*getH(direction, ilow, jhigh, klow) +
-        dx*(1.0f-dy)*(1.0f-dz)*getH(direction, ihigh, jlow, klow) +
-        (1.0f-dx)*(1.0f-dy)*(1.0f-dz)*getH(direction, ilow, jlow, klow);
-}
-
-
-float CalculationPartition::
-getE(int direction, Vector3f xx) const
-{
-    return getE(direction, xx[0], xx[1], xx[2]); // lazy
-}
-
-float CalculationPartition::
-getH(int direction, Vector3f xx) const
-{
-    return getH(direction, xx[0], xx[1], xx[2]); // also lazy, help me gcc!!!
-}
-
-void CalculationPartition::
-setE(int direction, int xi, int xj, int xk, float val)
-{
-    mLattice->setE(direction, Vector3i(xi,xj,xk), val);
-}
-
-void CalculationPartition::
-setH(int direction, int xi, int xj, int xk, float val)
-{
-    mLattice->setH(direction, Vector3i(xi, xj, xk), val);
-}
-
-
 void CalculationPartition::
 printFields(std::ostream & str, int octant, float scale)
 {
@@ -270,68 +167,6 @@ printFields(std::ostream & str, int octant, float scale)
         mLattice->printH(str, xyz(octant), scale);
     else if (isE(octant))
         mLattice->printE(str, xyz(octant), scale);
-    /*
-    float spaceMax = 0.2*scale;
-    float periodMax = 0.5*scale;
-    int direction;
-    bool isEHere = isE(field);
-    Rect3i r(mAllocOriginYee, mAllocOriginYee+mAllocYeeCells-1);
-    
-    int ni, nj, nk;
-    
-    if (isEHere)
-    {
-        direction = xyz(field);
-        assert(direction != -1);
-        for (nk = r.p1[2]; nk <= r.p2[2]; nk++)
-        {
-            str << "+";
-            for (ni = r.p1[0]; ni <= r.p2[0]; ni++)
-                str << "-";
-            str << "+\n";
-            for (nj = r.p2[1]; nj >= r.p1[1]; nj--)
-            {
-                str << "|";
-                for (ni = r.p1[0]; ni <= r.p2[0]; ni++)
-                {
-                    float field = fabs(getE(direction, ni, nj, nk));
-                    if (field < spaceMax)
-                        str << " ";
-                    else if (field < periodMax)
-                        str << ".";
-                    else
-                        str << "•";
-                }
-                str << "|\n";
-            }
-            str << "+";
-            for (ni = r.p1[0]; ni <= r.p2[0]; ni++)
-                str << "-";
-            str << "+\n";
-        }
-    }
-    else
-    {
-        direction = xyz(field);
-        assert(direction != -1);
-        for (int nk = r.p1[2]; nk <= r.p2[2]; nk++)
-        {
-            for (int nj = r.p2[1]; nj >= r.p1[1]; nj--)
-            {
-                for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
-                {
-                    float field = fabs(getH(direction, ni, nj, nk));
-                    if (field < spaceMax)
-                        str << " ";
-                    else if (field < periodMax)
-                        str << ".";
-                    else
-                        str << "•";
-                }
-                str << "\n";
-            }
-        }
-    }*/
 }
 
 

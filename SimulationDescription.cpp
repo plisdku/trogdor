@@ -599,7 +599,6 @@ SourceCurrents(string fields, Vector3f polarization) :
 void SourceCurrents::
 cycleCoordinates()
 {
-    unsigned int nn;
 	Mat3i permuteForward(Mat3i::cyclicPermutation());
     Mat3i permuteBackward(inverse(permuteForward));
 	
@@ -677,7 +676,6 @@ CurrentSourceDescription(SourceCurrents currents, string formula,
 HuygensSurfaceDescription::
 HuygensSurfaceDescription() :
     mCoordinatePermutationNumber(0),
-    mBuffers(6),
     mDirection(0,0,0),
     mSymmetries(0,0,0)
 {
@@ -687,7 +685,6 @@ HuygensSurfaceDescription::
 HuygensSurfaceDescription(HuygensSurfaceSourceType type) :
     mCoordinatePermutationNumber(0),
     mType(type),
-    mBuffers(6),
     mDirection(0,0,0),
     mSymmetries(0,0,0)
 {
@@ -699,11 +696,6 @@ HuygensSurfaceDescription(const HuygensSurfaceDescription & parent,
 {
     *this = parent;
     mHalfCells = newHalfCells;
-    
-	if (mIsTotalField)
-		initTFSFBuffers(1.0);
-	else
-		initTFSFBuffers(-1.0);
 }
 
 void HuygensSurfaceDescription::
@@ -750,16 +742,6 @@ cycleCoordinates()
 		newOmittedSides.insert(permuteForward * (*itr));
 	}
 	mOmittedSides = newOmittedSides;
-	
-	// Permute and rotate the buffers (the permutation is "backwards")
-	vector<NeighborBufferDescPtr> newBuffers(6);
-	for (int ii = 0; ii < 6; ii++)
-	{
-		newBuffers[ii] = mBuffers[ (ii+4)%6 ];
-		if (newBuffers[ii] != 0L)
-			newBuffers[ii]->cycleCoordinates();
-	}
-	mBuffers = newBuffers;
     
     mCoordinatePermutationNumber += 1;
     mCoordinatePermutationNumber %= 3;
@@ -775,10 +757,6 @@ becomeLink(GridDescPtr sourceGrid, const Rect3i & sourceHalfCells)
     
     LOG << "Source half cells " << sourceHalfCells << "\n";
     LOG << "Dest half cells " << mHalfCells << "\n";
-    
-    for (int nn = 0; nn < 6; nn++)
-    if (mBuffers[nn] != 0L)
-        mBuffers[nn]->setSourceRects(sourceHalfCells, nn);
 }
 
 HuygensSurfaceDescription* HuygensSurfaceDescription::
@@ -802,11 +780,6 @@ newTFSFTimeSource(SourceFields fields, string timeFile, Vector3i direction,
     hs2->mIsTotalField = isTF;
     
     LOG << "Half cells " << halfCells << "\n";
-	
-	if (isTF)
-		hs2->initTFSFBuffers(1.0);
-	else
-		hs2->initTFSFBuffers(-1.0);
     
     return hs2;
 }
@@ -834,11 +807,6 @@ newTFSFFormulaSource(SourceFields fields, string formula, Vector3i direction,
     hs2->mIsTotalField = isTF;
     
     LOG << "Half cells " << halfCells << "\n";
-	
-	if (isTF)
-		hs2->initTFSFBuffers(1.0);
-	else
-		hs2->initTFSFBuffers(-1.0);
     
     return hs2;
 }
@@ -858,11 +826,6 @@ newCustomTFSFSource(string file, Vector3i symmetries, Rect3i halfCells,
     hs2->mHalfCells = halfCells;
     hs2->mOmittedSides = omittedSides;
     hs2->mIsTotalField = isTF;
-    
-	if (isTF)
-		hs2->initTFSFBuffers(1.0);
-	else
-		hs2->initTFSFBuffers(-1.0);
     
     return hs2;
 }
@@ -890,218 +853,7 @@ newLink(string sourceGrid, Rect3i fromHalfCells, Rect3i toHalfCells,
     hs2->mOmittedSides = omittedSides;
     hs2->mIsTotalField = isTF;
     
-	if (isTF)
-		hs2->initLinkTFSFBuffers(1.0);
-	else
-		hs2->initLinkTFSFBuffers(-1.0);
-    
     return hs2;
-}
-
-void HuygensSurfaceDescription::
-initTFSFBuffers(float srcFactor)
-{
-	// The function works as:
-	//		for each side of each link
-	//			for each field (Ex, Ey, Hz, Ez, Hy, Hx)
-	//				add a TF or SF buffer appropriately
-	
-    //LOG << "My omitted sides: \n";
-    //LOGMORE << mOmittedSides << "\n";
-	// For all sides not "omitted" explicitly...
-	for (unsigned int nDir = 0; nDir < 6; nDir++)
-	if (mOmittedSides.count(cardinal(nDir)) == 0)
-	{
-		NeighborBufferDescPtr nb(new NeighborBufferDescription(
-			mHalfCells, nDir, srcFactor));
-		mBuffers[nDir] = nb;
-	}
-    
-    LOG << "Half cells " << mHalfCells << "\n";
-}
-void HuygensSurfaceDescription::
-initLinkTFSFBuffers(float srcFactor)
-{
-	// The function works as:
-	//		for each side of each link
-	//			for each field (Ex, Ey, Hz, Ez, Hy, Hx)
-	//				add a TF or SF buffer appropriately
-	
-    //LOG << "My omitted sides: \n";
-    //LOGMORE << mOmittedSides << "\n";
-	// For all sides not "omitted" explicitly...
-	for (unsigned int nDir = 0; nDir < 6; nDir++)
-	if (mOmittedSides.count(cardinal(nDir)) == 0)
-	{
-		NeighborBufferDescPtr nb(new NeighborBufferDescription(
-			mFromHalfCells, mHalfCells, nDir, srcFactor));
-		mBuffers[nDir] = nb;
-	}
-    LOG << "Half cells " << mHalfCells << "\n";
-}
-
-void HuygensSurfaceDescription::
-initFloquetBuffers()
-{
-	LOG << "Not doing anything for Floquet buffers.\n";
-}
-
-#pragma mark *** NeighborBuffer ***
-
-NeighborBufferDescription::
-NeighborBufferDescription(const Rect3i & huygensDestHalfCells,
-    int nSide, 
-	float incidentFieldFactor) :
-	mDestFactorsE(3),
-	mSrcFactorsE(3),
-	mDestFactorsH(3),
-	mSrcFactorsH(3)
-{
-    mDestHalfRect = getEdgeHalfCells(huygensDestHalfCells, nSide);
-    mBufferHalfRect = mDestHalfRect - mDestHalfRect.p1;
-	mBufferHalfRect.p1[nSide/2] = 0;
-	mBufferHalfRect.p2[nSide/2] = 1;
-    
-    LOG << "Huygens dest " << huygensDestHalfCells << "\n";
-    
-    initFactors(huygensDestHalfCells, nSide, incidentFieldFactor);
-}
-
-NeighborBufferDescription::
-NeighborBufferDescription(const Rect3i & huygensSourceHalfCells,
-    const Rect3i & huygensDestHalfCells,
-    int nSide, 
-	float incidentFieldFactor) :
-	mDestFactorsE(3),
-	mSrcFactorsE(3),
-	mDestFactorsH(3),
-	mSrcFactorsH(3)
-{
-    mSourceHalfRect = getEdgeHalfCells(huygensSourceHalfCells, nSide);
-    mDestHalfRect = getEdgeHalfCells(huygensDestHalfCells, nSide);
-    mBufferHalfRect = mDestHalfRect - mDestHalfRect.p1;
-	mBufferHalfRect.p1[nSide/2] = 0;
-	mBufferHalfRect.p2[nSide/2] = 1;
-    
-    LOG << "Huygens dest " << huygensDestHalfCells << "\n";
-    
-    initFactors(huygensDestHalfCells, nSide, incidentFieldFactor);
-}
-
-void NeighborBufferDescription::
-setSourceRects(const Rect3i & sourceHalfCells, int nSide)
-{
-    mSourceHalfRect = getEdgeHalfCells(sourceHalfCells, nSide);
-    
-    LOG << "Source " << mSourceHalfRect << " dest " << mDestHalfRect << "\n";
-}
-
-Rect3i NeighborBufferDescription::
-getEdgeHalfCells(const Rect3i & halfCells, int nSide)
-{
-	Rect3i outerHalfCells = edgeOfRect(halfCells, nSide);
-	
-	// the fat boundary contains the cells on BOTH sides of the TFSF boundary
-	// in the destination grid
-	if (nSide % 2 == 0) // if this is a low-x, low-y or low-z side
-		outerHalfCells.p1 += cardinal(nSide);
-	else
-		outerHalfCells.p2 += cardinal(nSide);
-	
-    return outerHalfCells;
-}
-
-void NeighborBufferDescription::
-initFactors(const Rect3i & huygensDestHalfCells, int nSide,
-    float incFieldFactor)
-{
-	Rect3i outerTotalField = edgeOfRect(huygensDestHalfCells, nSide);
-	unsigned int dir;
-    Vector3i fieldOffset, p1Offset;
-    
-    for (dir = 0; dir < 3; dir++)
-    {
-        // E fields
-        fieldOffset = eFieldOffset(dir);
-        p1Offset = outerTotalField.p1%2;
-        
-        // if we're in the total-field region, SUBTRACT the field here to
-        // prevent the incident field from moving out to the scattered field
-        // zone.
-        if (fieldOffset[nSide/2] == p1Offset[nSide/2])
-        {
-            mDestFactorsE[dir] = 1.0f;
-            mSrcFactorsE[dir] = -1.0f*incFieldFactor;
-        }
-        else
-        {
-            mDestFactorsE[dir] = 1.0f;
-            mSrcFactorsE[dir] = 1.0f * incFieldFactor;
-        }
-        
-        // H fields
-        fieldOffset = hFieldOffset(dir);
-        p1Offset = outerTotalField.p1%2;
-        
-        if (fieldOffset[nSide/2] == p1Offset[nSide/2])
-        {
-            mDestFactorsH[dir] = 1.0f;
-            mSrcFactorsH[dir] = -1.0f*incFieldFactor;
-        }
-        else
-        {
-            mDestFactorsH[dir] = 1.0f;
-            mSrcFactorsH[dir] = 1.0f * incFieldFactor;
-        }
-    }
-}
-
-
-void NeighborBufferDescription::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	// Rotate the rects
-	mDestHalfRect = permuteForward * mDestHalfRect;
-	mBufferHalfRect = permuteForward * mBufferHalfRect;
-	//mBufferYeeBounds = permuteForward * mBufferYeeBounds;
-	
-    vector<float> newDestFactors(3);
-    vector<float> newSrcFactors(3);
-    
-    for (int ii = 0; ii < 3; ii++)
-    {
-        newDestFactors[(ii+1)%3] = mDestFactorsE[ii];
-        newSrcFactors[(ii+1)%3] = mSrcFactorsE[ii];
-    }
-    mDestFactorsE = newDestFactors;
-    mSrcFactorsE = newSrcFactors;
-    
-    for (int ii = 0; ii < 3; ii++)
-    {
-        newDestFactors[(ii+1)%3] = mDestFactorsH[ii];
-        newSrcFactors[(ii+1)%3] = mSrcFactorsH[ii];
-    }
-    mDestFactorsH = newDestFactors;
-    mSrcFactorsH = newSrcFactors;
-    
-	// Permute the source and destination factors.
-    /*
-	// This is tricky since the order is (Ex, Ey, Hz, Ez, Hy, Hx).
-	// Might as well do it by hand (should I revisit this design later?)
-	int permuteOrder[] = {3,0,4,1,5,2}; // Ex was Ez, Ey was Ex, etc.
-	vector<float> newDestFactors(6);
-	vector<float> newSrcFactors(6);
-	for (int ii = 0; ii < 6; ii++)
-	{
-		newDestFactors[ii] = mDestFactors[ permuteOrder[ii] ];
-		newSrcFactors[ii] = mSrcFactors[ permuteOrder[ii] ];
-	}
-	mDestFactors = newDestFactors;
-	mSrcFactors = newSrcFactors;
-    */
 }
 
 #pragma mark *** Material ***
