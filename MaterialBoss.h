@@ -67,6 +67,7 @@ public:
 	// Auxiliary variables
     virtual void setNumCellsE(int fieldDir, int numCells);
     virtual void setNumCellsH(int fieldDir, int numCells);
+    
     virtual void setPMLHalfCells(int pmlDirection, Rect3i halfCellsOnSide,
         const GridDescription & gridDesc);
     virtual void setNumCellsOnPMLFaceE(int fieldDir, int faceNum, int numCells);
@@ -94,6 +95,20 @@ private:
     Paint* mParentPaint;
 };
 typedef Pointer<SetupMaterial> SetupMaterialPtr;
+
+
+template<class MaterialClass, class SetupRunlineType, class RunlineType>
+class SetupMaterialTemplate : public SetupMaterial
+{
+public:
+    SetupMaterialTemplate();
+    
+    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
+        const CalculationPartition & cp) const;
+    
+private:
+};
+
 
 struct SBMRunline
 {

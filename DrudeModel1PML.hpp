@@ -1,5 +1,5 @@
 /*
- *  StaticDielectricPML.hh
+ *  DrudeModel1PML.hh
  *  TROGDOR
  *
  *  Created by Paul Hansen on 5/4/09.
@@ -7,9 +7,9 @@
  *
  */
 
-#ifdef _STATICDIELECTRICPML_
+#ifdef _DRUDEMODEL1PML_
 
-#include "StaticDielectricPML.h"
+#include "DrudeModel1PML.h"
 #include "CalculationPartition.h"
 #include "Paint.h"
 #include "YeeUtilities.h"
@@ -18,37 +18,245 @@
 #include "STLOutput.h"
 #include <sstream>
 
+/*
 using namespace YeeUtilities;
 using namespace std;
 
-SetupStaticDielectricPML::
-SetupStaticDielectricPML(
+#pragma mark *** Static functions for PML stuff ***
+
+static vector<float>
+calcC_JH(const vector<float> & kappa,
+    const vector<float> & sigma, const vector<float> & alpha, float dt)
+{
+    assert(kappa.size() == sigma.size() && sigma.size() == alpha.size());
+    vector<float> c(sigma.size());
+    for (unsigned int nn = 0; nn < sigma.size(); nn++)
+    {
+        c[nn] = ( Constants::eps0 + 0.5*alpha[nn]*dt ) /
+            ( kappa[nn]*Constants::eps0 +
+            0.5*dt*(kappa[nn]*alpha[nn]+sigma[nn]) )
+            - 1.0;
+    }
+    return c;
+}
+
+static vector<float>
+calcC_PhiH(const vector<float> & kappa,
+    const vector<float> & sigma, const vector<float> & alpha, float dt)
+{
+    assert(kappa.size() == sigma.size() && sigma.size() == alpha.size());
+    vector<float> c(sigma.size());
+    for (unsigned int nn = 0; nn < sigma.size(); nn++)
+    {
+        c[nn] = dt*( (1.0-kappa[nn])*alpha[nn] - sigma[nn] ) /
+            (kappa[nn]*Constants::eps0 +
+            0.5*dt*(kappa[nn]*alpha[nn]+sigma[nn]));
+    }
+    return c;
+}
+
+static vector<float>
+calcC_PhiJ(const vector<float> & kappa,
+    const vector<float> & sigma, const vector<float> & alpha, float dt)
+{
+    assert(kappa.size() == sigma.size() && sigma.size() == alpha.size());
+    vector<float> c(sigma.size());
+    for (unsigned int nn = 0; nn < sigma.size(); nn++)
+    {
+        c[nn] = dt*( kappa[nn]*alpha[nn] + sigma[nn] ) /
+            ( kappa[nn]*Constants::eps0 +
+                0.5*dt*(kappa[nn]*alpha[nn]+sigma[nn]) );
+    }
+    return c;
+}
+
+#pragma mark *** Setup ***
+
+SetupDrudeModel1PML::
+SetupDrudeModel1PML(
+    const MaterialDescPtr & material,
     const Map<Vector3i, Map<string, string> > & pmlParams) :
     SimpleBulkPMLSetupMaterial(),
-    mPML(pmlParams)
+    mPMLParams(pmlParams)
 {
 }
 
-void SetupStaticDielectricPML::
+void SetupDrudeModel1PML::
 setNumCellsE(int fieldDir, int numCells)
 {
-    mPML.setNumCellsE(fieldDir, numCells, getParentPaint());
+    const int STRIDE = 1;
+    int jDir = (fieldDir+1)%3;
+    int kDir = (jDir+1)%3;
+    char fieldChar = '0' + fieldDir;
+    Vector3i pmlDir = getParentPaint()->getPMLDirections();
+    string prefix = getParentPaint()->getBulkMaterial()->getName() + " accum E";
+    
+    if (pmlDir[jDir])
+    {
+        mBufAccumEj[fieldDir] = MemoryBufferPtr(
+            new MemoryBuffer( prefix + 'j' + fieldChar, numCells, STRIDE ) );
+    }
+    if (pmlDir[kDir])
+    {
+        mBufAccumEk[fieldDir] = MemoryBufferPtr(
+            new MemoryBuffer( prefix + 'k' + fieldChar, numCells, STRIDE ) );
+    }
+    
+    // Drude
+    ostringstream bufName;
+    bufName << mDesc->getName() << " J" << fieldDir;
+    mCurrents[fieldDir] = MemoryBufferPtr(new MemoryBuffer(
+        bufName.str(), number, STRIDE));
 }
 
-void SetupStaticDielectricPML::
+void SetupDrudeModel1PML::
 setNumCellsH(int fieldDir, int numCells)
 {
-    mPML.setNumCellsH(fieldDir, numCells, getParentPaint());
+    const int STRIDE = 1;
+    int jDir = (fieldDir+1)%3;
+    int kDir = (jDir+1)%3;
+    char fieldChar = '0' + fieldDir;
+    Vector3i pmlDir = getParentPaint()->getPMLDirections();
+    string prefix = getParentPaint()->getBulkMaterial()->getName() + " accum H";
+    
+    if (pmlDir[jDir])
+    {
+        mBufAccumHj[fieldDir] = MemoryBufferPtr(
+            new MemoryBuffer( prefix + 'j' + fieldChar, numCells, STRIDE ) );
+    }
+    if (pmlDir[kDir])
+    {
+        mBufAccumHk[fieldDir] = MemoryBufferPtr(
+            new MemoryBuffer( prefix + 'k' + fieldChar, numCells, STRIDE ) );
+    }
 }
 
-void SetupStaticDielectricPML::
+void SetupDrudeModel1PML::
 setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
     const GridDescription & gridDesc)
 {
-    mPML.setPMLHalfCells(faceNum, halfCellsOnSide, gridDesc, getParentPaint());
+    Vector3i pmlDir = getParentPaint()->getPMLDirections();
+    
+    if (dot(pmlDir, cardinal(faceNum)) < 0) // check which side it is
+        return;
+    
+    Rect3i pmlYee;
+    int pmlDepthYee;
+    int nYee, nHalf, nHalf0;
+    int fieldDir;
+    float depthHalf, depthFrac;
+    float pmlDepthHalf = halfCellsOnSide.size(faceNum/2)+1;
+    string alphaStr, kappaStr, sigmaStr;
+    
+    const int ONE = 1; // if I set it to 0, the PML layer includes depth==0.
+    
+    //LOG << "------------ " << getParentPaint()->getPMLDirections() << "\n";
+    
+    calc_defs::Calculator<float> calculator;
+    calculator.set("eps0", Constants::eps0);
+    calculator.set("mu0", Constants::mu0);
+    calculator.set("L", pmlDepthHalf*gridDesc.getDxyz()[faceNum/2]);
+    calculator.set("dx", gridDesc.getDxyz()[faceNum/2]);
+    
+    for (fieldDir = 0; fieldDir < 3; fieldDir++)
+    if (fieldDir != faceNum/2)
+    {
+        // E field auxiliary constants
+        pmlYee = halfToYee(halfCellsOnSide, octantE(fieldDir));
+        pmlDepthYee = pmlYee.size(faceNum/2)+1;
+        mSigmaE[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
+        mAlphaE[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
+        mKappaE[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
+        
+        // the first half cell of the current octant.  we jump through hoops
+        // to make sure that it has the right half cell offset.
+        nHalf0 = yeeToHalf(pmlYee, octantE(fieldDir)).p1[faceNum/2];
+        
+        alphaStr = mPMLParams[cardinal(faceNum)]["alpha"];
+        kappaStr = mPMLParams[cardinal(faceNum)]["kappa"];
+        sigmaStr = mPMLParams[cardinal(faceNum)]["sigma"];
+        
+        for (nYee = 0, nHalf=nHalf0; nYee < pmlDepthYee; nYee++, nHalf+=2)
+        {
+            if (faceNum%2 == 0) // going left/down etc. (negative direction)
+                depthHalf = float(halfCellsOnSide.p2[faceNum/2]-nHalf+ONE);
+            else
+                depthHalf = float(nHalf-halfCellsOnSide.p1[faceNum/2]+ONE);
+            depthFrac = depthHalf / pmlDepthHalf;
+            calculator.set("d", depthFrac);
+            
+            bool parseError = calculator.parse(sigmaStr);
+            if (parseError)
+            {
+                calculator.report_error(cerr);
+                exit(1);
+            }
+            mSigmaE[fieldDir][faceNum/2][nYee] = calculator.get_value();
+            parseError = calculator.parse(kappaStr);
+            if (parseError)
+            {
+                calculator.report_error(cerr);
+                exit(1);
+            }
+            mKappaE[fieldDir][faceNum/2][nYee] = calculator.get_value();
+            parseError = calculator.parse(alphaStr);
+            if (parseError)
+            {
+                calculator.report_error(cerr);
+                exit(1);
+            }
+            mAlphaE[fieldDir][faceNum/2][nYee] = calculator.get_value();
+            
+        }
+        
+        // H field auxiliary constants
+        pmlYee = halfToYee(halfCellsOnSide, octantH(fieldDir));
+        pmlDepthYee = pmlYee.size(faceNum/2)+1;
+        mSigmaH[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
+        mAlphaH[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
+        mKappaH[fieldDir][faceNum/2].resize(pmlDepthYee, 0.0);
+        
+        nHalf0 = yeeToHalf(pmlYee, octantH(fieldDir)).p1[faceNum/2];
+        
+        for (nYee = 0, nHalf=nHalf0; nYee < pmlDepthYee; nYee++, nHalf+=2)
+        {
+            if (faceNum%2 == 0) // going left/down etc. (negative direction)
+                depthHalf = float(halfCellsOnSide.p2[faceNum/2]-nHalf+ONE);
+            else
+                depthHalf = float(nHalf-halfCellsOnSide.p1[faceNum/2]+ONE);
+            depthFrac = depthHalf / pmlDepthHalf;
+            calculator.set("d", depthFrac);
+            
+            bool parseError = calculator.parse(sigmaStr);
+            if (parseError)
+            {
+                calculator.report_error(cerr);
+                exit(1);
+            }
+            mSigmaH[fieldDir][faceNum/2][nYee] = calculator.get_value();
+            parseError = calculator.parse(kappaStr);
+            if (parseError)
+            {
+                calculator.report_error(cerr);
+                exit(1);
+            }
+            mKappaH[fieldDir][faceNum/2][nYee] = calculator.get_value();
+            parseError = calculator.parse(alphaStr);
+            if (parseError)
+            {
+                calculator.report_error(cerr);
+                exit(1);
+            }
+            mAlphaH[fieldDir][faceNum/2][nYee] = calculator.get_value();
+            
+        }
+    }
+    
+    if (ONE != 1)
+        LOG << "Warning: ONE is not 1.\n";
 }
 
-MaterialPtr SetupStaticDielectricPML::
+MaterialPtr SetupDrudeModel1PML::
 makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
@@ -61,22 +269,22 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     {
         if (pmlDir[1] && pmlDir[2])
         {
-            m = MaterialPtr(new StaticDielectricPML<1,1,1>(*this,
+            m = MaterialPtr(new DrudeModel1PML<1,1,1>(*this,
                 cp.getDxyz(), cp.getDt() ));
         }
         else if (pmlDir[1])
         {
-            m = MaterialPtr(new StaticDielectricPML<1,1,0>(*this,
+            m = MaterialPtr(new DrudeModel1PML<1,1,0>(*this,
                 cp.getDxyz(), cp.getDt() ));
         }
         else if (pmlDir[2])
         {
-            m = MaterialPtr(new StaticDielectricPML<1,0,1>(*this,
+            m = MaterialPtr(new DrudeModel1PML<1,0,1>(*this,
                 cp.getDxyz(), cp.getDt() ));
         }
         else
         {
-            m = MaterialPtr(new StaticDielectricPML<1,0,0>(*this,
+            m = MaterialPtr(new DrudeModel1PML<1,0,0>(*this,
                 cp.getDxyz(), cp.getDt() ));
         }
     }
@@ -84,18 +292,18 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     {
         if (pmlDir[2])
         {
-            m = MaterialPtr(new StaticDielectricPML<0,1,1>(*this,
+            m = MaterialPtr(new DrudeModel1PML<0,1,1>(*this,
                 cp.getDxyz(), cp.getDt() ));
         }
         else
         {
-            m = MaterialPtr(new StaticDielectricPML<0,1,0>(*this,
+            m = MaterialPtr(new DrudeModel1PML<0,1,0>(*this,
                 cp.getDxyz(), cp.getDt() ));
         }
     }
     else if (pmlDir[2] != 0)
     {
-        m = MaterialPtr(new StaticDielectricPML<0,0,1>(*this,
+        m = MaterialPtr(new DrudeModel1PML<0,0,1>(*this,
                 cp.getDxyz(), cp.getDt() ));
     }
     else
@@ -104,13 +312,14 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     return m;
 }
 
+#pragma mark *** Material calculation ***
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-StaticDielectricPML(const SetupStaticDielectricPML & deleg, Vector3f dxyz,
+DrudeModel1PML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
+DrudeModel1PML(const SetupDrudeModel1PML & deleg, Vector3f dxyz,
     float dt) :
     Material(),
-    mPML(deleg.getParentPaint(), deleg.getPML()),
+    mPMLDirection(deleg.getParentPaint()->getPMLDirections()),
     mDxyz(dxyz),
     mDt(dt),
     m_epsr(1.0),
@@ -166,33 +375,80 @@ StaticDielectricPML(const SetupStaticDielectricPML & deleg, Vector3f dxyz,
             //LOGMORE << mRunlines[field][nn] << "\n";
         }
     }
-    /*
-    for (int field = 0; field < 6; field++)
+    
+    // PML STUFF HERE
+    
+    // Grab memory buffers; we'll use these later to allocate the real fields.
+    for (int nn = 0; nn < 3; nn++)
     {
-        //LOG << "Printing as we create runlines in field " << field << "\n";
-        const std::vector<SBPMRunlinePtr> & setupRunlines =
-            deleg.getRunlines(field);
+        mBufAccumEj[nn] = deleg.getBufAccumEj(nn);
+        mBufAccumEk[nn] = deleg.getBufAccumEk(nn);
+        mBufAccumHj[nn] = deleg.getBufAccumHj(nn);
+        mBufAccumHk[nn] = deleg.getBufAccumHk(nn);
+    }
+    
+    //LOG << "------- " << pmlDir << "\n";
         
-        mRunlines[field].resize(setupRunlines.size());
+    // Allocate and calculate update constants.
+    for (int fieldDir = 0; fieldDir < 3; fieldDir++)
+    {
+        int jDir = (fieldDir+1)%3;
+        int kDir = (fieldDir+2)%3;
         
-        for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
+        if (mPMLDirection[jDir] != 0)
         {
-            mRunlines[field][nn] = SimpleAuxPMLRunline(*setupRunlines[nn]);
+            mC_JjH[fieldDir] = calcC_JH(deleg.getKappaE(fieldDir,jDir),
+                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+                dt);
+            mC_PhijH[fieldDir] = calcC_PhiH(deleg.getKappaE(fieldDir,jDir),
+                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+                dt);
+            mC_PhijJ[fieldDir] = calcC_PhiJ(deleg.getKappaE(fieldDir,jDir),
+                deleg.getSigmaE(fieldDir,jDir), deleg.getAlphaE(fieldDir,jDir),
+                dt);
             
-//            LOGMORE << MemoryBuffer::identify(mRunlines[field][nn].fi)
-//                << " " << MemoryBuffer::identify(mRunlines[field][nn].gj[0]) <<
-//                " " << MemoryBuffer::identify(mRunlines[field][nn].gk[0]) <<
-//                "\n";
+            // the magnetic coefficients are of the same form as the electric
+            // ones and can be handled with the same functions 
+            mC_MjE[fieldDir] = calcC_JH(deleg.getKappaH(fieldDir,jDir),
+                deleg.getSigmaH(fieldDir,jDir), deleg.getAlphaH(fieldDir,jDir),
+                dt);
+            mC_PsijE[fieldDir] = calcC_PhiH(deleg.getKappaH(fieldDir,jDir),
+                deleg.getSigmaH(fieldDir,jDir), deleg.getAlphaH(fieldDir,jDir),
+                dt);
+            mC_PsijM[fieldDir] = calcC_PhiJ(deleg.getKappaH(fieldDir,jDir),
+                deleg.getSigmaH(fieldDir,jDir), deleg.getAlphaH(fieldDir,jDir),
             
-            //LOGMORE << mRunlines[field][nn] << "\n";
+        }
+        
+        if (mPMLDirection[kDir] != 0)
+        {
+            mC_JkH[fieldDir] = calcC_JH(deleg.getKappaE(fieldDir,kDir),
+                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+                dt);
+            mC_PhikH[fieldDir] = calcC_PhiH(deleg.getKappaE(fieldDir,kDir),
+                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+                dt);
+            mC_PhikJ[fieldDir] = calcC_PhiJ(deleg.getKappaE(fieldDir,kDir),
+                deleg.getSigmaE(fieldDir,kDir), deleg.getAlphaE(fieldDir,kDir),
+                dt);
+            
+            // the magnetic coefficients are of the same form as the electric
+            // ones and can be handled with the same functions 
+            mC_MkE[fieldDir] = calcC_JH(deleg.getKappaH(fieldDir,kDir),
+                deleg.getSigmaH(fieldDir,kDir), deleg.getAlphaH(fieldDir,kDir),
+                dt);
+            mC_PsikE[fieldDir] = calcC_PhiH(deleg.getKappaH(fieldDir,kDir),
+                deleg.getSigmaH(fieldDir,kDir), deleg.getAlphaH(fieldDir,kDir),
+                dt);
+            mC_PsikM[fieldDir] = calcC_PhiJ(deleg.getKappaH(fieldDir,kDir),
+                deleg.getSigmaH(fieldDir,kDir), deleg.getAlphaH(fieldDir,kDir),
+                dt);
         }
     }
-    */
-    
 }
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
+void DrudeModel1PML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 allocateAuxBuffers()
 {
     // Allocate auxiliary variables
@@ -228,7 +484,7 @@ allocateAuxBuffers()
 
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
+void DrudeModel1PML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcEPhase(int direction)
 {
     if (direction == 0)
@@ -240,7 +496,7 @@ calcEPhase(int direction)
 }
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
+void DrudeModel1PML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcHPhase(int direction)
 {
     if (direction == 0)
@@ -253,7 +509,7 @@ calcHPhase(int direction)
 
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
+void DrudeModel1PML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcEx()
 {
     // grab the right set of runlines (for Ex, Ey, or Ez)
@@ -311,13 +567,7 @@ calcEx()
                 Jij = c_JijH*dHk + *Phi_ij;
                 *fi = *fi + (mDt/Constants::eps0/m_epsr)*Jij;
                 *Phi_ij += (c_Phi_ijH*dHk - c_Phi_ijJ*Jij);
-                /*
-                LOG << MemoryBuffer::identify(Phi_ij) << "\n";
-                LOG << MemoryBuffer::identify(gjLow) << "\n";
-                LOG << MemoryBuffer::identify(gjHigh) << "\n";
-                LOG << MemoryBuffer::identify(gkLow) << "\n";
-                LOG << MemoryBuffer::identify(gkHigh) << "\n";
-                */
+                
                 Phi_ij++;
             }
             
@@ -339,7 +589,7 @@ calcEx()
 }
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
+void DrudeModel1PML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcEy()
 {
     // grab the right set of runlines (for Ex, Ey, or Ez)
@@ -421,7 +671,7 @@ calcEy()
 }
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
+void DrudeModel1PML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcEz()
 {
     // grab the right set of runlines (for Ex, Ey, or Ez)
@@ -504,7 +754,7 @@ calcEz()
 }
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
+void DrudeModel1PML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcHx()
 {
     // grab the right set of runlines (for Hx, Hy, or Hz)
@@ -583,7 +833,7 @@ calcHx()
 }
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
+void DrudeModel1PML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcHy()
 {
     // grab the right set of runlines (for Hx, Hy, or Hz)
@@ -665,7 +915,7 @@ calcHy()
 }
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
+void DrudeModel1PML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcHz()
 {
     // grab the right set of runlines (for Hx, Hy, or Hz)
@@ -746,5 +996,5 @@ calcHz()
     }
 }
 
-
+*/
 #endif
