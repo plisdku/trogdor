@@ -56,7 +56,8 @@ private:
     std::vector<SimpleAuxPMLRunline> mRunlinesE[3];
     std::vector<SimpleAuxPMLRunline> mRunlinesH[3];
     
-    StandardPML mPML;
+    AbstractPML* mPML;
+    //StandardPML mPML<X_ATTEN, Y_ATTEN, Z_ATTEN>;
     
     Vector3f mDxyz;
     float mDt;

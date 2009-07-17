@@ -36,7 +36,10 @@ public:
 	static SetupMaterialPtr newSetupMaterial(const VoxelGrid & vg,
 		const PartitionCellCountPtr cg,
         const GridDescription & gridDesc,
-		Paint* parentPaint);
+		Paint* parentPaint,
+        std::vector<int> numCellsE,
+        std::vector<int> numCellsH,
+        std::vector<Rect3i> pmlRects);
     
     static Map<Vector3i, Map<std::string, std::string> > defaultPMLParams();
 };
@@ -55,6 +58,11 @@ private:
     
 };
 typedef Pointer<Material> MaterialPtr;
+
+struct MaterialInformation
+{
+    
+};
 
 // This is that rare thing—a class in Trogdor which doesn't observe RAII.
 // Initializing it just has too darned many parameters.
@@ -91,8 +99,20 @@ public:
     // Accessor for paint with all the goodies
     void setParentPaint(Paint* paint) { mParentPaint = paint; }
     Paint* getParentPaint() const { return mParentPaint; }
+    
+    int getNumCellsE(int fieldDirection) const
+        { return mNumCellsE.at(fieldDirection); }
+    int getNumCellsH(int fieldDirection) const
+        { return mNumCellsH.at(fieldDirection); }
+    const Rect3i & getPMLHalfCells(int fieldDirection) const
+        { return mPMLHalfCellsOnSide.at(fieldDirection); }
 private:
     Paint* mParentPaint;
+    
+    std::vector<int> mNumCellsE;
+    std::vector<int> mNumCellsH;
+    std::vector<Rect3i> mPMLHalfCellsOnSide;
+    
 };
 typedef Pointer<SetupMaterial> SetupMaterialPtr;
 
@@ -167,7 +187,7 @@ struct SBPMRunline
     BufferPointer f_k[2];
 };
 typedef Pointer<SBPMRunline> SBPMRunlinePtr;
-    
+
 class SimpleBulkPMLSetupMaterial : public SetupMaterial
 {
 public:

@@ -13,6 +13,7 @@
 #include "SimulationDescription.h"
 #include "MaterialBoss.h"
 
+/*
 class SetupStaticDielectric : public SimpleBulkSetupMaterial
 {
 public:
@@ -23,13 +24,14 @@ public:
 private:
     
 };
-
+*/
 
 class StaticDielectric : public Material
 {
 public:
-    StaticDielectric(const SetupStaticDielectric & deleg,
+    StaticDielectric(
         const MaterialDescription & descrip,
+        std::vector<int> numCellsE, std::vector<int> numCellsH,
         Vector3f dxyz, float dt);
         
     virtual void calcEPhase(int phasePart = 0);

@@ -13,7 +13,9 @@
 #include "geometry.h"
 #include "MemoryUtilities.h"
 #include "Paint.h"
+#include "MaterialBoss.h"
 
+#include <string>
 #include <vector>
 
 class SetupStandardPML
@@ -65,13 +67,30 @@ private:
     std::vector<float> mKappaH[3][3];
 };
 
-class StandardPML
+class AbstractPML
 {
 public:
-    StandardPML(SetupStandardPML & setupPML, Paint* parentPaint);
+    virtual void calcEx(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
+    virtual void calcEy(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
+    virtual void calcEz(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
+    virtual void calcHx(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
+    virtual void calcHy(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
+    virtual void calcHz(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
     
-    void allocateAuxBuffers();
+    virtual void allocateAuxBuffers() = 0;
+};
+
+template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
+class StandardPML : public AbstractPML
+{
+public:
+    StandardPML(const SetupStandardPML & setupPML, Paint* parentPaint,
+    Vector3f dxyz, float dt);
     
+    virtual void allocateAuxBuffers();
+    
+    Vector3i getPMLDirection() const { return mPMLDirection; }
+
     std::vector<float> & getAccumEj(int direction)
         { return mAccumEj[direction]; }
     std::vector<float> & getAccumEk(int direction)
@@ -107,6 +126,13 @@ public:
     std::vector<float> & getC_PsikM(int direction)
         { return mC_PsikM[direction]; }
     
+    virtual void calcEx(std::vector<SimpleAuxPMLRunline> & runlines);
+    virtual void calcEy(std::vector<SimpleAuxPMLRunline> & runlines);
+    virtual void calcEz(std::vector<SimpleAuxPMLRunline> & runlines);
+    virtual void calcHx(std::vector<SimpleAuxPMLRunline> & runlines);
+    virtual void calcHy(std::vector<SimpleAuxPMLRunline> & runlines);
+    virtual void calcHz(std::vector<SimpleAuxPMLRunline> & runlines);
+    
 private:
     // These vectors are the actual location of the allocated fields and
     // update constants.
@@ -122,11 +148,16 @@ private:
     MemoryBufferPtr mBufAccumEj[3], mBufAccumEk[3],
         mBufAccumHj[3], mBufAccumHk[3];
     Vector3i mPMLDirection;
+    
+    Vector3f mDxyz;
+    float mDt;
+    float m_epsr;
+    float m_mur;
 };
 
 
 
 
-
+#include "StandardPML.cpp"
 
 #endif

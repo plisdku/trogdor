@@ -429,30 +429,28 @@ createSetupMaterials(const GridDescription & gridDesc)
 		itr++)
 	{
 		Paint* p = *itr;
-		if (mSetupMaterials.count(p) == 0)
-		{
-			mSetupMaterials[p] = MaterialFactory::newSetupMaterial(
-				mVoxels, mCentralIndices, gridDesc, p);
-		}
-		SetupMaterial & mat = *mSetupMaterials[p];
 		
+        vector<int> numCellsE(3), numCellsH(3);
+        vector<Rect3i> pmlHalfCells(6);
+        
         int fieldDir;
-        long cells;
         for (fieldDir = 0; fieldDir < 3; fieldDir++)
         {
-            cells = mCentralIndices->getNumCells(p, octantE(fieldDir));
-            mat.setNumCellsE(fieldDir, cells);            
-            cells = mCentralIndices->getNumCells(p, octantH(fieldDir));
-            mat.setNumCellsH(fieldDir, cells);
+            numCellsE[fieldDir] = 
+                mCentralIndices->getNumCells(p, octantE(fieldDir));
+            numCellsH[fieldDir] = 
+                mCentralIndices->getNumCells(p, octantH(fieldDir));
         }
         
         LOG << "Not calling that PML cells on side function.  What's it for?\n";
-        if (p->isPML())
-        for (int faceNum = 0; faceNum < 6; faceNum++)
-        if (partitionHasPML(faceNum))
-        {
-            mat.setPMLHalfCells(faceNum, pmlRects[faceNum], gridDesc);
-        }
+        
+		if (mSetupMaterials.count(p) == 0)
+		{
+			mSetupMaterials[p] = MaterialFactory::newSetupMaterial(
+				mVoxels, mCentralIndices, gridDesc, p, numCellsE, numCellsH,
+                pmlRects);
+		}
+		SetupMaterial & mat = *mSetupMaterials[p];
 	}
 }
 
@@ -461,6 +459,13 @@ loadSpaceVaryingData()
 {
 	LOG << "Setup materials need to provide temporary space!\n";
 	LOGMORE << "Not loading anything yet.\n";
+    
+    // Plan: iterate over assembly structure, but instead of painting the usual
+    // way, paint into setup materials.  So for instance:
+    // -- graded index materials: paint the index into aux arrays
+    // -- effective material constants at boundaries: do local calculation and
+    //    put contants into aux arrays
+    // Y'know.  All that.
 }
 
 void VoxelizedPartition::

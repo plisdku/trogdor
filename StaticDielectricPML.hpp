@@ -110,13 +110,16 @@ StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 StaticDielectricPML(const SetupStaticDielectricPML & deleg, Vector3f dxyz,
     float dt) :
     Material(),
-    mPML(deleg.getParentPaint(), deleg.getPML()),
     mDxyz(dxyz),
     mDt(dt),
     m_epsr(1.0),
     m_mur(1.0)
 {
     int fieldDir, jDir, kDir;
+    
+    mPML = new StandardPML<X_ATTEN, Y_ATTEN, Z_ATTEN>(
+        deleg.getPML(), deleg.getParentPaint(), dxyz, dt);
+    
     MaterialDescPtr desc = deleg.getParentPaint()->getBulkMaterial();
      
     if (desc->getParams().count("epsr"))
@@ -195,35 +198,7 @@ template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
 void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 allocateAuxBuffers()
 {
-    // Allocate auxiliary variables
-    MemoryBufferPtr p;
-    for (int fieldDir = 0; fieldDir < 3; fieldDir++)
-    {
-        int jDir = (fieldDir+1)%3;
-        int kDir = (fieldDir+2)%3;
-        
-        if (mPMLDirection[jDir] != 0)
-        {
-            p = mBufAccumEj[fieldDir];
-            mAccumEj[fieldDir].resize(p->getLength());
-            p->setHeadPointer(&(mAccumEj[fieldDir][0]));
-            
-            p = mBufAccumHj[fieldDir];
-            mAccumHj[fieldDir].resize(p->getLength());
-            p->setHeadPointer(&(mAccumHj[fieldDir][0]));
-        }
-        
-        if (mPMLDirection[kDir] != 0)
-        {
-            p = mBufAccumEk[fieldDir];
-            mAccumEk[fieldDir].resize(p->getLength());
-            p->setHeadPointer(&(mAccumEk[fieldDir][0]));
-            
-            p = mBufAccumHk[fieldDir];
-            mAccumHk[fieldDir].resize(p->getLength());
-            p->setHeadPointer(&(mAccumHk[fieldDir][0]));
-        }
-    }
+    mPML->allocateAuxBuffers();
 }
 
 
@@ -232,11 +207,20 @@ void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcEPhase(int direction)
 {
     if (direction == 0)
+    {
         calcEx();
+        mPML->calcEx(mRunlinesE[0]);
+    }
     else if (direction == 1)
+    {
         calcEy();
+        mPML->calcEy(mRunlinesE[1]);
+    }
     else
+    {
         calcEz();
+        mPML->calcEz(mRunlinesE[2]);
+    }
 }
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
@@ -244,13 +228,21 @@ void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 calcHPhase(int direction)
 {
     if (direction == 0)
+    {
         calcHx();
+        mPML->calcHx(mRunlinesH[0]);
+    }
     else if (direction == 1)
+    {
         calcHy();
+        mPML->calcHy(mRunlinesH[1]);
+    }
     else
+    {
         calcHz();
+        mPML->calcHz(mRunlinesH[2]);
+    }
 }
-
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
 void StaticDielectricPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
@@ -273,28 +265,6 @@ calcEx()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        //float Jij, Jik;                 // e.g. Jxy, Jxz (temp vars)
-        float* Phi_ij, *Phi_ik;         // e.g. Phi_xy, Phi_xz
-        float c_JijH, c_JikH;           // constants for Ex update!  yay!
-        float c_Phi_ijH, c_Phi_ikH;     // also constant, hoorah!
-        float c_Phi_ijJ, c_Phi_ikJ;     // and still constant!
-        
-        if (Y_ATTEN)
-        {
-            Phi_ij = &(mAccumEj[DIRECTION][rl.auxIndex]);
-            c_JijH = mC_JjH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Phi_ijH = mC_PhijH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Phi_ijJ = mC_PhijJ[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        }
-        
-        if (Z_ATTEN)
-        {
-            Phi_ik = &mAccumEk[DIRECTION][rl.auxIndex];
-            c_JikH = mC_JkH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Phi_ikH = mC_PhikH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Phi_ikJ = mC_PhikJ[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        }
-        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -305,29 +275,6 @@ calcEx()
             
             *fi = *fi + (mDt/Constants::eps0/m_epsr)*
                 ( dHk - dHj );
-            
-            if (Y_ATTEN)
-            {
-                Jij = c_JijH*dHk + *Phi_ij;
-                *fi = *fi + (mDt/Constants::eps0/m_epsr)*Jij;
-                *Phi_ij += (c_Phi_ijH*dHk - c_Phi_ijJ*Jij);
-                /*
-                LOG << MemoryBuffer::identify(Phi_ij) << "\n";
-                LOG << MemoryBuffer::identify(gjLow) << "\n";
-                LOG << MemoryBuffer::identify(gjHigh) << "\n";
-                LOG << MemoryBuffer::identify(gkLow) << "\n";
-                LOG << MemoryBuffer::identify(gkHigh) << "\n";
-                */
-                Phi_ij++;
-            }
-            
-            if (Z_ATTEN)
-            {
-                Jik = c_JikH*dHj + *Phi_ik;
-                *fi = *fi - (mDt/Constants::eps0/m_epsr)*Jik;
-                *Phi_ik += (c_Phi_ikH*dHj - c_Phi_ikJ*Jik);
-                Phi_ik++;
-            }
             
             fi += STRIDE;
             gkLow += STRIDE;
@@ -359,28 +306,6 @@ calcEy()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        //float Jij, Jik;                 // e.g. Jxy, Jxz (temp vars)
-        float *Phi_ij, *Phi_ik;         // e.g. Phi_xy, Phi_xz
-        float c_JijH, *c_JikH;           // constants for Ex update!  yay!
-        float c_Phi_ijH, *c_Phi_ikH;
-        float c_Phi_ijJ, *c_Phi_ikJ;
-        
-        if (Z_ATTEN)
-        {
-            Phi_ij = &mAccumEj[DIRECTION][rl.auxIndex];
-            c_JijH = mC_JjH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Phi_ijH = mC_PhijH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Phi_ijJ = mC_PhijJ[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        }
-        
-        if (X_ATTEN)
-        {
-            Phi_ik = &mAccumEk[DIRECTION][rl.auxIndex];
-            c_JikH = &mC_JkH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Phi_ikH = &mC_PhikH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Phi_ikJ = &mC_PhikJ[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        }
-        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -391,25 +316,6 @@ calcEy()
             
             *fi = *fi + (mDt/Constants::eps0/m_epsr)*
                 ( dHk - dHj );
-            
-            if (Z_ATTEN)
-            {
-                Jij = c_JijH*dHk + *Phi_ij;
-                *fi = *fi + (mDt/Constants::eps0/m_epsr)*Jij;
-                *Phi_ij += (c_Phi_ijH*dHk - c_Phi_ijJ*Jij);
-                Phi_ij++;
-            }
-            
-            if (X_ATTEN)
-            {
-                Jik = *c_JikH*dHj + *Phi_ik;
-                *fi = *fi - (mDt/Constants::eps0/m_epsr)*Jik;
-                *Phi_ik += (*c_Phi_ikH*dHj - *c_Phi_ikJ*Jik);
-                Phi_ik++;
-                c_JikH++;
-                c_Phi_ikH++;
-                c_Phi_ikJ++;
-            }
             
             fi += STRIDE;
             gkLow += STRIDE;
@@ -441,28 +347,6 @@ calcEz()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        //float Jij, Jik;                 // e.g. Jxy, Jxz (temp vars)
-        float* Phi_ij, *Phi_ik;         // e.g. Phi_xy, Phi_xz
-        float *c_JijH, c_JikH;
-        float *c_Phi_ijH, c_Phi_ikH;
-        float *c_Phi_ijJ, c_Phi_ikJ;
-        
-        if (X_ATTEN)
-        {
-            Phi_ij = &mAccumEj[DIRECTION][rl.auxIndex];
-            c_JijH = &mC_JjH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Phi_ijH = &mC_PhijH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Phi_ijJ = &mC_PhijJ[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        }
-        
-        if (Y_ATTEN)
-        {
-            Phi_ik = &mAccumEk[DIRECTION][rl.auxIndex];
-            c_JikH = mC_JkH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Phi_ikH = mC_PhikH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Phi_ikJ = mC_PhikJ[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        }
-        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -473,26 +357,6 @@ calcEz()
             
             *fi = *fi + (mDt/Constants::eps0/m_epsr)*
                 ( dHk - dHj );
-            
-            
-            if (X_ATTEN)
-            {
-                Jij = *c_JijH*dHk + *Phi_ij;
-                *fi = *fi + (mDt/Constants::eps0/m_epsr)*Jij;
-                *Phi_ij += (*c_Phi_ijH*dHk - *c_Phi_ijJ*Jij);
-                Phi_ij++;
-                c_JijH++;
-                c_Phi_ijH++;
-                c_Phi_ijJ++;
-            }
-            
-            if (Y_ATTEN)
-            {
-                Jik = c_JikH*dHj + *Phi_ik;
-                *fi = *fi - (mDt/Constants::eps0/m_epsr)*Jik;
-                *Phi_ik += (c_Phi_ikH*dHj - c_Phi_ikJ*Jik);
-                Phi_ik++;
-            }
             
             fi += STRIDE;
             gkLow += STRIDE;
@@ -524,28 +388,6 @@ calcHx()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        //float Mij, Mik;                 // e.g. Jxy, Jxz (temp vars)
-        float* Psi_ij, *Psi_ik;         // e.g. Phi_xy, Phi_xz
-        float c_MijE, c_MikE;           // constants for Ex update!  yay!
-        float c_Psi_ijE, c_Psi_ikE;     // also constant, hoorah!
-        float c_Psi_ijM, c_Psi_ikM;     // and still constant!
-        
-        if (Y_ATTEN)
-        {
-            Psi_ij = &mAccumHj[DIRECTION][rl.auxIndex];
-            c_MijE = mC_MjE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Psi_ijE = mC_PsijE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Psi_ijM = mC_PsijM[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        }
-        
-        if (Z_ATTEN)
-        {
-            Psi_ik = &mAccumHk[DIRECTION][rl.auxIndex];
-            c_MikE = mC_MkE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Psi_ikE = mC_PsikE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Psi_ikM = mC_PsikM[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        }
-        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -556,22 +398,6 @@ calcHx()
             
             *fi = *fi - (mDt/Constants::mu0/m_mur)*
                 ( dEk - dEj );
-            
-            if (Y_ATTEN)
-            {
-                Mij = c_MijE*dEk + *Psi_ij;
-                *fi = *fi - (mDt/Constants::mu0/m_mur)*Mij;
-                *Psi_ij += (c_Psi_ijE*dEk - c_Psi_ijM*Mij);
-                Psi_ij++;
-            }
-            
-            if (Z_ATTEN)
-            {
-                Mik = c_MikE*dEj + *Psi_ik;
-                *fi = *fi + (mDt/Constants::mu0/m_mur)*Mik;
-                *Psi_ik += (c_Psi_ikE*dEj - c_Psi_ikM*Mik);
-                Psi_ik++;
-            }
             
             fi += STRIDE;
             gkLow += STRIDE;
@@ -603,28 +429,6 @@ calcHy()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        //float Mij, Mik;                 // e.g. Jxy, Jxz (temp vars)
-        float* Psi_ij, *Psi_ik;         // e.g. Phi_xy, Phi_xz
-        float c_MijE, *c_MikE;           // constants for Ex update!  yay!
-        float c_Psi_ijE, *c_Psi_ikE;     // also constant, hoorah!
-        float c_Psi_ijM, *c_Psi_ikM;     // and still constant!
-        
-        if (Z_ATTEN)
-        {
-            Psi_ij = &mAccumHj[DIRECTION][rl.auxIndex];
-            c_MijE = mC_MjE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Psi_ijE = mC_PsijE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Psi_ijM = mC_PsijM[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        }
-        
-        if (X_ATTEN)
-        {
-            Psi_ik = &mAccumHk[DIRECTION][rl.auxIndex];
-            c_MikE = &mC_MkE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Psi_ikE = &mC_PsikE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Psi_ikM = &mC_PsikM[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        }
-        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -635,25 +439,6 @@ calcHy()
             
             *fi = *fi - (mDt/Constants::mu0/m_mur)*
                 ( dEk - dEj );
-            
-            if (Z_ATTEN)
-            {
-                Mij = c_MijE*dEk + *Psi_ij;
-                *fi = *fi - (mDt/Constants::mu0/m_mur)*Mij;
-                *Psi_ij += (c_Psi_ijE*dEk - c_Psi_ijM*Mij);
-                Psi_ij++;
-            }
-            
-            if (X_ATTEN)
-            {
-                Mik = *c_MikE*dEj + *Psi_ik;
-                *fi = *fi + (mDt/Constants::mu0/m_mur)*Mik;
-                *Psi_ik += (*c_Psi_ikE*dEj - *c_Psi_ikM*Mik);
-                c_MikE++;
-                c_Psi_ikE++;
-                c_Psi_ikM++;
-                Psi_ik++;
-            }
             
             fi += STRIDE;
             gkLow += STRIDE;
@@ -685,28 +470,6 @@ calcHz()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        //float Mij, Mik;                 // e.g. Jxy, Jxz (temp vars)
-        float* Psi_ij, *Psi_ik;         // e.g. Phi_xy, Phi_xz
-        float *c_MijE, c_MikE;           // constants for Ex update!  yay!
-        float *c_Psi_ijE, c_Psi_ikE;     // also constant, hoorah!
-        float *c_Psi_ijM, c_Psi_ikM;     // and still constant!
-        
-        if (X_ATTEN)
-        {
-            Psi_ij = &mAccumHj[DIRECTION][rl.auxIndex];
-            c_MijE = &mC_MjE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Psi_ijE = &mC_PsijE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-            c_Psi_ijM = &mC_PsijM[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        }
-        
-        if (Y_ATTEN)
-        {
-            Psi_ik = &mAccumHk[DIRECTION][rl.auxIndex];
-            c_MikE = mC_MkE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Psi_ikE = mC_PsikE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-            c_Psi_ikM = mC_PsikM[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        }
-        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -717,25 +480,6 @@ calcHz()
             
             *fi = *fi - (mDt/Constants::mu0/m_mur)*
                 ( dEk - dEj );
-            
-            if (X_ATTEN)
-            {
-                Mij = *c_MijE*dEk + *Psi_ij;
-                *fi = *fi - (mDt/Constants::mu0/m_mur)*Mij;
-                *Psi_ij += (*c_Psi_ijE*dEk - *c_Psi_ijM*Mij);
-                c_MijE++;
-                c_Psi_ijE++;
-                c_Psi_ijM++;
-                Psi_ij++;
-            }
-            
-            if (Y_ATTEN)
-            {
-                Mik = c_MikE*dEj + *Psi_ik;
-                *fi = *fi + (mDt/Constants::mu0/m_mur)*Mik;
-                *Psi_ik += (c_Psi_ikE*dEj - c_Psi_ikM*Mik);
-                Psi_ik++;
-            }
             
             fi += STRIDE;
             gkLow += STRIDE;

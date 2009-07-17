@@ -78,6 +78,8 @@ PhysicalConstants.cpp
 SetupConstants.h
 SimpleEHOutput.h
 SimpleEHOutput.cpp
+SimpleMaterialTemplates.h
+SimpleMaterialTemplates.cpp
 SimulationDescription.h
 SimulationDescription.cpp
 SimulationDescriptionPredeclarations.h

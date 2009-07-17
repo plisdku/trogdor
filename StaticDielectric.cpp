@@ -19,6 +19,7 @@
 using namespace std;
 using namespace YeeUtilities;
 
+/*
 SetupStaticDielectric::
 SetupStaticDielectric() :
 	SimpleBulkSetupMaterial()
@@ -36,10 +37,12 @@ makeCalcMaterial(const VoxelizedPartition & vp,
         cp.getDt()
         ));
 }
+*/
 
 StaticDielectric::
-StaticDielectric(const SetupStaticDielectric & deleg,
+StaticDielectric(
     const MaterialDescription & descrip,
+    std::vector<int> numCellsE, std::vector<int> numCellsH,
     Vector3f dxyz, float dt) :
     Material(),
     mDxyz(dxyz),
@@ -51,7 +54,7 @@ StaticDielectric(const SetupStaticDielectric & deleg,
         istringstream(descrip.getParams()["epsr"]) >> m_epsr;
     if (descrip.getParams().count("mur"))
         istringstream(descrip.getParams()["mur"]) >> m_mur;
-    
+    /*
     int dir;
     for (dir = 0; dir < 3; dir++)
     {
@@ -83,6 +86,7 @@ StaticDielectric(const SetupStaticDielectric & deleg,
         }
     }
     LOG << "Created all runlines.\n";
+    */
 }
 
 void StaticDielectric::

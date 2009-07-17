@@ -32,7 +32,10 @@ using namespace YeeUtilities;
 SetupMaterialPtr MaterialFactory::
 newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
     const GridDescription & gridDesc,
-	Paint* parentPaint)
+	Paint* parentPaint,
+    std::vector<int> numCellsE,
+    std::vector<int> numCellsH,
+    std::vector<Rect3i> pmlRects)
 {
 	assert(parentPaint != 0L);
     
@@ -80,33 +83,33 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	if (bulkMaterial->getModelName() == "StaticDielectric")
 	{
         if (parentPaint->isPML())
-            matDel = SetupMaterialPtr(new SetupStaticDielectricPML(
-                pmlParams));
+        {
+            /*
+            matDel = SetupMaterialPtr(
+                new SimpleSetupMaterial<StaticDielectric>(
+                    parentPaint, numCellsE, numCellsH, dxyz, dt));
+            */
+        }
         else
-            matDel = SetupMaterialPtr(new SetupStaticDielectric);
-	}
-    else if (bulkMaterial->getModelName() == "StaticLossyDielectric")
-    {
-        matDel = SetupMaterialPtr(new SetupStaticLossyDielectric);
-    }
-	else if (bulkMaterial->getModelName() == "DrudeMetal")
-	{
-        //if (parentPaint->isPML())
-        //    matDel = SetupMaterialPtr(new SetupDrudeModel1PML(
-        //        bulkMaterial, pmlParams));
-        //else
-            matDel = SetupMaterialPtr(new SetupDrudeModel1(bulkMaterial));
-	}
-	else if (bulkMaterial->getModelName() == "PerfectConductor")
-	{
-        matDel = SetupMaterialPtr(new SetupPerfectConductor);
+        {
+            /*
+            matDel = SetupMaterialPtr(
+                new SimpleSetupMaterial<StaticDielectric>(
+                    parentPaint, numCellsE, numCellsH, dxyz, dt));
+            */
+            /*
+            matDel = SetupMaterialPtr(
+                new SimpleSetupPML<StaticDielectric, SetupStandardPML>(
+                    description, numCells, numPMLCells, pmlParams, dxyz, dt));
+            */
+        }
 	}
 	else
     {
         LOG << "Using default (silly) delegate.\n";
         matDel = SetupMaterialPtr(new SimpleBulkSetupMaterial);
     }
-    matDel->setParentPaint(parentPaint);
+    //matDel->setParentPaint(parentPaint);
     
     return matDel;
 }
