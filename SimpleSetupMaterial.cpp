@@ -1,5 +1,5 @@
 /*
- *  MaterialBoss.cpp
+ *  SimpleSetupMaterial.cpp
  *  TROGDOR
  *
  *  Created by Paul Hansen on 4/8/09.
@@ -7,7 +7,7 @@
  *
  */
 
-#include "MaterialBoss.h"
+#include "SimpleSetupMaterial.h"
 #include "SimulationDescription.h"
 
 //#include "CalculationPartition.h"

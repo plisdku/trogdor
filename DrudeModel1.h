@@ -10,7 +10,7 @@
 #ifndef _DRUDEMODEL1_
 #define _DRUDEMODEL1_
 
-#include "MaterialBoss.h"
+#include "SimpleSetupMaterial.h"
 #include "SimulationDescriptionPredeclarations.h"
 #include "Map.h"
 #include "MemoryUtilities.h"

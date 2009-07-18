@@ -11,7 +11,7 @@
 #define _STATICDIELECTRIC_
 
 #include "SimulationDescription.h"
-#include "MaterialBoss.h"
+#include "SimpleSetupMaterial.h"
 #include "SimpleMaterialTemplates.h"
 
 

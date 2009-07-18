@@ -14,6 +14,7 @@
 #include "PartitionCellCount.h"
 #include "SimulationDescription.h"
 
+#include "STLOutput.h"
 #include "geometry.h"
 
 // Headers for the materials we'll make
@@ -23,6 +24,9 @@
 #include "DrudeModel1.h"
 #include "DrudeModel1PML.h"
 #include "PerfectConductor.h"
+
+// Headers for the available PML types
+#include "CFSRIPML.h"
 
 SetupMaterialPtr MaterialFactory::
 newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
@@ -42,6 +46,8 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
     
     //LOG << "Hey, grid pml: \n";
     //LOGMORE << gridPMLParams << endl;
+    
+    LOG << "PML rects " << pmlRects << "\n";
     
     // This creates the map of PML parameters, first consulting the material's
     // parameters and secondarily the grid's default parameters and the global
@@ -71,13 +77,14 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
                         gridPMLParams[dir][itr->first];
             }
         }
+        //LOG << "PML is " << pmlParams << "\n";
     }
     
 	//LOG << "Getting delegate for " << *parentPaint << ".\n"; 
     
 	if (bulkMaterial->getModelName() == "StaticDielectric")
 	{
-        if (parentPaint->isPML())
+        if (0 == parentPaint->isPML())
         {
             matDel = SetupMaterialPtr(
                 new SimpleSetupMaterial<StaticDielectric>(
@@ -86,15 +93,18 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
         }
         else
         {
+            /*
             matDel = SetupMaterialPtr(
                 new SimpleSetupMaterial<StaticDielectric>(
                     parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
                     gridDesc.getDt()));
-            /*
-            matDel = SetupMaterialPtr(
-                new SimpleSetupPML<StaticDielectric, SetupStandardPML>(
-                    description, numCells, numPMLCells, pmlParams, dxyz, dt));
             */
+            LOG << "PML is " << pmlParams << "\n";
+            matDel = SetupMaterialPtr(
+                new SimpleSetupPML<StaticDielectric,  CFSRIPMLFactory>(
+                    parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
+                    gridDesc.getDxyz(), gridDesc.getDt()));
+            
         }
 	}
     else

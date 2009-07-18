@@ -11,7 +11,7 @@
 #define _STATICLOSSYDIELECTRIC_
 
 #include "SimulationDescription.h"
-#include "MaterialBoss.h"
+#include "SimpleSetupMaterial.h"
 
 class SetupStaticLossyDielectric : public SimpleBulkSetupMaterial
 {

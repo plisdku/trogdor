@@ -12,7 +12,7 @@
 #define _DRUDEMODEL1PML_
 
 #include "SimulationDescription.h"
-#include "MaterialBoss.h"
+#include "SimpleSetupMaterial.h"
 
 /*
 class SetupDrudeModel1PML : public SimpleBulkPMLSetupMaterial

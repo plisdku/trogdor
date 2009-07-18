@@ -44,6 +44,8 @@ ${magLibDirs}
 add_executable( trogdor
 CalculationPartition.h
 CalculationPartition.cpp
+CFSRIPML.h
+CFSRIPML.cpp
 ConvertOldXML.h
 ConvertOldXML.cpp
 DrudeModel1.h
@@ -65,8 +67,6 @@ Material.h
 Material.cpp
 MaterialFactory.h
 MaterialFactory.cpp
-MaterialBoss.h
-MaterialBoss.cpp
 MemoryUtilities.h
 MemoryUtilities.cpp
 OutputBoss.h
@@ -79,18 +79,20 @@ PerfectConductor.h
 PerfectConductor.cpp
 PhysicalConstants.h
 PhysicalConstants.cpp
+PML.h
+PML.cpp
 SetupConstants.h
 SimpleEHOutput.h
 SimpleEHOutput.cpp
 SimpleMaterialTemplates.h
 SimpleMaterialTemplates.cpp
+SimpleSetupMaterial.h
+SimpleSetupMaterial.cpp
 SimulationDescription.h
 SimulationDescription.cpp
 SimulationDescriptionPredeclarations.h
 SourceBoss.h
 SourceBoss.cpp
-StandardPML.h
-StandardPML.cpp
 StaticDielectric.h
 StaticDielectric.cpp
 StaticDielectricPML.h

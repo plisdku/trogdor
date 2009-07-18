@@ -10,7 +10,7 @@
 #ifndef _CALCULATIONPARTITION_
 #define _CALCULATIONPARTITION_
 
-#include "MaterialBoss.h"
+#include "SimpleSetupMaterial.h"
 #include "Pointer.h"
 #include "Map.h"
 #include <vector>

@@ -12,7 +12,7 @@
 #include "SimulationDescription.h"
 #include "Log.h"
 #include "YeeUtilities.h"
-#include "MaterialBoss.h"
+#include "SimpleSetupMaterial.h"
 #include "MaterialFactory.h"
 #include "STLOutput.h"
 #include "InterleavedLattice.h"
@@ -432,7 +432,6 @@ createSetupMaterials(const GridDescription & gridDesc)
 		Paint* p = *itr;
 		
         vector<int> numCellsE(3), numCellsH(3);
-        vector<Rect3i> pmlHalfCells(6);
         
         int fieldDir;
         for (fieldDir = 0; fieldDir < 3; fieldDir++)

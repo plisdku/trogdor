@@ -10,8 +10,9 @@
 #ifndef _SIMPLEMATERIALTEMPLATES_
 #define _SIMPLEMATERIALTEMPLATES_
 
-#include "MaterialBoss.h"
+#include "SimpleSetupMaterial.h"
 #include "geometry.h"
+#include "PML.h"
 
 class VoxelizedPartition;
 class CalculationPartition;
@@ -92,7 +93,7 @@ private:
 // this may be templatized by runline type as well.
 // TEMPLATE REQUIREMENTS:
 //  NonPMLMaterial must inherit or look like SimpleMaterial
-template<class NonPMLMaterial, class PMLImplementationClass>
+template<class NonPMLMaterial, class PMLFactory>
 class SimplePML : public NonPMLMaterial
 {
 public:
@@ -104,8 +105,15 @@ public:
     virtual void calcEPhase(int direction);
     virtual void calcHPhase(int direction);
     virtual void allocateAuxBuffers();
+    
+    // we use these to feed the extra pointers to the PML
+    virtual void setRunlinesE(int direction,
+        const std::vector<SBPMRunlinePtr> & rls);
+    virtual void setRunlinesH(int direction,
+        const std::vector<SBPMRunlinePtr> & rls);
+    
 private:
-    Pointer<PMLImplementationClass> mPML;
+    Pointer<PML> mPML;
 };
 
 

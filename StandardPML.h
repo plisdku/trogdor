@@ -9,11 +9,12 @@
 
 #ifndef _STANDARDPML_
 #define _STANDARDPML_
+#if 0
 
 #include "geometry.h"
 #include "MemoryUtilities.h"
 #include "Paint.h"
-#include "MaterialBoss.h"
+#include "SimpleSetupMaterial.h"
 
 #include <string>
 #include <vector>
@@ -197,5 +198,7 @@ private:
 
 
 #include "StandardPML.cpp"
+
+#endif // 0
 
 #endif

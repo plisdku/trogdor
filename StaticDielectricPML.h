@@ -12,7 +12,7 @@
 #define _STATICDIELECTRICPML_
 
 #include "SimulationDescription.h"
-#include "MaterialBoss.h"
+#include "SimpleSetupMaterial.h"
 #include "StandardPML.h"
 /*
 class SetupStaticDielectricPML : public SimpleBulkPMLSetupMaterial

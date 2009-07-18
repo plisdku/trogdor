@@ -52,8 +52,8 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
 
 #pragma mark *** SimpleSetupPML ***
 
-template<class MaterialClass, class PMLImplementationClass>
-SimpleSetupPML<MaterialClass, PMLImplementationClass>::
+template<class MaterialClass, class PMLFactory>
+SimpleSetupPML<MaterialClass, PMLFactory>::
 SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
@@ -69,14 +69,14 @@ SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
 }
 
 
-template<class MaterialClass, class PMLImplementationClass>
-MaterialPtr SimpleSetupPML<MaterialClass, PMLImplementationClass>::
+template<class MaterialClass, class PMLFactory>
+MaterialPtr SimpleSetupPML<MaterialClass, PMLFactory>::
 makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
-    SimplePML<MaterialClass, PMLImplementationClass>* m(
-        new SimplePML<MaterialClass, PMLImplementationClass>(
-            *mParentPaint->getBulkMaterial(),
+    SimplePML<MaterialClass, PMLFactory>* m(
+        new SimplePML<MaterialClass, PMLFactory>(
+            mParentPaint,
             mNumCellsE,
             mNumCellsH,
             mPMLHalfCells,
@@ -89,7 +89,7 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
         m->setRunlinesE(nn, getRunlinesE(nn));
         m->setRunlinesH(nn, getRunlinesH(nn));
     }
-    return m;
+    return MaterialPtr(m);
 }
 
 
@@ -140,43 +140,68 @@ setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
 
 #pragma mark *** SimplePML ***
 
-template<class NonPMLMaterial, class PMLImplementationClass>
-SimplePML<NonPMLMaterial, PMLImplementationClass>::
+template<class NonPMLMaterial, class PMLFactory>
+SimplePML<NonPMLMaterial, PMLFactory>::
 SimplePML(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt) :
     NonPMLMaterial(*parentPaint->getBulkMaterial(), numCellsE, numCellsH, dxyz,
-        dt)
-    
+        dt),
+    mPML(PMLFactory::newPML(parentPaint, numCellsE, numCellsH, pmlHalfCells,
+        pmlParams, dxyz, dt))
 {
-    //mPML(parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams, dxyz, dt)
 }
 
-template<class NonPMLMaterial, class PMLImplementationClass>
-void SimplePML<NonPMLMaterial, PMLImplementationClass>::
+template<class NonPMLMaterial, class PMLFactory>
+void SimplePML<NonPMLMaterial, PMLFactory>::
 calcEPhase(int direction)
 {
     NonPMLMaterial::calcEPhase(direction);
-    //mPML.calcEPhase(direction, getRunlinesE(direction));
+    if (direction == 0)
+        mPML->calcEx( );
+    else if (direction == 1)
+        mPML->calcEy();
+    else
+        mPML->calcEz();
 }
 
-template<class NonPMLMaterial, class PMLImplementationClass>
-void SimplePML<NonPMLMaterial, PMLImplementationClass>::
+template<class NonPMLMaterial, class PMLFactory>
+void SimplePML<NonPMLMaterial, PMLFactory>::
 calcHPhase(int direction)
 {
     NonPMLMaterial::calcHPhase(direction);
-    //mPML.calcEPhase(direction, getRunlinesH(direction));
+    if (direction == 0)
+        mPML->calcHx();
+    else if (direction == 1)
+        mPML->calcHy();
+    else
+        mPML->calcHz();
 }
 
-template<class NonPMLMaterial, class PMLImplementationClass>
-void SimplePML<NonPMLMaterial, PMLImplementationClass>::
+template<class NonPMLMaterial, class PMLFactory>
+void SimplePML<NonPMLMaterial, PMLFactory>::
 allocateAuxBuffers()
 {
     NonPMLMaterial::allocateAuxBuffers();
-    mPML->allocateAuxBuffers;
+    mPML->allocateAuxBuffers();
 }
 
+template<class NonPMLMaterial, class PMLFactory>
+void SimplePML<NonPMLMaterial, PMLFactory>::
+setRunlinesE(int direction, const std::vector<SBPMRunlinePtr> & rls)
+{
+    NonPMLMaterial::setRunlinesE(direction, rls);
+    mPML->setRunlinesE(direction, rls);
+}
+
+template<class NonPMLMaterial, class PMLFactory>
+void SimplePML<NonPMLMaterial, PMLFactory>::
+setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
+{
+    NonPMLMaterial::setRunlinesH(direction, rls);
+    mPML->setRunlinesH(direction, rls);
+}
 
 
 

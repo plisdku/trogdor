@@ -1,5 +1,5 @@
 /*
- *  MaterialBoss.h
+ *  SimpleSetupMaterial.h
  *  TROGDOR
  *
  *  Created by Paul Hansen on 4/8/09.
@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _MATERIALBOSS_
-#define _MATERIALBOSS_
+#ifndef _SIMPLESETUPMATERIAL_
+#define _SIMPLESETUPMATERIAL_
 
 #include "Material.h"     // we inherit Material and SetupMaterial
 #include "Pointer.h"
@@ -20,9 +20,6 @@ class Paint;
 class VoxelGrid;
 class PartitionCellCount;
 typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
-
-//class CalculationPartition;
-//typedef Pointer<CalculationPartition> CalculationPartitionPtr;
 
 class VoxelizedPartition;
 
@@ -104,10 +101,7 @@ public:
 	virtual void endRunline();
 	
 	virtual void printRunlines(std::ostream & out) const;
-	
-//    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
-//        const CalculationPartition & cp) const;
-        
+	    
     const std::vector<SBPMRunlinePtr> & getRunlinesE(int dir) const
         { return mRunlinesE[dir]; }
     const std::vector<SBPMRunlinePtr> & getRunlinesH(int dir) const
@@ -150,19 +144,6 @@ struct SimpleAuxRunline
     float* gk[2];
     unsigned long length;
     unsigned long auxIndex;
-};
-
-struct SimpleAuxPMLRunline
-{
-    SimpleAuxPMLRunline() {}
-    SimpleAuxPMLRunline(const SBPMRunline & setupRunline);
-    
-    float* fi;
-    float* gj[2];
-    float* gk[2];
-    unsigned long length;
-    unsigned long auxIndex;
-    unsigned long pmlIndex[3];
 };
 
 std::ostream & operator<<(std::ostream & str, const SimpleRunline & rl);
