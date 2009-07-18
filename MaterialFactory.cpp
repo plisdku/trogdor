@@ -47,7 +47,7 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
     //LOG << "Hey, grid pml: \n";
     //LOGMORE << gridPMLParams << endl;
     
-    LOG << "PML rects " << pmlRects << "\n";
+    //LOG << "PML rects " << pmlRects << "\n";
     
     // This creates the map of PML parameters, first consulting the material's
     // parameters and secondarily the grid's default parameters and the global
@@ -93,13 +93,6 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
         }
         else
         {
-            /*
-            matDel = SetupMaterialPtr(
-                new SimpleSetupMaterial<StaticDielectric>(
-                    parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
-                    gridDesc.getDt()));
-            */
-            LOG << "PML is " << pmlParams << "\n";
             matDel = SetupMaterialPtr(
                 new SimpleSetupPML<StaticDielectric,  CFSRIPMLFactory>(
                     parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,

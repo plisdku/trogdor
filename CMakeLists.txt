@@ -50,8 +50,6 @@ ConvertOldXML.h
 ConvertOldXML.cpp
 DrudeModel1.h
 DrudeModel1.cpp
-DrudeModel1PML.h
-DrudeModel1PML.hpp
 FDTDApplication.h
 FDTDApplication.cpp
 FormulaSource.h
@@ -95,8 +93,6 @@ SourceBoss.h
 SourceBoss.cpp
 StaticDielectric.h
 StaticDielectric.cpp
-StaticDielectricPML.h
-StaticDielectricPML.hpp
 StaticLossyDielectric.h
 StaticLossyDielectric.cpp
 Version.h
