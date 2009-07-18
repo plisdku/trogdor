@@ -61,6 +61,10 @@ HuygensLink.cpp
 InterleavedLattice.h
 InterleavedLattice.cpp
 main.cpp
+Material.h
+Material.cpp
+MaterialFactory.h
+MaterialFactory.cpp
 MaterialBoss.h
 MaterialBoss.cpp
 MemoryUtilities.h

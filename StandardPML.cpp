@@ -66,16 +66,45 @@ calcC_PhiJ(const vector<float> & kappa,
     return c;
 }
 
+#pragma mark *** AbstractPML ***
+
+AbstractPML::
+~AbstractPML()
+{
+}
+
+AbstractPMLPtr StandardPMLFactory::
+newPML(Paint* parentPaint, std::vector<int> numCellsE,
+        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
+        float dt)
+{
+    Vector3i dir = parentPaint->getPMLDirections();
+}
+
+/*
 #pragma mark *** SetupStandardPML ***
 
 SetupStandardPML::
-SetupStandardPML(const Map<Vector3i, Map<string, string> > & pmlParams) :
-    mPMLParams(pmlParams)
+SetupStandardPML(const Map<Vector3i, Map<string, string> > & pmlParams,
+    Paint* parentPaint, Vector3f dxyz, float dt) :
+    mPMLParams(pmlParams),
+    mParentPaint(parentPaint),
+    mDxyz(dxyz),
+    mDt(dt)
 {
     
 }
 
-void SetupStandardPML::
+SetupStandardPML::
+AbstractPMLPtr newPML() const
+{
+    return AbstractPMLPtr(new StandardPML(*this, parentPaint, mDxyz, mDt));
+}
+*/
+
+template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
+void StandardPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 setNumCellsE(int fieldDir, int numCells, Paint* parentPaint)
 {
     const int STRIDE = 1;
@@ -97,7 +126,8 @@ setNumCellsE(int fieldDir, int numCells, Paint* parentPaint)
     }
 }
 
-void SetupStandardPML::
+template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
+void StandardPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 setNumCellsH(int fieldDir, int numCells, Paint* parentPaint)
 {
     const int STRIDE = 1;
@@ -119,10 +149,10 @@ setNumCellsH(int fieldDir, int numCells, Paint* parentPaint)
     }
 }
 
-// TODO: note that gridDesc is only needed for the dxyz stuff.
-void SetupStandardPML::
+template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
+void StandardPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
 setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
-    const GridDescription & gridDesc, Paint* parentPaint)
+    Paint* parentPaint)
 {
     Vector3i pmlDir = parentPaint->getPMLDirections();
     
@@ -144,8 +174,8 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
     calc_defs::Calculator<float> calculator;
     calculator.set("eps0", Constants::eps0);
     calculator.set("mu0", Constants::mu0);
-    calculator.set("L", pmlDepthHalf*gridDesc.getDxyz()[faceNum/2]);
-    calculator.set("dx", gridDesc.getDxyz()[faceNum/2]);
+    calculator.set("L", pmlDepthHalf*mDxyz[faceNum/2]);
+    calculator.set("dx", mDxyz[faceNum/2]);
     
     for (fieldDir = 0; fieldDir < 3; fieldDir++)
     if (fieldDir != faceNum/2)
@@ -173,10 +203,10 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
                 depthHalf = float(nHalf-halfCellsOnSide.p1[faceNum/2]+ONE);
             depthFrac = depthHalf / pmlDepthHalf;
             calculator.set("d", depthFrac);
-            /*
-            LOG << "nYee " << nYee << " nHalf " << nHalf << " within "
-                << halfCellsOnSide << " depth " << depthFrac << "\n";
-            */
+            
+//            LOG << "nYee " << nYee << " nHalf " << nHalf << " within "
+//                << halfCellsOnSide << " depth " << depthFrac << "\n";
+            
             bool parseError = calculator.parse(sigmaStr);
             if (parseError)
             {
@@ -199,22 +229,22 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
             }
             mAlphaE[fieldDir][faceNum/2][nYee] = calculator.get_value();
             
-            /*
-            mSigmaE[fieldDir][faceNum/2][nYee] = depthFrac;
-            mKappaE[fieldDir][faceNum/2][nYee] = 1.0;
-            mAlphaE[fieldDir][faceNum/2][nYee] = 0.0;
-            */
+            
+//            mSigmaE[fieldDir][faceNum/2][nYee] = depthFrac;
+//            mKappaE[fieldDir][faceNum/2][nYee] = 1.0;
+//            mAlphaE[fieldDir][faceNum/2][nYee] = 0.0;
+            
         }
-        /*
-        LOG << "E: field " << fieldDir << " faceNum " << faceNum << " num "
-            << pmlDepthYee << "\n";
-        LOGMORE << "Sigma " << sigmaStr << "\n" <<
-            mSigmaE[fieldDir][faceNum/2] << endl;
-        LOGMORE << "Alpha " << alphaStr << "\n" <<
-            mAlphaE[fieldDir][faceNum/2] << endl;
-        LOGMORE << "Kappa " << kappaStr << "\n" <<
-            mKappaE[fieldDir][faceNum/2] << endl;
-        */
+        
+//        LOG << "E: field " << fieldDir << " faceNum " << faceNum << " num "
+//            << pmlDepthYee << "\n";
+//        LOGMORE << "Sigma " << sigmaStr << "\n" <<
+//            mSigmaE[fieldDir][faceNum/2] << endl;
+//        LOGMORE << "Alpha " << alphaStr << "\n" <<
+//            mAlphaE[fieldDir][faceNum/2] << endl;
+//        LOGMORE << "Kappa " << kappaStr << "\n" <<
+//            mKappaE[fieldDir][faceNum/2] << endl;
+        
         
         // H field auxiliary constants
         pmlYee = halfToYee(halfCellsOnSide, octantH(fieldDir));
@@ -233,10 +263,10 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
                 depthHalf = float(nHalf-halfCellsOnSide.p1[faceNum/2]+ONE);
             depthFrac = depthHalf / pmlDepthHalf;
             calculator.set("d", depthFrac);
-            /*
-            LOG << "nYee " << nYee << " nHalf " << nHalf << " within "
-                << halfCellsOnSide << "\n";
-            */
+            
+//            LOG << "nYee " << nYee << " nHalf " << nHalf << " within "
+//                << halfCellsOnSide << "\n";
+            
             bool parseError = calculator.parse(sigmaStr);
             if (parseError)
             {
@@ -259,22 +289,22 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
             }
             mAlphaH[fieldDir][faceNum/2][nYee] = calculator.get_value();
             
-            /*
-            mSigmaH[fieldDir][faceNum/2][nYee] = depthFrac;
-            mKappaH[fieldDir][faceNum/2][nYee] = 1.0;
-            mAlphaH[fieldDir][faceNum/2][nYee] = 0.0;
-            */
+            
+//            mSigmaH[fieldDir][faceNum/2][nYee] = depthFrac;
+//            mKappaH[fieldDir][faceNum/2][nYee] = 1.0;
+//            mAlphaH[fieldDir][faceNum/2][nYee] = 0.0;
+            
         }
-        /*
-        LOG << "H: field " << fieldDir << " faceNum " << faceNum << " num "
-            << pmlDepthYee << "\n";
-        LOGMORE << "Sigma " << sigmaStr << "\n" <<
-            mSigmaH[fieldDir][faceNum/2] << endl;
-        LOGMORE << "Alpha " << alphaStr << "\n" <<
-            mAlphaH[fieldDir][faceNum/2] << endl;
-        LOGMORE << "Kappa " << kappaStr << "\n" <<
-            mKappaH[fieldDir][faceNum/2] << endl;
-        */
+        
+//        LOG << "H: field " << fieldDir << " faceNum " << faceNum << " num "
+//            << pmlDepthYee << "\n";
+//        LOGMORE << "Sigma " << sigmaStr << "\n" <<
+//            mSigmaH[fieldDir][faceNum/2] << endl;
+//        LOGMORE << "Alpha " << alphaStr << "\n" <<
+//            mAlphaH[fieldDir][faceNum/2] << endl;
+//        LOGMORE << "Kappa " << kappaStr << "\n" <<
+//            mKappaH[fieldDir][faceNum/2] << endl;
+        
     }
     
     if (ONE != 1)
@@ -287,26 +317,28 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
 StandardPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-StandardPML(const SetupStandardPML & setupPML, Paint* parentPaint, 
-    Vector3f dxyz, float dt) :
+StandardPML(Paint* parentPaint, std::vector<int> numCellsE,
+        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
+        float dt) :
     mPMLDirection(parentPaint->getPMLDirections()),
     mDxyz(dxyz),
     mDt(dt),
     m_epsr(1.0),
     m_mur(1.0)
 {
-    LOG << "WARNING: epsilon and mu are both 1.0.\n";
-    // PML STUFF HERE
-    
-    // Grab memory buffers; we'll use these later to allocate the real fields.
     for (int nn = 0; nn < 3; nn++)
     {
-        mBufAccumEj[nn] = setupPML.getBufAccumEj(nn);
-        mBufAccumEk[nn] = setupPML.getBufAccumEk(nn);
-        mBufAccumHj[nn] = setupPML.getBufAccumHj(nn);
-        mBufAccumHk[nn] = setupPML.getBufAccumHk(nn);
+        setNumCellsE(nn, numCellsE[nn], parentPaint);
+        setNumCellsH(nn, numCellsH[nn], parentPaint);
+    }
+    for (int nn = 0; nn < 6; nn++)
+    {
+        setPMLHalfCells(nn, pmlHalfCells[nn], parentPaint);
     }
     
+    LOG << "WARNING: epsilon and mu are both 1.0.\n";
+            
     //LOG << "------- " << pmlDir << "\n";
         
     // Allocate and calculate update constants.
@@ -317,82 +349,82 @@ StandardPML(const SetupStandardPML & setupPML, Paint* parentPaint,
         
         if (mPMLDirection[jDir] != 0)
         {
-            mC_JjH[fieldDir] = calcC_JH(setupPML.getKappaE(fieldDir,jDir),
-                setupPML.getSigmaE(fieldDir,jDir), setupPML.getAlphaE(fieldDir,jDir),
+            mC_JjH[fieldDir] = calcC_JH(mKappaE[fieldDir][jDir],
+                mSigmaE[fieldDir][jDir], mAlphaE[fieldDir][jDir],
                 dt);
-            mC_PhijH[fieldDir] = calcC_PhiH(setupPML.getKappaE(fieldDir,jDir),
-                setupPML.getSigmaE(fieldDir,jDir), setupPML.getAlphaE(fieldDir,jDir),
+            mC_PhijH[fieldDir] = calcC_PhiH(mKappaE[fieldDir][jDir],
+                mSigmaE[fieldDir][jDir], mAlphaE[fieldDir][jDir],
                 dt);
-            mC_PhijJ[fieldDir] = calcC_PhiJ(setupPML.getKappaE(fieldDir,jDir),
-                setupPML.getSigmaE(fieldDir,jDir), setupPML.getAlphaE(fieldDir,jDir),
+            mC_PhijJ[fieldDir] = calcC_PhiJ(mKappaE[fieldDir][jDir],
+                mSigmaE[fieldDir][jDir], mAlphaE[fieldDir][jDir],
                 dt);
             
             // the magnetic coefficients are of the same form as the electric
             // ones and can be handled with the same functions 
-            mC_MjE[fieldDir] = calcC_JH(setupPML.getKappaH(fieldDir,jDir),
-                setupPML.getSigmaH(fieldDir,jDir), setupPML.getAlphaH(fieldDir,jDir),
+            mC_MjE[fieldDir] = calcC_JH(mKappaH[fieldDir][jDir],
+                mSigmaH[fieldDir][jDir], mAlphaH[fieldDir][jDir],
                 dt);
-            mC_PsijE[fieldDir] = calcC_PhiH(setupPML.getKappaH(fieldDir,jDir),
-                setupPML.getSigmaH(fieldDir,jDir), setupPML.getAlphaH(fieldDir,jDir),
+            mC_PsijE[fieldDir] = calcC_PhiH(mKappaH[fieldDir][jDir],
+                mSigmaH[fieldDir][jDir], mAlphaH[fieldDir][jDir],
                 dt);
-            mC_PsijM[fieldDir] = calcC_PhiJ(setupPML.getKappaH(fieldDir,jDir),
-                setupPML.getSigmaH(fieldDir,jDir), setupPML.getAlphaH(fieldDir,jDir),
+            mC_PsijM[fieldDir] = calcC_PhiJ(mKappaH[fieldDir][jDir],
+                mSigmaH[fieldDir][jDir], mAlphaH[fieldDir][jDir],
                 dt);
             /*
             LOG << "SigmaE " << fieldDir << jDir << ":\n";
-            LOGMORE << setupPML.getSigmaE(fieldDir,jDir) << "\n";
+            LOGMORE << mSigmaE[fieldDir][jDir] << "\n";
             LOG << "KappaE " << fieldDir << jDir << ":\n";
-            LOGMORE << setupPML.getKappaE(fieldDir,jDir) << "\n";
+            LOGMORE << mKappaE[fieldDir][jDir] << "\n";
             LOG << "AlphaE " << fieldDir << jDir << ":\n";
-            LOGMORE << setupPML.getAlphaE(fieldDir,jDir) << "\n";
+            LOGMORE << mAlphaE[fieldDir][jDir] << "\n";
             
             
             LOG << "SigmaH " << fieldDir << jDir << ":\n";
-            LOGMORE << setupPML.getSigmaH(fieldDir,jDir) << "\n";
+            LOGMORE << mSigmaH[fieldDir][jDir] << "\n";
             LOG << "KappaH " << fieldDir << jDir << ":\n";
-            LOGMORE << setupPML.getKappaH(fieldDir,jDir) << "\n";
+            LOGMORE << mKappaH[fieldDir][jDir] << "\n";
             LOG << "AlphaH " << fieldDir << jDir << ":\n";
-            LOGMORE << setupPML.getAlphaH(fieldDir,jDir) << "\n";
+            LOGMORE << mAlphaH[fieldDir][jDir] << "\n";
             */
         }
         
         if (mPMLDirection[kDir] != 0)
         {
-            mC_JkH[fieldDir] = calcC_JH(setupPML.getKappaE(fieldDir,kDir),
-                setupPML.getSigmaE(fieldDir,kDir), setupPML.getAlphaE(fieldDir,kDir),
+            mC_JkH[fieldDir] = calcC_JH(mKappaE[fieldDir][kDir],
+                mSigmaE[fieldDir][kDir], mAlphaE[fieldDir][kDir],
                 dt);
-            mC_PhikH[fieldDir] = calcC_PhiH(setupPML.getKappaE(fieldDir,kDir),
-                setupPML.getSigmaE(fieldDir,kDir), setupPML.getAlphaE(fieldDir,kDir),
+            mC_PhikH[fieldDir] = calcC_PhiH(mKappaE[fieldDir][kDir],
+                mSigmaE[fieldDir][kDir], mAlphaE[fieldDir][kDir],
                 dt);
-            mC_PhikJ[fieldDir] = calcC_PhiJ(setupPML.getKappaE(fieldDir,kDir),
-                setupPML.getSigmaE(fieldDir,kDir), setupPML.getAlphaE(fieldDir,kDir),
+            mC_PhikJ[fieldDir] = calcC_PhiJ(mKappaE[fieldDir][kDir],
+                mSigmaE[fieldDir][kDir], mAlphaE[fieldDir][kDir],
                 dt);
             
             // the magnetic coefficients are of the same form as the electric
             // ones and can be handled with the same functions 
-            mC_MkE[fieldDir] = calcC_JH(setupPML.getKappaH(fieldDir,kDir),
-                setupPML.getSigmaH(fieldDir,kDir), setupPML.getAlphaH(fieldDir,kDir),
+            mC_MkE[fieldDir] = calcC_JH(mKappaH[fieldDir][kDir],
+                mSigmaH[fieldDir][kDir], mAlphaH[fieldDir][kDir],
                 dt);
-            mC_PsikE[fieldDir] = calcC_PhiH(setupPML.getKappaH(fieldDir,kDir),
-                setupPML.getSigmaH(fieldDir,kDir), setupPML.getAlphaH(fieldDir,kDir),
+            mC_PsikE[fieldDir] = calcC_PhiH(mKappaH[fieldDir][kDir],
+                mSigmaH[fieldDir][kDir], mAlphaH[fieldDir][kDir],
                 dt);
-            mC_PsikM[fieldDir] = calcC_PhiJ(setupPML.getKappaH(fieldDir,kDir),
-                setupPML.getSigmaH(fieldDir,kDir), setupPML.getAlphaH(fieldDir,kDir),
+            mC_PsikM[fieldDir] = calcC_PhiJ(mKappaH[fieldDir][kDir],
+                mSigmaH[fieldDir][kDir], mAlphaH[fieldDir][kDir],
                 dt);
             /*
             LOG << "SigmaE " << fieldDir << kDir << ":\n";
-            LOGMORE << setupPML.getSigmaE(fieldDir,kDir) << "\n";
+            LOGMORE << mSigmaE[fieldDir][kDir] << "\n";
             LOG << "KappaE " << fieldDir << kDir << ":\n";
-            LOGMORE << setupPML.getKappaE(fieldDir,kDir) << "\n";
+            LOGMORE << mKappaE[fieldDir][kDir] << "\n";
             LOG << "AlphaE " << fieldDir << kDir << ":\n";
-            LOGMORE << setupPML.getAlphaE(fieldDir,kDir) << "\n";
+            LOGMORE << mAlphaE[fieldDir][kDir] << "\n";
             
             LOG << "SigmaH " << fieldDir << kDir << ":\n";
-            LOGMORE << setupPML.getSigmaH(fieldDir,kDir) << "\n";
+            LOGMORE << mSigmaH[fieldDir][kDir] << "\n";
             LOG << "KappaH " << fieldDir << kDir << ":\n";
-            LOGMORE << setupPML.getKappaH(fieldDir,kDir) << "\n";
+            LOGMORE << mKappaH[fieldDir][kDir] << "\n";
             LOG << "AlphaH " << fieldDir << kDir << ":\n";
-            LOGMORE << setupPML.getAlphaH(fieldDir,kDir) << "\n";
+            LOGMORE << mAlphaH[fieldDir][kDir] << "\n";
             */
         }
     }

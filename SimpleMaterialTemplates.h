@@ -1,5 +1,5 @@
 /*
- *  FreshMaterials.h
+ *  SimpleMaterialTemplates.h
  *  TROGDOR
  *
  *  Created by Paul Hansen on 7/17/09.
@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef AAA
-#define AAA
+#ifndef _SIMPLEMATERIALTEMPLATES_
+#define _SIMPLEMATERIALTEMPLATES_
 
 #include "MaterialBoss.h"
 #include "geometry.h"
@@ -35,18 +35,27 @@ private:
     float mDt;
 };
 
-
+// Inheritance from SimpleBulkPMLSetupMaterial provides the runline rules and
+// the storage of setup runlines.
 template<class MaterialClass, class PMLImplementationClass>
 class SimpleSetupPML : public SimpleBulkPMLSetupMaterial
 {
 public:
     SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
-        Map<Vector3i, Map<string,string> > pmlParams, Vector3f dxyz,
+        Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt);
     
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
+private:
+    Paint* mParentPaint;
+    std::vector<int> mNumCellsE;
+    std::vector<int> mNumCellsH;
+    std::vector<Rect3i> mPMLHalfCells;
+    Map<Vector3i, Map<std::string,std::string> > mPMLParams;
+    Vector3f mDxyz;
+    float mDt;
 };
 
 // TEMPLATE REQUIREMENTS:
@@ -56,12 +65,19 @@ template<class RunlineClass>
 class SimpleMaterial : public Material
 {
 public:
-    template<class SetupRunlineClass>
+    SimpleMaterial();
+    //  Because templated virtual functions are not allowed in C++, I have to
+    // overload the setRunlines functions manually.  What a pain!
+    
     virtual void setRunlinesE(int direction,
-        const std::vector<SBMRunline> & rls);
-    template<class SetupRunlineClass>
+        const std::vector<SBMRunlinePtr> & rls);
+    virtual void setRunlinesE(int direction,
+        const std::vector<SBPMRunlinePtr> & rls);
+    
     virtual void setRunlinesH(int direction,
-        const std::vector<SBMRunline> & rls);
+        const std::vector<SBMRunlinePtr> & rls);
+    virtual void setRunlinesH(int direction,
+        const std::vector<SBPMRunlinePtr> & rls);
     
     std::vector<RunlineClass> & getRunlinesE(int direction)
         { return mRunlinesE[direction]; }
@@ -80,56 +96,22 @@ template<class NonPMLMaterial, class PMLImplementationClass>
 class SimplePML : public NonPMLMaterial
 {
 public:
-    SimplePML();
+    SimplePML(Paint* parentPaint, std::vector<int> numCellsE,
+        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
+        float dt);
     
     virtual void calcEPhase(int direction);
     virtual void calcHPhase(int direction);
     virtual void allocateAuxBuffers();
 private:
-    PMLImplementationClass mPML;
+    Pointer<PMLImplementationClass> mPML;
 };
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#include "SimpleMaterialTemplates.cpp"
 
 
 

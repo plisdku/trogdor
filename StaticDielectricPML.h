@@ -14,7 +14,7 @@
 #include "SimulationDescription.h"
 #include "MaterialBoss.h"
 #include "StandardPML.h"
-
+/*
 class SetupStaticDielectricPML : public SimpleBulkPMLSetupMaterial
 {
 public:
@@ -64,6 +64,7 @@ private:
     float m_epsr;
     float m_mur;
 };
+*/
 
 #include "StaticDielectricPML.hpp"
 

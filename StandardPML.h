@@ -18,12 +18,30 @@
 #include <string>
 #include <vector>
 
+class AbstractPML
+{
+public:
+    virtual ~AbstractPML();
+    virtual void calcEx(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
+    virtual void calcEy(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
+    virtual void calcEz(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
+    virtual void calcHx(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
+    virtual void calcHy(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
+    virtual void calcHz(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
+    
+    virtual void allocateAuxBuffers() = 0;
+};
+typedef Pointer<AbstractPML> AbstractPMLPtr;
+/*
 class SetupStandardPML
 {
 public:
     SetupStandardPML(
-        const Map<Vector3i, Map<std::string, std::string> > & pmlParams);
-        
+        const Map<Vector3i, Map<std::string, std::string> > & pmlParams,
+        Paint* parentPaint, Vector3f dxyz, float dt);
+    
+    virtual AbstractPMLPtr newPML() const;
+    
     void setNumCellsE(int fieldDir, int numCells, Paint* parentPaint);
     void setNumCellsH(int fieldDir, int numCells, Paint* parentPaint);
     void setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide,
@@ -55,7 +73,11 @@ private:
     MemoryBufferPtr mBufAccumEj[3], mBufAccumEk[3],
         mBufAccumHj[3], mBufAccumHk[3];
     
+    std::vector<Rect3i> mPMLHalfCells;
     Map<Vector3i, Map<std::string, std::string> > mPMLParams;
+    Paint* mParentPaint;
+    Vector3f mDxyz;
+    float dt;
     
     // Indexing is [fieldDir][pmlDir].  The diagonal elements are unused because
     // Ex is not attenuated in the x direction, etc.
@@ -66,26 +88,31 @@ private:
     std::vector<float> mKappaE[3][3];
     std::vector<float> mKappaH[3][3];
 };
+*/
 
-class AbstractPML
+class StandardPMLFactory
 {
 public:
-    virtual void calcEx(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
-    virtual void calcEy(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
-    virtual void calcEz(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
-    virtual void calcHx(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
-    virtual void calcHy(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
-    virtual void calcHz(std::vector<SimpleAuxPMLRunline> & runlines) = 0;
-    
-    virtual void allocateAuxBuffers() = 0;
+    static AbstractPMLPtr newPML(Paint* parentPaint, std::vector<int> numCellsE,
+        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
+        float dt);
 };
 
 template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
 class StandardPML : public AbstractPML
 {
 public:
-    StandardPML(const SetupStandardPML & setupPML, Paint* parentPaint,
-    Vector3f dxyz, float dt);
+    StandardPML(Paint* parentPaint, std::vector<int> numCellsE,
+        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
+        float dt);
+    
+    // three setup functions
+    void setNumCellsE(int fieldDir, int numCells, Paint* parentPaint);
+    void setNumCellsH(int fieldDir, int numCells, Paint* parentPaint);
+    void setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide,
+        Paint* parentPaint);
     
     virtual void allocateAuxBuffers();
     
@@ -134,6 +161,17 @@ public:
     virtual void calcHz(std::vector<SimpleAuxPMLRunline> & runlines);
     
 private:
+    // Formerly setup things:
+    std::vector<float> mSigmaE[3][3];
+    std::vector<float> mSigmaH[3][3];
+    std::vector<float> mAlphaE[3][3];
+    std::vector<float> mAlphaH[3][3];
+    std::vector<float> mKappaE[3][3];
+    std::vector<float> mKappaH[3][3];
+    
+    std::vector<Rect3i> mPMLHalfCells;
+    Map<Vector3i, Map<std::string, std::string> > mPMLParams;
+    
     // These vectors are the actual location of the allocated fields and
     // update constants.
     std::vector<float> mAccumEj[3], mAccumEk[3],

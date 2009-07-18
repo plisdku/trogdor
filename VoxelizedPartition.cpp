@@ -13,6 +13,7 @@
 #include "Log.h"
 #include "YeeUtilities.h"
 #include "MaterialBoss.h"
+#include "MaterialFactory.h"
 #include "STLOutput.h"
 #include "InterleavedLattice.h"
 #include "HuygensSurface.h"

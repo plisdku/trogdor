@@ -12,21 +12,10 @@
 
 #include "SimulationDescription.h"
 #include "MaterialBoss.h"
+#include "SimpleMaterialTemplates.h"
 
-/*
-class SetupStaticDielectric : public SimpleBulkSetupMaterial
-{
-public:
-	SetupStaticDielectric();
-    
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
-        const CalculationPartition & cp) const;
-private:
-    
-};
-*/
 
-class StaticDielectric : public Material
+class StaticDielectric : public SimpleMaterial<SimpleRunline>
 {
 public:
     StaticDielectric(
@@ -42,8 +31,7 @@ private:
     
     float m_epsr;
     float m_mur;
-    std::vector<SimpleRunline> mRunlinesE[3];
-    std::vector<SimpleRunline> mRunlinesH[3];
 };
+
 
 #endif

@@ -13,38 +13,19 @@
 #include "Log.h"
 #include "PhysicalConstants.h"
 #include "YeeUtilities.h"
+#include "SimpleMaterialTemplates.h"
 
 #include <sstream>
 
 using namespace std;
 using namespace YeeUtilities;
 
-/*
-SetupStaticDielectric::
-SetupStaticDielectric() :
-	SimpleBulkSetupMaterial()
-{
-    
-}
-
-MaterialPtr SetupStaticDielectric::
-makeCalcMaterial(const VoxelizedPartition & vp,
-    const CalculationPartition & cp) const
-{
-    return MaterialPtr(new StaticDielectric(*this,
-        *(mStartPaint->getBulkMaterial()),
-        cp.getDxyz(),
-        cp.getDt()
-        ));
-}
-*/
-
 StaticDielectric::
 StaticDielectric(
     const MaterialDescription & descrip,
     std::vector<int> numCellsE, std::vector<int> numCellsH,
     Vector3f dxyz, float dt) :
-    Material(),
+    SimpleMaterial<SimpleRunline>(),
     mDxyz(dxyz),
     mDt(dt),
     m_epsr(1.0),
@@ -54,39 +35,6 @@ StaticDielectric(
         istringstream(descrip.getParams()["epsr"]) >> m_epsr;
     if (descrip.getParams().count("mur"))
         istringstream(descrip.getParams()["mur"]) >> m_mur;
-    /*
-    int dir;
-    for (dir = 0; dir < 3; dir++)
-    {
-        const std::vector<SBMRunlinePtr> & setupRunlines =
-            deleg.getRunlinesE(dir);
-        
-        mRunlinesE[dir].resize(setupRunlines.size());
-        
-        LOG << "Printing as we create E " << dir << " runlines\n";
-        for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
-        {
-            mRunlinesE[dir][nn] = SimpleRunline(*setupRunlines[nn]);
-            LOGMORE << mRunlinesE[dir][nn] << "\n";
-        }
-    }
-    
-    for (dir = 0; dir < 3; dir++)
-    {
-        const std::vector<SBMRunlinePtr> & setupRunlines =
-            deleg.getRunlinesH(dir);
-        
-        mRunlinesH[dir].resize(setupRunlines.size());
-        
-        LOG << "Printing as we create H " << dir << " runlines\n";
-        for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
-        {
-            mRunlinesH[dir][nn] = SimpleRunline(*setupRunlines[nn]);
-            LOGMORE << mRunlinesH[dir][nn] << "\n";
-        }
-    }
-    LOG << "Created all runlines.\n";
-    */
 }
 
 void StaticDielectric::
@@ -95,7 +43,7 @@ calcEPhase(int direction)
     //LOG << "direction " << direction << " number "
     //    << eFieldNumber(direction) << "\n";
     // grab the right set of runlines (for Ex, Ey, or Ez)
-    vector<SimpleRunline> & rls = mRunlinesE[direction];
+    vector<SimpleRunline> & rls = getRunlinesE(direction);
     const int STRIDE = 1;
     
     float dj = mDxyz[(direction+1)%3];  // e.g. dy
@@ -159,7 +107,7 @@ calcHPhase(int direction)
     //LOG << "direction " << direction << " number "
     //    << hFieldNumber(direction) << "\n";
     // grab the right set of runlines (for Hx, Hy, or Hz)
-    vector<SimpleRunline> & rls = mRunlinesH[direction];
+    vector<SimpleRunline> & rls = getRunlinesH(direction);
     const int STRIDE = 1;
     
     float dj = mDxyz[(direction+1)%3];  // e.g. dy
@@ -214,6 +162,7 @@ calcHPhase(int direction)
         }
     }
 }
+
 
 
 

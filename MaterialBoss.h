@@ -10,6 +10,7 @@
 #ifndef _MATERIALBOSS_
 #define _MATERIALBOSS_
 
+#include "Material.h"     // we inherit Material and SetupMaterial
 #include "Pointer.h"
 #include "geometry.h"
 #include "MemoryUtilities.h"
@@ -20,8 +21,8 @@ class VoxelGrid;
 class PartitionCellCount;
 typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
 
-class CalculationPartition;
-typedef Pointer<CalculationPartition> CalculationPartitionPtr;
+//class CalculationPartition;
+//typedef Pointer<CalculationPartition> CalculationPartitionPtr;
 
 class VoxelizedPartition;
 
@@ -29,106 +30,6 @@ class SetupMaterial;
 typedef Pointer<SetupMaterial> SetupMaterialPtr;
 
 class GridDescription;
-
-class MaterialFactory
-{
-public:
-	static SetupMaterialPtr newSetupMaterial(const VoxelGrid & vg,
-		const PartitionCellCountPtr cg,
-        const GridDescription & gridDesc,
-		Paint* parentPaint,
-        std::vector<int> numCellsE,
-        std::vector<int> numCellsH,
-        std::vector<Rect3i> pmlRects);
-    
-    static Map<Vector3i, Map<std::string, std::string> > defaultPMLParams();
-};
-
-class Material
-{
-public:
-    Material();
-    virtual ~Material();
-    
-    virtual void calcEPhase(int direction) = 0;
-    virtual void calcHPhase(int direction) = 0;
-    
-    virtual void allocateAuxBuffers();
-private:
-    
-};
-typedef Pointer<Material> MaterialPtr;
-
-struct MaterialInformation
-{
-    
-};
-
-// This is that rare thing—a class in Trogdor which doesn't observe RAII.
-// Initializing it just has too darned many parameters.
-class SetupMaterial
-{
-public:
-	SetupMaterial();
-	virtual ~SetupMaterial();
-	
-	// Auxiliary variables
-    virtual void setNumCellsE(int fieldDir, int numCells);
-    virtual void setNumCellsH(int fieldDir, int numCells);
-    
-    virtual void setPMLHalfCells(int pmlDirection, Rect3i halfCellsOnSide,
-        const GridDescription & gridDesc);
-    virtual void setNumCellsOnPMLFaceE(int fieldDir, int faceNum, int numCells);
-    virtual void setNumCellsOnPMLFaceH(int fieldDir, int faceNum, int numCells);
-	
-	// Runline handling
-	virtual void startRunline(const VoxelizedPartition & vp,
-		const Vector3i & startPos) = 0;
-	virtual bool canContinueRunline(const VoxelizedPartition & vp,
-		const Vector3i & oldPos,
-		const Vector3i & newPos, Paint* newPaint) const = 0;
-	virtual void continueRunline(const Vector3i & newPos) = 0;
-	virtual void endRunline() = 0;
-	
-	virtual void printRunlines(std::ostream & out) const = 0;
-    
-    // Setting up the runtime materials
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
-        const CalculationPartition & cp) const = 0;
-    
-    // Accessor for paint with all the goodies
-    void setParentPaint(Paint* paint) { mParentPaint = paint; }
-    Paint* getParentPaint() const { return mParentPaint; }
-    
-    int getNumCellsE(int fieldDirection) const
-        { return mNumCellsE.at(fieldDirection); }
-    int getNumCellsH(int fieldDirection) const
-        { return mNumCellsH.at(fieldDirection); }
-    const Rect3i & getPMLHalfCells(int fieldDirection) const
-        { return mPMLHalfCellsOnSide.at(fieldDirection); }
-private:
-    Paint* mParentPaint;
-    
-    std::vector<int> mNumCellsE;
-    std::vector<int> mNumCellsH;
-    std::vector<Rect3i> mPMLHalfCellsOnSide;
-    
-};
-typedef Pointer<SetupMaterial> SetupMaterialPtr;
-
-
-template<class MaterialClass, class SetupRunlineType, class RunlineType>
-class SetupMaterialTemplate : public SetupMaterial
-{
-public:
-    SetupMaterialTemplate();
-    
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
-        const CalculationPartition & cp) const;
-    
-private:
-};
-
 
 struct SBMRunline
 {
@@ -156,8 +57,8 @@ public:
 	
 	virtual void printRunlines(std::ostream & out) const;
 	
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
-        const CalculationPartition & cp) const;
+//    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
+//        const CalculationPartition & cp) const;
     
     const std::vector<SBMRunlinePtr> & getRunlinesE(int dir) const
         { return mRunlinesE[dir]; }
@@ -204,8 +105,8 @@ public:
 	
 	virtual void printRunlines(std::ostream & out) const;
 	
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
-        const CalculationPartition & cp) const;
+//    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
+//        const CalculationPartition & cp) const;
         
     const std::vector<SBPMRunlinePtr> & getRunlinesE(int dir) const
         { return mRunlinesE[dir]; }
@@ -230,22 +131,11 @@ struct SimpleRunline
 {
     SimpleRunline() {}
     SimpleRunline(const SBMRunline & setupRunline);
+    SimpleRunline(const SBPMRunline & setupRunline);
     
     float* fi;
     float* gj[2];
     float* gk[2];
-    unsigned long length;
-};
-
-struct SimplePMLRunline
-{
-    SimplePMLRunline() {}
-    SimplePMLRunline(const SBPMRunline & setupRunline);
-    
-    float* fi;
-    float* gj[2];
-    float* gk[2];
-    unsigned long pmlIndex[3];
     unsigned long length;
 };
 
@@ -253,6 +143,7 @@ struct SimpleAuxRunline
 {
     SimpleAuxRunline() {}
     SimpleAuxRunline(const SBMRunline & setupRunline);
+    SimpleAuxRunline(const SBPMRunline & setupRunline);
     
     float* fi;
     float* gj[2];
@@ -275,9 +166,7 @@ struct SimpleAuxPMLRunline
 };
 
 std::ostream & operator<<(std::ostream & str, const SimpleRunline & rl);
-std::ostream & operator<<(std::ostream & str, const SimplePMLRunline & rl);
 std::ostream & operator<<(std::ostream & str, const SimpleAuxRunline & rl);
-std::ostream & operator<<(std::ostream & str, const SimpleAuxPMLRunline & rl);
 
 
 

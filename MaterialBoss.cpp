@@ -10,186 +10,18 @@
 #include "MaterialBoss.h"
 #include "SimulationDescription.h"
 
+//#include "CalculationPartition.h"
+#include "HuygensSurface.h"
+#include "InterleavedLattice.h"
 #include "VoxelizedPartition.h"
 #include "VoxelGrid.h"
 #include "PartitionCellCount.h"
 #include "Paint.h"
 #include "Log.h"
 #include "YeeUtilities.h"
-#include "CalculationPartition.h"
-#include "HuygensSurface.h"
-
-#include "StaticDielectric.h"
-#include "StaticDielectricPML.h"
-#include "StaticLossyDielectric.h"
-#include "DrudeModel1.h"
-#include "DrudeModel1PML.h"
-#include "PerfectConductor.h"
 
 using namespace std;
 using namespace YeeUtilities;
-
-SetupMaterialPtr MaterialFactory::
-newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
-    const GridDescription & gridDesc,
-	Paint* parentPaint,
-    std::vector<int> numCellsE,
-    std::vector<int> numCellsH,
-    std::vector<Rect3i> pmlRects)
-{
-	assert(parentPaint != 0L);
-    
-    SetupMaterialPtr matDel;
-	const MaterialDescPtr bulkMaterial = parentPaint->getBulkMaterial();
-    const Map<Vector3i, Map<string, string> > & gridPMLParams(
-        gridDesc.getPMLParams());
-    Map<Vector3i, Map<string, string> > pmlParams;
-    
-    //LOG << "Hey, grid pml: \n";
-    //LOGMORE << gridPMLParams << endl;
-    
-    // This creates the map of PML parameters, first consulting the material's
-    // parameters and secondarily the grid's default parameters and the global
-    // default parameters.  In the usual case neither map will have anything,
-    // because I will be confident in the parameters that I build in to the
-    // program.  (-: (-: (-:
-    if (parentPaint->isPML())
-    {
-        pmlParams = defaultPMLParams();
-        const Map<Vector3i, Map<string, string> > & matParams =
-            bulkMaterial->getPMLParams();
-        
-        for (int sideNum = 0; sideNum < 6; sideNum++)
-        {
-            Vector3i dir = cardinal(sideNum);
-            
-            map<string, string>::const_iterator itr;
-            for (itr = pmlParams[dir].begin(); itr != pmlParams[dir].end();
-                itr++)
-            {
-                if (matParams.count(dir) && matParams[dir].count(itr->first))
-                    pmlParams[dir][itr->first] =
-                        matParams[dir][itr->first];
-                else if (gridPMLParams.count(dir) &&
-                    gridPMLParams[dir].count(itr->first))
-                    pmlParams[dir][itr->first] =
-                        gridPMLParams[dir][itr->first];
-            }
-        }
-    }
-    
-	//LOG << "Getting delegate for " << *parentPaint << ".\n"; 
-    
-	if (bulkMaterial->getModelName() == "StaticDielectric")
-	{
-        if (parentPaint->isPML())
-        {
-            /*
-            matDel = SetupMaterialPtr(
-                new SimpleSetupMaterial<StaticDielectric>(
-                    parentPaint, numCellsE, numCellsH, dxyz, dt));
-            */
-        }
-        else
-        {
-            /*
-            matDel = SetupMaterialPtr(
-                new SimpleSetupMaterial<StaticDielectric>(
-                    parentPaint, numCellsE, numCellsH, dxyz, dt));
-            */
-            /*
-            matDel = SetupMaterialPtr(
-                new SimpleSetupPML<StaticDielectric, SetupStandardPML>(
-                    description, numCells, numPMLCells, pmlParams, dxyz, dt));
-            */
-        }
-	}
-	else
-    {
-        LOG << "Using default (silly) delegate.\n";
-        matDel = SetupMaterialPtr(new SimpleBulkSetupMaterial);
-    }
-    //matDel->setParentPaint(parentPaint);
-    
-    return matDel;
-}
-
-Map<Vector3i, Map<string, string> > MaterialFactory::
-defaultPMLParams()
-{
-    Map<string, string> allDirectionsDefault;
-    Map<Vector3i, Map<string, string> > params;
-    
-    allDirectionsDefault["sigma"] =
-        "(d^3)*0.8*4/(((mu0/eps0)^0.5)*dx)";
-    allDirectionsDefault["alpha"] =
-        "d*3e8*eps0/(50*dx)";
-    allDirectionsDefault["kappa"] =
-        "1 + (5-1)*(d^3)";
-    /*
-    allDirectionsDefault["kappa"] = "d";
-    allDirectionsDefault["alpha"] = "d";
-    allDirectionsDefault["sigma"] = "d"; // I'll take L to be the PML thickness
-    */
-    
-    for (int sideNum = 0; sideNum < 6; sideNum++)
-        params[cardinal(sideNum)] = allDirectionsDefault;
-    
-    return params;
-}
-
-Material::
-Material()
-{
-}
-
-Material::
-~Material()
-{
-}
-
-void Material::
-allocateAuxBuffers()
-{
-}
-
-SetupMaterial::
-SetupMaterial()
-{
-}
-
-SetupMaterial::
-~SetupMaterial()
-{
-}
-
-
-
-void SetupMaterial::
-setNumCellsE(int fieldDir, int numCells)
-{
-}
-
-void SetupMaterial::
-setNumCellsH(int fieldDir, int numCells)
-{
-}
-
-
-void SetupMaterial::
-setPMLHalfCells(int pmlDir, Rect3i halfCellsOnSide,
-    const GridDescription & gridDesc)
-{
-}
-
-void SetupMaterial::
-setNumCellsOnPMLFaceE(int fieldDir, int faceNum, int numCells)
-{
-}
-void SetupMaterial::
-setNumCellsOnPMLFaceH(int fieldDir, int faceNum, int numCells)
-{
-}
 
 #pragma mark *** Simple Bulk Material ***
 
@@ -346,7 +178,7 @@ printRunlines(std::ostream & out) const
 		}
 	}
 }
-
+/*
 MaterialPtr SimpleBulkSetupMaterial::
 makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
@@ -354,7 +186,7 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     cerr << "You shouldn't be here.  Overload for your material.";
     exit(1);
 }
-
+*/
 
 #pragma mark *** Simple Bulk PML Material ***
 
@@ -553,7 +385,7 @@ printRunlines(std::ostream & out) const
 	}
     */
 }
-
+/*
 MaterialPtr SimpleBulkPMLSetupMaterial::
 makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
@@ -561,7 +393,7 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     cerr << "You shouldn't be here.  Overload for your material.";
     exit(1);
 }
-
+*/
 
 SimpleRunline::
 SimpleRunline(const SBMRunline & setupRunline) :
@@ -574,9 +406,8 @@ SimpleRunline(const SBMRunline & setupRunline) :
     gk[1] = setupRunline.f_k[1].getPointer();
 }
 
-
-SimplePMLRunline::
-SimplePMLRunline(const SBPMRunline & setupRunline) :
+SimpleRunline::
+SimpleRunline(const SBPMRunline & setupRunline) :
     fi(setupRunline.f_i.getPointer()),
     length(setupRunline.length)
 {
@@ -584,9 +415,6 @@ SimplePMLRunline(const SBPMRunline & setupRunline) :
     gj[1] = setupRunline.f_j[1].getPointer();
     gk[0] = setupRunline.f_k[0].getPointer();
     gk[1] = setupRunline.f_k[1].getPointer();
-    pmlIndex[0] = setupRunline.pmlDepthIndex[0];
-    pmlIndex[1] = setupRunline.pmlDepthIndex[1];
-    pmlIndex[2] = setupRunline.pmlDepthIndex[2];
 }
 
 
@@ -602,9 +430,8 @@ SimpleAuxRunline(const SBMRunline & setupRunline) :
     auxIndex = setupRunline.auxIndex;
 }
 
-
-SimpleAuxPMLRunline::
-SimpleAuxPMLRunline(const SBPMRunline & setupRunline) :
+SimpleAuxRunline::
+SimpleAuxRunline(const SBPMRunline & setupRunline) :
     fi(setupRunline.f_i.getPointer()),
     length(setupRunline.length)
 {
@@ -613,9 +440,6 @@ SimpleAuxPMLRunline(const SBPMRunline & setupRunline) :
     gk[0] = setupRunline.f_k[0].getPointer();
     gk[1] = setupRunline.f_k[1].getPointer();
     auxIndex = setupRunline.auxIndex;
-    pmlIndex[0] = setupRunline.pmlDepthIndex[0];
-    pmlIndex[1] = setupRunline.pmlDepthIndex[1];
-    pmlIndex[2] = setupRunline.pmlDepthIndex[2];
 }
 
 
@@ -635,24 +459,6 @@ operator<<(std::ostream & str, const SimpleRunline & rl)
     return str;
 }
 
-ostream &
-operator<<(std::ostream & str, const SimplePMLRunline & rl)
-{
-    /*
-    str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
-        << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.pmlIndex[0]
-        << " " << rl.pmlIndex[1] << " " << rl.pmlIndex[2] << " " << rl.length;
-    */
-    
-    str << hex << rl.fi << dec << ": " << MemoryBuffer::identify(rl.fi) << "\n";
-    str << hex << rl.gj[0] << dec << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
-    str << hex << rl.gj[1] << dec << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
-    str << hex << rl.gk[0] << dec << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
-    str << hex << rl.gk[1] << dec << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
-    str << dec << rl.pmlIndex[0] << ", " << rl.pmlIndex[1] << ", "
-        << rl.pmlIndex[2] << " length " << rl.length << "\n";
-    return str;
-}
 
 ostream &
 operator<<(std::ostream & str, const SimpleAuxRunline & rl)
@@ -662,19 +468,6 @@ operator<<(std::ostream & str, const SimpleAuxRunline & rl)
         << " " << rl.length;
     return str;
 }
-
-ostream &
-operator<<(std::ostream & str, const SimpleAuxPMLRunline & rl)
-{
-    str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
-        << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.auxIndex << " "
-        << rl.pmlIndex[0] << " " << rl.pmlIndex[1] << " " << rl.pmlIndex[2]
-        << " " << rl.length;
-    return str;
-}
-
-
-
 
 
 

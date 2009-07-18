@@ -20,7 +20,7 @@
 
 using namespace YeeUtilities;
 using namespace std;
-
+/*
 SetupStaticDielectricPML::
 SetupStaticDielectricPML(
     const Map<Vector3i, Map<string, string> > & pmlParams) :
@@ -169,28 +169,6 @@ StaticDielectricPML(const SetupStaticDielectricPML & deleg, Vector3f dxyz,
             //LOGMORE << mRunlines[field][nn] << "\n";
         }
     }
-    /*
-    for (int field = 0; field < 6; field++)
-    {
-        //LOG << "Printing as we create runlines in field " << field << "\n";
-        const std::vector<SBPMRunlinePtr> & setupRunlines =
-            deleg.getRunlines(field);
-        
-        mRunlines[field].resize(setupRunlines.size());
-        
-        for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
-        {
-            mRunlines[field][nn] = SimpleAuxPMLRunline(*setupRunlines[nn]);
-            
-//            LOGMORE << MemoryBuffer::identify(mRunlines[field][nn].fi)
-//                << " " << MemoryBuffer::identify(mRunlines[field][nn].gj[0]) <<
-//                " " << MemoryBuffer::identify(mRunlines[field][nn].gk[0]) <<
-//                "\n";
-            
-            //LOGMORE << mRunlines[field][nn] << "\n";
-        }
-    }
-    */
     
 }
 
@@ -489,6 +467,6 @@ calcHz()
         }
     }
 }
-
+*/
 
 #endif
