@@ -19,10 +19,8 @@
 
 // Headers for the materials we'll make
 #include "StaticDielectric.h"
-#include "StaticDielectricPML.h"
 #include "StaticLossyDielectric.h"
 #include "DrudeModel1.h"
-#include "DrudeModel1PML.h"
 #include "PerfectConductor.h"
 
 // Headers for the available PML types

@@ -37,6 +37,12 @@ StaticDielectric(
         istringstream(descrip.getParams()["mur"]) >> m_mur;
 }
 
+string StaticDielectric::
+getModelName() const
+{
+    return string("StaticDielectric");
+}
+
 void StaticDielectric::
 calcEPhase(int direction)
 {

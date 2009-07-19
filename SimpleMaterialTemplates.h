@@ -84,6 +84,11 @@ public:
         { return mRunlinesE[direction]; }
     std::vector<RunlineClass> & getRunlinesH(int direction)
         { return mRunlinesH[direction]; }
+    
+    virtual long getNumRunlinesE() const;
+    virtual long getNumRunlinesH() const;
+    virtual long getNumHalfCellsE() const;
+    virtual long getNumHalfCellsH() const;
 private:
     std::vector<RunlineClass> mRunlinesE[3];
     std::vector<RunlineClass> mRunlinesH[3];

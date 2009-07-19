@@ -16,31 +16,12 @@
 
 using namespace std;
 
-SetupStaticLossyDielectric::
-SetupStaticLossyDielectric() :
-	SimpleBulkSetupMaterial()
-{
-    
-}
-
-
-MaterialPtr SetupStaticLossyDielectric::
-makeCalcMaterial(const VoxelizedPartition & vp,
-    const CalculationPartition & cp) const
-{
-    return MaterialPtr(new StaticLossyDielectric(*this,
-        *(mStartPaint->getBulkMaterial()),
-        cp.getDxyz(),
-        cp.getDt()
-        ));
-}
-
-
 StaticLossyDielectric::
-StaticLossyDielectric(const SetupStaticLossyDielectric & deleg,
-    const MaterialDescription & descrip,
-    Vector3f dxyz, float dt) :
-    Material(),
+StaticLossyDielectric(
+        const MaterialDescription & descrip,
+        std::vector<int> numCellsE, std::vector<int> numCellsH,
+        Vector3f dxyz, float dt) :
+    SimpleMaterial<SimpleRunline>(),
     m_epsr(1.0),
     m_mur(1.0),
     m_sigma(0.0)
@@ -51,7 +32,7 @@ StaticLossyDielectric(const SetupStaticLossyDielectric & deleg,
         istringstream(descrip.getParams()["mur"]) >> m_mur;
     if (descrip.getParams().count("sigma"))
         istringstream(descrip.getParams()["sigma"]) >> m_sigma;
-    
+    /*
     int dir;
     for (dir = 0; dir < 6; dir++)
     {
@@ -74,7 +55,14 @@ StaticLossyDielectric(const SetupStaticLossyDielectric & deleg,
         for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
             mRunlinesH[dir][nn] = SimpleRunline(*setupRunlines[nn]);
     }
+    */
     //LOG << "Created all runlines.\n";
+}
+
+string StaticLossyDielectric::
+getModelName() const
+{
+    return string("StaticLossyDielectric");
 }
 
 void StaticLossyDielectric::

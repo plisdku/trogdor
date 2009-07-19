@@ -19,41 +19,12 @@
 using namespace YeeUtilities;
 using namespace std;
 
-SetupDrudeModel1::
-SetupDrudeModel1(const MaterialDescPtr & material) :
-	SimpleBulkSetupMaterial(),
-    mDesc(material)
-{
-}
-
-void SetupDrudeModel1::
-setNumCellsE(int fieldDir, int number)
-{
-    const int STRIDE = 1;
-    
-    ostringstream bufName;
-    bufName << mDesc->getName() << " J" << fieldDir;
-    mCurrents[fieldDir] = MemoryBufferPtr(new MemoryBuffer(
-        bufName.str(), number, STRIDE));
-}
-
-MaterialPtr SetupDrudeModel1::
-makeCalcMaterial(const VoxelizedPartition & vp,
-    const CalculationPartition & cp) const
-{
-    return MaterialPtr(new DrudeModel1(*this,
-        *(mStartPaint->getBulkMaterial()),
-        cp.getDxyz(),
-        cp.getDt()
-        ));
-}
-
-
 DrudeModel1::
-DrudeModel1(const SetupDrudeModel1 & deleg,
+DrudeModel1(
     const MaterialDescription & descrip,
+    std::vector<int> numCellsE, std::vector<int> numCellsH,
     Vector3f dxyz, float dt) :
-    Material(),
+    SimpleMaterial<SimpleAuxRunline>(),
     mDxyz(dxyz),
     mDt(dt),
     m_epsrinf(1.0),
@@ -69,32 +40,18 @@ DrudeModel1(const SetupDrudeModel1 & deleg,
         istringstream(descrip.getParams()["omegap"]) >> m_omegap;
     if (descrip.getParams().count("tauc"))
         istringstream(descrip.getParams()["tauc"]) >> m_tauc;
-    int dir;
-    
-    for (dir = 0; dir < 3; dir++)
-    {
-        const std::vector<SBMRunlinePtr> & setupRunlines =
-            deleg.getRunlinesE(dir);
-        
-        mRunlinesE[dir].resize(setupRunlines.size());
-        
-        for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
-            mRunlinesE[dir][nn] = SimpleAuxRunline(*setupRunlines[nn]);
-    }
-    for (dir = 0; dir < 3; dir++)
-    {
-        const std::vector<SBMRunlinePtr> & setupRunlines =
-            deleg.getRunlinesH(dir);
-        
-        mRunlinesH[dir].resize(setupRunlines.size());
-        
-        for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
-            mRunlinesH[dir][nn] = SimpleAuxRunline(*setupRunlines[nn]);
-    }
-    LOG << "Created all runlines.\n";
     
     for (int nn = 0; nn < 3; nn++)
-        mCurrentBuffers[nn] = deleg.mCurrents[nn];
+    {
+        mCurrentBuffers[nn] = MemoryBufferPtr(new MemoryBuffer(
+            string("DrudeModel1 J")+char('x'+nn), numCellsE[nn]));
+    }
+}
+
+string DrudeModel1::
+getModelName() const
+{
+    return string("DrudeModel1");
 }
 
 void DrudeModel1::
@@ -114,7 +71,7 @@ calcEPhase(int direction)
     //LOG << "direction " << direction << " number "
     //    << eFieldNumber(direction) << "\n";
     // grab the right set of runlines (for Ex, Ey, or Ez)
-    vector<SimpleAuxRunline> & rls = mRunlinesE[direction];
+    vector<SimpleAuxRunline> & rls = getRunlinesE(direction);
     const int STRIDE = 1;
     
     const float dj = mDxyz[(direction+1)%3];  // e.g. dy
@@ -165,7 +122,7 @@ calcHPhase(int direction)
     //LOG << "direction " << direction << " number "
     //    << hFieldNumber(direction) << "\n";
     // grab the right set of runlines (for Hx, Hy, or Hz)
-    vector<SimpleAuxRunline> & rls = mRunlinesH[direction];
+    vector<SimpleAuxRunline> & rls = getRunlinesH(direction);
     const int STRIDE = 1;
     
     const float dj = mDxyz[(direction+1)%3];  // e.g. dy

@@ -12,34 +12,23 @@
 
 #include "SimulationDescription.h"
 #include "SimpleSetupMaterial.h"
+#include "SimpleMaterialTemplates.h"
 
-class SetupStaticLossyDielectric : public SimpleBulkSetupMaterial
+class StaticLossyDielectric : public SimpleMaterial<SimpleRunline>
 {
 public:
-	SetupStaticLossyDielectric();
-    
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
-        const CalculationPartition & cp) const;
-private:
-    
-};
-
-
-class StaticLossyDielectric : public Material
-{
-public:
-    StaticLossyDielectric(const SetupStaticLossyDielectric & deleg,
+    StaticLossyDielectric(
         const MaterialDescription & descrip,
+        std::vector<int> numCellsE, std::vector<int> numCellsH,
         Vector3f dxyz, float dt);
-        
+    
+    virtual std::string getModelName() const;
     virtual void calcEPhase(int phasePart = 0);
     virtual void calcHPhase(int phasePart = 0);
 private:
     float m_epsr;
     float m_mur;
     float m_sigma;
-    std::vector<SimpleRunline> mRunlinesE[3];
-    std::vector<SimpleRunline> mRunlinesH[3];
 };
 
 #endif

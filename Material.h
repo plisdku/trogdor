@@ -13,6 +13,8 @@
 #include "Pointer.h"
 #include "geometry.h"
 
+#include <string>
+
 class VoxelizedPartition;
 class CalculationPartition;
 class Paint;
@@ -23,12 +25,20 @@ public:
     Material();
     virtual ~Material();
     
+    void setSubstanceName(const std::string & name) { mSubstanceName = name; }
+    const std::string & getSubstanceName() const { return mSubstanceName; }
+    
     virtual void calcEPhase(int direction) = 0;
     virtual void calcHPhase(int direction) = 0;
+    virtual long getNumRunlinesE() const = 0;
+    virtual long getNumRunlinesH() const = 0;
+    virtual long getNumHalfCellsE() const = 0;
+    virtual long getNumHalfCellsH() const = 0;
+    virtual std::string getModelName() const = 0;
     
     virtual void allocateAuxBuffers();
 private:
-    
+    std::string mSubstanceName;
 };
 typedef Pointer<Material> MaterialPtr;
 

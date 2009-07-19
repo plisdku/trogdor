@@ -12,24 +12,17 @@
 
 #include "SimulationDescription.h"
 #include "SimpleSetupMaterial.h"
+#include "SimpleMaterialTemplates.h"
 
-class SetupPerfectConductor : public SimpleBulkSetupMaterial
+class PerfectConductor : public SimpleMaterial<SimpleRunline>
 {
 public:
-	SetupPerfectConductor();
+    PerfectConductor(
+        const MaterialDescription & descrip,
+        std::vector<int> numCellsE, std::vector<int> numCellsH,
+        Vector3f dxyz, float dt);
     
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
-        const CalculationPartition & cp) const;
-private:
-    
-};
-
-
-class PerfectConductor : public Material
-{
-public:
-    PerfectConductor();
-        
+    virtual std::string getModelName() const;
     virtual void calcEPhase(int phasePart = 0);
     virtual void calcHPhase(int phasePart = 0);
 };

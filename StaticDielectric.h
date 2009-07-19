@@ -13,6 +13,7 @@
 #include "SimulationDescription.h"
 #include "SimpleSetupMaterial.h"
 #include "SimpleMaterialTemplates.h"
+#include <string>
 
 
 class StaticDielectric : public SimpleMaterial<SimpleRunline>
@@ -22,7 +23,8 @@ public:
         const MaterialDescription & descrip,
         std::vector<int> numCellsE, std::vector<int> numCellsH,
         Vector3f dxyz, float dt);
-        
+    
+    virtual std::string getModelName() const;
     virtual void calcEPhase(int phasePart = 0);
     virtual void calcHPhase(int phasePart = 0);
 private:

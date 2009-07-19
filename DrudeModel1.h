@@ -11,13 +11,14 @@
 #define _DRUDEMODEL1_
 
 #include "SimpleSetupMaterial.h"
+#include "SimpleMaterialTemplates.h"
 #include "SimulationDescriptionPredeclarations.h"
 #include "Map.h"
 #include "MemoryUtilities.h"
 #include <string>
 
 /**
-    Setup Drude model.
+    Drude metal model with one pole or whatever.
     A running equation uses the slash f dollar sign thing, like \f$\sqrt{x}\f$.
     However, if I want to use a display equation I can try it like this,
     
@@ -25,29 +26,15 @@
         |A| = \left( 5 \right)
     \f]
 */
-class SetupDrudeModel1 : public SimpleBulkSetupMaterial
+class DrudeModel1 : public SimpleMaterial<SimpleAuxRunline>
 {
 public:
-	SetupDrudeModel1(const MaterialDescPtr & material);
-	
-    virtual void setNumCellsE(int fieldDir, int numCells);
-    
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
-        const CalculationPartition & cp) const;
-    
-    friend class DrudeModel1;
-private:
-    MaterialDescPtr mDesc;
-	MemoryBufferPtr mCurrents[3];
-};
-
-
-class DrudeModel1 : public Material
-{
-public:
-    DrudeModel1(const SetupDrudeModel1 & deleg,
+    DrudeModel1(
         const MaterialDescription & descrip,
+        std::vector<int> numCellsE, std::vector<int> numCellsH,
         Vector3f dxyz, float dt);
+    
+    virtual std::string getModelName() const;
     
     virtual void allocateAuxBuffers();
     virtual void calcEPhase(int phasePart = 0);
@@ -64,8 +51,6 @@ private:
     
     std::vector<float> mCurrents[3];
     MemoryBufferPtr mCurrentBuffers[3];
-    std::vector<SimpleAuxRunline> mRunlinesE[3];
-    std::vector<SimpleAuxRunline> mRunlinesH[3];
 };
 
 

@@ -10,6 +10,7 @@
 #ifndef _CALCULATIONPARTITION_
 #define _CALCULATIONPARTITION_
 
+#include "Performance.h"
 #include "SimpleSetupMaterial.h"
 #include "Pointer.h"
 #include "Map.h"
@@ -38,6 +39,9 @@ public:
     
     InterleavedLatticePtr getLattice() const { return mLattice; }
     
+    // used by PartitionStatistics
+    const std::vector<MaterialPtr> getMaterials() const { return mMaterials; }
+    
     // instruct all materials and outputs to allocate space for extra fields
     // and accumulation variables (e.g. for output interpolation, currents...)
     void allocateAuxBuffers();
@@ -58,9 +62,18 @@ public:
     void sourceH(int timestep);
     void outputH(int timestep);
     
+    void timedUpdateE(int timestep);
+    void timedSourceE(int timestep);
+    void timedOutputE(int timestep);
+    void timedUpdateH(int timestep);
+    void timedSourceH(int timestep);
+    void timedOutputH(int timestep);
+    
     void printFields(std::ostream & str, int octant, float scale);
+    void printPerformanceForMatlab(std::ostream & str, std::string prefix);
     
 private:
+    //std::string mGridName;
     Vector3f m_dxyz;
     float m_dt;
     long m_numT;
@@ -70,6 +83,8 @@ private:
     std::vector<SourcePtr> mHardSources;
     std::vector<SourcePtr> mSoftSources;
     std::vector<HuygensSurfacePtr> mHuygensSurfaces;
+    
+    PartitionStatistics mStatistics;
     
     InterleavedLatticePtr mLattice;
 };

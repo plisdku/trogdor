@@ -16,25 +16,18 @@
 
 using namespace std;
 
-SetupPerfectConductor::
-SetupPerfectConductor() :
-	SimpleBulkSetupMaterial()
-{
-    
-}
-
-
-MaterialPtr SetupPerfectConductor::
-makeCalcMaterial(const VoxelizedPartition & vp,
-    const CalculationPartition & cp) const
-{
-    return MaterialPtr(new PerfectConductor);
-}
-
-
 PerfectConductor::
-PerfectConductor()
+PerfectConductor(
+    const MaterialDescription & descrip,
+    std::vector<int> numCellsE, std::vector<int> numCellsH,
+    Vector3f dxyz, float dt)
 {
+}
+
+string PerfectConductor::
+getModelName() const
+{
+    return string("PerfectConductor");
 }
 
 void PerfectConductor::

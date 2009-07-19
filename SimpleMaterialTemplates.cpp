@@ -137,6 +137,47 @@ setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
         mRunlinesH[direction][nn] = RunlineClass(*rls[nn]);
 }
 
+template<class RunlineClass>
+long SimpleMaterial<RunlineClass>::
+getNumRunlinesE() const
+{
+    long total = 0;
+    for (int direction = 0; direction < 3; direction++)
+        total += mRunlinesE[direction].size();
+    return total;
+}
+
+template<class RunlineClass>
+long SimpleMaterial<RunlineClass>::
+getNumRunlinesH() const
+{
+    long total = 0;
+    for (int direction = 0; direction < 3; direction++)
+        total += mRunlinesH[direction].size();
+    return total;
+}
+
+template<class RunlineClass>
+long SimpleMaterial<RunlineClass>::
+getNumHalfCellsE() const
+{
+    long total = 0;
+    for (int direction = 0; direction < 3; direction++)
+    for (int nn = 0; nn < mRunlinesE[direction].size(); nn++)
+        total += mRunlinesE[direction][nn].length;
+    return total;
+}
+
+template<class RunlineClass>
+long SimpleMaterial<RunlineClass>::
+getNumHalfCellsH() const
+{
+    long total = 0;
+    for (int direction = 0; direction < 3; direction++)
+    for (int nn = 0; nn < mRunlinesH[direction].size(); nn++)
+        total += mRunlinesH[direction][nn].length;
+    return total;
+}
 
 #pragma mark *** SimplePML ***
 

@@ -75,6 +75,8 @@ PartitionCellCount.h
 PartitionCellCount.cpp
 PerfectConductor.h
 PerfectConductor.cpp
+Performance.h
+Performance.cpp
 PhysicalConstants.h
 PhysicalConstants.cpp
 PML.h
