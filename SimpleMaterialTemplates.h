@@ -27,7 +27,7 @@ public:
     
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
-
+    
 private:
     Paint* mParentPaint;
     std::vector<int> mNumCellsE;
@@ -89,7 +89,7 @@ public:
     virtual long getNumRunlinesH() const;
     virtual long getNumHalfCellsE() const;
     virtual long getNumHalfCellsH() const;
-private:
+protected:
     std::vector<RunlineClass> mRunlinesE[3];
     std::vector<RunlineClass> mRunlinesH[3];
 };
@@ -98,8 +98,8 @@ private:
 // this may be templatized by runline type as well.
 // TEMPLATE REQUIREMENTS:
 //  NonPMLMaterial must inherit or look like SimpleMaterial
-template<class NonPMLMaterial, class PMLFactory>
-class SimplePML : public NonPMLMaterial
+template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
+class SimplePML : public SimpleMaterial<RunlineT>
 {
 public:
     SimplePML(Paint* parentPaint, std::vector<int> numCellsE,
@@ -111,14 +111,19 @@ public:
     virtual void calcHPhase(int direction);
     virtual void allocateAuxBuffers();
     
-    // we use these to feed the extra pointers to the PML
-    virtual void setRunlinesE(int direction,
-        const std::vector<SBPMRunlinePtr> & rls);
-    virtual void setRunlinesH(int direction,
-        const std::vector<SBPMRunlinePtr> & rls);
+    void calcEx();
+    void calcEy();
+    void calcEz();
+    void calcHx();
+    void calcHy();
+    void calcHz();
     
 private:
-    Pointer<PML> mPML;
+    Vector3f mDxyz;
+    float mDt;
+    MaterialT mMaterial;
+    PMLT mPML;
+    CurrentT mCurrent;
 };
 
 

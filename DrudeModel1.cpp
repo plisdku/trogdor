@@ -19,6 +19,7 @@
 using namespace YeeUtilities;
 using namespace std;
 
+/*
 DrudeModel1::
 DrudeModel1(
     const MaterialDescription & descrip,
@@ -97,10 +98,6 @@ calcEPhase(int direction)
         //LOGMORE << rl << "\n";
         for (int mm = 0; mm < len; mm++)
         {
-            /*
-            *fi = *fi + (mDt/Constants::eps0/m_epsrinf)*
-                ( (*gkHigh-*gkLow)/dj - (*gjHigh - *gjLow)/dk );
-            */
             *fi = *fi + ce1*(*gkHigh-*gkLow)/dj - ce1*(*gjHigh-*gjLow)/dk
                 - *Ji * ce2;
             
@@ -154,7 +151,7 @@ calcHPhase(int direction)
     }
 }
 
-
+*/
 
 
 

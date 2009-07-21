@@ -170,5 +170,26 @@ calcHPhase(int direction)
 }
 
 
+StaticDielectricUpdate::
+StaticDielectricUpdate(
+    const MaterialDescription & descrip,
+    std::vector<int> numCellsE, std::vector<int> numCellsH,
+    Vector3f dxyz, float dt) :
+    mDxyz(dxyz),
+    mDt(dt),
+    m_epsr(1.0),
+    m_mur(1.0)
+{
+    if (descrip.getParams().count("epsr"))
+        istringstream(descrip.getParams()["epsr"]) >> m_epsr;
+    if (descrip.getParams().count("mur"))
+        istringstream(descrip.getParams()["mur"]) >> m_mur;
+}
+
+string StaticDielectricUpdate::
+getModelName() const
+{
+    return "StaticDielectric";
+}
 
 

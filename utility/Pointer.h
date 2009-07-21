@@ -198,6 +198,7 @@ T& Pointer<T>::operator*()
 {
     if (mPtr == 0L)
     {
+        assert(!"Can't dereference a NULL pointer!\n");
         std::cerr << "Can't dereference a NULL pointer!\n";
         std::exit(1);
     }
@@ -210,9 +211,8 @@ T* Pointer<T>::operator->()
     if (mPtr == 0L)
     {
         assert(!"Can't dereference a NULL pointer!\n");
-        /*
         std::cerr << "Can't dereference a NULL pointer!\n";
-        std::exit(1);*/
+        std::exit(1);
     }
     return (mPtr);
 }
@@ -223,9 +223,8 @@ const T& Pointer<T>::operator*() const
     if (mPtr == 0L)
     {
         assert(!"Can't dereference a NULL pointer!\n");
-        /*
         std::cerr << "Can't dereference a NULL pointer!\n";
-        std::exit(1);*/
+        std::exit(1);
     }
     return (*mPtr);
 }
@@ -243,9 +242,8 @@ const T* Pointer<T>::operator->() const
     if (mPtr == 0L)
     {
         assert(!"Can't dereference a NULL pointer!\n");
-        /*
         std::cerr << "Can't dereference a NULL pointer!\n";
-        std::exit(1);*/
+        std::exit(1);
     }
     return (mPtr);
 }

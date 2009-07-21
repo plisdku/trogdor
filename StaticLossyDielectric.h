@@ -13,7 +13,7 @@
 #include "SimulationDescription.h"
 #include "SimpleSetupMaterial.h"
 #include "SimpleMaterialTemplates.h"
-
+/*
 class StaticLossyDielectric : public SimpleMaterial<SimpleRunline>
 {
 public:
@@ -30,5 +30,6 @@ private:
     float m_mur;
     float m_sigma;
 };
+*/
 
 #endif

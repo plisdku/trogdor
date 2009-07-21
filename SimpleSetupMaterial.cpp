@@ -395,54 +395,6 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
 }
 */
 
-SimpleRunline::
-SimpleRunline(const SBMRunline & setupRunline) :
-    fi(setupRunline.f_i.getPointer()),
-    length(setupRunline.length)
-{
-    gj[0] = setupRunline.f_j[0].getPointer();
-    gj[1] = setupRunline.f_j[1].getPointer();
-    gk[0] = setupRunline.f_k[0].getPointer();
-    gk[1] = setupRunline.f_k[1].getPointer();
-}
-
-SimpleRunline::
-SimpleRunline(const SBPMRunline & setupRunline) :
-    fi(setupRunline.f_i.getPointer()),
-    length(setupRunline.length)
-{
-    gj[0] = setupRunline.f_j[0].getPointer();
-    gj[1] = setupRunline.f_j[1].getPointer();
-    gk[0] = setupRunline.f_k[0].getPointer();
-    gk[1] = setupRunline.f_k[1].getPointer();
-}
-
-
-SimpleAuxRunline::
-SimpleAuxRunline(const SBMRunline & setupRunline) :
-    fi(setupRunline.f_i.getPointer()),
-    length(setupRunline.length)
-{
-    gj[0] = setupRunline.f_j[0].getPointer();
-    gj[1] = setupRunline.f_j[1].getPointer();
-    gk[0] = setupRunline.f_k[0].getPointer();
-    gk[1] = setupRunline.f_k[1].getPointer();
-    auxIndex = setupRunline.auxIndex;
-}
-
-SimpleAuxRunline::
-SimpleAuxRunline(const SBPMRunline & setupRunline) :
-    fi(setupRunline.f_i.getPointer()),
-    length(setupRunline.length)
-{
-    gj[0] = setupRunline.f_j[0].getPointer();
-    gj[1] = setupRunline.f_j[1].getPointer();
-    gk[0] = setupRunline.f_k[0].getPointer();
-    gk[1] = setupRunline.f_k[1].getPointer();
-    auxIndex = setupRunline.auxIndex;
-}
-
-
 ostream &
 operator<<(std::ostream & str, const SimpleRunline & rl)
 {

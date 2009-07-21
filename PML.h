@@ -12,6 +12,7 @@
 
 #include <vector>
 #include "SimpleSetupMaterial.h"
+#include "Runline.h"
 #include <iostream>
 
 using namespace std;
@@ -27,7 +28,7 @@ public:
         float dt);
 };
 */
-
+/*
 struct PMLRunline
 {
     PMLRunline() {}
@@ -40,6 +41,7 @@ struct PMLRunline
     unsigned long auxIndex;
     unsigned long pmlIndex[3];
 };
+*/
 
 
 class PML

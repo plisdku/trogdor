@@ -15,7 +15,7 @@
 #include <sstream>
 
 using namespace std;
-
+/*
 StaticLossyDielectric::
 StaticLossyDielectric(
         const MaterialDescription & descrip,
@@ -32,30 +32,7 @@ StaticLossyDielectric(
         istringstream(descrip.getParams()["mur"]) >> m_mur;
     if (descrip.getParams().count("sigma"))
         istringstream(descrip.getParams()["sigma"]) >> m_sigma;
-    /*
-    int dir;
-    for (dir = 0; dir < 6; dir++)
-    {
-        const std::vector<SBMRunlinePtr> & setupRunlines =
-            deleg.getRunlinesE(dir);
         
-        mRunlinesE[dir].resize(setupRunlines.size());
-        
-        for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
-            mRunlinesE[dir][nn] = SimpleRunline(*setupRunlines[nn]);
-    }
-
-    for (dir = 0; dir < 6; dir++)
-    {
-        const std::vector<SBMRunlinePtr> & setupRunlines =
-            deleg.getRunlinesH(dir);
-        
-        mRunlinesH[dir].resize(setupRunlines.size());
-        
-        for (unsigned int nn = 0; nn < setupRunlines.size(); nn++)
-            mRunlinesH[dir][nn] = SimpleRunline(*setupRunlines[nn]);
-    }
-    */
     //LOG << "Created all runlines.\n";
 }
 
@@ -76,3 +53,4 @@ calcHPhase(int direction)
 {
     //LOG << "Calculating H.\n";
 }
+*/

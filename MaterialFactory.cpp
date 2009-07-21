@@ -84,18 +84,25 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	{
         if (0 == parentPaint->isPML())
         {
+            
             matDel = SetupMaterialPtr(
                 new SimpleSetupMaterial<StaticDielectric>(
                     parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
                     gridDesc.getDt()));
+            
         }
         else
         {
             matDel = SetupMaterialPtr(
+                new SimpleSetupMaterial<StaticDielectric>(
+                    parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
+                    gridDesc.getDt()));
+            /*
+            matDel = SetupMaterialPtr(
                 new SimpleSetupPML<StaticDielectric,  CFSRIPMLFactory>(
                     parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
                     gridDesc.getDxyz(), gridDesc.getDt()));
-            
+            */
         }
 	}
     else

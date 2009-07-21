@@ -14,6 +14,7 @@
 #include "Pointer.h"
 #include "geometry.h"
 #include "MemoryUtilities.h"
+#include "Runline.h"
 #include <vector>
 
 class Paint;
@@ -28,15 +29,6 @@ typedef Pointer<SetupMaterial> SetupMaterialPtr;
 
 class GridDescription;
 
-struct SBMRunline
-{
-    long length;
-    long auxIndex;
-    BufferPointer f_i;
-    BufferPointer f_j[2];
-    BufferPointer f_k[2];
-};
-typedef Pointer<SBMRunline> SBMRunlinePtr;
 
 class SimpleBulkSetupMaterial : public SetupMaterial
 {
@@ -75,17 +67,6 @@ protected:
 	bool mUsedNeighborIndices[6];
 };
 
-struct SBPMRunline
-{
-    long length;
-    long auxIndex;
-    Vector3i pmlDepthIndex;
-    BufferPointer f_i;
-    BufferPointer f_j[2];
-    BufferPointer f_k[2];
-};
-typedef Pointer<SBPMRunline> SBPMRunlinePtr;
-
 class SimpleBulkPMLSetupMaterial : public SetupMaterial
 {
 public:
@@ -121,18 +102,8 @@ protected:
 	Rect3i mPMLRect;
 };
 
-struct SimpleRunline
-{
-    SimpleRunline() {}
-    SimpleRunline(const SBMRunline & setupRunline);
-    SimpleRunline(const SBPMRunline & setupRunline);
-    
-    float* fi;
-    float* gj[2];
-    float* gk[2];
-    unsigned long length;
-};
 
+/*
 struct SimpleAuxRunline
 {
     SimpleAuxRunline() {}
@@ -145,6 +116,7 @@ struct SimpleAuxRunline
     unsigned long length;
     unsigned long auxIndex;
 };
+*/
 
 std::ostream & operator<<(std::ostream & str, const SimpleRunline & rl);
 std::ostream & operator<<(std::ostream & str, const SimpleAuxRunline & rl);

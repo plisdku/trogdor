@@ -35,5 +35,43 @@ private:
     float m_mur;
 };
 
+class StaticDielectricUpdate
+{
+public:
+    StaticDielectricUpdate(
+        const MaterialDescription & descrip,
+        std::vector<int> numCellsE, std::vector<int> numCellsH,
+        Vector3f dxyz, float dt);
+    
+    std::string getModelName() const;
+    
+    struct LocalData
+    {
+    };
+    
+    // Note that these are inline functions!
+    void onStartRunline(LocalData & data, const SimpleRunline & rl)
+    {
+        // dielectric: do nothing.
+    }
+        
+    float dDdt(LocalData & data, float Ei, float dHj, float dHk, float Ji)
+    {
+        return dHk - dHj - Ji;
+    }
+    
+    float dBdt(LocalData & data, float Hi, float dEj, float dEk, float Ki)
+    {
+        return -dEk + dEj - Ki;
+    }
+
+private:
+    Vector3f mDxyz;
+    float mDt;
+    
+    float m_epsr;
+    float m_mur;
+};
+
 
 #endif

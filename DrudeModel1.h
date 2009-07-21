@@ -26,6 +26,7 @@
         |A| = \left( 5 \right)
     \f]
 */
+/*
 class DrudeModel1 : public SimpleMaterial<SimpleAuxRunline>
 {
 public:
@@ -52,7 +53,7 @@ private:
     std::vector<float> mCurrents[3];
     MemoryBufferPtr mCurrentBuffers[3];
 };
-
+*/
 
 
 #endif
