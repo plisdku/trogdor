@@ -18,6 +18,8 @@ class VoxelizedPartition;
 class CalculationPartition;
 class Paint;
 
+// Inheritance from SimpleBulkSetupMaterial provides the runline rules and
+// the storage of setup runlines.
 template<class MaterialClass>
 class SimpleSetupMaterial : public SimpleBulkSetupMaterial
 {

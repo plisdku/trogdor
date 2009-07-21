@@ -10,6 +10,10 @@
 #ifndef _RUNLINE_
 #define _RUNLINE_
 
+#include "MemoryUtilities.h"
+#include "geometry.h"
+#include <iostream>
+
 #pragma mark *** Setup Runlines ***
 
 struct SBMRunline
@@ -30,7 +34,6 @@ typedef Pointer<SBPMRunline> SBPMRunlinePtr;
 
 #pragma mark *** Runlines ***
 
-
 struct SimpleRunline
 {
     SimpleRunline() {}
@@ -45,7 +48,7 @@ struct SimpleRunline
 struct SimpleAuxRunline : public SimpleRunline
 {
     SimpleAuxRunline() : SimpleRunline() {}
-    SimpleRunline(const SBMRunline & setupRunline);
+    SimpleAuxRunline(const SBMRunline & setupRunline);
     unsigned long auxIndex;
 };
 
@@ -53,16 +56,20 @@ struct SimpleAuxRunline : public SimpleRunline
 struct PMLRunline
 {
     PMLRunline() {}
-    SimpleRunline(const SBPMRunline & setupRunline);
+    PMLRunline(const SBPMRunline & setupRunline);
     
     unsigned long pmlIndex[3];
 };
 
-struct SimpleAuxPMLRunline : public SimpleRunline, public PMLRunline
+struct SimpleAuxPMLRunline : public SimpleAuxRunline, public PMLRunline
 {
-    SimpleAuxPMLRunline() : SimpleRunline(), PMLRunline() {}
-    SimpleRunline(const SBPMRunline & setupRunline);
+    SimpleAuxPMLRunline() : SimpleAuxRunline(), PMLRunline() {}
+    SimpleAuxPMLRunline(const SBPMRunline & setupRunline);
 };
+
+std::ostream & operator<<(std::ostream & str, const SimpleRunline & rl);
+std::ostream & operator<<(std::ostream & str, const SimpleAuxRunline & rl);
+std::ostream & operator<<(std::ostream & str, const SimpleAuxPMLRunline & rl);
 
 
 #endif

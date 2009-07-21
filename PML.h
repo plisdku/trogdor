@@ -28,21 +28,6 @@ public:
         float dt);
 };
 */
-/*
-struct PMLRunline
-{
-    PMLRunline() {}
-    PMLRunline(const SBPMRunline & setupRunline);
-    
-    float* fi;
-    float* gj[2];
-    float* gk[2];
-    unsigned long length;
-    unsigned long auxIndex;
-    unsigned long pmlIndex[3];
-};
-*/
-
 
 class PML
 {
@@ -64,8 +49,6 @@ protected:
     std::vector<PMLRunline> mRunlinesE[3];
     std::vector<PMLRunline> mRunlinesH[3];
 };
-
-std::ostream & operator<<(std::ostream & str, const PMLRunline & rl);
 
 #endif
 

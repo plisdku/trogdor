@@ -46,9 +46,6 @@ public:
 	
 	virtual void printRunlines(std::ostream & out) const;
 	
-//    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
-//        const CalculationPartition & cp) const;
-    
     const std::vector<SBMRunlinePtr> & getRunlinesE(int dir) const
         { return mRunlinesE[dir]; }
     const std::vector<SBMRunlinePtr> & getRunlinesH(int dir) const
@@ -103,23 +100,6 @@ protected:
 };
 
 
-/*
-struct SimpleAuxRunline
-{
-    SimpleAuxRunline() {}
-    SimpleAuxRunline(const SBMRunline & setupRunline);
-    SimpleAuxRunline(const SBPMRunline & setupRunline);
-    
-    float* fi;
-    float* gj[2];
-    float* gk[2];
-    unsigned long length;
-    unsigned long auxIndex;
-};
-*/
-
-std::ostream & operator<<(std::ostream & str, const SimpleRunline & rl);
-std::ostream & operator<<(std::ostream & str, const SimpleAuxRunline & rl);
 
 
 

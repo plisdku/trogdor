@@ -9,6 +9,7 @@
 
 #include "Runline.h"
 
+using namespace std;
 
 SimpleRunline::
 SimpleRunline(const SBMRunline & setupRunline) :
@@ -21,64 +22,70 @@ SimpleRunline(const SBMRunline & setupRunline) :
     gk[1] = setupRunline.f_k[1].getPointer();
 }
 
-/*
-SimpleRunline::
-SimpleRunline(const SBPMRunline & setupRunline) :
-    fi(setupRunline.f_i.getPointer()),
-    length(setupRunline.length)
-{
-    gj[0] = setupRunline.f_j[0].getPointer();
-    gj[1] = setupRunline.f_j[1].getPointer();
-    gk[0] = setupRunline.f_k[0].getPointer();
-    gk[1] = setupRunline.f_k[1].getPointer();
-}
-*/
-
 SimpleAuxRunline::
 SimpleAuxRunline(const SBMRunline & setupRunline) :
-    fi(setupRunline.f_i.getPointer()),
-    length(setupRunline.length)
+    SimpleRunline(setupRunline),
+    auxIndex(setupRunline.auxIndex)
 {
-    gj[0] = setupRunline.f_j[0].getPointer();
-    gj[1] = setupRunline.f_j[1].getPointer();
-    gk[0] = setupRunline.f_k[0].getPointer();
-    gk[1] = setupRunline.f_k[1].getPointer();
-    auxIndex = setupRunline.auxIndex;
 }
-
-/*
-SimpleAuxRunline::
-SimpleAuxRunline(const SBPMRunline & setupRunline) :
-    fi(setupRunline.f_i.getPointer()),
-    length(setupRunline.length)
-{
-    gj[0] = setupRunline.f_j[0].getPointer();
-    gj[1] = setupRunline.f_j[1].getPointer();
-    gk[0] = setupRunline.f_k[0].getPointer();
-    gk[1] = setupRunline.f_k[1].getPointer();
-    auxIndex = setupRunline.auxIndex;
-}
-*/
 
 PMLRunline::
-PMLRunline(const SBPMRunline & setupRunline) :
-    fi(setupRunline.f_i.getPointer()),
-    length(setupRunline.length)
+PMLRunline(const SBPMRunline & setupRunline)
 {
-    gj[0] = setupRunline.f_j[0].getPointer();
-    gj[1] = setupRunline.f_j[1].getPointer();
-    gk[0] = setupRunline.f_k[0].getPointer();
-    gk[1] = setupRunline.f_k[1].getPointer();
-    auxIndex = setupRunline.auxIndex;
-    
     for (int nn = 0; nn < 3; nn++)
         pmlIndex[nn] = setupRunline.pmlDepthIndex[nn];
 }
 
 SimpleAuxPMLRunline::
 SimpleAuxPMLRunline(const SBPMRunline & setupRunline) :
-    SimpleRunline(setupRunline),
+    SimpleAuxRunline(setupRunline),
     PMLRunline(setupRunline)
 {
 }
+
+#pragma mark *** Output ***
+
+
+ostream &
+operator<<(std::ostream & str, const SimpleRunline & rl)
+{
+    /*
+    str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
+        << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.length;
+    */
+    
+    str << hex << rl.fi << dec << ": " << MemoryBuffer::identify(rl.fi) << "\n";
+    str << hex << rl.gj[0] << dec << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
+    str << hex << rl.gj[1] << dec << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
+    str << hex << rl.gk[0] << dec << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
+    str << hex << rl.gk[1] << dec << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
+    return str;
+}
+
+
+ostream &
+operator<<(std::ostream & str, const SimpleAuxRunline & rl)
+{
+    str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
+        << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.auxIndex
+        << " " << rl.length;
+    return str;
+}
+
+
+ostream &
+operator<<(std::ostream & str, const SimpleAuxPMLRunline & rl)
+{
+    str << "l = " << rl.length << "\n";
+    str << hex << rl.fi << dec << ": " << MemoryBuffer::identify(rl.fi) << "\n";
+    str << hex << rl.gj[0] << dec << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
+    str << hex << rl.gj[1] << dec << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
+    str << hex << rl.gk[0] << dec << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
+    str << hex << rl.gk[1] << dec << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
+    str << rl.auxIndex << ", PML " << rl.pmlIndex[0] << " " << rl.pmlIndex[1]
+        << " " << rl.pmlIndex[2] << "\n";
+    return str;
+}
+
+
 

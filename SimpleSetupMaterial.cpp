@@ -395,32 +395,6 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
 }
 */
 
-ostream &
-operator<<(std::ostream & str, const SimpleRunline & rl)
-{
-    /*
-    str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
-        << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.length;
-    */
-    
-    str << hex << rl.fi << dec << ": " << MemoryBuffer::identify(rl.fi) << "\n";
-    str << hex << rl.gj[0] << dec << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
-    str << hex << rl.gj[1] << dec << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
-    str << hex << rl.gk[0] << dec << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
-    str << hex << rl.gk[1] << dec << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
-    return str;
-}
-
-
-ostream &
-operator<<(std::ostream & str, const SimpleAuxRunline & rl)
-{
-    str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
-        << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.auxIndex
-        << " " << rl.length;
-    return str;
-}
-
 
 
 
