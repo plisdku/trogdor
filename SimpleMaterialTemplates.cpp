@@ -16,6 +16,9 @@
 #include "Pointer.h"
 #include "PhysicalConstants.h"
 
+#include "NullPML.h"
+#include "NullCurrent.h"
+
 #pragma mark *** SimpleSetupMaterial ***
 
 template<class MaterialClass>
@@ -36,6 +39,7 @@ MaterialPtr SimpleSetupMaterial<MaterialClass>::
 makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
+    /*
     MaterialClass* m(new MaterialClass(
         *mParentPaint->getBulkMaterial(),
         mNumCellsE,
@@ -48,25 +52,20 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
         m->setRunlinesE(nn, getRunlinesE(nn));
         m->setRunlinesH(nn, getRunlinesH(nn));
     }
-    
-    /*
-        Material* h = new MaterialHarness<MaterialClass, NullPML, NullCurrent>(
-            *mParentPaint->getBulkMaterial(),
-            mNumCellsE,
-            mNumCellsH,
-            mDxyz,
-            mDt);
-        
-        for (int nn = 0; nn < 3; nn++)
-        {
-            m->setRunlinesE(nn, getRunlinesE(nn));
-            m->setRunlinesH(nn, getRunlinesH(nn));
-        }
-        
-        return MaterialPtr(m);
-        
     */
     
+    Material* h = new UpdateHarness<MaterialClass, NullPML, NullCurrent>(
+        *mParentPaint->getBulkMaterial(),
+        mNumCellsE,
+        mNumCellsH,
+        mDxyz,
+        mDt);
+    
+    for (int nn = 0; nn < 3; nn++)
+    {
+        m->setRunlinesE(nn, getRunlinesE(nn));
+        m->setRunlinesH(nn, getRunlinesH(nn));
+    }
     
     return MaterialPtr(m);
 }
@@ -113,19 +112,34 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     }
     return MaterialPtr(m);
     */
+    
+    Material* h = new UpdateHarness<MaterialClass, NullPML, NullCurrent>(
+        *mParentPaint->getBulkMaterial(),
+        mNumCellsE,
+        mNumCellsH,
+        mDxyz,
+        mDt);
+    
+    for (int nn = 0; nn < 3; nn++)
+    {
+        m->setRunlinesE(nn, getRunlinesE(nn));
+        m->setRunlinesH(nn, getRunlinesH(nn));
+    }
+    
+    return MaterialPtr(m);
 }
 
 
-#pragma mark *** SimpleMaterial ***
+#pragma mark *** WithRunline ***
 
 template<class RunlineClass>
-SimpleMaterial<RunlineClass>::
-SimpleMaterial()
+WithRunline<RunlineClass>::
+WithRunline()
 {
 }
 
 template<class RunlineClass>
-void SimpleMaterial<RunlineClass>::
+void WithRunline<RunlineClass>::
 setRunlinesE(int direction, const std::vector<SBMRunlinePtr> & rls)
 {
     mRunlinesE[direction].resize(rls.size());
@@ -134,7 +148,7 @@ setRunlinesE(int direction, const std::vector<SBMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void SimpleMaterial<RunlineClass>::
+void WithRunline<RunlineClass>::
 setRunlinesH(int direction, const std::vector<SBMRunlinePtr> & rls)
 {
     mRunlinesH[direction].resize(rls.size());
@@ -143,7 +157,7 @@ setRunlinesH(int direction, const std::vector<SBMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void SimpleMaterial<RunlineClass>::
+void WithRunline<RunlineClass>::
 setRunlinesE(int direction, const std::vector<SBPMRunlinePtr> & rls)
 {
     mRunlinesE[direction].resize(rls.size());
@@ -152,7 +166,7 @@ setRunlinesE(int direction, const std::vector<SBPMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void SimpleMaterial<RunlineClass>::
+void WithRunline<RunlineClass>::
 setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
 {
     mRunlinesH[direction].resize(rls.size());
@@ -161,7 +175,7 @@ setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-long SimpleMaterial<RunlineClass>::
+long WithRunline<RunlineClass>::
 getNumRunlinesE() const
 {
     long total = 0;
@@ -171,7 +185,7 @@ getNumRunlinesE() const
 }
 
 template<class RunlineClass>
-long SimpleMaterial<RunlineClass>::
+long WithRunline<RunlineClass>::
 getNumRunlinesH() const
 {
     long total = 0;
@@ -181,7 +195,7 @@ getNumRunlinesH() const
 }
 
 template<class RunlineClass>
-long SimpleMaterial<RunlineClass>::
+long WithRunline<RunlineClass>::
 getNumHalfCellsE() const
 {
     long total = 0;
@@ -192,7 +206,7 @@ getNumHalfCellsE() const
 }
 
 template<class RunlineClass>
-long SimpleMaterial<RunlineClass>::
+long WithRunline<RunlineClass>::
 getNumHalfCellsH() const
 {
     long total = 0;
@@ -205,12 +219,12 @@ getNumHalfCellsH() const
 #pragma mark *** SimplePML ***
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-SimplePML<MaterialT, RunlineT, PMLT, CurrentT>::
-SimplePML(Paint* parentPaint, std::vector<int> numCellsE,
+UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
+UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt) :
-    SimpleMaterial<RunlineT>(),
+    WithRunline<RunlineT>(),
     mMaterial(*parentPaint->getBulkMaterial(), numCellsE, numCellsH, dxyz, dt),
     mPML(parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams, dxyz, dt),
     mCurrent(),
@@ -220,7 +234,7 @@ SimplePML(Paint* parentPaint, std::vector<int> numCellsE,
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void SimplePML<MaterialT, RunlineT, PMLT, CurrentT>::
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcEPhase(int direction)
 {
     if (direction == 0)
@@ -232,7 +246,7 @@ calcEPhase(int direction)
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void SimplePML<MaterialT, RunlineT, PMLT, CurrentT>::
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcHPhase(int direction)
 {
     if (direction == 0)
@@ -244,7 +258,7 @@ calcHPhase(int direction)
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void SimplePML<MaterialT, RunlineT, PMLT, CurrentT>::
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 allocateAuxBuffers()
 {
     mMaterial.allocateAuxBuffers();
@@ -252,7 +266,7 @@ allocateAuxBuffers()
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void SimplePML<MaterialT, RunlineT, PMLT, CurrentT>::
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcEx()
 {
     // grab the right set of runlines (for Ex, Ey, or Ez)
@@ -309,31 +323,31 @@ calcEx()
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void SimplePML<MaterialT, RunlineT, PMLT, CurrentT>::
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcEy()
 {
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void SimplePML<MaterialT, RunlineT, PMLT, CurrentT>::
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcEz()
 {
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void SimplePML<MaterialT, RunlineT, PMLT, CurrentT>::
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcHx()
 {
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void SimplePML<MaterialT, RunlineT, PMLT, CurrentT>::
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcHy()
 {
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void SimplePML<MaterialT, RunlineT, PMLT, CurrentT>::
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcHz()
 {
 }

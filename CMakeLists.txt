@@ -67,6 +67,8 @@ MaterialFactory.h
 MaterialFactory.cpp
 MemoryUtilities.h
 MemoryUtilities.cpp
+NullCurrent.h
+NullPML.h
 OutputBoss.h
 OutputBoss.cpp
 Paint.h

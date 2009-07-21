@@ -12,11 +12,13 @@
 
 #include "SimpleSetupMaterial.h"
 #include "geometry.h"
-#include "PML.h"
+#include "Runline.h"
 
 class VoxelizedPartition;
 class CalculationPartition;
 class Paint;
+
+#pragma mark *** Templates for the setup step ***
 
 // Inheritance from SimpleBulkSetupMaterial provides the runline rules and
 // the storage of setup runlines.
@@ -27,6 +29,8 @@ public:
     SimpleSetupMaterial(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, Vector3f dxyz, float dt);
     
+    // This returns a material harness with a null PML, a null current and
+    // the specified MaterialClass for the update equation.
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
     
@@ -40,7 +44,7 @@ private:
 
 // Inheritance from SimpleBulkPMLSetupMaterial provides the runline rules and
 // the storage of setup runlines.
-template<class MaterialClass, class PMLImplementationClass>
+template<class MaterialClass, class PMLFactory>
 class SimpleSetupPML : public SimpleBulkPMLSetupMaterial
 {
 public:
@@ -49,6 +53,8 @@ public:
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt);
     
+    // This returns a material harness with the given PML, no current,
+    // and the given MaterialClass for the update equation.
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
 private:
@@ -61,14 +67,17 @@ private:
     float mDt;
 };
 
+#pragma mark *** Calculation harness ***
+
+
 // TEMPLATE REQUIREMENTS:
 //  Material must have constructor with appropriate arguments (TBD?)
 //  RunlineClass needs to have constructor for given runline type
 template<class RunlineClass>
-class SimpleMaterial : public Material
+class WithRunline : public Material
 {
 public:
-    SimpleMaterial();
+    WithRunline();
     //  Because templated virtual functions are not allowed in C++, I have to
     // overload the setRunlines functions manually.  What a pain!
     
@@ -101,10 +110,10 @@ protected:
 // TEMPLATE REQUIREMENTS:
 //  NonPMLMaterial must inherit or look like SimpleMaterial
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-class SimplePML : public SimpleMaterial<RunlineT>
+class UpdateHarness : public WithRunline<RunlineT>
 {
 public:
-    SimplePML(Paint* parentPaint, std::vector<int> numCellsE,
+    UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt);
@@ -132,8 +141,5 @@ private:
 
 
 #include "SimpleMaterialTemplates.cpp"
-
-
-
 
 #endif
