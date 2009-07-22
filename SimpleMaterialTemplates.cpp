@@ -19,10 +19,12 @@
 #include "NullPML.h"
 #include "NullCurrent.h"
 
+#include <cmath>
+
 #pragma mark *** SimpleSetupMaterial ***
 
-template<class MaterialClass>
-SimpleSetupMaterial<MaterialClass>::
+template<class MaterialClass, class RunlineT>
+SimpleSetupMaterial<MaterialClass, RunlineT>::
 SimpleSetupMaterial(Paint* parentPaint, std::vector<int> numCellsE,
     std::vector<int> numCellsH, Vector3f dxyz, float dt) :
     mParentPaint(parentPaint),
@@ -34,28 +36,14 @@ SimpleSetupMaterial(Paint* parentPaint, std::vector<int> numCellsE,
     assert(mParentPaint != 0L);
 }
 
-template<class MaterialClass>
-MaterialPtr SimpleSetupMaterial<MaterialClass>::
+template<class MaterialClass, class RunlineT>
+MaterialPtr SimpleSetupMaterial<MaterialClass, RunlineT>::
 makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
-{
-    /*
-    MaterialClass* m(new MaterialClass(
-        *mParentPaint->getBulkMaterial(),
-        mNumCellsE,
-        mNumCellsH,
-        mDxyz,
-        mDt));
-    
-    for (int nn = 0; nn < 3; nn++)
-    {
-        m->setRunlinesE(nn, getRunlinesE(nn));
-        m->setRunlinesH(nn, getRunlinesH(nn));
-    }
-    */
-    
-    Material* h = new UpdateHarness<MaterialClass, NullPML, NullCurrent>(
-        *mParentPaint->getBulkMaterial(),
+{    
+    WithRunline<RunlineT>* h =
+        new UpdateHarness<MaterialClass, RunlineT, NullPML, NullCurrent>(
+        mParentPaint,
         mNumCellsE,
         mNumCellsH,
         mDxyz,
@@ -63,17 +51,17 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     
     for (int nn = 0; nn < 3; nn++)
     {
-        m->setRunlinesE(nn, getRunlinesE(nn));
-        m->setRunlinesH(nn, getRunlinesH(nn));
+        h->setRunlinesE(nn, getRunlinesE(nn));
+        h->setRunlinesH(nn, getRunlinesH(nn));
     }
     
-    return MaterialPtr(m);
+    return MaterialPtr(h);
 }
 
 #pragma mark *** SimpleSetupPML ***
 
-template<class MaterialClass, class PMLFactory>
-SimpleSetupPML<MaterialClass, PMLFactory>::
+template<class MaterialClass, class RunlineT, class PMLT>
+SimpleSetupPML<MaterialClass, RunlineT, PMLT>::
 SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
@@ -89,44 +77,30 @@ SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
 }
 
 
-template<class MaterialClass, class PMLFactory>
-MaterialPtr SimpleSetupPML<MaterialClass, PMLFactory>::
+template<class MaterialClass, class RunlineT, class PMLT>
+MaterialPtr SimpleSetupPML<MaterialClass, RunlineT, PMLT>::
 makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
-    /*
-    SimplePML<MaterialClass, PMLFactory>* m(
-        new SimplePML<MaterialClass, PMLFactory>(
-            mParentPaint,
-            mNumCellsE,
-            mNumCellsH,
-            mPMLHalfCells,
-            mPMLParams,
-            mDxyz,
-            mDt));
-    
-    for (int nn = 0; nn < 3; nn++)
-    {
-        m->setRunlinesE(nn, getRunlinesE(nn));
-        m->setRunlinesH(nn, getRunlinesH(nn));
-    }
-    return MaterialPtr(m);
-    */
-    
-    Material* h = new UpdateHarness<MaterialClass, NullPML, NullCurrent>(
-        *mParentPaint->getBulkMaterial(),
+    WithRunline<RunlineT>* h =
+        new UpdateHarness<MaterialClass, RunlineT, PMLT, NullCurrent>(
+        mParentPaint,
         mNumCellsE,
         mNumCellsH,
+        mPMLHalfCells,
+        mPMLParams,
         mDxyz,
         mDt);
     
     for (int nn = 0; nn < 3; nn++)
     {
-        m->setRunlinesE(nn, getRunlinesE(nn));
-        m->setRunlinesH(nn, getRunlinesH(nn));
+        h->setRunlinesE(nn, getRunlinesE(nn));
+        h->setRunlinesH(nn, getRunlinesH(nn));
     }
     
-    return MaterialPtr(m);
+    return MaterialPtr(h);
+    
+    //return MaterialPtr(0L);
 }
 
 
@@ -221,6 +195,19 @@ getNumHalfCellsH() const
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
+        std::vector<int> numCellsH, Vector3f dxyz, float dt) :
+    WithRunline<RunlineT>(),
+    mMaterial(*parentPaint->getBulkMaterial(), numCellsE, numCellsH, dxyz, dt),
+    mPML(),
+    mCurrent(),
+    mDxyz(dxyz),
+    mDt(dt)
+{
+}
+
+template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
+UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
+UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt) :
@@ -276,8 +263,16 @@ calcEx()
     float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
     float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
     
+    typename MaterialT::LocalDataE materialData;
+    typename PMLT::LocalDataEx pmlData;
+    typename CurrentT::LocalDataE currentData;
+    
+    mMaterial.initLocalE(materialData);
+    mPML.initLocalEx(pmlData);
+    mCurrent.initLocalE(currentData);
+    
     std::vector<RunlineT> & runlines =
-        SimpleMaterial<RunlineT>::getRunlinesE(DIRECTION);
+        WithRunline<RunlineT>::getRunlinesE(DIRECTION);
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
@@ -287,13 +282,9 @@ calcEx()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        typename MaterialT::LocalData materialData;
-        typename PMLT::LocalData pmlData;
-        //typename CurrentT::LocalData currentData;
-        
-        mMaterial.onStartRunline(materialData, rl);
-        mPML.onStartRunline(pmlData, rl);
-        //mCurrent.onStartRunline(pmlData, rl);
+        mMaterial.onStartRunlineE(materialData, rl);
+        mPML.onStartRunlineEx(pmlData, rl);
+        mCurrent.onStartRunlineE(currentData, rl);
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
@@ -301,17 +292,33 @@ calcEx()
             float dHj = (*gjHigh - *gjLow)/dk;
             float dHk = (*gkHigh - *gkLow)/dj;
             
-            mMaterial.beforeUpdateEx(materialData, *fi, dHj, dHk);
+            mMaterial.beforeUpdateE(materialData, *fi, dHj, dHk);
             mPML.beforeUpdateEx(pmlData, *fi, dHj, dHk);
-            //mCurrent.beforeUpdateEx(currentData, *fi, dHj, dHk);
+            mCurrent.beforeUpdateE(currentData, *fi, dHj, dHk);
             
-            *fi += (mDt/Constants::eps0)*mMaterial.dDxdt(materialData, dHj, dHk,
-                    *fi, mPML.getCurrent(pmlData, dHj, dHk));
-                    //mCurrent.getCurrent(currentData, nn));
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
             
-            mMaterial.afterUpdateEx(materialData, *fi, dHj, dHk);
-            mPML.afterUpdateEx(materialData, *fi, dHj, dHk);
-            //mCurrent.afterUpdateEx(currentData, *fi, dHj, dHk);
+//            LOG << "*** Ex: \n"
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
+                
+            *fi = mMaterial.updateEx(materialData, *fi, dHj, dHk,
+                mPML.updateJx(pmlData, *fi, dHj, dHk) +
+                mCurrent.updateJx(currentData, *fi, dHj, dHk) );
+            
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
+            
+//            LOGMORE
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
+//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
+//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
+//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
+//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
+            
+            mMaterial.afterUpdateE(materialData, *fi, dHj, dHk);
+            mPML.afterUpdateEx(pmlData, *fi, dHj, dHk);
+            mCurrent.afterUpdateE(currentData, *fi, dHj, dHk);
             
             fi += STRIDE;
             gkLow += STRIDE;
@@ -326,30 +333,389 @@ template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcEy()
 {
+    // grab the right set of runlines (for Ex, Ey, or Ez)
+    const int DIRECTION = 1;
+    const int STRIDE = 1;
+    
+    float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
+    float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
+    
+    typename MaterialT::LocalDataE materialData;
+    typename PMLT::LocalDataEy pmlData;
+    typename CurrentT::LocalDataE currentData;
+    
+    mMaterial.initLocalE(materialData);
+    mPML.initLocalEy(pmlData);
+    mCurrent.initLocalE(currentData);
+    
+    std::vector<RunlineT> & runlines =
+        WithRunline<RunlineT>::getRunlinesE(DIRECTION);
+    for (int nRL = 0; nRL < runlines.size(); nRL++)
+    {
+        RunlineT & rl(runlines[nRL]);
+        float* fi(rl.fi);               // e.g. Ex
+        const float* gjLow(rl.gj[0]);   // e.g. Hy(z-1/2)
+        const float* gjHigh(rl.gj[1]);  // e.g. Hy(z+1/2)
+        const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
+        const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
+        
+        mMaterial.onStartRunlineE(materialData, rl);
+        mPML.onStartRunlineEy(pmlData, rl);
+        mCurrent.onStartRunlineE(currentData, rl);
+        
+        const int len(rl.length);
+        for (int mm = 0; mm < len; mm++)
+        {
+            float dHj = (*gjHigh - *gjLow)/dk;
+            float dHk = (*gkHigh - *gkLow)/dj;
+            
+            mMaterial.beforeUpdateE(materialData, *fi, dHj, dHk);
+            mPML.beforeUpdateEy(pmlData, *fi, dHj, dHk);
+            mCurrent.beforeUpdateE(currentData, *fi, dHj, dHk);
+            
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
+            
+//            LOG << "*** Ey: \n"
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
+                
+            *fi = mMaterial.updateEy(materialData, *fi, dHj, dHk,
+                mPML.updateJy(pmlData, *fi, dHj, dHk) +
+                mCurrent.updateJy(currentData, *fi, dHj, dHk) );
+            
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
+            
+//            LOGMORE
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
+//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
+//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
+//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
+//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
+            
+            mMaterial.afterUpdateE(materialData, *fi, dHj, dHk);
+            mPML.afterUpdateEy(pmlData, *fi, dHj, dHk);
+            mCurrent.afterUpdateE(currentData, *fi, dHj, dHk);
+            
+            fi += STRIDE;
+            gkLow += STRIDE;
+            gkHigh += STRIDE;
+            gjLow += STRIDE;
+            gjHigh += STRIDE;
+        }
+    }
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcEz()
 {
+    // grab the right set of runlines (for Ex, Ey, or Ez)
+    const int DIRECTION = 2;
+    const int STRIDE = 1;
+    
+    float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
+    float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
+    
+    typename MaterialT::LocalDataE materialData;
+    typename PMLT::LocalDataEz pmlData;
+    typename CurrentT::LocalDataE currentData;
+    
+    mMaterial.initLocalE(materialData);
+    mPML.initLocalEz(pmlData);
+    mCurrent.initLocalE(currentData);
+    
+    std::vector<RunlineT> & runlines =
+        WithRunline<RunlineT>::getRunlinesE(DIRECTION);
+    for (int nRL = 0; nRL < runlines.size(); nRL++)
+    {
+        RunlineT & rl(runlines[nRL]);
+        float* fi(rl.fi);               // e.g. Ex
+        const float* gjLow(rl.gj[0]);   // e.g. Hy(z-1/2)
+        const float* gjHigh(rl.gj[1]);  // e.g. Hy(z+1/2)
+        const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
+        const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
+        
+        mMaterial.onStartRunlineE(materialData, rl);
+        mPML.onStartRunlineEz(pmlData, rl);
+        mCurrent.onStartRunlineE(currentData, rl);
+        
+        const int len(rl.length);
+        for (int mm = 0; mm < len; mm++)
+        {
+            float dHj = (*gjHigh - *gjLow)/dk;
+            float dHk = (*gkHigh - *gkLow)/dj;
+            
+            mMaterial.beforeUpdateE(materialData, *fi, dHj, dHk);
+            mPML.beforeUpdateEz(pmlData, *fi, dHj, dHk);
+            mCurrent.beforeUpdateE(currentData, *fi, dHj, dHk);
+            
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
+            
+//            LOG << "*** Ez: \n"
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
+                
+            //float Jz = mPML.updateJz(pmlData, *fi, dHj, dHk);
+            *fi = mMaterial.updateEz(materialData, *fi, dHj, dHk,
+                //mPML.updateJz(pmlData, *fi, dHj, dHk) +
+                //Jz + 
+                mPML.updateJz(pmlData, *fi, dHj, dHk) +
+                mCurrent.updateJz(currentData, *fi, dHj, dHk) );
+            
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
+            
+            //LOG << "Jz is " << Jz << "\n";
+//            LOGMORE
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
+//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
+//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
+//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
+//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
+            
+            mMaterial.afterUpdateE(materialData, *fi, dHj, dHk);
+            mPML.afterUpdateEz(pmlData, *fi, dHj, dHk);
+            mCurrent.afterUpdateE(currentData, *fi, dHj, dHk);
+            
+            fi += STRIDE;
+            gkLow += STRIDE;
+            gkHigh += STRIDE;
+            gjLow += STRIDE;
+            gjHigh += STRIDE;
+        }
+    }
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcHx()
 {
+    // grab the right set of runlines (for Ex, Ey, or Ez)
+    const int DIRECTION = 0;
+    const int STRIDE = 1;
+    
+    float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
+    float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
+    
+    typename MaterialT::LocalDataH materialData;
+    typename PMLT::LocalDataHx pmlData;
+    typename CurrentT::LocalDataH currentData;
+    
+    mMaterial.initLocalH(materialData);
+    mPML.initLocalHx(pmlData);
+    mCurrent.initLocalH(currentData);
+    
+    std::vector<RunlineT> & runlines =
+        WithRunline<RunlineT>::getRunlinesH(DIRECTION);
+    for (int nRL = 0; nRL < runlines.size(); nRL++)
+    {
+        RunlineT & rl(runlines[nRL]);
+        float* fi(rl.fi);               // e.g. Ex
+        const float* gjLow(rl.gj[0]);   // e.g. Hy(z-1/2)
+        const float* gjHigh(rl.gj[1]);  // e.g. Hy(z+1/2)
+        const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
+        const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
+        
+        mMaterial.onStartRunlineH(materialData, rl);
+        mPML.onStartRunlineHx(pmlData, rl);
+        mCurrent.onStartRunlineH(currentData, rl);
+        
+        const int len(rl.length);
+        for (int mm = 0; mm < len; mm++)
+        {
+            float dEj = (*gjHigh - *gjLow)/dk;
+            float dEk = (*gkHigh - *gkLow)/dj;
+            
+            mMaterial.beforeUpdateH(materialData, *fi, dEj, dEk);
+            mPML.beforeUpdateHx(pmlData, *fi, dEj, dEk);
+            mCurrent.beforeUpdateH(currentData, *fi, dEj, dEk);
+            
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
+            
+//            LOG << "*** Hx: \n"
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
+                
+            *fi = mMaterial.updateHx(materialData, *fi, dEj, dEk,
+                mPML.updateKx(pmlData, *fi, dEj, dEk) +
+                mCurrent.updateKx(currentData, *fi, dEj, dEk) );
+            
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
+            
+//            LOGMORE
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
+//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
+//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
+//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
+//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
+            
+            mMaterial.afterUpdateH(materialData, *fi, dEj, dEk);
+            mPML.afterUpdateHx(pmlData, *fi, dEj, dEk);
+            mCurrent.afterUpdateH(currentData, *fi, dEj, dEk);
+            
+            fi += STRIDE;
+            gkLow += STRIDE;
+            gkHigh += STRIDE;
+            gjLow += STRIDE;
+            gjHigh += STRIDE;
+        }
+    }
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcHy()
 {
+    // grab the right set of runlines (for Ex, Ey, or Ez)
+    const int DIRECTION = 1;
+    const int STRIDE = 1;
+    
+    float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
+    float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
+    
+    typename MaterialT::LocalDataH materialData;
+    typename PMLT::LocalDataHy pmlData;
+    typename CurrentT::LocalDataH currentData;
+    
+    mMaterial.initLocalH(materialData);
+    mPML.initLocalHy(pmlData);
+    mCurrent.initLocalH(currentData);
+    
+    std::vector<RunlineT> & runlines =
+        WithRunline<RunlineT>::getRunlinesH(DIRECTION);
+    for (int nRL = 0; nRL < runlines.size(); nRL++)
+    {
+        RunlineT & rl(runlines[nRL]);
+        float* fi(rl.fi);               // e.g. Ex
+        const float* gjLow(rl.gj[0]);   // e.g. Hy(z-1/2)
+        const float* gjHigh(rl.gj[1]);  // e.g. Hy(z+1/2)
+        const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
+        const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
+        
+        mMaterial.onStartRunlineH(materialData, rl);
+        mPML.onStartRunlineHy(pmlData, rl);
+        mCurrent.onStartRunlineH(currentData, rl);
+        
+        const int len(rl.length);
+        for (int mm = 0; mm < len; mm++)
+        {
+            float dEj = (*gjHigh - *gjLow)/dk;
+            float dEk = (*gkHigh - *gkLow)/dj;
+            
+            mMaterial.beforeUpdateH(materialData, *fi, dEj, dEk);
+            mPML.beforeUpdateHy(pmlData, *fi, dEj, dEk);
+            mCurrent.beforeUpdateH(currentData, *fi, dEj, dEk);
+            
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
+            
+//            LOG << "*** Hy: \n"
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
+                
+            *fi = mMaterial.updateHy(materialData, *fi, dEj, dEk,
+                mPML.updateKy(pmlData, *fi, dEj, dEk) +
+                mCurrent.updateKy(currentData, *fi, dEj, dEk) );
+            
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
+            
+//            LOGMORE
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
+//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
+//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
+//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
+//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
+            
+            mMaterial.afterUpdateH(materialData, *fi, dEj, dEk);
+            mPML.afterUpdateHy(pmlData, *fi, dEj, dEk);
+            mCurrent.afterUpdateH(currentData, *fi, dEj, dEk);
+            
+            fi += STRIDE;
+            gkLow += STRIDE;
+            gkHigh += STRIDE;
+            gjLow += STRIDE;
+            gjHigh += STRIDE;
+        }
+    }
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 calcHz()
 {
+    // grab the right set of runlines (for Ex, Ey, or Ez)
+    const int DIRECTION = 2;
+    const int STRIDE = 1;
+    
+    float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
+    float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
+    
+    typename MaterialT::LocalDataH materialData;
+    typename PMLT::LocalDataHz pmlData;
+    typename CurrentT::LocalDataH currentData;
+    
+    mMaterial.initLocalH(materialData);
+    mPML.initLocalHz(pmlData);
+    mCurrent.initLocalH(currentData);
+    
+    std::vector<RunlineT> & runlines =
+        WithRunline<RunlineT>::getRunlinesH(DIRECTION);
+    for (int nRL = 0; nRL < runlines.size(); nRL++)
+    {
+        RunlineT & rl(runlines[nRL]);
+        float* fi(rl.fi);               // e.g. Ex
+        const float* gjLow(rl.gj[0]);   // e.g. Hy(z-1/2)
+        const float* gjHigh(rl.gj[1]);  // e.g. Hy(z+1/2)
+        const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
+        const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
+        
+        mMaterial.onStartRunlineH(materialData, rl);
+        mPML.onStartRunlineHz(pmlData, rl);
+        mCurrent.onStartRunlineH(currentData, rl);
+        
+        const int len(rl.length);
+        for (int mm = 0; mm < len; mm++)
+        {
+            float dEj = (*gjHigh - *gjLow)/dk;
+            float dEk = (*gkHigh - *gkLow)/dj;
+            
+            mMaterial.beforeUpdateH(materialData, *fi, dEj, dEk);
+            mPML.beforeUpdateHz(pmlData, *fi, dEj, dEk);
+            mCurrent.beforeUpdateH(currentData, *fi, dEj, dEk);
+            
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
+            
+//            LOG << "*** Hz: \n"
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
+                
+            *fi = mMaterial.updateHz(materialData, *fi, dEj, dEk,
+                mPML.updateKz(pmlData, *fi, dEj, dEk) +
+                mCurrent.updateKz(currentData, *fi, dEj, dEk) );
+            
+            assert(!std::isnan(*fi));
+            assert(!std::isinf(*fi));
+            
+//            LOGMORE
+//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
+//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
+//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
+//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
+//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
+            
+            mMaterial.afterUpdateH(materialData, *fi, dEj, dEk);
+            mPML.afterUpdateHz(pmlData, *fi, dEj, dEk);
+            mCurrent.afterUpdateH(currentData, *fi, dEj, dEk);
+            
+            fi += STRIDE;
+            gkLow += STRIDE;
+            gkHigh += STRIDE;
+            gjLow += STRIDE;
+            gjHigh += STRIDE;
+        }
+    }
 }
 
 

@@ -22,7 +22,7 @@ class Paint;
 
 // Inheritance from SimpleBulkSetupMaterial provides the runline rules and
 // the storage of setup runlines.
-template<class MaterialClass>
+template<class MaterialClass, class RunlineT>
 class SimpleSetupMaterial : public SimpleBulkSetupMaterial
 {
 public:
@@ -44,7 +44,7 @@ private:
 
 // Inheritance from SimpleBulkPMLSetupMaterial provides the runline rules and
 // the storage of setup runlines.
-template<class MaterialClass, class PMLFactory>
+template<class MaterialClass, class RunlineT, class PMLFactory>
 class SimpleSetupPML : public SimpleBulkPMLSetupMaterial
 {
 public:
@@ -114,6 +114,9 @@ class UpdateHarness : public WithRunline<RunlineT>
 {
 public:
     UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
+        std::vector<int> numCellsH, Vector3f dxyz, float dt);
+    
+    UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt);
@@ -129,6 +132,8 @@ public:
     void calcHy();
     void calcHz();
     
+    virtual std::string getModelName() const
+        { return mMaterial.getModelName(); }
 private:
     Vector3f mDxyz;
     float mDt;

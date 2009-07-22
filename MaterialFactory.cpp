@@ -26,6 +26,15 @@
 // Headers for the available PML types
 #include "CFSRIPML.h"
 
+
+template<class MaterialT, class RunlineT>
+static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
+    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
+        float dt);
+
+#pragma mark *** Material Factory ***
+
 SetupMaterialPtr MaterialFactory::
 newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
     const GridDescription & gridDesc,
@@ -36,7 +45,7 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 {
 	assert(parentPaint != 0L);
     
-    SetupMaterialPtr matDel;
+    SetupMaterialPtr setupMat;
 	const MaterialDescPtr bulkMaterial = parentPaint->getBulkMaterial();
     const Map<Vector3i, Map<string, string> > & gridPMLParams(
         gridDesc.getPMLParams());
@@ -80,39 +89,35 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
     
 	//LOG << "Getting delegate for " << *parentPaint << ".\n"; 
     
+    // StaticDielectric is a simple bulk material.  Its runline type is
+    // SimpleRunline and its PML runline is SimpleAuxPMLRunline.  It can use
+    // the standard material harness, from the SimpleMaterialTemplates.h file.
 	if (bulkMaterial->getModelName() == "StaticDielectric")
 	{
         if (0 == parentPaint->isPML())
         {
-            
-            matDel = SetupMaterialPtr(
-                new SimpleSetupMaterial<StaticDielectric>(
+            setupMat = SetupMaterialPtr(
+                new SimpleSetupMaterial<StaticDielectricUpdate, SimpleRunline>(
                     parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
                     gridDesc.getDt()));
-            
         }
         else
-        {
-            matDel = SetupMaterialPtr(
-                new SimpleSetupMaterial<StaticDielectric>(
-                    parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
-                    gridDesc.getDt()));
-            /*
-            matDel = SetupMaterialPtr(
-                new SimpleSetupPML<StaticDielectric,  CFSRIPMLFactory>(
-                    parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
-                    gridDesc.getDxyz(), gridDesc.getDt()));
-            */
+        {   
+            setupMat = newCFSRIPML<StaticDielectricUpdate, SimpleAuxPMLRunline>(
+                parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
+                gridDesc.getDxyz(), gridDesc.getDt());
+            
         }
 	}
     else
     {
         cerr << "Warning: returning null material.\n";
     }
-    //matDel->setParentPaint(parentPaint);
+    //setupMat->setParentPaint(parentPaint);
     
-    return matDel;
+    return setupMat;
 }
+
 
 Map<Vector3i, Map<string, string> > MaterialFactory::
 defaultPMLParams()
@@ -136,4 +141,85 @@ defaultPMLParams()
         params[cardinal(sideNum)] = allDirectionsDefault;
     
     return params;
+}
+
+
+#pragma mark *** Local templated functions ***
+
+template<class MaterialT, class RunlineT>
+static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
+    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
+        float dt)
+{
+    Vector3i pmlDirs = parentPaint->getPMLDirections();
+    SetupMaterial* m;
+    if (pmlDirs[0] != 0)
+    {
+        if (pmlDirs[1] != 0)
+        {
+            if (pmlDirs[2] != 0)
+            {
+                m = new SimpleSetupPML<MaterialT, RunlineT, CFSRIPML<1,1,1> >(
+                    parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                    dxyz, dt);
+            }
+            else
+            {
+                m = new SimpleSetupPML<MaterialT, RunlineT, CFSRIPML<1,1,0> >(
+                    parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                    dxyz, dt);
+            }
+        }
+        else
+        {
+            if (pmlDirs[2] != 0)
+            {
+                m = new SimpleSetupPML<MaterialT, RunlineT, CFSRIPML<1,0,1> >(
+                    parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                    dxyz, dt);
+            }
+            else
+            {
+                m = new SimpleSetupPML<MaterialT, RunlineT, CFSRIPML<1,0,0> >(
+                    parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                    dxyz, dt);
+            }
+        }
+    }
+    else
+    {
+        if (pmlDirs[1] != 0)
+        {
+            if (pmlDirs[2] != 0)
+            {
+                m = new SimpleSetupPML<MaterialT, RunlineT, CFSRIPML<0,1,1> >(
+                    parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                    dxyz, dt);
+            }
+            else
+            {
+                m = new SimpleSetupPML<MaterialT, RunlineT, CFSRIPML<0,1,0> >(
+                    parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                    dxyz, dt);
+            }
+        }
+        else
+        {
+            if (pmlDirs[2] != 0)
+            {
+                m = new SimpleSetupPML<MaterialT, RunlineT, CFSRIPML<0,0,1> >(
+                    parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                    dxyz, dt);
+            }
+            else
+            {
+                m = 0L;
+                assert(!"PML must have a direction.");
+                cerr << "PML must have a direction.\n";
+                exit(1);
+            }
+        }
+    }
+    return SetupMaterialPtr(m);
 }

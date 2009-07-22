@@ -65,6 +65,8 @@ struct SimpleAuxPMLRunline : public SimpleAuxRunline, public PMLRunline
 {
     SimpleAuxPMLRunline() : SimpleAuxRunline(), PMLRunline() {}
     SimpleAuxPMLRunline(const SBPMRunline & setupRunline);
+    SimpleAuxPMLRunline(const SBMRunline & setupRunline)
+        { assert(!"This should never be run."); }
 };
 
 std::ostream & operator<<(std::ostream & str, const SimpleRunline & rl);

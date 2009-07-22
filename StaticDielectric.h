@@ -14,26 +14,7 @@
 #include "SimpleSetupMaterial.h"
 #include "SimpleMaterialTemplates.h"
 #include <string>
-
-
-class StaticDielectric : public SimpleMaterial<SimpleRunline>
-{
-public:
-    StaticDielectric(
-        const MaterialDescription & descrip,
-        std::vector<int> numCellsE, std::vector<int> numCellsH,
-        Vector3f dxyz, float dt);
-    
-    virtual std::string getModelName() const;
-    virtual void calcEPhase(int phasePart = 0);
-    virtual void calcHPhase(int phasePart = 0);
-private:
-    Vector3f mDxyz;
-    float mDt;
-    
-    float m_epsr;
-    float m_mur;
-};
+#include "Log.h"
 
 class StaticDielectricUpdate
 {
@@ -44,34 +25,143 @@ public:
         Vector3f dxyz, float dt);
     
     std::string getModelName() const;
+    void allocateAuxBuffers();
     
-    struct LocalData
+    struct LocalDataE
     {
+        float ce1;
     };
     
-    // Note that these are inline functions!
-    void onStartRunline(LocalData & data, const SimpleRunline & rl)
+    struct LocalDataH
     {
-        // dielectric: do nothing.
-    }
-        
-    float dDdt(LocalData & data, float Ei, float dHj, float dHk, float Ji)
-    {
-        return dHk - dHj - Ji;
-    }
+        float ch1;
+    };
     
-    float dBdt(LocalData & data, float Hi, float dEj, float dEk, float Ki)
-    {
-        return -dEk + dEj - Ki;
-    }
+    void initLocalE(LocalDataE & data);
+    void onStartRunlineE(LocalDataE & data, const SimpleRunline & rl);
+    void beforeUpdateE(LocalDataE & data, float Ei, float dHj, float dHk);    
+    float updateEx(LocalDataE & data, float Ei, float dHj, float dHk, float Ji);
+    float updateEy(LocalDataE & data, float Ei, float dHj, float dHk, float Ji);
+    float updateEz(LocalDataE & data, float Ei, float dHj, float dHk, float Ji);
+    void afterUpdateE(LocalDataE & data, float Ei, float dHj, float dHk);
+    
+    void initLocalH(LocalDataH & data);
+    void onStartRunlineH(LocalDataH & data, const SimpleRunline & rl);
+    void beforeUpdateH(LocalDataH & data, float Hi, float dEj, float dEk);
+    float updateHx(LocalDataH & data, float Hi, float dEj, float dEk, float Ki);
+    float updateHy(LocalDataH & data, float Hi, float dEj, float dEk, float Ki);
+    float updateHz(LocalDataH & data, float Hi, float dEj, float dEk, float Ki);
+    void afterUpdateH(LocalDataH & data, float Hi, float dEj, float dEk);
 
 private:
     Vector3f mDxyz;
     float mDt;
     
+    float m_ce1, m_ch1;
+    
     float m_epsr;
     float m_mur;
 };
+
+inline void StaticDielectricUpdate::
+initLocalE(LocalDataE & data)
+{
+    data.ce1 = m_ce1;
+}
+
+inline void StaticDielectricUpdate::
+onStartRunlineE(LocalDataE & data, const SimpleRunline & rl)
+{
+}
+
+inline void StaticDielectricUpdate::
+beforeUpdateE(LocalDataE & data, float Ei, float dHj, float dHk)
+{
+}
+
+inline float StaticDielectricUpdate::
+updateEx(LocalDataE & data, float Ei, float dHj, float dHk, float Ji)
+{
+    //LOG << "ce1 = " << data.ce1 << "\n";
+//    if (Ji != 0)
+//        LOG << "dHj " << dHj << " dHk " << dHk << " Ji " << Ji << "\n"; 
+    return Ei + data.ce1*(dHk - dHj - Ji);
+}
+
+inline float StaticDielectricUpdate::
+updateEy(LocalDataE & data, float Ei, float dHj, float dHk, float Ji)
+{
+    //LOG << "ce1 = " << data.ce1 << "\n";
+//    if (Ji != 0)
+//        LOG << "dHj " << dHj << " dHk " << dHk << " Ji " << Ji << "\n"; 
+    return Ei + data.ce1*(dHk - dHj - Ji);
+}
+
+inline float StaticDielectricUpdate::
+updateEz(LocalDataE & data, float Ei, float dHj, float dHk, float Ji)
+{
+    //LOG << "ce1 = " << data.ce1 << "\n";
+//    if (Ji != 0)
+//        LOG << "dHj " << dHj << " dHk " << dHk << " Ji " << Ji << "\n"; 
+    return Ei + data.ce1*(dHk - dHj - Ji);
+}
+
+inline void StaticDielectricUpdate::
+afterUpdateE(LocalDataE & data, float Ei, float dHj, float dHk)
+{
+}
+
+
+inline void StaticDielectricUpdate::
+initLocalH(LocalDataH & data)
+{
+    data.ch1 = m_ch1;
+}
+
+inline void StaticDielectricUpdate::
+onStartRunlineH(LocalDataH & data, const SimpleRunline & rl)
+{
+}
+
+inline void StaticDielectricUpdate::
+beforeUpdateH(LocalDataH & data, float Hi, float dEj, float dEk)
+{
+}
+
+inline float StaticDielectricUpdate::
+updateHx(LocalDataH & data, float Hi, float dEj, float dEk, float Ki)
+{
+    //LOG << "ch1 = " << data.ch1 << "\n";
+//    if (Ki != 0)
+//        LOG << "dEj " << dEj << " dEk " << dEk << " Ki " << Ki << "\n"; 
+    return Hi + data.ch1*(-dEk + dEj - Ki);
+}
+
+inline float StaticDielectricUpdate::
+updateHy(LocalDataH & data, float Hi, float dEj, float dEk, float Ki)
+{
+    //LOG << "ch1 = " << data.ch1 << "\n";
+//    if (Ki != 0)
+//        LOG << "dEj " << dEj << " dEk " << dEk << " Ki " << Ki << "\n";
+    return Hi + data.ch1*(-dEk + dEj - Ki);
+}
+
+inline float StaticDielectricUpdate::
+updateHz(LocalDataH & data, float Hi, float dEj, float dEk, float Ki)
+{
+    //LOG << "ch1 = " << data.ch1 << "\n";
+//    if (Ki != 0)
+//        LOG << "dEj " << dEj << " dEk " << dEk << " Ki " << Ki << "\n";
+    return Hi + data.ch1*(-dEk + dEj - Ki);
+}
+
+inline void StaticDielectricUpdate::
+afterUpdateH(LocalDataH & data, float Hi, float dEj, float dEk)
+{
+}
+
+
+
 
 
 #endif

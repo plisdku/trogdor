@@ -13,7 +13,7 @@
 #include "SimulationDescription.h"
 #include "SimpleSetupMaterial.h"
 #include "SimpleMaterialTemplates.h"
-
+/*
 class PerfectConductor : public SimpleMaterial<SimpleRunline>
 {
 public:
@@ -26,6 +26,7 @@ public:
     virtual void calcEPhase(int phasePart = 0);
     virtual void calcHPhase(int phasePart = 0);
 };
+*/
 
 
 #endif

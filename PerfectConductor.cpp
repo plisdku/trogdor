@@ -16,6 +16,7 @@
 
 using namespace std;
 
+/*
 PerfectConductor::
 PerfectConductor(
     const MaterialDescription & descrip,
@@ -41,3 +42,4 @@ calcHPhase(int direction)
 {
     //LOG << "Calculating H.\n";
 }
+*/

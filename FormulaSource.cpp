@@ -132,7 +132,7 @@ uniformSourceE(CalculationPartition & cp, int timestep)
     
 	val = mCalculator.get_value();
     
-    //LOG << "Writing " << val << "\n";
+//    LOG << "Source E val " << val << "\n";
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
@@ -175,6 +175,8 @@ uniformSourceH(CalculationPartition & cp, int timestep)
 	mCalculator.set("t", mDt*(0.5f + timestep));
 	mCalculator.parse(mFormula);
 	val = mCalculator.get_value();
+    
+//    LOG << "Source H val " << val << "\n";
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
