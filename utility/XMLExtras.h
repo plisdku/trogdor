@@ -138,8 +138,10 @@ void sSetAttribute(TiXmlElement* elem,
         elem->SetAttribute(attribute, istr.str().c_str());
 }
 
-template <>
-void sGetMandatoryAttribute<std::string>(const TiXmlElement* elem,
+//template <>
+//void sGetMandatoryAttribute<std::string>(const TiXmlElement* elem,
+//	const std::string & attribute, std::string & val) throw(Exception)
+static void sGetMandatoryAttribute(const TiXmlElement* elem,
 	const std::string & attribute, std::string & val) throw(Exception)
 {
 	assert(elem);
@@ -153,9 +155,11 @@ void sGetMandatoryAttribute<std::string>(const TiXmlElement* elem,
 	val = elem->Attribute(attribute.c_str());
 }
 
-template <>
-bool sTryGetAttribute<std::string>(const TiXmlElement* elem,
-	const std::string & attribute, std::string & val)
+//template <>
+//bool sTryGetAttribute<std::string>(const TiXmlElement* elem,
+//	const std::string & attribute, std::string & val)
+static bool sTryGetAttribute(const TiXmlElement* elem, 
+    const std::string & attribute, std::string & val)
 {
 	assert(elem);
 	std::ostringstream err;
@@ -169,9 +173,12 @@ bool sTryGetAttribute<std::string>(const TiXmlElement* elem,
 	return 1;
 }
 
-template <>
-void sGetOptionalAttribute<std::string>(const TiXmlElement* elem,
-	const std::string & attribute, std::string & val, const std::string & defaultVal)
+//template <>
+//void sGetOptionalAttribute<std::string>(const TiXmlElement* elem,
+//	const std::string & attribute, std::string & val, const std::string & defaultVal)
+static void sGetOptionalAttribute(const TiXmlElement* elem,
+    const std::string & attribute, std::string & val,
+    const std::string & defaultVal)
 {
 	assert(elem);
 	std::ostringstream err;
