@@ -7,19 +7,19 @@ add_executable(testInterleavedLattice
 )
 
 #set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_USE_MULTITHREADED ON)
-find_package( Boost COMPONENTS unit_test_framework)
+#set(Boost_USE_MULTITHREADED ON)
+#find_package( Boost COMPONENTS unit_test_framework)
 
-if(Boost_FOUND)
-	include_directories(${Boost_INCLUDE_DIRS})
-	message("Boost testing includes are at ${Boost_INCLUDE_DIRS}")
-	message("Boost testing libraries are ${Boost_LIBRARIES}")
-endif()
+#if(Boost_FOUND)
+#	include_directories(${Boost_INCLUDE_DIRS})
+#	message("Boost testing includes are at ${Boost_INCLUDE_DIRS}")
+#	message("Boost testing libraries are ${Boost_LIBRARIES}")
+#endif()
 
 
 target_link_libraries(testInterleavedLattice
-#    boost_unit_test_framework-xgcc40-mt
-    ${Boost_LIBRARIES}
+    boost_unit_test_framework-xgcc40-mt
+#    ${Boost_LIBRARIES}
     utility
 )
 # gets "LOCATION" of "tester" and stores it in "testStuffLocation"
@@ -36,7 +36,8 @@ add_executable(testGeometry
     testGeometry.cpp
 )
 target_link_libraries(testGeometry
-    ${Boost_LIBRARIES}
+    boost_unit_test_framework-xgcc40-mt
+#    ${Boost_LIBRARIES}
 )
 #add_custom_command(TARGET testGeometry
 #    POST_BUILD
@@ -49,8 +50,8 @@ include_directories(
 	${TROGDOR_SOURCE_DIR}/tinyxml
 	${magIncDirs}
 	/usr/local/include/
-#/usr/local/include/boost-1_38
-	${Boost_INCLUDE_DIRS}
+    /usr/local/include/boost-1_38
+#	${Boost_INCLUDE_DIRS}
 	/sw/include
 )
 	

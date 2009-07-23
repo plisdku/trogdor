@@ -743,6 +743,9 @@ runUntimed(Map<string, CalculationPartitionPtr> & calculationGrids)
     outputH(calculationGrids, 0);
     for (long tt = 1; tt < mNumT; tt++)
     {
+        cout << "\r                                                          "
+            << flush;
+        cout << "\rTimestep " << tt << " of " << mNumT << flush;
         updateE(calculationGrids, tt);
         sourceE(calculationGrids, tt);
         outputE(calculationGrids, tt);
@@ -755,12 +758,21 @@ runUntimed(Map<string, CalculationPartitionPtr> & calculationGrids)
 void FDTDApplication::
 runTimed(Map<string, CalculationPartitionPtr> & calculationGrids)
 {
+    double t0, t1, printTimestepTotalTime;
+    printTimestepTotalTime = 0.0;
+    
     sourceETimed(calculationGrids, 0);
     outputETimed(calculationGrids, 0);
     sourceHTimed(calculationGrids, 0);
     outputHTimed(calculationGrids, 0);
     for (long tt = 1; tt < mNumT; tt++)
     {
+		t0 = getTimeInMicroseconds();
+        cout << "\r                                                          "
+            << flush;
+        cout << "\rTimestep " << tt << " of " << mNumT << flush;
+		t1 = getTimeInMicroseconds();
+        printTimestepTotalTime += (t1-t0);
         updateETimed(calculationGrids, tt);
         sourceETimed(calculationGrids, tt);
         outputETimed(calculationGrids, tt);
@@ -768,6 +780,7 @@ runTimed(Map<string, CalculationPartitionPtr> & calculationGrids)
         sourceHTimed(calculationGrids, tt);
         outputHTimed(calculationGrids, tt);
     }
+    mPerformance.setPrintTimestepMicroseconds(printTimestepTotalTime);
 }
 
 void FDTDApplication::
