@@ -21,6 +21,22 @@ string(REGEX MATCHALL "[-]I[^ ;\n]+" rawIncdirs "${mcppflags}")
 string(REGEX REPLACE "[-]I([^ ;\n]+)" "\\1" magIncDirs "${rawIncdirs}")
 message("ImageMagick inc directories are ${magIncDirs}")
 
+#find_package( Boost )
+#if (Boost_FOUND)
+#	include_directories(${Boost_INCLUDE_DIRS})
+#endif()
+
+#set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+find_package( Boost COMPONENTS date_time program_options thread)
+
+if(Boost_FOUND)
+	include_directories(${Boost_INCLUDE_DIRS})
+	message("Boost includes are at ${Boost_INCLUDE_DIRS}")
+	message("Boost libraries are ${Boost_LIBRARIES}")
+#	add_executable(foo foo.cc)
+#	target_link_libraries(trogdor ${Boost_LIBRARIES})
+endif()
 
 include_directories(
 	${TROGDOR_SOURCE_DIR}
@@ -28,7 +44,7 @@ include_directories(
 	${TROGDOR_SOURCE_DIR}/tinyxml
 	${magIncDirs}
 	/usr/local/include/
-	/usr/local/include/boost-1_38
+#	/usr/local/include/boost-1_38
 	/sw/include)
 
 #include_directories( ${magIncDirs} )
@@ -114,18 +130,19 @@ YeeUtilities.cpp
 target_link_libraries( trogdor
 tinyxml
 utility
-boost_date_time-xgcc40-mt
-boost_program_options-xgcc40-mt
-boost_thread-xgcc40-mt
+${Boost_LIBRARIES}
+#boost_date_time-xgcc40-mt
+#boost_program_options-xgcc40-mt
+#boost_thread-xgcc40-mt
 ${magDepLibs}
 )
 
 add_subdirectory( utility )
 add_subdirectory( tinyxml )
 
-add_subdirectory( tests )
-enable_testing() # only need to do this once, but
-add_test(geom tests/testGeometry) # this once per test
-add_test(lattice tests/testInterleavedLattice) # this once per test
+#add_subdirectory( tests )
+#enable_testing() # only need to do this once, but
+#add_test(geom tests/testGeometry) # this once per test
+#add_test(lattice tests/testInterleavedLattice) # this once per test
 
 
