@@ -58,7 +58,7 @@ static void sSetAttributes(TiXmlElement* elem,
 }
 
 template <class T>
-static void sGetMandatoryAttribute(const TiXmlElement* elem,
+void sGetMandatoryAttribute(const TiXmlElement* elem,
 	const std::string & attribute, T & val) throw(Exception)
 {
 	assert(elem);
@@ -81,7 +81,7 @@ static void sGetMandatoryAttribute(const TiXmlElement* elem,
 }
 
 template <class T>
-static bool sTryGetAttribute(const TiXmlElement* elem,
+bool sTryGetAttribute(const TiXmlElement* elem,
 	const std::string & attribute, T & val)
 {
 	assert(elem);
@@ -104,7 +104,7 @@ static bool sTryGetAttribute(const TiXmlElement* elem,
 }
 
 template <class T>
-static void sGetOptionalAttribute(const TiXmlElement* elem,
+void sGetOptionalAttribute(const TiXmlElement* elem,
 	const std::string & attribute, T & val, const T & defaultVal)
 {
 	assert(elem);
@@ -129,7 +129,7 @@ static void sGetOptionalAttribute(const TiXmlElement* elem,
 
 
 template<class T>
-static void sSetAttribute(TiXmlElement* elem,
+void sSetAttribute(TiXmlElement* elem,
     const std::string & attribute, T & val) throw(Exception)
 {
     std::istringstream istr;
@@ -139,7 +139,7 @@ static void sSetAttribute(TiXmlElement* elem,
 }
 
 template <>
-static void sGetMandatoryAttribute<std::string>(const TiXmlElement* elem,
+void sGetMandatoryAttribute<std::string>(const TiXmlElement* elem,
 	const std::string & attribute, std::string & val) throw(Exception)
 {
 	assert(elem);
@@ -154,7 +154,7 @@ static void sGetMandatoryAttribute<std::string>(const TiXmlElement* elem,
 }
 
 template <>
-static bool sTryGetAttribute<std::string>(const TiXmlElement* elem,
+bool sTryGetAttribute<std::string>(const TiXmlElement* elem,
 	const std::string & attribute, std::string & val)
 {
 	assert(elem);
@@ -170,7 +170,7 @@ static bool sTryGetAttribute<std::string>(const TiXmlElement* elem,
 }
 
 template <>
-static void sGetOptionalAttribute<std::string>(const TiXmlElement* elem,
+void sGetOptionalAttribute<std::string>(const TiXmlElement* elem,
 	const std::string & attribute, std::string & val, const std::string & defaultVal)
 {
 	assert(elem);
