@@ -622,20 +622,19 @@ operator<< (std::ostream & out, const VoxelGrid & grid)
 //
 //  (Why: multiplying by 257 fills up the dynamic range completely.)
 //
-Vector3i sConvertColor(const Magick::Color & inColor)
+static Vector3i sConvertColor(const Magick::Color & inColor)
 {
     Vector3i outColor;
     
-#if (MagickLibVersion == 0x618)
-    outColor[0] = Magick::ScaleQuantumToChar(inColor.redQuantum());
-    outColor[1] = Magick::ScaleQuantumToChar(inColor.blueQuantum());
-    outColor[2] = Magick::ScaleQuantumToChar(inColor.greenQuantum());
-#else
+#if (MagickLibVersion == 0x628)
     outColor[0] = MagickLib::ScaleQuantumToChar(inColor.redQuantum());
     outColor[1] = MagickLib::ScaleQuantumToChar(inColor.blueQuantum());
     outColor[2] = MagickLib::ScaleQuantumToChar(inColor.greenQuantum());
+#else
+    outColor[0] = MagickCore::ScaleQuantumToChar(inColor.redQuantum());
+    outColor[1] = MagickCore::ScaleQuantumToChar(inColor.blueQuantum());
+    outColor[2] = MagickCore::ScaleQuantumToChar(inColor.greenQuantum());
 #endif
-
     return outColor;
 }
 
