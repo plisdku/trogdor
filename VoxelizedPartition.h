@@ -23,6 +23,7 @@
 #include "OutputBoss.h"
 #include "SourceBoss.h"
 #include "MemoryUtilities.h"
+#include "InterleavedLattice.h"
 
 #include "SimulationDescriptionPredeclarations.h"
 
@@ -32,25 +33,22 @@
 #include <string>
 
 class SetupMaterial;
-typedef Pointer<SetupMaterial> SetupMaterialPtr;
-
-class InterleavedLattice;
-typedef Pointer<InterleavedLattice> InterleavedLatticePtr;
+//typedef Pointer<SetupMaterial> SetupMaterialPtr;
 
 class VoxelizedPartition;
-typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
+//typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
 
 class HuygensSurface;
-typedef Pointer<HuygensSurface> HuygensSurfacePtr;
+//typedef Pointer<HuygensSurface> HuygensSurfacePtr;
 
 class PartitionCellCount;
-typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
+//typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
 
 class VoxelizedPartition
 {
 public:
 	VoxelizedPartition(const GridDescription & gridDesc, 
-		const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
+		const Map<GridDescPtr, Pointer<VoxelizedPartition> > & voxelizedGrids,
 		Rect3i allocRegion, Rect3i calcRegion);  // !
 	
 	const std::vector<Vector3i> & getHuygensRegionSymmetries() const {
@@ -70,29 +68,29 @@ public:
 	const VoxelGrid & getVoxelGrid() const { return mVoxels; }
     
     // returns      the index of each cell by material type (air #1, air #2...)
-	const PartitionCellCountPtr & getIndices() const
+	const Pointer<PartitionCellCount> & getIndices() const
 		{ return mCentralIndices; }
     
-    InterleavedLatticePtr getLattice() const { return mLattice; }
+    Pointer<InterleavedLattice> getLattice() const { return mLattice; }
     
     // returns      the structures that store temp data for setting up materials
-    const Map<Paint*, SetupMaterialPtr> & getDelegates() const
+    const Map<Paint*, Pointer<SetupMaterial> > & getDelegates() const
         { return mSetupMaterials; }
     
     // returns      the structures that store temp data for setting up outputs
-    const std::vector<SetupOutputPtr> & getSetupOutputs() const
+    const std::vector<Pointer<SetupOutput> > & getSetupOutputs() const
         { return mSetupOutputs; }
     
     // returns      the structures that store temp data for setting up sources
-    const std::vector<SetupSourcePtr> & getSoftSetupSources() const
+    const std::vector<Pointer<SetupSource> > & getSoftSetupSources() const
         { return mSoftSetupSources; }
     
     // returns      the structures that store temp data for setting up sources
-    const std::vector<SetupSourcePtr> & getHardSetupSources() const
+    const std::vector<Pointer<SetupSource> > & getHardSetupSources() const
         { return mHardSetupSources; }
     
     // returns      the structures that store temp data for setting up NBs
-    const std::vector<HuygensSurfacePtr> & getHuygensSurfaces()
+    const std::vector<Pointer<HuygensSurface> > & getHuygensSurfaces()
         const { return mHuygensSurfaces; }
     
     void clearVoxelGrid();
@@ -100,13 +98,13 @@ public:
     
     void createHuygensSurfaces(
         const GridDescPtr & gridDescription,
-        const Map<GridDescPtr, VoxelizedPartitionPtr> & grids);
+        const Map<GridDescPtr, Pointer<VoxelizedPartition> > & grids);
     
     void calculateRunlines();
 	
 private:
 	void paintFromAssembly(const GridDescription & gridDesc,
-		const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids);
+		const Map<GridDescPtr, Pointer<VoxelizedPartition> > & voxelizedGrids);
 	void paintFromHuygensSurfaces(const GridDescription & gridDesc);
 	void paintFromCurrentSources(const GridDescription & gridDesc);
 	void paintPML();
@@ -125,17 +123,17 @@ private:
     void createSetupSources(const std::vector<SourceDescPtr> & sources);
     
 	VoxelGrid mVoxels;
-	PartitionCellCountPtr mCentralIndices;
+	Pointer<PartitionCellCount> mCentralIndices;
 	
-    InterleavedLatticePtr mLattice;
+    Pointer<InterleavedLattice> mLattice;
 	
     // THIS IS WHERE GRID DENIZENS LIVE
-	Map<Paint*, SetupMaterialPtr> mSetupMaterials;
-	std::vector<SetupOutputPtr> mSetupOutputs;
-    std::vector<SetupSourcePtr> mSoftSetupSources;
-    std::vector<SetupSourcePtr> mHardSetupSources;
+	Map<Paint*, Pointer<SetupMaterial> > mSetupMaterials;
+	std::vector<Pointer<SetupOutput> > mSetupOutputs;
+    std::vector<Pointer<SetupSource> > mSoftSetupSources;
+    std::vector<Pointer<SetupSource> > mHardSetupSources;
     
-    std::vector<HuygensSurfacePtr> mHuygensSurfaces;
+    std::vector<Pointer<HuygensSurface> > mHuygensSurfaces;
     
     // END OF GRID DENIZEN ZONE
     

@@ -63,7 +63,8 @@ private:
 	Paint(const MaterialDescPtr & material); // bulk constructor
 	
 public:
-	
+	std::string getFullName() const;
+    
 	static Paint* getPaint(const MaterialDescPtr & material);
     
 	Paint* withoutModifications() const { return mBasePaint; }

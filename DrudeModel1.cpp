@@ -16,16 +16,15 @@
 
 #include <sstream>
 #include "YeeUtilities.h"
+
 using namespace YeeUtilities;
 using namespace std;
 
-/*
 DrudeModel1::
 DrudeModel1(
     const MaterialDescription & descrip,
     std::vector<int> numCellsE, std::vector<int> numCellsH,
     Vector3f dxyz, float dt) :
-    SimpleMaterial<SimpleAuxRunline>(),
     mDxyz(dxyz),
     mDt(dt),
     m_epsrinf(1.0),
@@ -47,6 +46,13 @@ DrudeModel1(
         mCurrentBuffers[nn] = MemoryBufferPtr(new MemoryBuffer(
             string("DrudeModel1 J")+char('x'+nn), numCellsE[nn]));
     }
+    
+    // update constants
+    m_cj1 = (2*m_tauc - dt)/(2*m_tauc + dt);
+    m_cj2 = 2*m_tauc*dt*m_omegap*m_omegap*m_epsrinf*Constants::eps0
+        /(dt+2*m_tauc);
+    m_ce = dt/m_epsrinf/Constants::eps0;
+    m_ch = dt/m_mur/Constants::mu0;
 }
 
 string DrudeModel1::
@@ -65,7 +71,7 @@ allocateAuxBuffers()
         mCurrentBuffers[nn]->setHeadPointer(&(mCurrents[nn][0]));
     }
 }
-
+/*
 void DrudeModel1::
 calcEPhase(int direction)
 {

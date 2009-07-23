@@ -16,6 +16,7 @@
 #ifndef _FDTDAPPLICATION_
 #define _FDTDAPPLICATION_
 
+#include "Performance.h"
 #include "geometry.h"
 #include "tinyxml.h"
 #include "Pointer.h"
@@ -110,18 +111,26 @@ private: // heh, "new private" stuff
         int timestep);
     void outputH(Map<std::string, CalculationPartitionPtr> & calcGrids,
         int timestep);
-    /*
-    void calcE(Map<std::string, CalculationPartitionPtr> & calcGrids);
-    void calcBeforeE(Map<std::string, CalculationPartitionPtr> & calcGrids,
+    
+    void updateETimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
         int timestep);
-    void calcAfterE(Map<std::string, CalculationPartitionPtr> & calcGrids,
+    void sourceETimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
         int timestep);
-    void calcH(Map<std::string, CalculationPartitionPtr> & calcGrids);
-    void calcBeforeH(Map<std::string, CalculationPartitionPtr> & calcGrids,
+    void outputETimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
         int timestep);
-    void calcAfterH(Map<std::string, CalculationPartitionPtr> & calcGrids,
+    void updateHTimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
         int timestep);
-    */
+    void sourceHTimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
+    void outputHTimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
+        int timestep);
+        
+    void runUntimed(
+        Map<std::string, CalculationPartitionPtr> & calculationGrids);
+    void runTimed(Map<std::string, CalculationPartitionPtr> & calculationGrids);
+    
+    void reportPerformance(
+        Map<std::string, CalculationPartitionPtr> & calculationGrids);
     
 private:
     float m_dx;
@@ -129,7 +138,9 @@ private:
     float m_dz;
     float m_dt;
     int mNumT;
-	
+    
+    GlobalStatistics mPerformance;
+	/*
 	std::vector<double> mTimestepStartTimes;
 	
 	double mUpdateETime;
@@ -138,6 +149,7 @@ private:
 	double mBufferHTime;
 	double mOutputTime;
 	double mPrintTimestepTime;
+    */
     
 #pragma mark *** Singleton Stuff ***
 public:

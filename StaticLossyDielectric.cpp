@@ -15,13 +15,12 @@
 #include <sstream>
 
 using namespace std;
-/*
+
 StaticLossyDielectric::
 StaticLossyDielectric(
         const MaterialDescription & descrip,
         std::vector<int> numCellsE, std::vector<int> numCellsH,
         Vector3f dxyz, float dt) :
-    SimpleMaterial<SimpleRunline>(),
     m_epsr(1.0),
     m_mur(1.0),
     m_sigma(0.0)
@@ -32,8 +31,11 @@ StaticLossyDielectric(
         istringstream(descrip.getParams()["mur"]) >> m_mur;
     if (descrip.getParams().count("sigma"))
         istringstream(descrip.getParams()["sigma"]) >> m_sigma;
-        
-    //LOG << "Created all runlines.\n";
+    
+    m_ce1 = (2*m_epsr*Constants::eps0 - m_sigma*dt) /
+        (2*m_epsr*Constants::eps0 + m_sigma*dt);
+    m_ce2 = 2*dt/(2*m_epsr*Constants::eps0 + m_sigma*dt);
+    m_ch1 = dt/m_mur/Constants::mu0;
 }
 
 string StaticLossyDielectric::
@@ -41,16 +43,3 @@ getModelName() const
 {
     return string("StaticLossyDielectric");
 }
-
-void StaticLossyDielectric::
-calcEPhase(int direction)
-{
-    //LOG << "Calculating E.\n";
-}
-
-void StaticLossyDielectric::
-calcHPhase(int direction)
-{
-    //LOG << "Calculating H.\n";
-}
-*/

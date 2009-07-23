@@ -20,8 +20,8 @@
 using namespace std;
 using namespace YeeUtilities;
 
-StaticDielectricUpdate::
-StaticDielectricUpdate(
+StaticDielectric::
+StaticDielectric(
     const MaterialDescription & descrip,
     std::vector<int> numCellsE, std::vector<int> numCellsH,
     Vector3f dxyz, float dt) :
@@ -38,16 +38,16 @@ StaticDielectricUpdate(
     m_ce1 = dt/m_epsr/Constants::eps0;
     m_ch1 = dt/m_mur/Constants::mu0;
     
-    LOG << "Init with ce1 = " << m_ce1 << " and ch1 = " << m_ch1 << "\n";
+//    LOG << "Init with ce1 = " << m_ce1 << " and ch1 = " << m_ch1 << "\n";
 }
 
-string StaticDielectricUpdate::
+string StaticDielectric::
 getModelName() const
 {
     return "StaticDielectric";
 }
 
-void StaticDielectricUpdate::
+void StaticDielectric::
 allocateAuxBuffers()
 {
 }

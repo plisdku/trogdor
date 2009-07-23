@@ -57,13 +57,12 @@ paintBlock(const GridDescription & gridDesc,
 	Rect3i halfCells;
 	if (instruction.getFillStyle() == kPECStyle)
 	{
-		halfCells = instruction.getYeeRect();
-		halfCells = halfCells*2;
+		halfCells = yeeToHalf(instruction.getYeeRect());
 		halfCells.p2 += Vector3i(1,1,1);
 	}
 	else if (instruction.getFillStyle() == kPMCStyle)
 	{
-		halfCells = instruction.getYeeRect();
+		halfCells = yeeToHalf(instruction.getYeeRect());
 		halfCells.p1 -= Vector3i(1,1,1);
 	}
 	else if (instruction.getFillStyle() == kHalfCellStyle)
@@ -74,7 +73,8 @@ paintBlock(const GridDescription & gridDesc,
 	// Clipping explicitly is unnecessary and even undesirable because of grid-
 	// level wraparound.
 	//halfCells = clip(mAllocRegion, halfCells);
-	
+	//LOG << "Painting half cells " << halfCells << "\n";
+    
 	for (int kk = halfCells.p1[2]; kk <= halfCells.p2[2]; kk++)
 	for (int jj = halfCells.p1[1]; jj <= halfCells.p2[1]; jj++)
 	for (int ii = halfCells.p1[0]; ii <= halfCells.p2[0]; ii++)
@@ -338,52 +338,6 @@ paintExtrude(const GridDescription & gridDesc, const Extrude & instruction)
 }
 
 #pragma mark *** Overlay methods ***
-/*
-void VoxelGrid::
-overlayHuygensSurface(const HuygensSurfaceDescription & surf)
-{
-	int ii, jj, kk;
-	for (int sideNum = 0; sideNum < 6; sideNum++)
-	{
-		Vector3i side(cardinal(sideNum));
-		if (!surf.getOmittedSides().count(side))
-		{
-			NeighborBufferDescPtr nb = surf.getBuffers()[sideNum];
-			assert(nb != 0L);
-			
-			Rect3i innerHalfRect = edgeOfRect(
-				surf.getHalfCells(), sideNum);
-			Rect3i outerHalfRect = (innerHalfRect + side);
-			
-			// Paint the inside
-			for (kk = innerHalfRect.p1[2]; kk <= innerHalfRect.p2[2]; kk++)
-			for (jj = innerHalfRect.p1[1]; jj <= innerHalfRect.p2[1]; jj++)
-			for (ii = innerHalfRect.p1[0]; ii <= innerHalfRect.p2[0]; ii++)
-			{
-				Paint* p = (*this)(ii,jj,kk)->withCurlBuffer(sideNum, nb);
-				paintHalfCell(p, ii, jj, kk);
-				//(*this)(ii,jj,kk) = p;
-			}
-			
-			//LOG << "Huygens inner " << innerHalfRect << "\n";
-			
-			// Paint the outside
-			int oppositeSideNum = (sideNum % 2) ? (sideNum-1) : (sideNum+1);
-			for (kk = outerHalfRect.p1[2]; kk <= outerHalfRect.p2[2]; kk++)
-			for (jj = outerHalfRect.p1[1]; jj <= outerHalfRect.p2[1]; jj++)
-			for (ii = outerHalfRect.p1[0]; ii <= outerHalfRect.p2[0]; ii++)
-			{
-				Paint* q = (*this)(ii,jj,kk)->withCurlBuffer(oppositeSideNum,
-					nb);
-				paintHalfCell(q, ii, jj, kk);
-				//(*this)(ii,jj,kk) = q;
-			}
-			
-			//LOG << "Huygens outer " << outerHalfRect << "\n"; 
-
-		}
-	}
-}*/
 
 void VoxelGrid::
 overlayHuygensSurface(const HuygensSurface & surf)

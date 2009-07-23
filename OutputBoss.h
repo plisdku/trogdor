@@ -38,6 +38,7 @@ class SetupOutput
 {
 public:
     SetupOutput() {}
+    virtual ~SetupOutput() {}
     
     // Setting up runtime outputs
     virtual OutputPtr makeOutput(const VoxelizedPartition & vp,

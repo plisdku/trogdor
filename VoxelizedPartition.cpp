@@ -77,7 +77,7 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	
 	mVoxels.overlayPML(); // * grid-scale wraparound
 	
-	cout << mVoxels << endl;
+	//cout << mVoxels << endl;
 	
 	calculateMaterialIndices();
 	createSetupMaterials(gridDesc);
@@ -206,7 +206,7 @@ createHuygensSurfaces(const GridDescPtr & gridDescription,
     
     paintFromHuygensSurfaces(*gridDescription);
     
-    cout << mVoxels << "\n";
+    //cout << mVoxels << "\n";
     
 }
 
@@ -283,7 +283,7 @@ paintFromHuygensSurfaces(const GridDescription & gridDesc)
 void VoxelizedPartition::
 paintFromCurrentSources(const GridDescription & gridDesc)
 {
-	LOG << "Painting from current sources.  (Doing nothing.)\n";
+//	LOG << "Painting from current sources.  (Doing nothing.)\n";
 }
 
 
@@ -442,7 +442,7 @@ createSetupMaterials(const GridDescription & gridDesc)
                 mCentralIndices->getNumCells(p, octantH(fieldDir));
         }
         
-        LOG << "Not calling that PML cells on side function.  What's it for?\n";
+//        LOG << "Not calling that PML cells on side function.  What's it for?\n";
         
 		if (mSetupMaterials.count(p) == 0)
 		{
@@ -457,8 +457,8 @@ createSetupMaterials(const GridDescription & gridDesc)
 void VoxelizedPartition::
 loadSpaceVaryingData()
 {
-	LOG << "Setup materials need to provide temporary space!\n";
-	LOGMORE << "Not loading anything yet.\n";
+//	LOG << "Setup materials need to provide temporary space!\n";
+//	LOGMORE << "Not loading anything yet.\n";
     
     // Plan: iterate over assembly structure, but instead of painting the usual
     // way, paint into setup materials.  So for instance:

@@ -89,31 +89,70 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
     
 	//LOG << "Getting delegate for " << *parentPaint << ".\n"; 
     
-    // StaticDielectric is a simple bulk material.  Its runline type is
-    // SimpleRunline and its PML runline is SimpleAuxPMLRunline.  It can use
-    // the standard material harness, from the SimpleMaterialTemplates.h file.
-	if (bulkMaterial->getModelName() == "StaticDielectric")
-	{
-        if (0 == parentPaint->isPML())
+    if (0 == parentPaint->isPML())
+    {
+        if (bulkMaterial->getModelName() == "StaticDielectric")
         {
             setupMat = SetupMaterialPtr(
-                new SimpleSetupMaterial<StaticDielectricUpdate, SimpleRunline>(
+                new SimpleSetupMaterial<StaticDielectric, SimpleRunline>(
                     parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
                     gridDesc.getDt()));
         }
-        else
-        {   
-            setupMat = newCFSRIPML<StaticDielectricUpdate, SimpleAuxPMLRunline>(
-                parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
-                gridDesc.getDxyz(), gridDesc.getDt());
-            
+        else if (bulkMaterial->getModelName() == "StaticLossyDielectric")
+        {
+            setupMat = SetupMaterialPtr(
+                new SimpleSetupMaterial<StaticLossyDielectric, SimpleRunline>(
+                    parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
+                    gridDesc.getDt()));
         }
-	}
+        else if (bulkMaterial->getModelName() == "DrudeMetal1")
+        {
+            setupMat = SetupMaterialPtr(
+                new SimpleSetupMaterial<DrudeModel1, SimpleAuxRunline>(
+                    parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
+                    gridDesc.getDt()));
+        }
+        else if (bulkMaterial->getModelName() == "PerfectConductor")
+        {
+            setupMat = SetupMaterialPtr(new SetupPerfectConductor);
+        }
+        else
+        {
+            throw(Exception(string("Unsupported material model: ") + 
+                bulkMaterial->getModelName()));
+        }
+    }
     else
     {
-        cerr << "Warning: returning null material.\n";
+        if (bulkMaterial->getModelName() == "StaticDielectric")
+        {
+            setupMat = newCFSRIPML<StaticDielectric, SimpleAuxPMLRunline>(
+                parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
+                gridDesc.getDxyz(), gridDesc.getDt());
+        }
+        else if (bulkMaterial->getModelName() == "StaticLossyDielectric")
+        {
+            setupMat = newCFSRIPML<StaticLossyDielectric, SimpleAuxPMLRunline>(
+                parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
+                gridDesc.getDxyz(), gridDesc.getDt());
+        }
+        else if (bulkMaterial->getModelName() == "DrudeMetal1")
+        {
+            setupMat = newCFSRIPML<DrudeModel1, SimpleAuxPMLRunline>(
+                parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
+                gridDesc.getDxyz(), gridDesc.getDt());
+        }
+        else if (bulkMaterial->getModelName() == "PerfectConductor")
+        {
+            setupMat = SetupMaterialPtr(new SetupPerfectConductor);
+        }
+        else
+        {
+            throw(Exception(string("Unsupported PML material model: ") + 
+                bulkMaterial->getModelName()));
+        }
     }
-    //setupMat->setParentPaint(parentPaint);
+    
     
     return setupMat;
 }

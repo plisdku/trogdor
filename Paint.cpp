@@ -10,7 +10,7 @@
 #include "Paint.h"
 #include "Map.h"
 #include "SimulationDescription.h"
-
+#include <sstream>
 using namespace std;
 
 Map<Paint, PaintPtr> Paint::mPalette;
@@ -60,6 +60,23 @@ Paint(const MaterialDescPtr & material) :
 	mBulkMaterial(material)
 {
 	assert(material != 0L);
+}
+
+string Paint::
+getFullName() const
+{
+    ostringstream str;
+    str << mBulkMaterial->getName();
+    
+	if (mType == kBulkPaintType)
+		str << " bulk";
+	else
+		str << " boundary";
+	
+	if (norm2(mPMLDirections) != 0)
+		str << " PML " << mPMLDirections;
+    
+    return str.str();
 }
 
 Paint* Paint::

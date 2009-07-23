@@ -136,7 +136,9 @@ public:
         { return mMaterial.getModelName(); }
 private:
     Vector3f mDxyz;
+    Vector3f mDxyz_inverse;
     float mDt;
+    
     MaterialT mMaterial;
     PMLT mPML;
     CurrentT mCurrent;

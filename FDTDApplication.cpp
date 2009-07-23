@@ -46,23 +46,34 @@ FDTDApplication FDTDApplication::sInstance;
 void FDTDApplication::
 runNew(string parameterFile)
 {
+    double t0, t1;
 	Map<GridDescPtr, VoxelizedPartitionPtr> voxelizedGrids;
     Map<string, CalculationPartitionPtr> calculationGrids;
 	
+    t0 = getTimeInMicroseconds();
 	SimulationDescPtr sim = loadSimulation(parameterFile);
+    mNumT = sim->getDuration();
 	//Mat3i orientation = guessFastestOrientation(*sim);
+    t1 = getTimeInMicroseconds();
+    mPerformance.setReadDescriptionMicroseconds(t1-t0);
 	
+    t0 = getTimeInMicroseconds();
 	//sim->cycleCoordinates();
 	//sim->cycleCoordinates();
 	voxelizeGrids(sim, voxelizedGrids); // includes setup runlines
 	
 	// in here: do any setup that requires the voxelized grids
 	// extract all information that will be needed after the setup grid is gone
-	
+	t1 = getTimeInMicroseconds();
+    mPerformance.setVoxelizeMicroseconds(t1-t0);
+    
+    t0 = getTimeInMicroseconds();
     trimVoxelizedGrids(voxelizedGrids); // delete VoxelGrid & PartitionCellCount
     makeCalculationGrids(sim, calculationGrids, voxelizedGrids);
 	voxelizedGrids.clear();  // this will delete the setup objects
     allocateAuxBuffers(calculationGrids);
+    t1 = getTimeInMicroseconds();
+    mPerformance.setSetupCalculationMicroseconds(t1-t0);
 	
 	// allocate memory that can be postponed
     
@@ -75,7 +86,7 @@ runNew(string parameterFile)
     */
     
 	// RUN THE SIMULATION hoorah.
-    LOG << "Beginning calculation.\n";
+//    LOG << "Beginning calculation.\n";
     
     // The execution order here is a wee bit weird, with the priming-the-pump
     // step.  Timestep 0 is considered to be the initial condition, and is
@@ -83,18 +94,19 @@ runNew(string parameterFile)
     // written to the output files.  So there are N-1 updates in an N step
     // simulation.
     
-    sourceE(calculationGrids, 0);
-    outputE(calculationGrids, 0);
-    sourceH(calculationGrids, 0);
-    outputH(calculationGrids, 0);
-    for (long tt = 1; tt < sim->getDuration(); tt++)
+    const bool BENCHMARK_ALL = 1;
+    
+    t0 = getTimeInMicroseconds();
+    if (BENCHMARK_ALL)
+        runTimed(calculationGrids);
+    else
+        runUntimed(calculationGrids);
+    t1 = getTimeInMicroseconds();
+    mPerformance.setRunCalculationMicroseconds(t1-t0);
+    
+    if (BENCHMARK_ALL)
     {
-        updateE(calculationGrids, tt);
-        sourceE(calculationGrids, tt);
-        outputE(calculationGrids, tt);
-        updateH(calculationGrids, tt);
-        sourceH(calculationGrids, tt);
-        outputH(calculationGrids, tt);
+        reportPerformance(calculationGrids);
     }
     
     LOG << "Done with simulation.\n";
@@ -356,8 +368,8 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 		cerr << "Warning: Huygens surface facing sides (e.g. +x and -x) are "
 			"both omitted.  This results in arbitrary and possibly incorrect "
 			"behavior.\n";
-    LOG << "What is omitted?\n";
-    LOGMORE << omittedSides << endl;
+    //LOG << "What is omitted?\n";
+    //LOGMORE << omittedSides << endl;
 	
 	Rect3i copyFrom(huygensSurface->getHalfCells());
 	for (nn = 0; nn < 3; nn++)
@@ -538,7 +550,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	if (omittedSides.count(srcDir))
 	{
 		// use a hard source
-		LOG << "Using a hard source.\n";
+		//LOG << "Using a hard source.\n";
         const int SIGNIFIESHARDSOURCE = 0;
         const int SIGNIFIESSOFTSOURCE = 1;
 				
@@ -561,7 +573,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	else
 	{
 		// use a soft source, and omit the back side
-		LOG << "Using a soft source.\n";
+//		LOG << "Using a soft source.\n";
         
 		HuygensSurfaceDescPtr hPtr(
             new HuygensSurfaceDescription(*huygensSurface, tfRect));
@@ -618,7 +630,7 @@ makeCalculationGrids(const SimulationDescPtr sim,
 void FDTDApplication::
 allocateAuxBuffers(Map<string, CalculationPartitionPtr> & calcs)
 {
-    LOG << "Completing allocation.\n";
+//    LOG << "Completing allocation.\n";
     
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcs.begin(); itr != calcs.end(); itr++)
@@ -674,6 +686,113 @@ outputH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
         itr->second->outputH(timestep);
 }
 
+void FDTDApplication::
+updateETimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->timedUpdateE(timestep);
+}
+
+void FDTDApplication::
+sourceETimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->timedSourceE(timestep);
+}
+
+void FDTDApplication::
+outputETimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->timedOutputE(timestep);
+}
+
+void FDTDApplication::
+updateHTimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->timedUpdateH(timestep);
+}
+
+void FDTDApplication::
+sourceHTimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->timedSourceH(timestep);
+}
+
+void FDTDApplication::
+outputHTimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+{
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
+        itr->second->timedOutputH(timestep);
+}
+
+void FDTDApplication::
+runUntimed(Map<string, CalculationPartitionPtr> & calculationGrids)
+{
+    sourceE(calculationGrids, 0);
+    outputE(calculationGrids, 0);
+    sourceH(calculationGrids, 0);
+    outputH(calculationGrids, 0);
+    for (long tt = 1; tt < mNumT; tt++)
+    {
+        updateE(calculationGrids, tt);
+        sourceE(calculationGrids, tt);
+        outputE(calculationGrids, tt);
+        updateH(calculationGrids, tt);
+        sourceH(calculationGrids, tt);
+        outputH(calculationGrids, tt);
+    }
+}
+
+void FDTDApplication::
+runTimed(Map<string, CalculationPartitionPtr> & calculationGrids)
+{
+    sourceETimed(calculationGrids, 0);
+    outputETimed(calculationGrids, 0);
+    sourceHTimed(calculationGrids, 0);
+    outputHTimed(calculationGrids, 0);
+    for (long tt = 1; tt < mNumT; tt++)
+    {
+        updateETimed(calculationGrids, tt);
+        sourceETimed(calculationGrids, tt);
+        outputETimed(calculationGrids, tt);
+        updateHTimed(calculationGrids, tt);
+        sourceHTimed(calculationGrids, tt);
+        outputHTimed(calculationGrids, tt);
+    }
+}
+
+void FDTDApplication::
+reportPerformance(Map<string, CalculationPartitionPtr> & calculationGrids)
+{
+    ofstream runlog("runlog.m");
+    mPerformance.printForMatlab(runlog);
+    int gridN = 1;
+    map<string, CalculationPartitionPtr>::iterator itr;
+    for (itr = calculationGrids.begin(); itr != calculationGrids.end(); itr++)
+    {
+        ostringstream prefix;
+        prefix << "trogdor.grid{" << gridN << "}.";
+        runlog << prefix.str() << "name = '" << itr->first << "';\n";
+        itr->second->printPerformanceForMatlab(runlog, prefix.str());
+        gridN++;
+    }
+    
+    
+    
+    runlog.close();
+}
+
+
+
 #pragma mark *** Singleton stuff ***
 
 FDTDApplication & FDTDApplication::
@@ -689,14 +808,7 @@ FDTDApplication() :
 	m_dy(0.0),
 	m_dz(0.0),
 	m_dt(0.0),
-	mNumT(0),
-	mTimestepStartTimes(),
-	mUpdateETime(0.0),
-	mUpdateHTime(0.0),
-	mBufferETime(0.0),
-	mBufferHTime(0.0),
-	mOutputTime(0.0),
-	mPrintTimestepTime(0.0)
+	mNumT(0)
 {
 }
 

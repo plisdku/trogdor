@@ -136,13 +136,13 @@ NeighborBuffer(string prefix,
     mLattice = InterleavedLatticePtr(new InterleavedLattice(
         prefix, destHalfRect));
         
-    LOG << "Source " << mSourceHalfCells << " dest " << destHalfRect << "\n";
-    LOG << "Source factors: \n";
-    LOGMORE << mSourceFactorsE << "\n";
-    LOGMORE << mSourceFactorsH << "\n";
-    LOG << "Dest factors: \n";
-    LOGMORE << mDestFactorsE << "\n";
-    LOGMORE << mDestFactorsH << "\n";
+//    LOG << "Source " << mSourceHalfCells << " dest " << destHalfRect << "\n";
+//    LOG << "Source factors: \n";
+//    LOGMORE << mSourceFactorsE << "\n";
+//    LOGMORE << mSourceFactorsH << "\n";
+//    LOG << "Dest factors: \n";
+//    LOGMORE << mDestFactorsE << "\n";
+//    LOGMORE << mDestFactorsH << "\n";
 }
 
 const Rect3i & NeighborBuffer::
@@ -223,13 +223,13 @@ initFactors(const Rect3i & huygensHalfCells, int sideNum,
         
         if (eFieldIsWithinTotalField)
         {
-            LOG << "E" << char('x'+dir) << " is TOTAL FIELD\n";
+//            LOG << "E" << char('x'+dir) << " is TOTAL FIELD\n";
             mDestFactorsE[dir] = 1.0f;
             mSourceFactorsE[dir] = -1.0f*incidentFieldFactor;
         }
         else
         {
-            LOG << "E" << char('x'+dir) << " is SCATTERED FIELD\n";
+//            LOG << "E" << char('x'+dir) << " is SCATTERED FIELD\n";
             mDestFactorsE[dir] = 1.0f;
             mSourceFactorsE[dir] = 1.0f * incidentFieldFactor;
         }
@@ -241,13 +241,13 @@ initFactors(const Rect3i & huygensHalfCells, int sideNum,
         
         if (hFieldIsWithinTotalField)
         {
-            LOG << "H" << char('x'+dir) << " is TOTAL FIELD\n";
+//            LOG << "H" << char('x'+dir) << " is TOTAL FIELD\n";
             mDestFactorsH[dir] = 1.0f;
             mSourceFactorsH[dir] = -1.0f*incidentFieldFactor;
         }
         else
         {
-            LOG << "H" << char('x'+dir) << " is SCATTERED FIELD\n";
+//            LOG << "H" << char('x'+dir) << " is SCATTERED FIELD\n";
             mDestFactorsH[dir] = 1.0f;
             mSourceFactorsH[dir] = 1.0f * incidentFieldFactor;
         }

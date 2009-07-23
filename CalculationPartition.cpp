@@ -48,7 +48,9 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     for (itr = delegs.begin(); itr != delegs.end(); itr++)
     {
         //LOG << "Dealing with paint " << *itr->first << endl;
-        mMaterials.push_back(itr->second->makeCalcMaterial(vp, *this));
+        MaterialPtr newMaterial = itr->second->makeCalcMaterial(vp, *this);
+        newMaterial->setSubstanceName(itr->first->getFullName());
+        mMaterials.push_back(newMaterial);
     }
     
     const vector<SetupOutputPtr> & outs = vp.getSetupOutputs();
@@ -78,6 +80,12 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
 CalculationPartition::
 ~CalculationPartition()
 {
+}
+
+InterleavedLatticePtr CalculationPartition::
+getLattice() const
+{
+    return mLattice; 
 }
 
 void CalculationPartition::
@@ -128,7 +136,7 @@ outputE(int timestep)
     for (nn = 0; nn < mOutputs.size(); nn++)
         mOutputs[nn]->outputEPhase(*this, timestep);
     
-    printFields(cout, octantE(2), 1.0);
+    //printFields(cout, octantE(2), 1.0);
 }
 
 void CalculationPartition::
@@ -226,7 +234,7 @@ timedOutputE(int timestep)
         mStatistics.addOutputMicroseconds(nn, t2-t1);
     }
     
-    printFields(cout, octantE(2), 1.0);
+    //printFields(cout, octantE(2), 1.0);
 }
 
 void CalculationPartition::

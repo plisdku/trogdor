@@ -37,6 +37,7 @@ class SetupSource
 {
 public:
     SetupSource() {}
+    virtual ~SetupSource() {}
     
     // Setting up runtime outputs
     virtual SourcePtr makeSource(const VoxelizedPartition & vp,

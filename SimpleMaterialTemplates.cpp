@@ -203,6 +203,7 @@ UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
     mDxyz(dxyz),
     mDt(dt)
 {
+    mDxyz_inverse = 1.0 / mDxyz;
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
@@ -218,6 +219,7 @@ UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
     mDxyz(dxyz),
     mDt(dt)
 {
+    mDxyz_inverse = 1.0 / mDxyz;
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
@@ -260,8 +262,8 @@ calcEx()
     const int DIRECTION = 0;
     const int STRIDE = 1;
     
-    float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
-    float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
+    float dj_inv = mDxyz_inverse[(DIRECTION+1)%3];  // e.g. dy
+    float dk_inv = mDxyz_inverse[(DIRECTION+2)%3];  // e.g. dz
     
     typename MaterialT::LocalDataE materialData;
     typename PMLT::LocalDataEx pmlData;
@@ -282,15 +284,15 @@ calcEx()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        mMaterial.onStartRunlineE(materialData, rl);
+        mMaterial.onStartRunlineEx(materialData, rl);
         mPML.onStartRunlineEx(pmlData, rl);
         mCurrent.onStartRunlineE(currentData, rl);
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
-            float dHj = (*gjHigh - *gjLow)/dk;
-            float dHk = (*gkHigh - *gkLow)/dj;
+            float dHj = (*gjHigh - *gjLow)*dk_inv;
+            float dHk = (*gkHigh - *gkLow)*dj_inv;
             
             mMaterial.beforeUpdateE(materialData, *fi, dHj, dHk);
             mPML.beforeUpdateEx(pmlData, *fi, dHj, dHk);
@@ -337,8 +339,8 @@ calcEy()
     const int DIRECTION = 1;
     const int STRIDE = 1;
     
-    float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
-    float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
+    float dj_inv = mDxyz_inverse[(DIRECTION+1)%3];  // e.g. dy
+    float dk_inv = mDxyz_inverse[(DIRECTION+2)%3];  // e.g. dz
     
     typename MaterialT::LocalDataE materialData;
     typename PMLT::LocalDataEy pmlData;
@@ -359,15 +361,15 @@ calcEy()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        mMaterial.onStartRunlineE(materialData, rl);
+        mMaterial.onStartRunlineEy(materialData, rl);
         mPML.onStartRunlineEy(pmlData, rl);
         mCurrent.onStartRunlineE(currentData, rl);
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
-            float dHj = (*gjHigh - *gjLow)/dk;
-            float dHk = (*gkHigh - *gkLow)/dj;
+            float dHj = (*gjHigh - *gjLow)*dk_inv;
+            float dHk = (*gkHigh - *gkLow)*dj_inv;
             
             mMaterial.beforeUpdateE(materialData, *fi, dHj, dHk);
             mPML.beforeUpdateEy(pmlData, *fi, dHj, dHk);
@@ -414,8 +416,8 @@ calcEz()
     const int DIRECTION = 2;
     const int STRIDE = 1;
     
-    float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
-    float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
+    float dj_inv = mDxyz_inverse[(DIRECTION+1)%3];  // e.g. dy
+    float dk_inv = mDxyz_inverse[(DIRECTION+2)%3];  // e.g. dz
     
     typename MaterialT::LocalDataE materialData;
     typename PMLT::LocalDataEz pmlData;
@@ -436,15 +438,15 @@ calcEz()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        mMaterial.onStartRunlineE(materialData, rl);
+        mMaterial.onStartRunlineEz(materialData, rl);
         mPML.onStartRunlineEz(pmlData, rl);
         mCurrent.onStartRunlineE(currentData, rl);
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
-            float dHj = (*gjHigh - *gjLow)/dk;
-            float dHk = (*gkHigh - *gkLow)/dj;
+            float dHj = (*gjHigh - *gjLow)*dk_inv;
+            float dHk = (*gkHigh - *gkLow)*dj_inv;
             
             mMaterial.beforeUpdateE(materialData, *fi, dHj, dHk);
             mPML.beforeUpdateEz(pmlData, *fi, dHj, dHk);
@@ -495,8 +497,8 @@ calcHx()
     const int DIRECTION = 0;
     const int STRIDE = 1;
     
-    float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
-    float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
+    float dj_inv = mDxyz_inverse[(DIRECTION+1)%3];  // e.g. dy
+    float dk_inv = mDxyz_inverse[(DIRECTION+2)%3];  // e.g. dz
     
     typename MaterialT::LocalDataH materialData;
     typename PMLT::LocalDataHx pmlData;
@@ -517,15 +519,15 @@ calcHx()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        mMaterial.onStartRunlineH(materialData, rl);
+        mMaterial.onStartRunlineHx(materialData, rl);
         mPML.onStartRunlineHx(pmlData, rl);
         mCurrent.onStartRunlineH(currentData, rl);
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
-            float dEj = (*gjHigh - *gjLow)/dk;
-            float dEk = (*gkHigh - *gkLow)/dj;
+            float dEj = (*gjHigh - *gjLow)*dk_inv;
+            float dEk = (*gkHigh - *gkLow)*dj_inv;
             
             mMaterial.beforeUpdateH(materialData, *fi, dEj, dEk);
             mPML.beforeUpdateHx(pmlData, *fi, dEj, dEk);
@@ -572,8 +574,8 @@ calcHy()
     const int DIRECTION = 1;
     const int STRIDE = 1;
     
-    float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
-    float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
+    float dj_inv = mDxyz_inverse[(DIRECTION+1)%3];  // e.g. dy
+    float dk_inv = mDxyz_inverse[(DIRECTION+2)%3];  // e.g. dz
     
     typename MaterialT::LocalDataH materialData;
     typename PMLT::LocalDataHy pmlData;
@@ -594,15 +596,15 @@ calcHy()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        mMaterial.onStartRunlineH(materialData, rl);
+        mMaterial.onStartRunlineHy(materialData, rl);
         mPML.onStartRunlineHy(pmlData, rl);
         mCurrent.onStartRunlineH(currentData, rl);
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
-            float dEj = (*gjHigh - *gjLow)/dk;
-            float dEk = (*gkHigh - *gkLow)/dj;
+            float dEj = (*gjHigh - *gjLow)*dk_inv;
+            float dEk = (*gkHigh - *gkLow)*dj_inv;
             
             mMaterial.beforeUpdateH(materialData, *fi, dEj, dEk);
             mPML.beforeUpdateHy(pmlData, *fi, dEj, dEk);
@@ -649,8 +651,8 @@ calcHz()
     const int DIRECTION = 2;
     const int STRIDE = 1;
     
-    float dj = mDxyz[(DIRECTION+1)%3];  // e.g. dy
-    float dk = mDxyz[(DIRECTION+2)%3];  // e.g. dz
+    float dj_inv = mDxyz_inverse[(DIRECTION+1)%3];  // e.g. dy
+    float dk_inv = mDxyz_inverse[(DIRECTION+2)%3];  // e.g. dz
     
     typename MaterialT::LocalDataH materialData;
     typename PMLT::LocalDataHz pmlData;
@@ -671,15 +673,15 @@ calcHz()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
-        mMaterial.onStartRunlineH(materialData, rl);
+        mMaterial.onStartRunlineHz(materialData, rl);
         mPML.onStartRunlineHz(pmlData, rl);
         mCurrent.onStartRunlineH(currentData, rl);
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
-            float dEj = (*gjHigh - *gjLow)/dk;
-            float dEk = (*gkHigh - *gkLow)/dj;
+            float dEj = (*gjHigh - *gjLow)*dk_inv;
+            float dEk = (*gkHigh - *gkLow)*dj_inv;
             
             mMaterial.beforeUpdateH(materialData, *fi, dEj, dEk);
             mPML.beforeUpdateHz(pmlData, *fi, dEj, dEk);

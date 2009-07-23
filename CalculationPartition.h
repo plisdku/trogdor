@@ -37,7 +37,7 @@ public:
         Vector3f dxyz, float dt, long numT);
     ~CalculationPartition();
     
-    InterleavedLatticePtr getLattice() const { return mLattice; }
+    InterleavedLatticePtr getLattice() const;
     
     // used by PartitionStatistics
     const std::vector<MaterialPtr> getMaterials() const { return mMaterials; }
@@ -73,7 +73,6 @@ public:
     void printPerformanceForMatlab(std::ostream & str, std::string prefix);
     
 private:
-    //std::string mGridName;
     Vector3f m_dxyz;
     float m_dt;
     long m_numT;

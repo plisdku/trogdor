@@ -755,8 +755,8 @@ becomeLink(GridDescPtr sourceGrid, const Rect3i & sourceHalfCells)
     mSourceGrid = sourceGrid;
     mSourceGridName = sourceGrid->getName();
     
-    LOG << "Source half cells " << sourceHalfCells << "\n";
-    LOG << "Dest half cells " << mHalfCells << "\n";
+//    LOG << "Source half cells " << sourceHalfCells << "\n";
+//    LOG << "Dest half cells " << mHalfCells << "\n";
 }
 
 HuygensSurfaceDescription* HuygensSurfaceDescription::
@@ -779,7 +779,7 @@ newTFSFTimeSource(SourceFields fields, string timeFile, Vector3i direction,
     hs2->mOmittedSides = omittedSides;
     hs2->mIsTotalField = isTF;
     
-    LOG << "Half cells " << halfCells << "\n";
+//    LOG << "Half cells " << halfCells << "\n";
     
     return hs2;
 }
@@ -806,7 +806,7 @@ newTFSFFormulaSource(SourceFields fields, string formula, Vector3i direction,
     hs2->mOmittedSides = omittedSides;
     hs2->mIsTotalField = isTF;
     
-    LOG << "Half cells " << halfCells << "\n";
+    //LOG << "Half cells " << halfCells << "\n";
     
     return hs2;
 }
