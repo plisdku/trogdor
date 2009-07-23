@@ -208,7 +208,8 @@ printForMatlab(std::ostream & str, const string & prefix,
         str << prefix << "material{" << nn+1 << "}.numYeeCells = " <<
             halfCells/6.0 << ";\n";
         str << prefix << "material{" << nn+1 << "}.totalTime = " <<
-            totalMicroseconds*1e-6 << ";\n";        str << prefix << "material{" << nn+1 << "}.halfCellTime = " <<
+            totalMicroseconds*1e-6 << ";\n";
+        str << prefix << "material{" << nn+1 << "}.halfCellTime = " <<
             (totalMicroseconds*1e-6/halfCells/numT) << ";\n";
     }
 }
