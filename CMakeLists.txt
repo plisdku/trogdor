@@ -68,6 +68,8 @@ DrudeModel1.h
 DrudeModel1.cpp
 FDTDApplication.h
 FDTDApplication.cpp
+FileSource.h
+FileSource.cpp
 FormulaSource.h
 FormulaSource.cpp
 HuygensSurface.h
