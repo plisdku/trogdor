@@ -396,31 +396,90 @@ overlayPML()
 	//LOGMORE << "Bounds " << mAllocRegion << "\n";
 	//LOGMORE << "nonPML " << mNonPMLRegion << "\n";
 	
+    /*
 	LOG << "Warning: this will not result in correct behavior if the current "
 		"node needs to paint the PML from the opposite side of the whole grid"
 		" and if the PML is not in the same direction.  This can be avoided "
 		"by always painting a half-cell of PEC or PMC at the grid edge, I "
 		"believe, but I don't know that I would count on this behavior.\n";
-	
+	*/
 	Rect3i clipPMLDir(-1, -1, -1, 1, 1, 1);
 	Rect3i & mGrid = mGridHalfCells;
 	
-	Vector3i pp;
-	for (pp[2] = mGrid.p1[2]; pp[2] <= mGrid.p2[2]; pp[2]++)
-	for (pp[1] = mGrid.p1[1]; pp[1] <= mGrid.p2[1]; pp[1]++)
-	for (pp[0] = mGrid.p1[0]; pp[0] <= mGrid.p2[0]; pp[0]++)
-	if (!mNonPMLRegion.encloses(pp))
-	{
-		// pmlDir points from the PML to the non PML region, and all components
-		// are 1, -1 or 0.
-		Vector3i pmlDir(clip(clipPMLDir, 
-			Vector3i(pp - clip(mNonPMLRegion, pp))));
-		
-		// this is like paintHalfCell except it tags PML.  there's some fancy
-		// footwork to account for PML that is wrapping around the grid in
-		// MPI contexts, should that ever occur.
-		paintPML(pmlDir, pp);
-	}
+    const bool USE_FASTER_METHOD = 1;
+    
+    Vector3i pp;
+    if (USE_FASTER_METHOD == 0)
+    {
+        for (pp[2] = mGrid.p1[2]; pp[2] <= mGrid.p2[2]; pp[2]++)
+        for (pp[1] = mGrid.p1[1]; pp[1] <= mGrid.p2[1]; pp[1]++)
+        for (pp[0] = mGrid.p1[0]; pp[0] <= mGrid.p2[0]; pp[0]++)
+        if (!mNonPMLRegion.encloses(pp))
+        {
+            // pmlDir points from the PML to the non PML region, and all
+            // components are 1, -1 or 0.
+            Vector3i pmlDir(clip(clipPMLDir, 
+                Vector3i(pp - clip(mNonPMLRegion, pp))));
+            
+            // this is like paintHalfCell except it tags PML.  there's some fancy
+            // footwork to account for PML that is wrapping around the grid in
+            // MPI contexts, should that ever occur.
+            paintPML(pmlDir, pp);
+        }
+    }
+    else
+    {
+        // 1.  +X and -X faces
+        for (pp[2] = mGrid.p1[2]; pp[2] <= mGrid.p2[2]; pp[2]++)
+        for (pp[1] = mGrid.p1[1]; pp[1] <= mGrid.p2[1]; pp[1]++)
+        for (pp[0] = mGrid.p1[0]; pp[0] < mNonPMLRegion.p1[0]; pp[0]++)
+        {
+            Vector3i pmlDir(clip(clipPMLDir,  pp - clip(mNonPMLRegion, pp)));
+            paintPML(pmlDir, pp);
+        }
+        
+        for (pp[2] = mGrid.p1[2]; pp[2] <= mGrid.p2[2]; pp[2]++)
+        for (pp[1] = mGrid.p1[1]; pp[1] <= mGrid.p2[1]; pp[1]++)
+        for (pp[0] = mNonPMLRegion.p2[0]+1; pp[0] <= mGrid.p2[0]; pp[0]++)
+        {
+            Vector3i pmlDir(clip(clipPMLDir,  pp - clip(mNonPMLRegion, pp)));
+            paintPML(pmlDir, pp);
+        }
+        
+        // 2.  +Y and -Y faces, limited to the non-X-PML regions
+        for (pp[2] = mGrid.p1[2]; pp[2] <= mGrid.p2[2]; pp[2]++)
+        for (pp[1] = mGrid.p1[1]; pp[1] < mNonPMLRegion.p1[1]; pp[1]++)
+        for (pp[0] = mNonPMLRegion.p1[0]; pp[0] <= mNonPMLRegion.p2[0]; pp[0]++)
+        {
+            Vector3i pmlDir(clip(clipPMLDir,  pp - clip(mNonPMLRegion, pp)));
+            paintPML(pmlDir, pp);
+        }
+        
+        for (pp[2] = mGrid.p1[2]; pp[2] <= mGrid.p2[2]; pp[2]++)
+        for (pp[1] = mNonPMLRegion.p2[1]+1; pp[1] <= mGrid.p2[1]; pp[1]++)
+        for (pp[0] = mNonPMLRegion.p1[0]; pp[0] <= mNonPMLRegion.p2[0]; pp[0]++)
+        {
+            Vector3i pmlDir(clip(clipPMLDir,  pp - clip(mNonPMLRegion, pp)));
+            paintPML(pmlDir, pp);
+        }
+        
+        // 3.  +Z and -Z faces, limited to non-X-PML and non-Y-PML regions
+        for (pp[2] = mGrid.p1[2]; pp[2] < mNonPMLRegion.p1[2]; pp[2]++)
+        for (pp[1] = mNonPMLRegion.p1[1]; pp[1] <= mNonPMLRegion.p2[1]; pp[1]++)
+        for (pp[0] = mNonPMLRegion.p1[0]; pp[0] <= mNonPMLRegion.p2[0]; pp[0]++)
+        {
+            Vector3i pmlDir(clip(clipPMLDir,  pp - clip(mNonPMLRegion, pp)));
+            paintPML(pmlDir, pp);
+        }
+        
+        for (pp[2] = mNonPMLRegion.p2[2]+1; pp[2] <= mGrid.p2[2]; pp[2]++)
+        for (pp[1] = mNonPMLRegion.p1[1]; pp[1] <= mNonPMLRegion.p2[1]; pp[1]++)
+        for (pp[0] = mNonPMLRegion.p1[0]; pp[0] <= mNonPMLRegion.p2[0]; pp[0]++)
+        {
+            Vector3i pmlDir(clip(clipPMLDir,  pp - clip(mNonPMLRegion, pp)));
+            paintPML(pmlDir, pp);
+        }
+    }
 }
 
 #pragma mark *** Accessor and grid paint methods ***

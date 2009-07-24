@@ -1,26 +1,21 @@
 /*
- *  FormulaSource.h
+ *  FileSource.h
  *  TROGDOR
  *
- *  Created by Paul Hansen on 5/7/09.
+ *  Created by Paul Hansen on 7/24/09.
  *  Copyright 2009 Stanford University. All rights reserved.
  *
  */
 
-#ifndef _FORMULASOURCE_
-#define _FORMULASOURCE_
+#ifndef _FILESOURCE_
+#define _FILESOURCE_
 
-#include "SourceBoss.h"
-#include "SimulationDescription.h"
-#include "Pointer.h"
-#include "geometry.h"
-#include "calc.hh"
-#include <vector>
+#include <fstream>
 
-class FormulaSetupSource : public SetupSource
+class FileSetupSource : public SetupSource
 {
 public:
-    FormulaSetupSource(const SourceDescPtr & desc);
+    FileSetupSource(const SourceDescPtr & desc);
     
     virtual SourcePtr makeSource(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
@@ -28,10 +23,10 @@ private:
     SourceDescPtr mDesc;
 };
 
-class FormulaSource : public Source
+class FileSource : public Source
 {
 public:
-    FormulaSource(const SourceDescription & desc,
+    FileSource(const SourceDescription & desc,
         const VoxelizedPartition & vp, const CalculationPartition & cp);
     
     virtual void sourceEPhase(CalculationPartition & cp, int timestep);
@@ -47,10 +42,9 @@ private:
     //void sourceE(Vector3f value);
     //void sourceH(Vector3f value);
     
-    int mCurrentDuration;
+    std::ifstream mFileStream;
     
-    std::string mFormula;
-	calc_defs::Calculator<float> mCalculator;
+    int mCurrentDuration;
     SourceFields mFields;
     
     float mDt;
@@ -62,6 +56,9 @@ private:
     
     Map<std::string, std::string> mParams;
 };
+
+
+
 
 
 

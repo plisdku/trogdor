@@ -1,47 +1,36 @@
 /*
- *  FormulaSource.cpp
+ *  FileSource.cpp
  *  TROGDOR
  *
- *  Created by Paul Hansen on 5/7/09.
+ *  Created by Paul Hansen on 7/24/09.
  *  Copyright 2009 Stanford University. All rights reserved.
  *
  */
 
-#include "FormulaSource.h"
-
-#include "SimulationDescription.h"
-#include "CalculationPartition.h"
-#include "VoxelizedPartition.h"
-#include "InterleavedLattice.h"
-#include <cstdlib>
-#include <iostream>
-
-using namespace std;
+#include "FileSource.h"
 
 #pragma mark *** Setup ***
 
-FormulaSetupSource::
-FormulaSetupSource(const SourceDescPtr & desc) :
+FileSetupSource::
+FileSetupSource(const SourceDescPtr & desc) :
     SetupSource(),
     mDesc(desc)
 {
 }
 
-SourcePtr FormulaSetupSource::
+SourcePtr FileSetupSource::
 makeSource(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
-    return SourcePtr(new FormulaSource(*mDesc, vp, cp));
+    return SourcePtr(new FileSource(*mDesc, vp, cp));
 }
 
 
-FormulaSource::
-FormulaSource(const SourceDescription & desc, const VoxelizedPartition & vp,
+FileSource::
+FileSource(const SourceDescription & desc, const VoxelizedPartition & vp,
     const CalculationPartition & cp) :
     Source(),
     mCurrentDuration(0),
-    mFormula(desc.getFormula()),
-    mCalculator(),
     mFields(desc.getSourceFields()),
     mDt(cp.getDt()),
     mIsSpaceVarying(desc.isSpaceVarying()),
@@ -49,6 +38,16 @@ FormulaSource(const SourceDescription & desc, const VoxelizedPartition & vp,
     mRegions(desc.getRegions()),
     mDurations(desc.getDurations())
 {
+    if (desc.isSpaceVarying())
+        throw(Exception("Space-varying file source not yet supported.\n"));
+    
+    mFileStreamStream.open(desc.getTimeFile(), ios::binary);
+    if (mFileStreamStream.good())
+        LOGF << "Opened binary file " << desc.getTimeFile() << ".\n";
+    else
+        throw(Exception(string("Could not open binary file")
+            + desc.getTimeFile()));
+    
     for (int rr = 0; rr < mRegions.size(); rr++)
     {
         Rect3i rect(clip(vp.getGridYeeCells(), mRegions[rr].getYeeCells()));
@@ -58,30 +57,10 @@ FormulaSource(const SourceDescription & desc, const VoxelizedPartition & vp,
     for (int dd = 0; dd < mDurations.size(); dd++)
     if (mDurations[dd].getLast() > (cp.getDuration()-1))
         mDurations[dd].setLast(cp.getDuration()-1);
-        
-	// The calculator will eventually update "n" and "t" to be the current
-	// timestep and current time; we can set them here to test the formula.
-	mCalculator.set("n", 0);
-	mCalculator.set("t", 0);
-	
-	LOGF << "Formula is " << mFormula << endl;
-	
-	bool err = mCalculator.parse(mFormula);
-	if (err)
-	{
-		LOG << "Error found.";
-		cerr << "Calculator cannot parse\n"
-			<< mFormula << "\n"
-			<< "Error message:\n";
-		mCalculator.report_error(cerr);
-		cerr << "Quitting.\n";
-		assert(!"Assert death.");
-		exit(1);
-	}
 }
 
 
-void FormulaSource::
+void FileSource::
 sourceEPhase(CalculationPartition & cp, int timestep)
 {
     if (norm2(mFields.getWhichE()) == 0)
@@ -105,7 +84,7 @@ sourceEPhase(CalculationPartition & cp, int timestep)
     }
 }
 
-void FormulaSource::
+void FileSource::
 sourceHPhase(CalculationPartition & cp, int timestep)
 {
     if (norm2(mFields.getWhichH()) == 0)
@@ -129,18 +108,15 @@ sourceHPhase(CalculationPartition & cp, int timestep)
     }
 }
 
-void FormulaSource::
+void FileSource::
 uniformSourceE(CalculationPartition & cp, int timestep)
 {
     //LOG << "Source E\n";
     float val;
     InterleavedLatticePtr lattice(cp.getLattice());
     
-	mCalculator.set("n", timestep);
-	mCalculator.set("t", mDt*timestep);
-	mCalculator.parse(mFormula);
-    
-	val = mCalculator.get_value();
+	if (mFileStream.good())
+		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
     
 //    LOG << "Source E val " << val << "\n";
     
@@ -174,17 +150,15 @@ uniformSourceE(CalculationPartition & cp, int timestep)
     }
 }
 
-void FormulaSource::
+void FileSource::
 uniformSourceH(CalculationPartition & cp, int timestep)
 {
     //LOG << "Source H\n";
     float val;
     InterleavedLatticePtr lattice(cp.getLattice());
     
-	mCalculator.set("n", timestep);
-	mCalculator.set("t", mDt*(0.5f + timestep));
-	mCalculator.parse(mFormula);
-	val = mCalculator.get_value();
+	if (mFileStream.good())
+		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
     
 //    LOG << "Source H val " << val << "\n";
     
@@ -213,7 +187,7 @@ uniformSourceH(CalculationPartition & cp, int timestep)
     }
 }
 
-void FormulaSource::
+void FileSource::
 polarizedSourceE(CalculationPartition & cp, int timestep)
 {
     //assert(mIsSoft);
@@ -223,11 +197,8 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
     float val;
     InterleavedLatticePtr lattice(cp.getLattice());
     
-	mCalculator.set("n", timestep);
-	mCalculator.set("t", mDt*timestep);
-	mCalculator.parse(mFormula);
-    
-	val = mCalculator.get_value();
+	if (mFileStream.good())
+		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
     
 //    LOG << "Source E val " << val << "\n";
     
@@ -258,7 +229,7 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
     }
 }
 
-void FormulaSource::
+void FileSource::
 polarizedSourceH(CalculationPartition & cp, int timestep)
 {
     //assert(mIsSoft);
@@ -268,11 +239,8 @@ polarizedSourceH(CalculationPartition & cp, int timestep)
     float val;
     InterleavedLatticePtr lattice(cp.getLattice());
     
-	mCalculator.set("n", timestep);
-	mCalculator.set("t", mDt*timestep);
-	mCalculator.parse(mFormula);
-    
-	val = mCalculator.get_value();
+	if (mFileStream.good())
+		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
     
 //    LOG << "Source H val " << val << "\n";
     
