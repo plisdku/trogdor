@@ -9,6 +9,14 @@
 
 #include "FileSource.h"
 
+#include "SimulationDescription.h"
+#include "CalculationPartition.h"
+#include "VoxelizedPartition.h"
+#include "InterleavedLattice.h"
+#include <cstdlib>
+
+using namespace std;
+
 #pragma mark *** Setup ***
 
 FileSetupSource::
@@ -32,6 +40,7 @@ FileSource(const SourceDescription & desc, const VoxelizedPartition & vp,
     Source(),
     mCurrentDuration(0),
     mFields(desc.getSourceFields()),
+    mFileStream(),
     mDt(cp.getDt()),
     mIsSpaceVarying(desc.isSpaceVarying()),
     mIsSoft(desc.isSoftSource()),
@@ -41,8 +50,8 @@ FileSource(const SourceDescription & desc, const VoxelizedPartition & vp,
     if (desc.isSpaceVarying())
         throw(Exception("Space-varying file source not yet supported.\n"));
     
-    mFileStreamStream.open(desc.getTimeFile(), ios::binary);
-    if (mFileStreamStream.good())
+    mFileStream.open(desc.getTimeFile().c_str(), ios::binary);
+    if (mFileStream.good())
         LOGF << "Opened binary file " << desc.getTimeFile() << ".\n";
     else
         throw(Exception(string("Could not open binary file")
@@ -117,6 +126,8 @@ uniformSourceE(CalculationPartition & cp, int timestep)
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
+    else
+        throw(Exception("Cannot read further from file."));
     
 //    LOG << "Source E val " << val << "\n";
     
@@ -159,6 +170,8 @@ uniformSourceH(CalculationPartition & cp, int timestep)
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
+    else
+        throw(Exception("Cannot read further from file."));
     
 //    LOG << "Source H val " << val << "\n";
     
@@ -199,6 +212,8 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
+    else
+        throw(Exception("Cannot read further from file."));
     
 //    LOG << "Source E val " << val << "\n";
     
@@ -241,6 +256,8 @@ polarizedSourceH(CalculationPartition & cp, int timestep)
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
+    else
+        throw(Exception("Cannot read further from file."));
     
 //    LOG << "Source H val " << val << "\n";
     

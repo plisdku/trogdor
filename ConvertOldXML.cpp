@@ -421,7 +421,15 @@ tfsfSource(const TiXmlElement* old)
         newAttribs["halfCells"] = oldAttribs["fineTFRect"];
     newAttribs["direction"] = oldAttribs["direction"];
     newAttribs["polarization"] = oldParamsAttribs["polarization"];
-    newAttribs["field"] = oldParamsAttribs["field"];
+    
+    // It seems that Trogdor 4 would not be troubled by a TFSFSource that had
+    // no "field" attribute.  This is ridiculous but there will be params.xml
+    // files all around with this problem.  I'll do the same thing as T4 and
+    // just assume it's "electric".
+    if (oldParamsAttribs.count("field"))
+        newAttribs["field"] = oldParamsAttribs["field"];
+    else
+        newAttribs["field"] = "electric";
     
     if (oldParamsAttribs.count("formula"))
         newAttribs["formula"] = oldParamsAttribs["formula"];

@@ -10,6 +10,11 @@
 #ifndef _FILESOURCE_
 #define _FILESOURCE_
 
+#include "SourceBoss.h"
+#include "SimulationDescription.h"
+#include "Pointer.h"
+#include "geometry.h"
+#include <vector>
 #include <fstream>
 
 class FileSetupSource : public SetupSource
