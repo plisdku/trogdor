@@ -117,6 +117,8 @@ StaticDielectric.h
 StaticDielectric.cpp
 StaticLossyDielectric.h
 StaticLossyDielectric.cpp
+StructuralReports.h
+StructuralReports.cpp
 Version.h
 VoxelGrid.h
 VoxelGrid.cpp

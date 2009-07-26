@@ -73,12 +73,15 @@ int main (int argc, char * const argv[])
 {
 	string paramFileName;
 	//string directory;
+    /*
 	int numThreads;
 	int numTimestepsOverride;
 	bool output3D = 0;
 	bool output2D = 0;
 	bool dumpGrid = 0;
 	bool runSim = 1;
+    */
+    SimulationPreferences prefs;
 	
 	// Get the command line arguments, print the help or version messages
 	// as necessary, handle parsing exceptions.
@@ -99,28 +102,29 @@ int main (int argc, char * const argv[])
 	// here is an override for debuggery.
 	paramFileName = variablesMap["input-file"].as<string>();
 	//directory = variablesMap["outputDirectory"].as<string>();
-	numThreads = variablesMap["numthreads"].as<int>();
+	prefs.numThreads = variablesMap["numthreads"].as<int>();
 	if (variablesMap.count("timesteps"))
 	{
-		numTimestepsOverride = variablesMap["timesteps"].as<int>();
-		cout << "Running with timestep override " << numTimestepsOverride;
+		prefs.numTimestepsOverride = variablesMap["timesteps"].as<int>();
+		cout << "Running with timestep override " << prefs.numTimestepsOverride;
 		cout << endl;
-		LOGF << "Running with timestep override " << numTimestepsOverride;
+		LOGF << "Running with timestep override " << prefs.numTimestepsOverride;
 		LOGFMORE << endl;
 	}
 	else
-		numTimestepsOverride = -1;
-	
-	dumpGrid = variablesMap.count("dumpgrid");
-	output3D = variablesMap.count("geometry");
-	output2D = variablesMap.count("xsections");
+		prefs.numTimestepsOverride = -1;
+    
+	prefs.dumpGrid = variablesMap.count("dumpgrid");
+	prefs.output3D = variablesMap.count("geometry");
+	prefs.output2D = variablesMap.count("xsections");
 	if (variablesMap.count("nosim"))
-		runSim = 0;
-	
-	runSim = (variablesMap.count("nosim") == 0);
+		prefs.runSim = 0;
+	prefs.runSim = (variablesMap.count("nosim") == 0);
+    prefs.memoryDirection = variablesMap.count("fastaxis");
+    
 	
     FDTDApplication& app = FDTDApplication::getInstance();
-	app.runNew(paramFileName);
+	app.runNew(paramFileName, prefs);
     //app.runAll(paramFileName, numThreads, runSim, output3D, dumpGrid,
 	//	output2D, numTimestepsOverride);
     
@@ -151,6 +155,8 @@ handleArguments(int argc, char* const argv[])
 		("dumpgrid", "write compiled grid information to text files")
 		("nosim", "do not run simulation")
 		("nodragon", "don't draw the dragon")
+        ("fastaxis,f", po::value<char>()->default_value('x'),
+            "axis along which memory is allocated")
 		//("outputDirectory,D",
 		//	po::value<string>()->default_value(""),
 		//	"directory for simulation outputs")

@@ -145,7 +145,7 @@ writeE(const CalculationPartition & cp)
     // Variables prefixed by "in" are the corresponding permuted ones, to deal
     // with "invisible" grid rotations.
     
-    InterleavedLatticePtr lattice(cp.getLattice());
+    const InterleavedLattice & lattice(cp.getLattice());
     
     int in0 = (3-mCoordPermutation)%3;  // direction corresponding to outside x
     int in1 = (4-mCoordPermutation)%3;  // ... outside y
@@ -176,7 +176,7 @@ writeE(const CalculationPartition & cp)
                         p[in0] += stride[in0])
                     {
                         //float val = cp.getE(inDir, p);
-                        float val = lattice->getE(inDir, p);
+                        float val = lattice.getE(inDir, p);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));
                     }
@@ -190,7 +190,7 @@ writeE(const CalculationPartition & cp)
                     for (p[in0] = rect.p1[in0]; p[in0] <= rect.p2[in0];
                         p[in0] += stride[in0])
                     {
-                        float val = lattice->getInterpolatedE(
+                        float val = lattice.getInterpolatedE(
                             inDir, Vector3f(p)+mInterpolationPoint);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));
@@ -209,7 +209,7 @@ writeH(const CalculationPartition & cp)
     // Variables prefixed by "in" are the corresponding permuted ones, to deal
     // with "invisible" grid rotations.
     
-    InterleavedLatticePtr lattice(cp.getLattice());
+    const InterleavedLattice& lattice(cp.getLattice());
     
     int in0 = (3-mCoordPermutation)%3;  // direction corresponding to outside x
     int in1 = (4-mCoordPermutation)%3;  // ... outside y
@@ -239,7 +239,7 @@ writeH(const CalculationPartition & cp)
                     for (p[in0] = rect.p1[in0]; p[in0] <= rect.p2[in0];
                         p[in0] += stride[in0])
                     {
-                        float val = lattice->getH(inDir, p);
+                        float val = lattice.getH(inDir, p);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));
                     }
@@ -253,7 +253,7 @@ writeH(const CalculationPartition & cp)
                     for (p[in0] = rect.p1[in0]; p[in0] <= rect.p2[in0];
                         p[in0] += stride[in0])
                     {
-                        float val = lattice->getInterpolatedH(
+                        float val = lattice.getInterpolatedH(
                             inDir, Vector3f(p)+mInterpolationPoint);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));

@@ -122,7 +122,7 @@ uniformSourceE(CalculationPartition & cp, int timestep)
 {
     //LOG << "Source E\n";
     float val;
-    InterleavedLatticePtr lattice(cp.getLattice());
+    InterleavedLattice& lattice(cp.getLattice());
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
@@ -144,7 +144,7 @@ uniformSourceE(CalculationPartition & cp, int timestep)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
                 {
-                    lattice->setE(dir, xx, val);
+                    lattice.setE(dir, xx, val);
                     //LOG << "Writing at " << ii << " " << jj << " " << kk
                     //    << "\n";
                     //LOG << "E is now " << cp.getE(dir, ii, jj, kk) << "\n";
@@ -155,7 +155,7 @@ uniformSourceE(CalculationPartition & cp, int timestep)
                 for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice->setE(dir, xx, lattice->getE(dir, xx)+val);
+                    lattice.setE(dir, xx, lattice.getE(dir, xx)+val);
             }
         }
     }
@@ -166,7 +166,7 @@ uniformSourceH(CalculationPartition & cp, int timestep)
 {
     //LOG << "Source H\n";
     float val;
-    InterleavedLatticePtr lattice(cp.getLattice());
+    InterleavedLattice& lattice(cp.getLattice());
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
@@ -187,14 +187,14 @@ uniformSourceH(CalculationPartition & cp, int timestep)
                 for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice->setH(dir, xx, val);
+                    lattice.setH(dir, xx, val);
             }
             else
             {
                 for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice->setH(dir, xx, lattice->getH(dir, xx)+val);
+                    lattice.setH(dir, xx, lattice.getH(dir, xx)+val);
             }
         }
     }
@@ -208,7 +208,7 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
     ////LOG << "Source E\n";
     Vector3f polarization = mFields.getPolarization();
     float val;
-    InterleavedLatticePtr lattice(cp.getLattice());
+    InterleavedLattice & lattice(cp.getLattice());
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
@@ -229,7 +229,7 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
                 {
-                    lattice->setE(dir, xx, val*polarization[dir]);
+                    lattice.setE(dir, xx, val*polarization[dir]);
                 }
             }
             else
@@ -237,8 +237,8 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
                 for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                lattice->setE(dir, xx,
-                    lattice->getE(dir, xx)+val*polarization[dir]);
+                lattice.setE(dir, xx,
+                    lattice.getE(dir, xx)+val*polarization[dir]);
             }
         }
     }
@@ -252,7 +252,7 @@ polarizedSourceH(CalculationPartition & cp, int timestep)
     //LOG << "Source H\n";
     Vector3f polarization = mFields.getPolarization();
     float val;
-    InterleavedLatticePtr lattice(cp.getLattice());
+    InterleavedLattice & lattice(cp.getLattice());
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
@@ -272,78 +272,17 @@ polarizedSourceH(CalculationPartition & cp, int timestep)
                 for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice->setH(dir, xx, val*polarization[dir]);
+                    lattice.setH(dir, xx, val*polarization[dir]);
             }
             else
             {
                 for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice->setH(dir, xx,
-                        lattice->getH(dir, xx)+val*polarization[dir]);
+                    lattice.setH(dir, xx,
+                        lattice.getH(dir, xx)+val*polarization[dir]);
             }
         }
     }
 }
 
-/*
-void FormulaSource::
-sourceE(Vector3f value)
-{
-    InterleavedLatticePtr lattice(cp.getLattice());
-    
-    for (unsigned int rr = 0; rr < mRegions.size(); rr++)
-    {
-        Rect3i rect = mRegions[rr].getYeeCells();
-        for (int dir = 0; dir < 3; dir++)
-        {
-            Vector3i xx;
-            if (!mIsSoft)
-            {
-                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
-                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
-                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice->setE(dir, xx, value);
-            }
-            else
-            {
-                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
-                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
-                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice->setE(dir, xx,
-                        lattice->getE(dir, xx)+value);
-            }
-        }
-    }
-}
-
-void FormulaSource::
-sourceH(Vector3f value)
-{
-    InterleavedLatticePtr lattice(cp.getLattice());
-    
-    for (unsigned int rr = 0; rr < mRegions.size(); rr++)
-    {
-        Rect3i rect = mRegions[rr].getYeeCells();
-        for (int dir = 0; dir < 3; dir++)
-        {
-            Vector3i xx;
-            if (!mIsSoft)
-            {
-                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
-                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
-                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice->setH(dir, xx, value);
-            }
-            else
-            {
-                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
-                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
-                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice->setH(dir, xx,
-                        lattice->getH(dir, xx)+value);
-            }
-        }
-    }
-}
-*/

@@ -82,10 +82,16 @@ CalculationPartition::
 {
 }
 
-InterleavedLatticePtr CalculationPartition::
+const InterleavedLattice & CalculationPartition::
 getLattice() const
 {
-    return mLattice; 
+    return *mLattice; 
+}
+
+InterleavedLattice & CalculationPartition::
+getLattice()
+{
+    return *mLattice; 
 }
 
 void CalculationPartition::

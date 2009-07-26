@@ -38,6 +38,21 @@ typedef Pointer<HuygensSurfaceDescription> HuygensSurfaceDescPtr;
 class CalculationPartition;
 typedef Pointer<CalculationPartition> CalculationPartitionPtr;
 
+struct SimulationPreferences
+{
+public:
+    SimulationPreferences();
+    
+    int numThreads;
+    int numTimestepsOverride;
+    bool output3D;
+    bool output2D;
+    bool dumpGrid;
+    bool runSim;
+    char memoryDirection;
+};
+
+
 /**
  *  Core application singleton
  *
@@ -63,7 +78,7 @@ public:
 		bool output3D, bool dumpGrid, bool output2D,
 		int numTimestepsOverride = -1);
 	*/
-	void runNew(std::string parameterFile);
+	void runNew(std::string parameterFile, const SimulationPreferences & prefs);
 
 private: // heh, "new private" stuff
 	
@@ -72,7 +87,6 @@ private: // heh, "new private" stuff
 	Mat3i guessFastestOrientation(const SimulationDescription & sim) const;
 	
 	void voxelizeGrids(const SimulationDescPtr sim,
-		//Map<std::string, GridDescriptionPtr> gridDescriptions,
 		Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids);
 	
 	void voxelizeGridRecursor(

@@ -37,7 +37,8 @@ public:
         Vector3f dxyz, float dt, long numT);
     ~CalculationPartition();
     
-    InterleavedLatticePtr getLattice() const;
+    const InterleavedLattice& getLattice() const;
+    InterleavedLattice& getLattice();
     
     // used by PartitionStatistics
     const std::vector<MaterialPtr> getMaterials() const { return mMaterials; }

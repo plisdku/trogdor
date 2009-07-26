@@ -27,6 +27,7 @@
 #include "TimeWrapper.h"
 #include "Version.h"
 #include "STLOutput.h"
+#include "StructuralReports.h"
 
 #include <Magick++.h>
 
@@ -43,8 +44,23 @@ using namespace YeeUtilities;
 
 FDTDApplication FDTDApplication::sInstance;
 
+
+SimulationPreferences::
+SimulationPreferences()
+{
+    numThreads = 1;
+    numTimestepsOverride = -1;
+    output3D = 0;
+    output2D = 0;
+    dumpGrid = 0;
+    runSim = 1;
+    memoryDirection = 'x';
+}
+
+
+
 void FDTDApplication::
-runNew(string parameterFile)
+runNew(string parameterFile, const SimulationPreferences & prefs)
 {
     double t0, t1;
 	Map<GridDescPtr, VoxelizedPartitionPtr> voxelizedGrids;
@@ -58,14 +74,38 @@ runNew(string parameterFile)
     mPerformance.setReadDescriptionMicroseconds(t1-t0);
 	
     t0 = getTimeInMicroseconds();
-	//sim->cycleCoordinates();
-	//sim->cycleCoordinates();
+    
+    if (prefs.memoryDirection == 'y')
+        sim->cycleCoordinates();
+    else if (prefs.memoryDirection == 'z')
+    {
+        sim->cycleCoordinates();
+        sim->cycleCoordinates();
+    }
 	voxelizeGrids(sim, voxelizedGrids); // includes setup runlines
 	
 	// in here: do any setup that requires the voxelized grids
 	// extract all information that will be needed after the setup grid is gone
 	t1 = getTimeInMicroseconds();
     mPerformance.setVoxelizeMicroseconds(t1-t0);
+    
+    map<GridDescPtr, VoxelizedPartitionPtr>::const_iterator itr;
+    if (prefs.output2D)
+    {
+        for (itr = voxelizedGrids.begin(); itr != voxelizedGrids.end(); itr++)
+        {
+            StructuralReports::saveOutputCrossSections(*itr->first,
+                *itr->second);
+        }
+    }
+    if (prefs.output3D)
+    {
+        for (itr = voxelizedGrids.begin(); itr != voxelizedGrids.end(); itr++)
+        {
+            StructuralReports::saveMaterialBoundariesBeta(*itr->first,
+                *itr->second);
+        }
+    }
     
     t0 = getTimeInMicroseconds();
     trimVoxelizedGrids(voxelizedGrids); // delete VoxelGrid & PartitionCellCount
