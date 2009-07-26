@@ -21,6 +21,10 @@
 
 #include <cmath>
 
+static const int PREFETCH_CELLS_AHEAD = 3;
+static const bool PREFETCH_E = 1;
+static const bool PREFETCH_H = 1;
+
 #pragma mark *** SimpleSetupMaterial ***
 
 template<class MaterialClass, class RunlineT>
@@ -288,6 +292,16 @@ calcEx()
         mPML.onStartRunlineEx(pmlData, rl);
         mCurrent.onStartRunlineE(currentData, rl);
         
+        if (nRL < runlines.size()-1)
+        {
+            RunlineT & rlAhead(runlines[nRL+1]);
+            __builtin_prefetch(rlAhead.fi, 1); // 1 indicates write
+            __builtin_prefetch(rlAhead.gj[0], 0);
+            __builtin_prefetch(rlAhead.gj[1], 0);
+            __builtin_prefetch(rlAhead.gk[0], 0);
+            __builtin_prefetch(rlAhead.gk[1], 0);
+        }
+        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -298,25 +312,9 @@ calcEx()
             mPML.beforeUpdateEx(pmlData, *fi, dHj, dHk);
             mCurrent.beforeUpdateE(currentData, *fi, dHj, dHk);
             
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-//            LOG << "*** Ex: \n"
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
-                
             *fi = mMaterial.updateEx(materialData, *fi, dHj, dHk,
                 mPML.updateJx(pmlData, *fi, dHj, dHk) +
                 mCurrent.updateJx(currentData, *fi, dHj, dHk) );
-            
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-//            LOGMORE
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
-//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
-//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
-//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
-//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
             
             mMaterial.afterUpdateE(materialData, *fi, dHj, dHk);
             mPML.afterUpdateEx(pmlData, *fi, dHj, dHk);
@@ -329,6 +327,7 @@ calcEx()
             gjHigh += STRIDE;
         }
     }
+    
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
@@ -365,6 +364,16 @@ calcEy()
         mPML.onStartRunlineEy(pmlData, rl);
         mCurrent.onStartRunlineE(currentData, rl);
         
+        if (nRL < runlines.size()-1)
+        {
+            RunlineT & rlAhead(runlines[nRL+1]);
+            __builtin_prefetch(rlAhead.fi, 1); // 1 indicates write
+            __builtin_prefetch(rlAhead.gj[0], 0);
+            __builtin_prefetch(rlAhead.gj[1], 0);
+            __builtin_prefetch(rlAhead.gk[0], 0);
+            __builtin_prefetch(rlAhead.gk[1], 0);
+        }
+        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -375,25 +384,9 @@ calcEy()
             mPML.beforeUpdateEy(pmlData, *fi, dHj, dHk);
             mCurrent.beforeUpdateE(currentData, *fi, dHj, dHk);
             
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-//            LOG << "*** Ey: \n"
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
-                
             *fi = mMaterial.updateEy(materialData, *fi, dHj, dHk,
                 mPML.updateJy(pmlData, *fi, dHj, dHk) +
                 mCurrent.updateJy(currentData, *fi, dHj, dHk) );
-            
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-//            LOGMORE
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
-//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
-//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
-//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
-//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
             
             mMaterial.afterUpdateE(materialData, *fi, dHj, dHk);
             mPML.afterUpdateEy(pmlData, *fi, dHj, dHk);
@@ -442,6 +435,16 @@ calcEz()
         mPML.onStartRunlineEz(pmlData, rl);
         mCurrent.onStartRunlineE(currentData, rl);
         
+        if (nRL < runlines.size()-1)
+        {
+            RunlineT & rlAhead(runlines[nRL+1]);
+            __builtin_prefetch(rlAhead.fi, 1); // 1 indicates write
+            __builtin_prefetch(rlAhead.gj[0], 0);
+            __builtin_prefetch(rlAhead.gj[1], 0);
+            __builtin_prefetch(rlAhead.gk[0], 0);
+            __builtin_prefetch(rlAhead.gk[1], 0);
+        }
+        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -452,29 +455,11 @@ calcEz()
             mPML.beforeUpdateEz(pmlData, *fi, dHj, dHk);
             mCurrent.beforeUpdateE(currentData, *fi, dHj, dHk);
             
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-//            LOG << "*** Ez: \n"
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
-                
-            //float Jz = mPML.updateJz(pmlData, *fi, dHj, dHk);
             *fi = mMaterial.updateEz(materialData, *fi, dHj, dHk,
                 //mPML.updateJz(pmlData, *fi, dHj, dHk) +
                 //Jz + 
                 mPML.updateJz(pmlData, *fi, dHj, dHk) +
                 mCurrent.updateJz(currentData, *fi, dHj, dHk) );
-            
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-            //LOG << "Jz is " << Jz << "\n";
-//            LOGMORE
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
-//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
-//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
-//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
-//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
             
             mMaterial.afterUpdateE(materialData, *fi, dHj, dHk);
             mPML.afterUpdateEz(pmlData, *fi, dHj, dHk);
@@ -523,6 +508,16 @@ calcHx()
         mPML.onStartRunlineHx(pmlData, rl);
         mCurrent.onStartRunlineH(currentData, rl);
         
+        if (nRL < runlines.size()-1)
+        {
+            RunlineT & rlAhead(runlines[nRL+1]);
+            __builtin_prefetch(rlAhead.fi, 1); // 1 indicates write
+            __builtin_prefetch(rlAhead.gj[0], 0);
+            __builtin_prefetch(rlAhead.gj[1], 0);
+            __builtin_prefetch(rlAhead.gk[0], 0);
+            __builtin_prefetch(rlAhead.gk[1], 0);
+        }
+        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -533,25 +528,9 @@ calcHx()
             mPML.beforeUpdateHx(pmlData, *fi, dEj, dEk);
             mCurrent.beforeUpdateH(currentData, *fi, dEj, dEk);
             
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-//            LOG << "*** Hx: \n"
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
-                
             *fi = mMaterial.updateHx(materialData, *fi, dEj, dEk,
                 mPML.updateKx(pmlData, *fi, dEj, dEk) +
                 mCurrent.updateKx(currentData, *fi, dEj, dEk) );
-            
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-//            LOGMORE
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
-//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
-//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
-//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
-//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
             
             mMaterial.afterUpdateH(materialData, *fi, dEj, dEk);
             mPML.afterUpdateHx(pmlData, *fi, dEj, dEk);
@@ -600,6 +579,16 @@ calcHy()
         mPML.onStartRunlineHy(pmlData, rl);
         mCurrent.onStartRunlineH(currentData, rl);
         
+        if (nRL < runlines.size()-1)
+        {
+            RunlineT & rlAhead(runlines[nRL+1]);
+            __builtin_prefetch(rlAhead.fi, 1); // 1 indicates write
+            __builtin_prefetch(rlAhead.gj[0], 0);
+            __builtin_prefetch(rlAhead.gj[1], 0);
+            __builtin_prefetch(rlAhead.gk[0], 0);
+            __builtin_prefetch(rlAhead.gk[1], 0);
+        }
+        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -609,27 +598,11 @@ calcHy()
             mMaterial.beforeUpdateH(materialData, *fi, dEj, dEk);
             mPML.beforeUpdateHy(pmlData, *fi, dEj, dEk);
             mCurrent.beforeUpdateH(currentData, *fi, dEj, dEk);
-            
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-//            LOG << "*** Hy: \n"
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
-                
+                            
             *fi = mMaterial.updateHy(materialData, *fi, dEj, dEk,
                 mPML.updateKy(pmlData, *fi, dEj, dEk) +
                 mCurrent.updateKy(currentData, *fi, dEj, dEk) );
-            
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-//            LOGMORE
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
-//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
-//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
-//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
-//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
-            
+                        
             mMaterial.afterUpdateH(materialData, *fi, dEj, dEk);
             mPML.afterUpdateHy(pmlData, *fi, dEj, dEk);
             mCurrent.afterUpdateH(currentData, *fi, dEj, dEk);
@@ -677,6 +650,16 @@ calcHz()
         mPML.onStartRunlineHz(pmlData, rl);
         mCurrent.onStartRunlineH(currentData, rl);
         
+        if (nRL < runlines.size()-1)
+        {
+            RunlineT & rlAhead(runlines[nRL+1]);
+            __builtin_prefetch(rlAhead.fi, 1); // 1 indicates write
+            __builtin_prefetch(rlAhead.gj[0], 0);
+            __builtin_prefetch(rlAhead.gj[1], 0);
+            __builtin_prefetch(rlAhead.gk[0], 0);
+            __builtin_prefetch(rlAhead.gk[1], 0);
+        }
+        
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
         {
@@ -686,26 +669,10 @@ calcHz()
             mMaterial.beforeUpdateH(materialData, *fi, dEj, dEk);
             mPML.beforeUpdateHz(pmlData, *fi, dEj, dEk);
             mCurrent.beforeUpdateH(currentData, *fi, dEj, dEk);
-            
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-//            LOG << "*** Hz: \n"
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n";
                 
             *fi = mMaterial.updateHz(materialData, *fi, dEj, dEk,
                 mPML.updateKz(pmlData, *fi, dEj, dEk) +
                 mCurrent.updateKz(currentData, *fi, dEj, dEk) );
-            
-            assert(!std::isnan(*fi));
-            assert(!std::isinf(*fi));
-            
-//            LOGMORE
-//                << *fi << ": " << MemoryBuffer::identify(fi) << "\n"
-//                << *gjLow << ": " << MemoryBuffer::identify(gjLow) << "\n"
-//                << *gjHigh << ": " << MemoryBuffer::identify(gjHigh) << "\n"
-//                << *gkLow << ": " << MemoryBuffer::identify(gkLow) << "\n"
-//                << *gkHigh << ": " << MemoryBuffer::identify(gkHigh) << "\n";
             
             mMaterial.afterUpdateH(materialData, *fi, dEj, dEk);
             mPML.afterUpdateHz(pmlData, *fi, dEj, dEk);
