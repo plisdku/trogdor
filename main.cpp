@@ -114,13 +114,15 @@ int main (int argc, char * const argv[])
 	else
 		prefs.numTimestepsOverride = -1;
     
+    //LOG << variablesMap << endl;
+    
 	prefs.dumpGrid = variablesMap.count("dumpgrid");
 	prefs.output3D = variablesMap.count("geometry");
 	prefs.output2D = variablesMap.count("xsections");
 	if (variablesMap.count("nosim"))
 		prefs.runSim = 0;
 	prefs.runSim = (variablesMap.count("nosim") == 0);
-    prefs.memoryDirection = variablesMap.count("fastaxis");
+    prefs.memoryDirection = variablesMap["fastaxis"].as<char>();
     
 	
     FDTDApplication& app = FDTDApplication::getInstance();
