@@ -75,13 +75,21 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
 	
     t0 = getTimeInMicroseconds();
     
-    if (prefs.memoryDirection == 'y')
+    if (prefs.memoryDirection == 'x')
+        LOG << "Not rotating.\n";
+    else if (prefs.memoryDirection == 'y')
+    {
+        LOG << "Rotating once.\n";
         sim->cycleCoordinates();
+    }
     else if (prefs.memoryDirection == 'z')
     {
+        LOG << "Rotating twice.\n";
         sim->cycleCoordinates();
         sim->cycleCoordinates();
     }
+    else
+        throw(Exception("Bad fastaxis direction (should be x, y or z)."));
 	voxelizeGrids(sim, voxelizedGrids); // includes setup runlines
 	
 	// in here: do any setup that requires the voxelized grids
