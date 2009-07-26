@@ -15,6 +15,7 @@
 
 //#include "SimpleEHSource.h"
 #include "FormulaSource.h"
+#include "FileSource.h"
 
 #include <cstdlib>
 
@@ -28,8 +29,7 @@ newSetupSource(const VoxelizedPartition & vp, const SourceDescPtr & desc)
         return SetupSourcePtr(new FormulaSetupSource(desc));
     else if (desc->getTimeFile() != "" || desc->getSpaceTimeFile() != "")
     {
-        LOG << "File source not supported.\n";
-        exit(1);
+        return SetupSourcePtr(new FileSetupSource(desc));
     }
     
     LOG << "Using default (null) source... and crashing.\n";
