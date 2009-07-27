@@ -293,6 +293,7 @@ calcEx()
         mPML.onStartRunlineEx(pmlData, rl);
         mCurrent.onStartRunlineE(currentData, rl);
         
+        /*
         if (nRL < runlines.size()-1)
         {
             RunlineT & rlAhead(runlines[nRL+1]);
@@ -302,6 +303,8 @@ calcEx()
             __builtin_prefetch(rlAhead.gk[0], 0);
             __builtin_prefetch(rlAhead.gk[1], 0);
         }
+        */
+        
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
@@ -366,6 +369,7 @@ calcEy()
         mPML.onStartRunlineEy(pmlData, rl);
         mCurrent.onStartRunlineE(currentData, rl);
         
+        /*
         if (nRL < runlines.size()-1)
         {
             RunlineT & rlAhead(runlines[nRL+1]);
@@ -375,6 +379,8 @@ calcEy()
             __builtin_prefetch(rlAhead.gk[0], 0);
             __builtin_prefetch(rlAhead.gk[1], 0);
         }
+        */
+        
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
@@ -439,6 +445,7 @@ calcEz()
         mPML.onStartRunlineEz(pmlData, rl);
         mCurrent.onStartRunlineE(currentData, rl);
         
+        /*
         if (nRL < runlines.size()-1)
         {
             RunlineT & rlAhead(runlines[nRL+1]);
@@ -448,6 +455,8 @@ calcEz()
             __builtin_prefetch(rlAhead.gk[0], 0);
             __builtin_prefetch(rlAhead.gk[1], 0);
         }
+        */
+        
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
@@ -512,6 +521,7 @@ calcHx()
         mPML.onStartRunlineHx(pmlData, rl);
         mCurrent.onStartRunlineH(currentData, rl);
         
+        /*
         if (nRL < runlines.size()-1)
         {
             RunlineT & rlAhead(runlines[nRL+1]);
@@ -521,6 +531,8 @@ calcHx()
             __builtin_prefetch(rlAhead.gk[0], 0);
             __builtin_prefetch(rlAhead.gk[1], 0);
         }
+        */
+        
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
@@ -583,6 +595,8 @@ calcHy()
         mPML.onStartRunlineHy(pmlData, rl);
         mCurrent.onStartRunlineH(currentData, rl);
         
+        /*
+        /*
         if (nRL < runlines.size()-1)
         {
             RunlineT & rlAhead(runlines[nRL+1]);
@@ -592,6 +606,9 @@ calcHy()
             __builtin_prefetch(rlAhead.gk[0], 0);
             __builtin_prefetch(rlAhead.gk[1], 0);
         }
+        */
+        
+        */
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
@@ -654,6 +671,7 @@ calcHz()
         mPML.onStartRunlineHz(pmlData, rl);
         mCurrent.onStartRunlineH(currentData, rl);
         
+        /*
         if (nRL < runlines.size()-1)
         {
             RunlineT & rlAhead(runlines[nRL+1]);
@@ -663,6 +681,8 @@ calcHz()
             __builtin_prefetch(rlAhead.gk[0], 0);
             __builtin_prefetch(rlAhead.gk[1], 0);
         }
+        */
+        
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
