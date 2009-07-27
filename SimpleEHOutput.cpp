@@ -146,10 +146,14 @@ writeE(const CalculationPartition & cp)
     // with "invisible" grid rotations.
     
     const InterleavedLattice & lattice(cp.getLattice());
-    
+    /*
     int in0 = (3-mCoordPermutation)%3;  // direction corresponding to outside x
     int in1 = (4-mCoordPermutation)%3;  // ... outside y
     int in2 = (5-mCoordPermutation)%3;  // ... outside z
+    */
+    int in0 = mCoordPermutation;
+    int in1 = (mCoordPermutation+1)%3;
+    int in2 = (mCoordPermutation+2)%3;
     
     // If there is no grid rotation, in0 = 0, in1 = 1, in2 = 2 because the
     // inside and outside xyz axes point the same directions...
@@ -160,20 +164,21 @@ writeE(const CalculationPartition & cp)
         {
             int inDir = (outDir + 3 - mCoordPermutation)%3;
             
-            Rect3i rect = mRegions[rr].getYeeCells();
-            Vector3i stride = mRegions[rr].getStride();
+            // The regions have been counter-rotated
+            Rect3i outRect = mRegions[rr].getYeeCells();
+            Vector3i outStride = mRegions[rr].getStride();
             Vector3i p;
             
             if (mWhichE[inDir] != 0)
             {
                 if (!mIsInterpolated)
                 {
-                    for (p[in2] = rect.p1[in2]; p[in2] <= rect.p2[in2];
-                        p[in2] += stride[in2])
-                    for (p[in1] = rect.p1[in1]; p[in1] <= rect.p2[in1];
-                        p[in1] += stride[in1])
-                    for (p[in0] = rect.p1[in0]; p[in0] <= rect.p2[in0];
-                        p[in0] += stride[in0])
+                    for (p[in2] = outRect.p1[2]; p[in2] <= outRect.p2[2];
+                        p[in2] += outStride[2])
+                    for (p[in1] = outRect.p1[1]; p[in1] <= outRect.p2[1];
+                        p[in1] += outStride[1])
+                    for (p[in0] = outRect.p1[0]; p[in0] <= outRect.p2[0];
+                        p[in0] += outStride[0])
                     {
                         //float val = cp.getE(inDir, p);
                         float val = lattice.getE(inDir, p);
@@ -183,12 +188,12 @@ writeE(const CalculationPartition & cp)
                 }
                 else
                 {
-                    for (p[in2] = rect.p1[in2]; p[in2] <= rect.p2[in2];
-                        p[in2] += stride[in2])
-                    for (p[in1] = rect.p1[in1]; p[in1] <= rect.p2[in1];
-                        p[in1] += stride[in1])
-                    for (p[in0] = rect.p1[in0]; p[in0] <= rect.p2[in0];
-                        p[in0] += stride[in0])
+                    for (p[in2] = outRect.p1[2]; p[in2] <= outRect.p2[2];
+                        p[in2] += outStride[2])
+                    for (p[in1] = outRect.p1[1]; p[in1] <= outRect.p2[1];
+                        p[in1] += outStride[1])
+                    for (p[in0] = outRect.p1[0]; p[in0] <= outRect.p2[0];
+                        p[in0] += outStride[0])
                     {
                         float val = lattice.getInterpolatedE(
                             inDir, Vector3f(p)+mInterpolationPoint);
@@ -211,9 +216,14 @@ writeH(const CalculationPartition & cp)
     
     const InterleavedLattice& lattice(cp.getLattice());
     
+    /*
     int in0 = (3-mCoordPermutation)%3;  // direction corresponding to outside x
     int in1 = (4-mCoordPermutation)%3;  // ... outside y
     int in2 = (5-mCoordPermutation)%3;  // ... outside z
+    */
+    int in0 = mCoordPermutation;
+    int in1 = (mCoordPermutation+1)%3;
+    int in2 = (mCoordPermutation+2)%3;
     
     // If there is no grid rotation, in0 = 0, in1 = 1, in2 = 2 because the
     // inside and outside xyz axes point the same directions...
@@ -224,20 +234,21 @@ writeH(const CalculationPartition & cp)
         {
             int inDir = (outDir + 3 - mCoordPermutation)%3;
             
-            Rect3i rect = mRegions[rr].getYeeCells();
-            Vector3i stride = mRegions[rr].getStride();
+            // The regions have been counter-rotated
+            Rect3i outRect = mRegions[rr].getYeeCells();
+            Vector3i outStride = mRegions[rr].getStride();
             Vector3i p;
             
             if (mWhichH[inDir] != 0)
             {
                 if (!mIsInterpolated)
                 {
-                    for (p[in2] = rect.p1[in2]; p[in2] <= rect.p2[in2];
-                        p[in2] += stride[in2])
-                    for (p[in1] = rect.p1[in1]; p[in1] <= rect.p2[in1];
-                        p[in1] += stride[in1])
-                    for (p[in0] = rect.p1[in0]; p[in0] <= rect.p2[in0];
-                        p[in0] += stride[in0])
+                    for (p[in2] = outRect.p1[2]; p[in2] <= outRect.p2[2];
+                        p[in2] += outStride[2])
+                    for (p[in1] = outRect.p1[1]; p[in1] <= outRect.p2[1];
+                        p[in1] += outStride[1])
+                    for (p[in0] = outRect.p1[0]; p[in0] <= outRect.p2[0];
+                        p[in0] += outStride[0])
                     {
                         float val = lattice.getH(inDir, p);
                         mDatafile.write((char*)(&val),
@@ -246,12 +257,12 @@ writeH(const CalculationPartition & cp)
                 }
                 else
                 {
-                    for (p[in2] = rect.p1[in2]; p[in2] <= rect.p2[in2];
-                        p[in2] += stride[in2])
-                    for (p[in1] = rect.p1[in1]; p[in1] <= rect.p2[in1];
-                        p[in1] += stride[in1])
-                    for (p[in0] = rect.p1[in0]; p[in0] <= rect.p2[in0];
-                        p[in0] += stride[in0])
+                    for (p[in2] = outRect.p1[2]; p[in2] <= outRect.p2[2];
+                        p[in2] += outStride[2])
+                    for (p[in1] = outRect.p1[1]; p[in1] <= outRect.p2[1];
+                        p[in1] += outStride[1])
+                    for (p[in0] = outRect.p1[0]; p[in0] <= outRect.p2[0];
+                        p[in0] += outStride[0])
                     {
                         float val = lattice.getInterpolatedH(
                             inDir, Vector3f(p)+mInterpolationPoint);

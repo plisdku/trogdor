@@ -53,7 +53,7 @@ operator<<(std::ostream & str, const SimpleRunline & rl)
     str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
         << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.length;
     */
-    
+    str << "length " << rl.length << "\n";
     str << hex << rl.fi << dec << ": " << MemoryBuffer::identify(rl.fi) << "\n";
     str << hex << rl.gj[0] << dec << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
     str << hex << rl.gj[1] << dec << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
@@ -66,9 +66,13 @@ operator<<(std::ostream & str, const SimpleRunline & rl)
 ostream &
 operator<<(std::ostream & str, const SimpleAuxRunline & rl)
 {
-    str << hex << rl.fi << " " << rl.gj[0] << " " << rl.gj[1] << " "
-        << rl.gk[0] << " " << rl.gk[1] << " " << dec << rl.auxIndex
-        << " " << rl.length;
+    str << "length " << rl.length << "\n";
+    str << hex << rl.fi << dec << ": " << MemoryBuffer::identify(rl.fi) << "\n";
+    str << hex << rl.gj[0] << dec << ": " << MemoryBuffer::identify(rl.gj[0]) << "\n";
+    str << hex << rl.gj[1] << dec << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
+    str << hex << rl.gk[0] << dec << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
+    str << hex << rl.gk[1] << dec << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
+    str << "aux " << rl.auxIndex << "\n";
     return str;
 }
 
@@ -82,7 +86,7 @@ operator<<(std::ostream & str, const SimpleAuxPMLRunline & rl)
     str << hex << rl.gj[1] << dec << ": " << MemoryBuffer::identify(rl.gj[1]) << "\n";
     str << hex << rl.gk[0] << dec << ": " << MemoryBuffer::identify(rl.gk[0]) << "\n";
     str << hex << rl.gk[1] << dec << ": " << MemoryBuffer::identify(rl.gk[1]) << "\n";
-    str << rl.auxIndex << ", PML " << rl.pmlIndex[0] << " " << rl.pmlIndex[1]
+    str << "aux " << rl.auxIndex << ", PML " << rl.pmlIndex[0] << " " << rl.pmlIndex[1]
         << " " << rl.pmlIndex[2] << "\n";
     return str;
 }

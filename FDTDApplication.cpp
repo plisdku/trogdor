@@ -740,6 +740,8 @@ updateETimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
         itr->second->timedUpdateE(timestep);
+//    if (calcGrids.count("Main Grid"))
+//        calcGrids["Main Grid"]->printFields(cout, octantE(1), 1.0);
 }
 
 void FDTDApplication::

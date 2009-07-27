@@ -362,33 +362,55 @@ setH(int direction, const Vector3i & yeeCell, float value)
 void InterleavedLattice::
 printE(std::ostream & str, int fieldDirection, float scale) const
 {
-    float spaceMax = 0.2*scale;
-    float periodMax = 0.5*scale;
+    float periodMax = 0.2*scale;
+    float dotMax = 0.5*scale;
     Rect3i r(halfToYee(mHalfCells, octantE(fieldDirection)));
     
-    for (int nk = r.p1[2]; nk <= r.p2[2]; nk++)
+    int dir0, dir1, dir2;
+    
+    dir0 = 0;
+    for (int nn = 0; nn < 3; nn++)
+    if (mNumYeeCells[nn] == 1)
+        dir0 = (nn+1)%3;
+    dir1 = (dir0+1)%3;
+    for (int nn = 1; nn < 3; nn++)
+    if (mNumYeeCells[ (dir0+nn)%3 ] != 1)
+        dir1 = (dir0+nn)%3;
+    dir2 = 3 - (dir0 + dir1);
+    
+    LOG << "Axes " << dir0 << " " << dir1 << " " << dir2 << "\n";
+    
+    Vector3i ijk;
+    
+    for (ijk[dir2] = r.p1[dir2]; ijk[dir2] <= r.p2[dir2]; ijk[dir2]++)
     {
         str << "+";
-        for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
+        for (int ni = r.p1[dir0]; ni <= r.p2[dir0]; ni++)
             str << "-";
         str << "+\n";
-        for (int nj = r.p2[1]; nj >= r.p1[1]; nj--)
+        for (ijk[dir1] = r.p2[dir1]; ijk[dir1] >= r.p1[dir1]; ijk[dir1]--)
         {
             str << "|";
-            for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
+            for (ijk[dir0] = r.p1[dir0]; ijk[dir0] <= r.p2[dir0]; ijk[dir0]++)
             {
-                float field = fabs(getE(fieldDirection, Vector3i(ni, nj, nk)));
-                if (field < spaceMax)
+                float field = fabs(getE(fieldDirection, ijk));
+                if (field == 0)
                     str << " ";
                 else if (field < periodMax)
                     str << ".";
+                else if (field < dotMax)
+                    str << "o";
+                else if (isinf(field))
+                    str << "∞";
+                else if (isnan(field))
+                    str << "N";
                 else
-                    str << "•";
+                    str << "O";
             }
             str << "|\n";
         }
         str << "+";
-        for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
+        for (int ni = r.p1[dir0]; ni <= r.p2[dir0]; ni++)
             str << "-";
         str << "+\n";
     }
@@ -397,33 +419,55 @@ printE(std::ostream & str, int fieldDirection, float scale) const
 void InterleavedLattice::
 printH(std::ostream & str, int fieldDirection, float scale) const
 {
-    float spaceMax = 0.2*scale;
-    float periodMax = 0.5*scale;
+    float periodMax = 0.2*scale;
+    float dotMax = 0.5*scale;
     Rect3i r(halfToYee(mHalfCells, octantH(fieldDirection)));
     
-    for (int nk = r.p1[2]; nk <= r.p2[2]; nk++)
+    int dir0, dir1, dir2;
+    
+    dir0 = 0;
+    for (int nn = 0; nn < 3; nn++)
+    if (mNumYeeCells[nn] == 1)
+        dir0 = (nn+1)%3;
+    dir1 = (dir0+1)%3;
+    for (int nn = 1; nn < 3; nn++)
+    if (mNumYeeCells[ (dir0+nn)%3 ] != 1)
+        dir1 = (dir0+nn)%3;
+    dir2 = 3 - (dir0 + dir1);
+    
+    LOG << "Axes " << dir0 << " " << dir1 << " " << dir2 << "\n";
+    
+    Vector3i ijk;
+    
+    for (ijk[dir2] = r.p1[dir2]; ijk[dir2] <= r.p2[dir2]; ijk[dir2]++)
     {
         str << "+";
-        for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
+        for (int ni = r.p1[dir0]; ni <= r.p2[dir0]; ni++)
             str << "-";
         str << "+\n";
-        for (int nj = r.p2[1]; nj >= r.p1[1]; nj--)
+        for (ijk[dir1] = r.p2[dir1]; ijk[dir1] >= r.p1[dir1]; ijk[dir1]--)
         {
             str << "|";
-            for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
+            for (ijk[dir0] = r.p1[dir0]; ijk[dir0] <= r.p2[dir0]; ijk[dir0]++)
             {
-                float field = fabs(getH(fieldDirection, Vector3i(ni, nj, nk)));
-                if (field < spaceMax)
+                float field = fabs(getH(fieldDirection, ijk));
+                if (field == 0)
                     str << " ";
                 else if (field < periodMax)
                     str << ".";
+                else if (field < dotMax)
+                    str << "o";
+                else if (isinf(field))
+                    str << "∞";
+                else if (isnan(field))
+                    str << "N";
                 else
-                    str << "•";
+                    str << "O";
             }
             str << "|\n";
         }
         str << "+";
-        for (int ni = r.p1[0]; ni <= r.p2[0]; ni++)
+        for (int ni = r.p1[dir0]; ni <= r.p2[dir0]; ni++)
             str << "-";
         str << "+\n";
     }

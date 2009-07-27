@@ -204,8 +204,8 @@ initFactors(const Rect3i & huygensHalfCells, int sideNum,
 	unsigned int dir;
     Vector3i fieldOffset, p1Offset;
     
-    LOG << "For side number " << sideNum << " (outer " << outerTotalField
-        << "):\n";
+//    LOG << "For side number " << sideNum << " (outer " << outerTotalField
+//        << "):\n";
     
     for (dir = 0; dir < 3; dir++)
     {

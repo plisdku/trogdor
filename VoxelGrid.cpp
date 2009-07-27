@@ -39,7 +39,7 @@ VoxelGrid(Rect3i voxelizedBounds, Rect3i gridHalfCells, Rect3i nonPML) :
 	m_ny = m_nny/2;
 	m_nz = m_nnz/2;
 	
-	LOG << "Non PML is " << nonPML << endl;
+//	LOG << "Non PML is " << nonPML << endl;
 	
 	mMaterialHalfCells.resize(m_nnx*m_nny*m_nnz);
 }
@@ -343,6 +343,8 @@ void VoxelGrid::
 overlayHuygensSurface(const HuygensSurface & surf)
 {
 	int ii, jj, kk;
+    
+    //cout << *this << "\n";
 	for (int sideNum = 0; sideNum < 6; sideNum++)
 	{
         if (surf.hasBuffer(sideNum))
@@ -381,6 +383,9 @@ overlayHuygensSurface(const HuygensSurface & surf)
 
 		}
 	}
+    
+    //cout << *this << "\n";
+    //LOG << "Done.\n";
 }
 
 void VoxelGrid::

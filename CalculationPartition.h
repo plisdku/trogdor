@@ -71,6 +71,7 @@ public:
     void timedOutputH(int timestep);
     
     void printFields(std::ostream & str, int octant, float scale);
+    
     void printPerformanceForMatlab(std::ostream & str, std::string prefix);
     
 private:

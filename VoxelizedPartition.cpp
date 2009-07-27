@@ -192,8 +192,8 @@ createHuygensSurfaces(const GridDescPtr & gridDescription,
     const vector<HuygensSurfaceDescPtr> & surfaces = 
         gridDescription->getHuygensSurfaces();
     
-    LOG << "I am making " << surfaces.size() << " setup Huygens surfaces.\n";
-    LOGMORE << "I am " << mGridHalfCells << " half cells across.\n";
+//    LOG << "I am making " << surfaces.size() << " setup Huygens surfaces.\n";
+//    LOGMORE << "I am " << mGridHalfCells << " half cells across.\n";
     for (unsigned int nn = 0; nn < surfaces.size(); nn++)
     {
         ostringstream huygensSurfaceName;
@@ -479,31 +479,11 @@ generateRunlines()
 	LOG << "Check it out, we're sticking to the calc region.  I'm not sure "
 		"yet precisely how to use this in the MPI context—work it out later.\n";
 	
-    LOG << "Warning: about to use some magic numbers (0 and 7 are unused"
-        " octants.\n";
-    for (int octantNum = 1; octantNum <= 6; octantNum++)
+    for (int direction = 0; direction < 3; direction++)
     {
-        genRunlinesInOctant(octantNum);
+        genRunlinesInOctant(octantE(direction));
+        genRunlinesInOctant(octantH(direction));
     }
-    /*
-	for (int fieldNum = 0; fieldNum < 6; fieldNum++)
-	{
-		// Remember to set up the buffers here!
-		//LOG << "Runlines for offset " << halfCellFieldOffset(fieldNum) << "\n";
-        
-		genRunlinesInOctant(octant(halfCellFieldOffset(fieldNum)));
-	}
-    */
-	
-    /*
-	LOG << "Printing runlines.\n";
-	map<Paint*, SetupMaterialPtr>::iterator itr;
-	for (itr = mSetupMaterials.begin(); itr != mSetupMaterials.end(); itr++)
-	{
-		cout << *(itr->first) << "\n";
-		itr->second->printRunlines(cout);
-	}
-    */
 }
 
 void VoxelizedPartition::
@@ -516,8 +496,8 @@ genRunlinesInOctant(int octant)
 	for (int nn = 0; nn < 3; nn++)
 	if (p1[nn] % 2 != offset[nn])
 		p1[nn]++;
-	//LOG << "Calc region " << mCalcHalfCells << endl;
-	//LOG << "Runlines in octant " << octant << " at start " << p1 << endl;
+//	LOG << "Calc region " << mCalcHalfCells << endl;
+//	LOG << "Runlines in octant " << octant << " at start " << p1 << endl;
 	
 	SetupMaterial* material; // unsafe pointer for speed in this case.
 	

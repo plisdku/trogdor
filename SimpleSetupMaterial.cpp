@@ -87,7 +87,8 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 	//LOG << "Field direction " << fieldDirection << " ui " << ui << " uj "
 	//	<< uj << " uk " << uk << "\n";
 	
-	/*
+	
+    /*
 	LOG << "Start runline:\n";
 	LOGMORE << "start " << mStartPoint << "\n";
 	LOGMORE << "aux " << mCurrentRunline.auxIndex << "\n";
@@ -96,7 +97,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		<< mCurrentRunline.f_j[1] << "\n";
 	LOGMORE << "f_k " << mCurrentRunline.f_k[0] << " "
 		<< mCurrentRunline.f_k[1] << "\n";
-	*/
+    */
 }
 
 bool SimpleBulkSetupMaterial::
@@ -337,9 +338,9 @@ printRunlines(std::ostream & out) const
 				" pml depth";
 			for (int nn = 0; nn < 3; nn++)
 				out << " " << mRunlinesE[dir][rr]->pmlDepthIndex[nn];
-			out << rr << ": length " << mRunlinesE[dir][rr]->length <<
-				" aux " << mRunlinesE[dir][rr]->auxIndex << "\n";
-			out << "\t" << mRunlinesE[dir][rr]->f_i << "\n";
+			//out << rr << ": length " << mRunlinesE[dir][rr]->length <<
+			//	" aux " << mRunlinesE[dir][rr]->auxIndex << "\n";
+			out << "\n\t" << mRunlinesE[dir][rr]->f_i << "\n";
 			out << "\t" << mRunlinesE[dir][rr]->f_j[0] << "\n";
 			out << "\t" << mRunlinesE[dir][rr]->f_j[1] << "\n";
 			out << "\t" << mRunlinesE[dir][rr]->f_k[0] << "\n";
@@ -356,7 +357,7 @@ printRunlines(std::ostream & out) const
 				" pml depth";
 			for (int nn = 0; nn < 3; nn++)
 				out << " " << mRunlinesH[dir][rr]->pmlDepthIndex[nn];
-			out << "\t" << mRunlinesH[dir][rr]->f_i << "\n";
+			out << "\n\t" << mRunlinesH[dir][rr]->f_i << "\n";
 			out << "\t" << mRunlinesH[dir][rr]->f_j[0] << "\n";
 			out << "\t" << mRunlinesH[dir][rr]->f_j[1] << "\n";
 			out << "\t" << mRunlinesH[dir][rr]->f_k[0] << "\n";

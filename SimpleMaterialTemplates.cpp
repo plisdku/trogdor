@@ -288,6 +288,7 @@ calcEx()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
+//        LOG << rl << "\n";
         mMaterial.onStartRunlineEx(materialData, rl);
         mPML.onStartRunlineEx(pmlData, rl);
         mCurrent.onStartRunlineE(currentData, rl);
@@ -360,6 +361,7 @@ calcEy()
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
+//        LOG << rl << "\n";
         mMaterial.onStartRunlineEy(materialData, rl);
         mPML.onStartRunlineEy(pmlData, rl);
         mCurrent.onStartRunlineE(currentData, rl);
@@ -430,6 +432,8 @@ calcEz()
         const float* gjHigh(rl.gj[1]);  // e.g. Hy(z+1/2)
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
+        
+//        LOG << rl << "\n";
         
         mMaterial.onStartRunlineEz(materialData, rl);
         mPML.onStartRunlineEz(pmlData, rl);

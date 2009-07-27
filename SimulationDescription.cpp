@@ -233,11 +233,15 @@ getNumDimensions() const
 void Region::
 cycleCoordinates()
 {
+//    LOG << "Rotating region.\n";
 	Mat3i permuteForward(Mat3i::cyclicPermutation());
     Mat3i permuteBackward(inverse(permuteForward));
     
     mYeeCells = permuteForward*mYeeCells;
     mStride = permuteForward*mStride;
+    
+//    LOGMORE << "Yee cells of " << hex << this << dec << " now "
+//        << mYeeCells << "\n";
 }
 
 
@@ -319,6 +323,7 @@ cycleCoordinates()
     
     mInterpolationPoint = permuteForward*mInterpolationPoint;
     
+    LOG << "Rotating output.\n";
     for (nn = 0; nn < mRegions.size(); nn++)
         mRegions[nn].cycleCoordinates();
 }
@@ -742,6 +747,9 @@ cycleCoordinates()
 		newOmittedSides.insert(permuteForward * (*itr));
 	}
 	mOmittedSides = newOmittedSides;
+    
+    // Rotate the source fields
+    mFields.cycleCoordinates();
     
     mCoordinatePermutationNumber += 1;
     mCoordinatePermutationNumber %= 3;

@@ -34,7 +34,7 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     mHuygensSurfaces(vp.getHuygensSurfaces()),
     mLattice(vp.getLattice())
 {
-    LOG << "New calc partition.\n";
+//    LOG << "New calc partition.\n";
     unsigned int nn;
     
     // Allocate memory, both main grid and Huygens surfaces
@@ -142,7 +142,7 @@ outputE(int timestep)
     for (nn = 0; nn < mOutputs.size(); nn++)
         mOutputs[nn]->outputEPhase(*this, timestep);
     
-    //printFields(cout, octantE(2), 1.0);
+    printFields(cout, octantE(2), 1.0);
 }
 
 void CalculationPartition::
@@ -202,6 +202,8 @@ timedUpdateE(int timestep)
         t2 = getTimeInMicroseconds();
         mStatistics.addMaterialMicrosecondsE(nn, t2-t1);
     }
+    
+    //LOG << "Finished with " << mMaterials.size() << " materials.\n";
 }
 
 void CalculationPartition::
@@ -239,8 +241,12 @@ timedOutputE(int timestep)
         t2 = getTimeInMicroseconds();
         mStatistics.addOutputMicroseconds(nn, t2-t1);
     }
-    
-    //printFields(cout, octantE(2), 1.0);
+    /*
+    LOG << "Output E (3)\n";
+    printFields(cout, octantE(0), 1.0);
+    printFields(cout, octantE(1), 1.0);
+    printFields(cout, octantE(2), 1.0);
+    */
 }
 
 void CalculationPartition::
@@ -267,6 +273,7 @@ timedUpdateH(int timestep)
         t2 = getTimeInMicroseconds();
         mStatistics.addMaterialMicrosecondsH(nn, t2-t1);
     }
+    //LOG << "Finished with " << mMaterials.size() << " materials.\n";
 }
 
 void CalculationPartition::
@@ -304,6 +311,12 @@ timedOutputH(int timestep)
         t2 = getTimeInMicroseconds();
         mStatistics.addOutputMicroseconds(nn, t2-t1);
     }
+    /*
+    LOG << "Output H (3)\n";
+    printFields(cout, octantH(0), 1.0/377);
+    printFields(cout, octantH(1), 1.0/377);
+    printFields(cout, octantH(2), 1.0/377);
+    */
 }
 
 
