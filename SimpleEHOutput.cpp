@@ -162,7 +162,8 @@ writeE(const CalculationPartition & cp)
     {
         for (int outDir = 0; outDir < 3; outDir++)
         {
-            int inDir = (outDir + 3 - mCoordPermutation)%3;
+            //int inDir = (outDir + 3 - mCoordPermutation)%3;
+            int inDir = (outDir + mCoordPermutation)%3;
             
             // The regions have been counter-rotated
             Rect3i outRect = mRegions[rr].getYeeCells();
@@ -232,7 +233,7 @@ writeH(const CalculationPartition & cp)
     {
         for (int outDir = 0; outDir < 3; outDir++)
         {
-            int inDir = (outDir + 3 - mCoordPermutation)%3;
+            int inDir = (outDir + mCoordPermutation)%3;
             
             // The regions have been counter-rotated
             Rect3i outRect = mRegions[rr].getYeeCells();
@@ -345,12 +346,22 @@ writeDescriptionFile(const VoxelizedPartition & vp,
     
     for (nn = 0; nn < mRegions.size(); nn++)
     {
+        // For some reason I decided to unrotate the region, so this block
+        // is wrong.
+        /*
         descFile << "region "
             << cyclicPermute(mRegions[nn].getYeeCells()-vp.getOriginYee(),
                 unpermute)
             << " stride "
             << cyclicPermute(mRegions[nn].getStride(), unpermute)
             << "\n";
+        */
+        descFile << "region "
+            << mRegions[nn].getYeeCells()-vp.getOriginYee()
+            << " stride "
+            << mRegions[nn].getStride()
+            << "\n";
+        
     }
     
     for (nn = 0; nn < mDurations.size(); nn++)

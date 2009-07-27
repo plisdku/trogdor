@@ -297,8 +297,10 @@ output(const TiXmlElement* old)
     Map<string,string> oldParamsAttribs = sGetAttributes(oldParams);
     
     durationAttribs["firstTimestep"] = "1";
-    if (oldParamsAttribs.count("period") != 0)
-        durationAttribs["period"] = oldParamsAttribs["period"];
+//    if (oldParamsAttribs.count("period") != 0)
+//        durationAttribs["period"] = oldParamsAttribs["period"];
+    if (oldAttribs.count("period") != 0)
+        durationAttribs["period"] = oldAttribs["period"];
     regionAttribs["yeeCells"] = oldParamsAttribs["region"];
     
     if (oldParamsAttribs.count("stride"))
