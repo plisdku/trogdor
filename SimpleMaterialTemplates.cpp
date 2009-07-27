@@ -596,7 +596,6 @@ calcHy()
         mCurrent.onStartRunlineH(currentData, rl);
         
         /*
-        /*
         if (nRL < runlines.size()-1)
         {
             RunlineT & rlAhead(runlines[nRL+1]);
@@ -606,8 +605,6 @@ calcHy()
             __builtin_prefetch(rlAhead.gk[0], 0);
             __builtin_prefetch(rlAhead.gk[1], 0);
         }
-        */
-        
         */
         
         const int len(rl.length);
