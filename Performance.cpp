@@ -177,7 +177,8 @@ printForMatlab(std::ostream & str, const string & prefix,
     double totalSoftSource_us = accumulate(mSoftSourceMicroseconds.begin(),
         mSoftSourceMicroseconds.end(), 0.0);
     double totalHuygensSurface_us = accumulate(
-        mHuygensSurfaceMicroseconds.begin(), mHuygensSurfaceMicroseconds.end());
+        mHuygensSurfaceMicroseconds.begin(), mHuygensSurfaceMicroseconds.end(),
+        0.0);
     
     str << prefix << "calcETime = " << totalMatE_us*1e-6 << ";\n";
     str << prefix << "calcHTime = " << totalMatH_us*1e-6 << ";\n";
