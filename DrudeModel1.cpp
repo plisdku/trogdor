@@ -64,7 +64,7 @@ getModelName() const
 void DrudeModel1::
 allocateAuxBuffers()
 {
-    LOG << "Allocating currents.\n";
+    //LOG << "Allocating currents.\n";
     for (int nn = 0; nn < 3; nn++)
     {
         mCurrents[nn].resize(mCurrentBuffers[nn]->getLength());
