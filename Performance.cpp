@@ -10,6 +10,9 @@
 #include "Performance.h"
 #include "Material.h"
 
+// for accumulate()
+#include <numeric>
+
 using namespace std;
 
 #pragma mark *** GlobalStatistics ***
@@ -163,17 +166,29 @@ printForMatlab(std::ostream & str, const string & prefix,
 {
     assert(materials.size() == mMaterialMicrosecondsE.size());
     
-    // From Trogdor 4
-//    runlog << pre << "material{" << nn+1 << "}.name = '"
-//        << materials[nn]->getMaterialName() << "';\n";
-//    runlog << pre << "material{" << nn+1 << "}.numRunlines = "
-//        << materials[nn]->numRunlines() << ";\n";
-//    runlog << pre << "material{" << nn+1 << "}.numHalfCells = "
-//        << materials[nn]->numCells() << ";\n";
-//    runlog << pre << "material{" << nn+1 << "}.numYeeCells = "
-//        << materials[nn]->numCells()/6.0 << ";\n";
-//    runlog << pre << "material{" << nn+1 << "}.halfCellTime = "
-//        << materialTimes[nn]*1e-6/cellTimesteps << ";\n";
+    double totalMatE_us = accumulate(mMaterialMicrosecondsE.begin(),
+        mMaterialMicrosecondsE.end(), 0.0);
+    double totalMatH_us = accumulate(mMaterialMicrosecondsH.begin(),
+        mMaterialMicrosecondsH.end(), 0.0);
+    double totalOut_us = accumulate(mOutputMicroseconds.begin(),
+        mOutputMicroseconds.end(), 0.0);
+    double totalHardSource_us = accumulate(mHardSourceMicroseconds.begin(),
+        mHardSourceMicroseconds.end(), 0.0);
+    double totalSoftSource_us = accumulate(mSoftSourceMicroseconds.begin(),
+        mSoftSourceMicroseconds.end(), 0.0);
+    double totalHuygensSurface_us = accumulate(
+        mHuygensSurfaceMicroseconds.begin(), mHuygensSurfaceMicroseconds.end());
+    
+    str << prefix << "calcETime = " << totalMatE_us*1e-6 << ";\n";
+    str << prefix << "calcHTime = " << totalMatH_us*1e-6 << ";\n";
+    str << prefix << "calcTime = " << (totalMatE_us+totalMatH_us)*1e-6 << ";\n";
+    str << prefix << "outputTime = " << totalOut_us*1e-6 << ";\n";
+    str << prefix << "hardSourceTime = " << totalHardSource_us*1e-6 << ";\n";
+    str << prefix << "softSourceTime = " << totalSoftSource_us*1e-6<< ";\n";
+    str << prefix << "sourceTime = " << (totalHardSource_us+totalSoftSource_us)
+        *1e-6 << ";\n";
+    str << prefix << "huygensSurfaceTime = " << totalHuygensSurface_us*1e-6
+        << ";\n";
     
     for (int nn = 0; nn < mMaterialMicrosecondsE.size(); nn++)
     {
