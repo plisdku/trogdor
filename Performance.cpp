@@ -84,7 +84,7 @@ printForMatlab(std::ostream & str)
     str << "% Post-simulation analysis\n"
         "% Runtime is the total after the setup is complete.\n"
         "% Work time is the time not including printing timesteps to "
-            "standard output.\n";
+            "standard output.\n"
         "% printTimestepTime is exactly what it sounds like.\n";
     str << "trogdor.runtime = " << mRunCalculationMicroseconds*1e-6 << ";\n";
     str << "trogdor.printTimestepTime = " << mPrintTimestepMicroseconds*1e-6

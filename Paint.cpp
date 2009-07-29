@@ -10,6 +10,7 @@
 #include "Paint.h"
 #include "Map.h"
 #include "SimulationDescription.h"
+#include "HuygensSurface.h"
 #include <sstream>
 using namespace std;
 
@@ -167,12 +168,18 @@ hasCurlBuffer(int side) const
 	return (mCurlBuffers[side] != 0L);
 }
 
-const NeighborBufferPtr & Paint::
+const NeighborBuffer* Paint::
 getCurlBuffer(int side) const
 {
 	assert(side >= 0);
 	assert(side < 6);
 	return mCurlBuffers[side];
+}
+
+const MaterialDescription* Paint::
+getBulkMaterial() const
+{
+    return mBulkMaterial;
 }
 	
 bool Paint::

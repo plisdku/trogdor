@@ -59,8 +59,8 @@ public:
     float getInterpolatedE(int direction, const Vector3f & position) const;
     float getInterpolatedH(int direction, const Vector3f & position) const;
     
-    float setE(int direction, const Vector3i & yeeCell, float value);
-    float setH(int direction, const Vector3i & yeeCell, float value);
+    void setE(int direction, const Vector3i & yeeCell, float value);
+    void setH(int direction, const Vector3i & yeeCell, float value);
     
     void printE(std::ostream & str, int fieldDirection, float scale) const;
     void printH(std::ostream & str, int fieldDirection, float scale) const;

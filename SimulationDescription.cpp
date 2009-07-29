@@ -466,12 +466,8 @@ SourceFields(string fields, Vector3f polarization) :
 void SourceFields::
 cycleCoordinates()
 {
-    unsigned int nn;
 	Mat3i permuteForward(Mat3i::cyclicPermutation());
     Mat3i permuteBackward(inverse(permuteForward));
-	
-	//mCoordinatePermutationNumber += 1;
-	//mCoordinatePermutationNumber %= 3;
     
     mPolarization = permuteForward*mPolarization;
     mWhichE = permuteForward*mWhichE;
@@ -1004,8 +1000,8 @@ Block::
 Block(Rect3i halfCellRect, string material) throw(Exception) :
 	Instruction(kBlockType),
 	mFillRect(halfCellRect),
-	mMaterialName(material),
-	mStyle(kHalfCellStyle)
+	mStyle(kHalfCellStyle),
+	mMaterialName(material)
 {
 	cerr << "Warning: minimal validation done for Block().\n";
 	if (!vec_ge(mFillRect.size(), 0))
@@ -1016,8 +1012,8 @@ Block::
 Block(Rect3i yeeCellRect, FillStyle style, string material) throw(Exception) :
 	Instruction(kBlockType),
 	mFillRect(yeeCellRect),
-	mMaterialName(material),
-	mStyle(style)
+	mStyle(style),
+	mMaterialName(material)
 {
 	cerr << "Warning: minimal validation done for Block().\n";
 	assert(mStyle != kHalfCellStyle);

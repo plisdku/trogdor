@@ -38,9 +38,9 @@ FileSource::
 FileSource(const SourceDescription & desc, const VoxelizedPartition & vp,
     const CalculationPartition & cp) :
     Source(),
+    mFileStream(),
     mCurrentDuration(0),
     mFields(desc.getSourceFields()),
-    mFileStream(),
     mDt(cp.getDt()),
     mIsSpaceVarying(desc.isSpaceVarying()),
     mIsSoft(desc.isSoftSource()),

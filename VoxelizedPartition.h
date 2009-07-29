@@ -20,10 +20,15 @@
 #include "geometry.h"
 #include "Map.h"
 #include "VoxelGrid.h"
+#include "PartitionCellCount.h"
+#include "InterleavedLattice.h"
+
+#include "Material.h"
 #include "OutputBoss.h"
 #include "SourceBoss.h"
+#include "HuygensSurface.h"
+
 #include "MemoryUtilities.h"
-#include "InterleavedLattice.h"
 
 #include "SimulationDescriptionPredeclarations.h"
 
@@ -31,18 +36,6 @@
 
 #include <vector>
 #include <string>
-
-class SetupMaterial;
-//typedef Pointer<SetupMaterial> SetupMaterialPtr;
-
-class VoxelizedPartition;
-//typedef Pointer<VoxelizedPartition> VoxelizedPartitionPtr;
-
-class HuygensSurface;
-//typedef Pointer<HuygensSurface> HuygensSurfacePtr;
-
-class PartitionCellCount;
-//typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
 
 class VoxelizedPartition
 {

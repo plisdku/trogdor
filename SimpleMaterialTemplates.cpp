@@ -201,11 +201,11 @@ UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, Vector3f dxyz, float dt) :
     WithRunline<RunlineT>(),
+    mDxyz(dxyz),
+    mDt(dt),
     mMaterial(*parentPaint->getBulkMaterial(), numCellsE, numCellsH, dxyz, dt),
     mPML(),
-    mCurrent(),
-    mDxyz(dxyz),
-    mDt(dt)
+    mCurrent()
 {
     mDxyz_inverse = 1.0 / mDxyz;
 }
@@ -217,11 +217,11 @@ UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt) :
     WithRunline<RunlineT>(),
+    mDxyz(dxyz),
+    mDt(dt),
     mMaterial(*parentPaint->getBulkMaterial(), numCellsE, numCellsH, dxyz, dt),
     mPML(parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams, dxyz, dt),
-    mCurrent(),
-    mDxyz(dxyz),
-    mDt(dt)
+    mCurrent()
 {
     mDxyz_inverse = 1.0 / mDxyz;
 }

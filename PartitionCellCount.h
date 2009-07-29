@@ -22,14 +22,20 @@ class VoxelGrid;
 class PartitionCellCount
 {
 public:
+    //PartitionCellCount(Rect3i halfCellBounds);
 	PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds);
 	
+    //void countCells(const VoxelGrid & grid);
+    
 	long operator() (int ii, int jj, int kk) const;
 	long operator() (const Vector3i & pp) const;
 	
 	long getNumCells(Paint* paint, int octant) const;
 	Map<Paint*, long> getAllNumCells(int octant) const;
 	std::set<Paint*> getCurlBufferParentPaints() const;
+    
+    // deletes the grid of material half cells; retains dimensions
+    //void clear();
 	
 private:
 	void calcMaterialIndices(const VoxelGrid & grid);

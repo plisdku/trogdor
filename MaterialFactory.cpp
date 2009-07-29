@@ -46,7 +46,7 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	assert(parentPaint != 0L);
     
     SetupMaterialPtr setupMat;
-	const MaterialDescPtr bulkMaterial = parentPaint->getBulkMaterial();
+	const MaterialDescription* bulkMaterial = parentPaint->getBulkMaterial();
     const Map<Vector3i, Map<string, string> > & gridPMLParams(
         gridDesc.getPMLParams());
     Map<Vector3i, Map<string, string> > pmlParams;

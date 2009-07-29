@@ -43,8 +43,8 @@ HuygensSurface::
 HuygensSurface(string namePrefix, const VoxelizedPartition & vp,
     const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
     const HuygensSurfaceDescPtr & surfaceDescription) :
-    mNeighborBuffers(6),
     mHalfCells(surfaceDescription->getHalfCells()),
+    mNeighborBuffers(6),
     mDestLattice(vp.getLattice())
 {
     static const Rect3i UNUSED_SOURCE_RECT_ARGUMENT(0,0,0,0,0,0);

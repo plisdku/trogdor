@@ -619,7 +619,6 @@ loadTFSFSources(const TiXmlElement* parent, const set<string> & allGridNames)
 		string field;
 		Vector3f polarization;
         Rect3i temp, halfCells;
-        bool usesPolarization;
 		Vector3i direction;
 		string tfsfType;
 		string formula;

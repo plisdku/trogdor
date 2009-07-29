@@ -119,12 +119,12 @@ private:
 	Rect3i mCalcRegionHalf;
 	Rect3i mNonPMLHalf;
     
+	Vector3i mOriginYee;
     Vector3f mDxyz;
     float mDt;
     
     Map<Vector3i, Map<std::string, std::string> > mPMLParams;
 	
-	Vector3i mOriginYee;
 	
 	std::vector<OutputDescPtr> mOutputs;
 	std::vector<SourceDescPtr> mSources;

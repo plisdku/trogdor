@@ -155,9 +155,7 @@ static void sGetMandatoryAttribute(const TiXmlElement* elem,
 	val = elem->Attribute(attribute.c_str());
 }
 
-//template <>
-//bool sTryGetAttribute<std::string>(const TiXmlElement* elem,
-//	const std::string & attribute, std::string & val)
+/*
 static bool sTryGetAttribute(const TiXmlElement* elem, 
     const std::string & attribute, std::string & val)
 {
@@ -172,10 +170,9 @@ static bool sTryGetAttribute(const TiXmlElement* elem,
 	}
 	return 1;
 }
+*/
 
-//template <>
-//void sGetOptionalAttribute<std::string>(const TiXmlElement* elem,
-//	const std::string & attribute, std::string & val, const std::string & defaultVal)
+/*
 static void sGetOptionalAttribute(const TiXmlElement* elem,
     const std::string & attribute, std::string & val,
     const std::string & defaultVal)
@@ -192,6 +189,7 @@ static void sGetOptionalAttribute(const TiXmlElement* elem,
 		val = elem->Attribute(attribute.c_str());
 	}
 }
+*/
 
 
 

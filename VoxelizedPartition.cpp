@@ -48,7 +48,6 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	m_nx = (mFieldAllocHalfCells.size(0)+1)/2;
 	m_ny = (mFieldAllocHalfCells.size(1)+1)/2;
 	m_nz = (mFieldAllocHalfCells.size(2)+1)/2;
-	int bufSize = m_nx*m_ny*m_nz;
     
     mNumAllocHalfCells = mFieldAllocHalfCells.size()+1;
 	
@@ -290,8 +289,6 @@ paintFromCurrentSources(const GridDescription & gridDesc)
 void VoxelizedPartition::
 calculateMaterialIndices()
 {
-	// This must be done separately for each octant.
-	
 	mCentralIndices = PartitionCellCountPtr(new PartitionCellCount(mVoxels,
 		mAuxAllocRegion));
 	
@@ -450,7 +447,6 @@ createSetupMaterials(const GridDescription & gridDesc)
 				mVoxels, mCentralIndices, gridDesc, p, numCellsE, numCellsH,
                 pmlRects);
 		}
-		SetupMaterial & mat = *mSetupMaterials[p];
 	}
 }
 

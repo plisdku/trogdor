@@ -600,7 +600,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 		// use a hard source
 		//LOG << "Using a hard source.\n";
         const int SIGNIFIESHARDSOURCE = 0;
-        const int SIGNIFIESSOFTSOURCE = 1;
+        //const int SIGNIFIESSOFTSOURCE = 1;
 				
 		Rect3i yeeTFRect = YeeUtilities::halfToYee(tfRect);
 		Vector3i srcYeeCell = clip(yeeTFRect, Vector3i(1000000*srcDir));

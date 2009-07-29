@@ -54,7 +54,7 @@ static Vector3i sFieldOffsets[6] =
 
 static int sHalfCellFieldIndices[6] =
 	{ 1, 2, 3, 4, 5, 6 }; // indices of the field offsets (above) for E, H.
-
+/*
 static int sOctantFieldIndices[8] =
 	{ -1, 0, 1, 2, 3, 4, 5, -1 }; // indices of field offsets
 
@@ -63,7 +63,7 @@ static int sOctantEIndices[8] =
 
 static int sOctantHIndices[8] =
 	{ -1, -1, -1, 2, -1, 1, 0, -1 }; // Hx = 0, etc.
-
+*/
 static int sOctantFieldDirections[8] =
 	{ -1, 0, 1, 2, 2, 1, 0, -1 }; // x = 0, y = 1, z = 2
 
@@ -72,13 +72,13 @@ static int sEFieldOctants[3] =
 
 static int sHFieldOctants[3] =
     { 6, 5, 3 };
-
+/*
 static int sEFieldNumbers[3] =
     { 0, 1, 3 };
 
 static int sHFieldNumbers[3] =
     { 5, 4, 2 };
-
+*/
 int octant(const Vector3i & v)
 {
 	return mod2abs(v[0]) + 2*mod2abs(v[1]) + 4*mod2abs(v[2]);

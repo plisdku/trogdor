@@ -150,12 +150,21 @@ allocateAuxiliaryDataSpace(const VoxelGrid & grid)
 	// It's a little weird of me to include the auxiliary data allocation here. 
 }
 
+/*
+void PartitionCellCount::
+clear()
+{
+    mMaterialIndexHalfCells.clear();
+    mNumCells.clear();
+}
+*/
+
 
 std::ostream & operator<< (std::ostream & out, const PartitionCellCount & grid)
 {
 	int nni = grid.mHalfCellBounds.size(0)+1;
 	int nnj = grid.mHalfCellBounds.size(1)+1;
-	int nnk = grid.mHalfCellBounds.size(2)+1;
+	//int nnk = grid.mHalfCellBounds.size(2)+1;
 	
 	set<Paint*> parentPaints = grid.getCurlBufferParentPaints();
 	for (set<Paint*>::iterator itr = parentPaints.begin();

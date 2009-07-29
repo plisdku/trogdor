@@ -319,7 +319,7 @@ getInterpolatedH(int direction, const Vector3f & position) const
 }
 
 
-float InterleavedLattice::
+void InterleavedLattice::
 setE(int direction, const Vector3i & yeeCell, float value)
 {
     assert(mFieldsAreAllocated);
@@ -339,7 +339,7 @@ setE(int direction, const Vector3i & yeeCell, float value)
         = value;
     */
 }
-float InterleavedLattice::
+void InterleavedLattice::
 setH(int direction, const Vector3i & yeeCell, float value)
 {
     assert(mFieldsAreAllocated);
