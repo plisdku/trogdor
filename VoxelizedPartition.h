@@ -94,6 +94,9 @@ public:
         const Map<GridDescPtr, Pointer<VoxelizedPartition> > & grids);
     
     void calculateRunlines();
+    
+    void writeDataRequest(const HuygensSurfaceDescPtr surf,
+        const GridDescPtr gridDescription) const;
 	
 private:
 	void paintFromAssembly(const GridDescription & gridDesc,

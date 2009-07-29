@@ -301,7 +301,12 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	assert(surfs.size() == gridSymmetries.size());
 	
 	for (unsigned int nn = 0; nn < surfs.size(); nn++)
-	if (surfs[nn]->getType() == kTFSFSource) // only TFSFSources turn into links
+    if (surfs[nn]->getType() == kLink)
+    {
+        LOG << "Links don't recurse.\n";
+    }
+	//if (surfs[nn]->getType() == kTFSFSource) // only TFSFSources turn into links
+    else
 	{
 		Vector3i sourceSymm = surfs[nn]->getSymmetries();
 		Vector3i gridSymm = gridSymmetries[nn];
@@ -315,8 +320,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		
 		if (norm2(collapsible) > 0)
 		{
-			//LOG << "Collapsing the grid.\n";
-			
+			//LOG << "Collapsing the grid.\n";		
 			ostringstream auxGridName;
 			auxGridName << currentGrid->getName() << "_autoaux_" << nn;
 			GridDescPtr gPtr = makeAuxGridDescription(collapsible,
@@ -335,6 +339,8 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		}
 		else if (currentGrid->getNumDimensions() == 1)
 		{
+            assert(surfs[nn]->getType() != kLink); // how could this happen?
+            
 			//LOG << "Need to create last aux grid.\n";
 			ostringstream srcGridName;
 			srcGridName << currentGrid->getName() << "_autosrc";
@@ -347,17 +353,18 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 			voxelizeGridRecursor(voxelizedGrids, gPtr, numNodes, thisNode,
 				partitionWallsHalf);
 		}
-		else
+		else if (surfs[nn]->getType() != kCustomTFSFSource)
 		{
 			cerr << "Error: we need a TFSF source, but the grid is not "
 				"collapsible and the current grid is not 1D yet.  Dying.\n";
 			exit(1);
 		}
-	}
-	else if (surfs[nn]->getType() == kCustomTFSFSource)
-	{
-		// Write data request
-		LOG << "Need to write data request.\n";
+        else
+        {
+            assert(surfs[nn]->getType() == kCustomTFSFSource);
+            voxelizedGrids[currentGrid]->writeDataRequest(surfs[nn],
+                currentGrid);
+        }
 	}
 }
 

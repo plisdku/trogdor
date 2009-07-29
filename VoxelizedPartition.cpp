@@ -216,6 +216,214 @@ calculateRunlines()
     generateRunlines(); // * partition wraparound
 }
 
+
+void VoxelizedPartition::
+writeDataRequest(const HuygensSurfaceDescPtr surf,
+    const GridDescPtr gridDescription) const
+{
+	// 1.  Simulation parameters
+	// 2.  Source information (params, bounds)
+	// 3.  Materials and parameters
+	// 4.  Material sample (1D or 2D)
+	// 5.  Required sample locations: Ex, Ey, Ez, Hx, Hy, Hz
+    
+    ostringstream fileNameStream;
+    fileNameStream << surf->getFile() << ".m";
+    
+    ofstream file;
+    file.open(fileNameStream.str().c_str());
+    
+    // I think the simplest thing will be for the source request to use user
+    // coordinates in every way, but to request values at coordinates in the
+    // appropriate direction.
+    
+    LOG << "WARNING: Data requests are not coordinate-rotated.\n";
+    
+    file << "clear afp;\n";
+    file << "afp.dxdydzdt = [" << gridDescription->getDxyz()[0] << " "
+        << gridDescription->getDxyz()[1] << " " << gridDescription->getDxyz()[2]
+        << "];\n";
+    
+    int numT = surf->getDuration().getLast() - surf->getDuration().getFirst()
+        + 1;
+    file << "afp.numT = [" << numT << "];\n";
+    
+    file << "afp.halfCells = " << surf->getHalfCells() << ";\n";
+    file << "afp.tfRect = afp.halfCells;\n";
+    file << "afp.inputFile = '" << surf->getFile() << "';\n";
+    /*
+    // Now write the materials and their parameters.
+    int ii, jj, kk;
+    int numMaterials = 0;
+    Rect3i sampleRect = ss->getTFRect();
+    const vmlib::SMat<3,bool> & gridSymmetries =
+        ss->getCachedGridSymmetries();
+    Vector3b sourceSymmetries = ss->getSymmetries();
+    Vector3b periodicDimensions = getPeriodicDimensions(sampleRect);
+    Vector3b combinedSymmetries(0,0,0);
+    
+    LOGF << "Grid symmetries are " << gridSymmetries << endl;
+    LOGF << "Source symmetries are " << sourceSymmetries << endl;
+    LOGF << "Periodic dimensions are " << periodicDimensions << endl;
+    
+    for (int nSym = 0; nSym < 3; nSym++)
+    {
+        // There are two conditions under which a dimension can be dropped.
+        //	 1.  If the sourceRect has full X symmetry (which means that
+        //		gridSymmetries(nSym,:) == 1) then the X direction collapses.
+        //	 2.  If the sourceRect has X symmetry on some faces, but
+        //      the remaining faces don't need TFSF correction, then that
+        //		is good enough.  That condition is usually the same as
+        //		having a periodic dimension.  (Warning: this is a kludge.)
+        
+        Vector3b symmetryOrPeriodicity(
+            periodicDimensions[0] || gridSymmetries(nSym,0),
+            periodicDimensions[1] || gridSymmetries(nSym,1),
+            periodicDimensions[2] || gridSymmetries(nSym,2) );
+        
+        if (minval(symmetryOrPeriodicity) == 1) // if vector == (1 1 1)
+            combinedSymmetries[nSym] = 1;
+    }
+    
+    LOGF << "Combined symmetries are " << combinedSymmetries << endl;
+    
+    for (int nn = 0; nn < 3; nn++)
+    if (combinedSymmetries[nn])
+        sampleRect.p2[nn] = sampleRect.p1[nn];
+    
+    // Determine all the materials in this chunk of grid.
+    Map<int, int> tagToParent;
+    Map<int, int> parentToIndex;
+    vector<int> materials;
+    for (kk = sampleRect.p1[2]; kk <= sampleRect.p2[2]; kk++)
+    for (jj = sampleRect.p1[1]; jj <= sampleRect.p2[1]; jj++)
+    for (ii = sampleRect.p1[0]; ii <= sampleRect.p2[0]; ii++)
+    {
+        Paint* mat = mVoxels(ii,jj,kk);
+        int parentTag;
+        //cout << mat << "\n";
+        if (tagToParent.count(mat) == 0)
+        {
+            const MaterialType & matType =
+                mStructureGrid->getMaterialType(mat);
+            if (matType.isTFSF())
+                parentTag = mStructureGrid->getMaterialIndex(
+                    matType.getName());
+            else
+                parentTag = mat;
+            
+            tagToParent[mat] = parentTag;
+        }
+        
+        parentTag = tagToParent[mat];
+        if (parentToIndex.count(parentTag) == 0)
+        {
+            parentToIndex[parentTag] = numMaterials;
+            materials.push_back(parentTag);
+            numMaterials++;
+        }
+    }
+    // Write the material descriptions
+    for (int mm = 0; mm < numMaterials; mm++)
+    {
+        const MaterialType & matType = mStructureGrid->getMaterialType(
+            materials[mm]);
+        const SetupMaterialPtr setupMat = mMaterials[matType.getName()];
+        file << "afp.materials{" << mm+1 << "}.class = '" << 
+            setupMat->getClass() << "';\n";
+        file << "afp.materials{" << mm+1 << "}.name = '" <<
+            setupMat->getName() << "';\n";
+        
+        const Map<string, string> & params = setupMat->getParameters();
+        Map<string, string>::const_iterator itr;
+        for (itr = params.begin(); itr != params.end(); itr++)
+        {
+            file << "afp.materials{" << mm+1 << "}." << itr->first
+                << " = " << itr->second << ";\n";
+        }
+    }
+    // Write the grid
+    file << "afp.sampleBounds = " << sampleRect << ";\n";
+    file << "afp.grid = [";
+    for (kk = sampleRect.p1[2]; kk <= sampleRect.p2[2]; kk++)
+    {
+        file << "...\n";
+        for (jj = sampleRect.p1[1]; jj <= sampleRect.p2[1]; jj++)
+        {
+            file << "\t";
+            for (ii = sampleRect.p1[0]; ii <= sampleRect.p2[0]; ii++)
+            {
+                Paint* mat = mVoxels(ii,jj,kk);
+                //int matInd = parentToIndex[tagToParent[mat]];
+                //file << matInd+1 << " ";
+            }
+            file << "...\n";
+        }
+    }
+    file << "];\n";
+    
+    // Write the buffer points required, first in half cells, then in meters
+    SetupTFSFBufferSet temporaryBuffer(*ss, mActiveRegion);
+    
+    // Make a list of parities of Ex, Ey, Ez, Hx, Hy and Hz
+    vector<Vector3i> fieldParities;
+    fieldParities.push_back(Vector3i(1,0,0));
+    fieldParities.push_back(Vector3i(0,1,0));
+    fieldParities.push_back(Vector3i(0,0,1));
+    fieldParities.push_back(Vector3i(0,1,1));
+    fieldParities.push_back(Vector3i(1,0,1));
+    fieldParities.push_back(Vector3i(1,1,0));
+    vector<string> fieldNames;
+    fieldNames.push_back("Ex");
+    fieldNames.push_back("Ey");
+    fieldNames.push_back("Ez");
+    fieldNames.push_back("Hx");
+    fieldNames.push_back("Hy");
+    fieldNames.push_back("Hz");
+    
+    int ff, gg;
+    for (ff = 0; ff < 6; ff++)
+    {
+        file << "afp.yee"+fieldNames[ff] << " = [ ...\n";
+        
+        for (gg = 0; gg < 6; gg++)  // iterate over sides (-x, +x, etc)
+        if (!temporaryBuffer.omits(gg))
+        {
+            Rect3i yeeBounds = temporaryBuffer.getYeeBufferRect(gg,
+                fieldParities[ff]);
+            for (kk = yeeBounds.p1[2]; kk <= yeeBounds.p2[2]; kk++)
+            for (jj = yeeBounds.p1[1]; jj <= yeeBounds.p2[1]; jj++)
+            for (ii = yeeBounds.p1[0]; ii <= yeeBounds.p2[0]; ii++)
+                file << "\t[" << ii << ", " << jj << ", " << kk << "]; ...\n";
+        }
+        file << "];\n";
+    }
+    
+    for (ff = 0; ff < 6; ff++)
+    {
+        file << "afp.pos"+fieldNames[ff] << " = [ ...\n";
+        
+        for (gg = 0; gg < 6; gg++)  // iterate over sides (-x, +x, etc)
+        if (!temporaryBuffer.omits(gg))
+        {
+            Rect3i yeeBounds = temporaryBuffer.getYeeBufferRect(gg,
+                fieldParities[ff]);
+            for (kk = yeeBounds.p1[2]; kk <= yeeBounds.p2[2]; kk++)
+            for (jj = yeeBounds.p1[1]; jj <= yeeBounds.p2[1]; jj++)
+            for (ii = yeeBounds.p1[0]; ii <= yeeBounds.p2[0]; ii++)
+            {
+                file << "\t[" << dx*(ii+0.5*fieldParities[ff][0]) << ", "
+                    << dy*(jj+0.5*fieldParities[ff][1]) << ", "
+                    << dz*(kk+0.5*fieldParities[ff][2]) << "]; ...\n";
+            }
+        }
+        file << "];\n";
+    }
+    */
+    file << "% end auto-generated file \n";
+    
+    file.close();
+}
 	
 #pragma mark *** Private methods ***
 
