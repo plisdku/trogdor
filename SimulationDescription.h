@@ -85,6 +85,7 @@ public:
 		const Map<std::string, GridDescPtr> & gridMap);
 	
 	void cycleCoordinates();  // rotate entire sim, x->y, y->z, z->x
+    int getCoordinatePermutation() const { return mCoordinatePermutation; }
 	
 	// Accessors
 	const std::string & getName() const { return mName; }
@@ -130,6 +131,8 @@ private:
 	std::vector<SourceDescPtr> mSources;
     std::vector<HuygensSurfaceDescPtr> mHuygensSurfaces;
 	AssemblyDescPtr mAssembly;
+    
+    int mCoordinatePermutation;
 };
 
 class Duration
@@ -473,50 +476,6 @@ private:
     GridDescPtr mSourceGrid;
     Rect3i mFromHalfCells;
 };
-/*
-class NeighborBufferDescription
-{
-public:
-	// add constructors for things like Floquet boundaries
-	NeighborBufferDescription(const Rect3i & huygensDestHalfCells, int nSide,
-		float incidentFieldFactor);
-    NeighborBufferDescription(const Rect3i & huygensSourceHalfCells,
-        const Rect3i & huygensDestHalfCells, int nSide,
-        float incidentFieldFactor);
-	
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
-	
-    const Rect3i & getSourceHalfRect() const { return mSourceHalfRect; }
-	const Rect3i & getDestHalfRect() const { return mDestHalfRect; }
-	const Rect3i & getBufferHalfRect() const { return mBufferHalfRect; }
-	//const Rect3i & getBufferYeeBounds() const { return mBufferYeeBounds; }
-    
-    const std::vector<float> & getDestFactorsE() const
-        { return mDestFactorsE; }
-    const std::vector<float> & getSourceFactorsE() const
-        { return mSrcFactorsE; }
-    const std::vector<float> & getDestFactorsH() const
-        { return mDestFactorsH; }
-    const std::vector<float> & getSourceFactorsH() const
-        { return mSrcFactorsH; }
-    
-    void setSourceRects(const Rect3i & sourceHalfCells, int nSide);
-	
-private:
-    Rect3i getEdgeHalfCells(const Rect3i & halfCells, int nSide);
-    void initFactors(const Rect3i & huygensDestHalfCells, int nSide,
-        float incFieldFactor);
-    
-    Rect3i mSourceHalfRect; // only used for links of course
-	Rect3i mDestHalfRect;
-	Rect3i mBufferHalfRect;
-	//Rect3i mBufferYeeBounds;
-	std::vector<float> mDestFactorsE;
-	std::vector<float> mSrcFactorsE;
-	std::vector<float> mDestFactorsH;
-	std::vector<float> mSrcFactorsH;
-};
-*/
 
 class MaterialDescription
 {

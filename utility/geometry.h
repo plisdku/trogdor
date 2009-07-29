@@ -139,6 +139,9 @@ struct OrientedRect
 typedef OrientedRect<int> OrientedRect3i;
 typedef OrientedRect<double> OrientedRect3d;
 
+template<typename T>
+OrientedRect<T>
+cyclicPermute(const OrientedRect<T> & r, unsigned int nn);
 
 #pragma mark *** Input/Output ***
 

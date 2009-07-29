@@ -270,6 +270,13 @@ bool operator>(const Rect<T> & lhs, const Rect<T> & rhs)
 }
 
 
+template<typename T>
+OrientedRect<T> cyclicPermute(const OrientedRect<T> & r, unsigned int nn)
+{
+    return OrientedRect<T>(cyclicPermute(r.rect,nn),
+        cyclicPermute(r.normal,nn));
+}
+
 
 template<typename T>
 std::ostream & operator<<(std::ostream & str, const Rect<T> & rect)

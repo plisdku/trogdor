@@ -147,7 +147,7 @@ saveMaterialBoundariesBeta(const GridDescription & grid,
 {
 	ObjFile objFile;
 	int ii,jj,kk;
-	
+    
 	ostringstream foutname;
 	foutname << grid.getName() << "_faces.obj";
 	ofstream fout(foutname.str().c_str());
@@ -325,6 +325,15 @@ saveMaterialBoundariesBeta(const GridDescription & grid,
 			}
 		}
 		}
+        
+        int dePermute = (3 - grid.getCoordinatePermutation())%3;
+        for (int nn = 0; nn < xFaces.size(); nn++)
+            xFaces[nn] = cyclicPermute(xFaces[nn], dePermute);
+        for (int nn = 0; nn < yFaces.size(); nn++)
+            yFaces[nn] = cyclicPermute(yFaces[nn], dePermute);
+        for (int nn = 0; nn < zFaces.size(); nn++)
+            zFaces[nn] = cyclicPermute(zFaces[nn], dePermute);
+        
 		// Now try to consolidate a little bit.		
 		list<OrientedRect3i> xCompressed;
 		list<OrientedRect3i> yCompressed;

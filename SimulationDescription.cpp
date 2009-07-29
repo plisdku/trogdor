@@ -114,7 +114,8 @@ GridDescription(string name, Vector3i numYeeCells,
 	mNonPMLHalf(nonPMLHalf),
 	mOriginYee(originYee),
     mDxyz(dxyz),
-    mDt(dt)
+    mDt(dt),
+    mCoordinatePermutation(0)
 {
 	assert(Vector3i(2*mNumYeeCells) == mNumHalfCells); // caller's job...
 	
@@ -204,6 +205,8 @@ cycleCoordinates()
     mPMLParams = newPMLParams;
     
     mDxyz = cyclicPermute(mDxyz, 1);
+    
+    mCoordinatePermutation = (mCoordinatePermutation+1)%3;
 }
 
 Rect3i GridDescription::
