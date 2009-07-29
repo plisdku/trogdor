@@ -31,6 +31,10 @@ GlobalStatistics() :
 void GlobalStatistics::
 setNumTimesteps(long numT)
 {
+    if (numT > mTimestepStartTimes.max_size())
+        cerr << "Warning: storage of " << numT << " timestep start times will"
+        " likely fail (std::vector::max_size = "
+        << mTimestepStartTimes.max_size() << ")" << endl;
     mTimestepStartTimes.resize(numT);
 }
 

@@ -41,6 +41,15 @@ VoxelGrid(Rect3i voxelizedBounds, Rect3i gridHalfCells, Rect3i nonPML) :
 	
 //	LOG << "Non PML is " << nonPML << endl;
 	
+    long allocSize = m_nnx*m_nny*m_nnz;
+    if (mMaterialHalfCells.max_size() < allocSize)
+    {
+        cerr << "Warning: VoxelGrid is going to attempt to allocate a "
+            << m_nnx << "x" << m_nny << "x" << m_nnz << " cell array with "
+            "std::vector; the total size is " << allocSize << " and the vector"
+            " maximum size is " << mMaterialHalfCells.max_size() << ", so this"
+            " will likely fail." << endl;
+    }
 	mMaterialHalfCells.resize(m_nnx*m_nny*m_nnz);
 }
 
