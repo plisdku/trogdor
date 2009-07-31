@@ -1,7 +1,5 @@
 project( TROGDOR )
 
-#INCLUDE(CPack)
-
 EXECUTE_PROCESS(COMMAND Magick++-config --libs
 	OUTPUT_VARIABLE mlibs)
 EXECUTE_PROCESS(COMMAND Magick++-config --cppflags
@@ -130,6 +128,28 @@ YeeUtilities.h
 YeeUtilities.cpp
 )
 
+find_package( Boost )
+message("Boost root is .${BOOSTROOT}".)
+if (Boost_FOUND)
+	include_directories(${Boost_INCLUDE_DIRS})
+else(Boost_FOUND)
+	message("\nCan't find Boost!")
+endif(Boost_FOUND)
+
+set(BOOST_INCLUDEDIR /usr/local/include/boost)
+set(BOOST_ROOT /usr/local)
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+find_package( Boost COMPONENTS program_options thread)
+
+if(Boost_FOUND)
+	include_directories(${Boost_INCLUDE_DIRS})
+	message("\nBoost includes are at ${Boost_INCLUDE_DIRS}")
+	message("\nBoost libraries are ${Boost_LIBRARIES}")
+	target_link_libraries(trogdor ${Boost_LIBRARIES})
+else(Boost_FOUND)
+	message("\nCan't find Boost!")
+endif(Boost_FOUND)
 
 target_link_libraries( trogdor
     tinyxml
@@ -138,15 +158,15 @@ target_link_libraries( trogdor
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_link_libraries( trogdor
-        boost_date_time-xgcc40-mt
-        boost_program_options-xgcc40-mt
-        boost_thread-xgcc40-mt
-    )
+#    target_link_libraries( trogdor
+#        boost_date_time-xgcc40-mt
+#        boost_program_options-xgcc40-mt
+#        boost_thread-xgcc40-mt
+#    )
     
-    include_directories(
-    	/usr/local/include/boost-1_38
-    )
+#    include_directories(
+#    	/usr/local/include/boost-1_38
+#    )
     
     add_subdirectory( tests )
     enable_testing() # only need to do this once, but
@@ -154,13 +174,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_test(lattice tests/testInterleavedLattice) # this once per test
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries( trogdor
-        boost_date_time-mt
-        boost_program_options-mt
-        boost_thread-mt
-    )
-endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+#if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+#    target_link_libraries( trogdor
+#        boost_date_time-mt
+#        boost_program_options-mt
+#        boost_thread-mt
+#    )
+#endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 
 add_subdirectory( utility )
