@@ -17,7 +17,7 @@ using namespace YeeUtilities;
 
 InterleavedLattice::
 InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
-    Vector3i nonZeroDimensions) :
+    int allocationDirection) :
     mHalfCells(halfCellBounds),
     mNonZeroDimensions(1,1,1),
     mBuffersE(3),
@@ -54,9 +54,13 @@ InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
     // Calculate the memory stride.  It is useful, perhaps kludgy though, to
     // set the memory stride equal to zero along dimensions which are not used
     // (e.g. the z direction for a 2D, XY-plane lattice).
-    mMemStride[0] = STRIDE;
-    mMemStride[1] = mNumYeeCells[0]*mMemStride[0];
-    mMemStride[2] = mNumYeeCells[1]*mMemStride[1];
+    
+    int alloc0 = allocationDirection;
+    int alloc1 = (alloc0+1)%3;
+    int alloc2 = (alloc1+1)%3;
+    mMemStride[alloc0] = STRIDE;
+    mMemStride[alloc1] = mNumYeeCells[alloc0]*mMemStride[alloc0];
+    mMemStride[alloc2] = mNumYeeCells[alloc1]*mMemStride[alloc1];
     
     for (int nn = 0; nn < 3; nn++)
     if (mNonZeroDimensions[nn] == 0 || mNumYeeCells[nn] == 1)
@@ -136,12 +140,6 @@ pointer(const Vector3i & halfCell) const
     long index = linearYeeIndex(halfCell);
     
     return BufferPointer(*mOctantBuffers[octant(halfCell)], index);
-    /*
-    if (isE(octant(halfCell)))
-        return BufferPointer(*mBuffersE[xyz(octant(halfCell))], index);
-    else
-        return BufferPointer(*mBuffersH[xyz(octant(halfCell))], index);
-    */
 }
 
 BufferPointer InterleavedLattice::
@@ -151,12 +149,6 @@ wrappedPointer(const Vector3i & halfCell) const
     long index = linearYeeIndex(wrapped);
     
     return BufferPointer(*mOctantBuffers[octant(halfCell)], index);
-    /*
-    if (isE(octant(wrapped)))
-        return BufferPointer(*mBuffersE[xyz(octant(wrapped))], index);
-    else
-        return BufferPointer(*mBuffersH[xyz(octant(wrapped))], index);
-    */
 }
 
 BufferPointer InterleavedLattice::
@@ -333,11 +325,6 @@ setE(int direction, const Vector3i & yeeCell, float value)
     assert(mBuffersE[direction]->includes(ptr));
     
     *ptr = value;
-    
-    /*
-    mHeadE[direction][dot(yeeCell-mAllocOriginYeeE[direction], mMemStride)]
-        = value;
-    */
 }
 void InterleavedLattice::
 setH(int direction, const Vector3i & yeeCell, float value)
@@ -351,11 +338,6 @@ setH(int direction, const Vector3i & yeeCell, float value)
     assert(mBuffersH[direction]->includes(ptr));
     
     *ptr = value;
-    
-    /*
-    mHeadH[direction][dot(yeeCell-mAllocOriginYeeH[direction], mMemStride)]
-        = value;
-    */
 }
 
 
@@ -473,62 +455,4 @@ printH(std::ostream & str, int fieldDirection, float scale) const
     }
 }
 
-
-#if 0
-InterleavedLattice::
-InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
-    Vector3i nonZeroDimensions) :
-    mHalfCells(halfCellBounds),
-    mNonZeroDimensions(1,1,1),
-    mBuffersE(3),
-    mBuffersH(3),
-    mFieldsAreAllocated(0)
-{
-    Rect3i maximalYeeBounds(halfToYee(mHalfCells));
-    mNumYeeCells = maximalYeeBounds.size()+1;
-    for (int nn = 0; nn < 3; nn++)
-    if (mNonZeroDimensions[nn] == 0)
-        mNumYeeCells[nn] = 1;
-    mNumHalfCells = 2*mNumYeeCells;
-    /*
-    LOG << "Not sure what to do with these cached alloc origins."
-        "  It may be okay to just use one value as I'm provisionally doing "
-        "here, since I make good use of mNonZeroDimensions.\n";
-    */
-    for (int nn = 0; nn < 3; nn++)
-    {
-        mAllocOriginYeeE[nn] = halfToYee(mHalfCells.p1);
-        mAllocOriginYeeH[nn] = halfToYee(mHalfCells.p1);
-    }
-    
-    int bufferSize = mNumYeeCells[0]*mNumYeeCells[1]*mNumYeeCells[2];
-    const int BUFFERSTRIDE = 1;
-    for (int nn = 0; nn < 3; nn++)
-    {
-        mBuffersE[nn] = MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" E"
-            +char('x'+nn), bufferSize, BUFFERSTRIDE));
-        mBuffersH[nn] = MemoryBufferPtr(new MemoryBuffer(bufferNamePrefix+" H"
-            +char('x'+nn), bufferSize, BUFFERSTRIDE));
-    }
-    mMemStride[0] = BUFFERSTRIDE;
-    mMemStride[1] = mNumYeeCells[0]*mMemStride[0];
-    mMemStride[2] = mNumYeeCells[1]*mMemStride[1];
-    
-    for (int nn = 0; nn < 3; nn++)
-    {
-        if (mNonZeroDimensions[nn] == 0)
-            mMemStride[nn] = 0;
-        if (mNumYeeCells[nn] == 1)
-            mMemStride[nn] = 0;
-    }
-    
-    for (int nn = 0; nn < 3; nn++)
-    {
-        mHeadE[nn] = 0L;
-        mHeadH[nn] = 0L;
-    }
-}
-
-
-#endif
 

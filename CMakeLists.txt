@@ -140,7 +140,7 @@ set(BOOST_INCLUDEDIR /usr/local/include/boost)
 set(BOOST_ROOT /usr/local)
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
-find_package( Boost COMPONENTS program_options thread)
+find_package( Boost COMPONENTS date_time program_options thread)
 
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})

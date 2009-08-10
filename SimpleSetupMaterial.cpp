@@ -133,7 +133,6 @@ continueRunline(const Vector3i & newPos)
 void SimpleBulkSetupMaterial::
 endRunline()
 {
-	//int field = octantFieldNumber(mStartPoint);
     int oct = octant(mStartPoint);
     if (isE(oct))
         mRunlinesE[xyz(oct)].push_back(
@@ -297,7 +296,11 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
     // Notably differing from non-PML, the PML materials can't wrap to a new
     // y or z coordinate because that screws up the indexing into their
     // update constants.
-    if (oldPos[1] != newPos[1] || oldPos[2] != newPos[2])
+    
+    int runlineDirection = 0;
+    int rd1 = (runlineDirection+1)%3;
+    int rd2 = (runlineDirection+2)%3;
+    if (oldPos[rd1] != newPos[rd1] || oldPos[rd2] != newPos[rd2])
         return 0;
     
 	return 1;
@@ -364,37 +367,8 @@ printRunlines(std::ostream & out) const
 			out << "\t" << mRunlinesH[dir][rr]->f_k[1] << "\n";
 		}
 	}
-    /*
-    int dir;
-	for (dir = 0; dir < 6; dir++)
-	{
-		out << "Dir " << dir << "\n";
-		for (unsigned int rr = 0; rr < mRunlines[dir].size(); rr++)
-		{
-			out << rr << ": length " << mRunlines[dir][rr]->length <<
-				" aux " << mRunlines[dir][rr]->auxIndex <<
-				" pml depth";
-			for (int nn = 0; nn < 3; nn++)
-				out << " " << mRunlines[dir][rr]->pmlDepthIndex[nn];
-			out << "\n";
-			out << "\t" << mRunlines[dir][rr]->f_i << "\n";
-			out << "\t" << mRunlines[dir][rr]->f_j[0] << "\n";
-			out << "\t" << mRunlines[dir][rr]->f_j[1] << "\n";
-			out << "\t" << mRunlines[dir][rr]->f_k[0] << "\n";
-			out << "\t" << mRunlines[dir][rr]->f_k[1] << "\n";
-		}
-	}
-    */
 }
-/*
-MaterialPtr SimpleBulkPMLSetupMaterial::
-makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
-    const
-{
-    cerr << "You shouldn't be here.  Overload for your material.";
-    exit(1);
-}
-*/
+
 
 
 

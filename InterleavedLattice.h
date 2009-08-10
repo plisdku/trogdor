@@ -17,20 +17,71 @@
 #include <string>
 #include "Pointer.h"
 
+/**
+ * A rectangular (1D, 2D or 3D) Yee lattice, including both electric (E) and
+ * magnetic (H) fields.  The interleaved lattice provides a means to get and set
+ * field values; the fields are indexed either by Yee cell or half cell.  On
+ * construction the lattice does not reserve storage for the fields, but
+ * {@link BufferPointer}s are immediately available and will point to the
+ * correct E and H field values after the allocate() method is called.
+ *
+ * @author Paul C. Hansen
+ * @see MemoryBuffer, BufferPointer
+ */
 class InterleavedLattice
 {
 public:
+    /**
+     * Initializes a lattice but does not allocate E and H fields yet.
+     * 
+     * @param bufferNamePrefix "Surname" for the E and H MemoryBuffers
+     * @param halfCellBounds Extent in world coordinates of the lattice
+     * @param allocationDirection Determines memory ordering; allowed values are
+     *  0, 1 and 2 for x, y and z
+     * @param nonZeroDimensions Set this to zero along unused directions for 1D
+     *  or 2D grids
+     */
     InterleavedLattice(const std::string & bufferNamePrefix,
-        Rect3i halfCellBounds, Vector3i nonZeroDimensions = Vector3i(1,1,1));
+        Rect3i halfCellBounds, int allocationDirection = 0);
     
+    /**
+     * @deprecated
+     * Determine whether the grid is 1D, 2D or 3D, and which dimensions are
+     * used.
+     *
+     * @returns a vector containing 1s (dimension used) and 0s (dimension not 
+     *  used)
+     */
     Vector3i nonZeroDimensions() const { return mNonZeroDimensions; }
     
+    /**
+     * Get the bounds of the grid in world coordinates
+     * @returns grid bounds in half cells
+     */
     const Rect3i & halfCells() const { return mHalfCells; }
+    
+    /**
+     * Get the number of half cells along each dimension.  Because the grid
+     * spans an integer number of Yee cells, the returned dimensions will all
+     * be even.
+     * @returns extent of the grid in half cells along x, y and z
+     */
     const Vector3i & numHalfCells() const { return mNumHalfCells; }
+    /**
+     * Get the number of Yee cells along each dimension.
+     * @returns eextent of the grid in Yee cells along x, y and z
+     */ 
     const Vector3i & numYeeCells() const { return mNumYeeCells; }
     
     // On all nonzero dimensions, halfCell is wrapped to the interior.
     // The component in the null dimension is unchanged.
+    
+    /**
+     * Treating the grid as periodic in all directions, return the (unique)
+     * point inside the grid which is \f$N\f$
+     * numHalfCells() away from halfCell for some integer-valued vector
+     * \f$N\f$.
+     */
     Vector3i wrap(const Vector3i & halfCell) const;
     long linearYeeIndex(const Vector3i & halfCell) const;
     long wrappedLinearYeeIndex(const Vector3i & halfCell) const;

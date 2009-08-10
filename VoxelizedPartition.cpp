@@ -712,13 +712,19 @@ genRunlinesInOctant(int octant)
 	//
 	// Therafter, if there is not a current runline
 	//	Begin new runline
+    
+    // d0 is the direction of memory allocation.  In the for-loops, this is
+    // the innermost of the three Cartesian directions.
+    const int d0 = 0;
+    const int d1 = (d0+1)%3;
+    const int d2 = (d0+2)%3;
 	
 	bool needNewRunline = 1;
 	Vector3i x(p1), lastX(p1);
 	Paint *xPaint, *xParentPaint = 0L, *lastXParentPaint = 0L;
-	for (x[2] = p1[2]; x[2] <= mCalcHalfCells.p2[2]; x[2] += 2)
-	for (x[1] = p1[1]; x[1] <= mCalcHalfCells.p2[1]; x[1] += 2)
-	for (x[0] = p1[0]; x[0] <= mCalcHalfCells.p2[0]; x[0] += 2)
+	for (x[d2] = p1[d2]; x[d2] <= mCalcHalfCells.p2[d2]; x[d2] += 2)
+	for (x[d1] = p1[d1]; x[d1] <= mCalcHalfCells.p2[d1]; x[d1] += 2)
+	for (x[d0] = p1[d0]; x[d0] <= mCalcHalfCells.p2[d0]; x[d0] += 2)
 	{
 		xPaint = mVoxels(x);
 		xParentPaint = xPaint->withoutCurlBuffers();

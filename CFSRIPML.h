@@ -12,18 +12,6 @@
 
 #include "Pointer.h"
 
-/*
-class CFSRIPMLFactory
-{
-public:
-    static Pointer<PML> newPML(Paint* parentPaint,
-        std::vector<int> numCellsE,
-        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
-        Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
-        float dt);
-};
-*/
-
 // This class handles everything that's in common between the various templated
 // PML update classes; the templates just add direction-specific update
 // equations.
@@ -83,7 +71,7 @@ protected:
 
 // Completes the implementation of the PML interface.
 // This is the dude that gets fed to the template hopper.
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
 class CFSRIPML : public CFSRIPMLBase
 {
 public:
@@ -93,226 +81,210 @@ public:
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt);
     
-    // Now for the inline functions and all that.
-    struct LocalDataEx { 
-        float* Phi_ij, *Phi_ik;         // e.g. Phi_xy, Phi_xz
-        float c_JijH, c_JikH;           // constants
-        float c_Phi_ijH, c_Phi_ikH;     // also constant, hoorah!
-        float c_Phi_ijJ, c_Phi_ikJ;     // and still constant!
-    };
-    struct LocalDataEy {
-        float *Phi_ij, *Phi_ik;         // e.g. Phi_xy, Phi_xz
-        float c_JijH, *c_JikH;
-        float c_Phi_ijH, *c_Phi_ikH;
-        float c_Phi_ijJ, *c_Phi_ikJ;
-    };
-    struct LocalDataEz {
-        float* Phi_ij, *Phi_ik;         // e.g. Phi_xy, Phi_xz
-        float *c_JijH, c_JikH;
-        float *c_Phi_ijH, c_Phi_ikH;
-        float *c_Phi_ijJ, c_Phi_ikJ;
-    };
-    struct LocalDataHx {
-        float* Psi_ij, *Psi_ik;         // e.g. Phi_xy, Phi_xz
-        float c_MijE, c_MikE;           // constants
-        float c_Psi_ijE, c_Psi_ikE;     // also constant, hoorah!
-        float c_Psi_ijM, c_Psi_ikM;     // and still constant!
-    }; 
-    struct LocalDataHy {
-        float* Psi_ij, *Psi_ik;         // e.g. Phi_xy, Phi_xz
-        float c_MijE, *c_MikE;
-        float c_Psi_ijE, *c_Psi_ikE;     // also constant, hoorah!
-        float c_Psi_ijM, *c_Psi_ikM;     // and still constant!
-    }; 
-    struct LocalDataHz {
-        float* Psi_ij, *Psi_ik;         // e.g. Phi_xy, Phi_xz
-        float *c_MijE, c_MikE;           // constants
-        float *c_Psi_ijE, c_Psi_ikE;     // also constant, hoorah!
-        float *c_Psi_ijM, c_Psi_ikM;     // and still constant!
-    };   
+    // This will be specialized below.  The DOESNOTHING parameter is here for
+    // a REALLY DUMB C++ REASON.  If it's not there, this won't compile.  I am
+    // consequently mad at the C++ language.
+    template<int MEMORYDIRECTION, int DOESNOTHING=0>
+    struct LocalDataE {};
+    template<int MEMORYDIRECTION, int DOESNOTHING=0>
+    struct LocalDataH {};
     
-    void initLocalEx(LocalDataEx & data);
-    void initLocalEy(LocalDataEy & data);
-    void initLocalEz(LocalDataEz & data);
-    void onStartRunlineEx(LocalDataEx & data, const SimpleAuxPMLRunline & rl);
-    void onStartRunlineEy(LocalDataEy & data, const SimpleAuxPMLRunline & rl);
-    void onStartRunlineEz(LocalDataEz & data, const SimpleAuxPMLRunline & rl);
-    void beforeUpdateEx(LocalDataEx & data, float Ei, float dHj, float dHk);
-    void beforeUpdateEy(LocalDataEy & data, float Ei, float dHj, float dHk);
-    void beforeUpdateEz(LocalDataEz & data, float Ei, float dHj, float dHk); 
-    float updateJx(LocalDataEx & data, float Ei, float dHj, float dHk);
-    float updateJy(LocalDataEy & data, float Ei, float dHj, float dHk);
-    float updateJz(LocalDataEz & data, float Ei, float dHj, float dHk);
-    void afterUpdateEx(LocalDataEx & data, float Ei, float dHj, float dHk);
-    void afterUpdateEy(LocalDataEy & data, float Ei, float dHj, float dHk);
-    void afterUpdateEz(LocalDataEz & data, float Ei, float dHj, float dHk);
+    void onStartRunlineE(LocalDataE<0> & data, const SimpleAuxPMLRunline & rl,
+        int dir0, int dir1, int dir2);
+    void onStartRunlineE(LocalDataE<1> & data, const SimpleAuxPMLRunline & rl,
+        int dir0, int dir1, int dir2);
+    void onStartRunlineE(LocalDataE<2> & data, const SimpleAuxPMLRunline & rl,
+        int dir0, int dir1, int dir2);
+        
+    float updateJ(LocalDataE<0> & data, float Ei, float dHj, float dHk);
+    float updateJ(LocalDataE<1> & data, float Ei, float dHj, float dHk);
+    float updateJ(LocalDataE<2> & data, float Ei, float dHj, float dHk);
     
-    void initLocalHx(LocalDataHx & data);
-    void initLocalHy(LocalDataHy & data);
-    void initLocalHz(LocalDataHz & data);
-    void onStartRunlineHx(LocalDataHx & data, const SimpleAuxPMLRunline & rl);
-    void onStartRunlineHy(LocalDataHy & data, const SimpleAuxPMLRunline & rl);
-    void onStartRunlineHz(LocalDataHz & data, const SimpleAuxPMLRunline & rl);
-    void beforeUpdateHx(LocalDataHx & data, float Hi, float dEj, float dEk);
-    void beforeUpdateHy(LocalDataHy & data, float Hi, float dEj, float dEk);
-    void beforeUpdateHz(LocalDataHz & data, float Hi, float dEj, float dEk);
-    float updateKx(LocalDataHx & data, float Hi, float dEj, float dEk);
-    float updateKy(LocalDataHy & data, float Hi, float dEj, float dEk);
-    float updateKz(LocalDataHz & data, float Hi, float dEj, float dEk);
-    void afterUpdateHx(LocalDataHx & data, float Hi, float dEj, float dEk);
-    void afterUpdateHy(LocalDataHy & data, float Hi, float dEj, float dEk);
-    void afterUpdateHz(LocalDataHz & data, float Hi, float dEj, float dEk);
+    
+    void onStartRunlineH(LocalDataH<0> & data, const SimpleAuxPMLRunline & rl,
+        int dir0, int dir1, int dir2);
+    void onStartRunlineH(LocalDataH<1> & data, const SimpleAuxPMLRunline & rl,
+        int dir0, int dir1, int dir2);
+    void onStartRunlineH(LocalDataH<2> & data, const SimpleAuxPMLRunline & rl,
+        int dir0, int dir1, int dir2);
+        
+    float updateK(LocalDataH<0> & data, float Hi, float dEj, float dEk);
+    float updateK(LocalDataH<1> & data, float Hi, float dEj, float dEk);
+    float updateK(LocalDataH<2> & data, float Hi, float dEj, float dEk);
 };
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-initLocalEx(LocalDataEx & data)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+template<int DOESNOTHING>
+struct CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::LocalDataE<0, DOESNOTHING>
 {
-    //LOG << X_ATTEN << " " << Y_ATTEN << " " << Z_ATTEN << "\n";
-}
+    float* Phi_ij, *Phi_ik;         // e.g. Phi_xy, Phi_xz
+    float c_JijH, c_JikH;
+    float c_Phi_ijH, c_Phi_ikH;
+    float c_Phi_ijJ, c_Phi_ikJ;
+};
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-initLocalEy(LocalDataEy & data)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+template<int DOESNOTHING>
+struct CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::LocalDataE<1, DOESNOTHING>
 {
-    //LOG << X_ATTEN << " " << Y_ATTEN << " " << Z_ATTEN << "\n";
-}
+    float *Phi_ij, *Phi_ik;         // e.g. Phi_xy, Phi_xz
+    float c_JijH, *c_JikH;
+    float c_Phi_ijH, *c_Phi_ikH;
+    float c_Phi_ijJ, *c_Phi_ikJ;
+};
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-initLocalEz(LocalDataEz & data)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+template<int DOESNOTHING>
+struct CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::LocalDataE<2, DOESNOTHING>
 {
-    //LOG << X_ATTEN << " " << Y_ATTEN << " " << Z_ATTEN << "\n";
-}
+    float* Phi_ij, *Phi_ik;         // e.g. Phi_xy, Phi_xz
+    float *c_JijH, c_JikH;
+    float *c_Phi_ijH, c_Phi_ikH;
+    float *c_Phi_ijJ, c_Phi_ikJ;
+};
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-onStartRunlineEx(LocalDataEx & data, const SimpleAuxPMLRunline & rl)
+
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+template<int DOESNOTHING>
+struct CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::LocalDataH<0, DOESNOTHING>
 {
-    const int DIRECTION = 0;
-    if (Y_ATTEN)
+    float* Psi_ij, *Psi_ik;         // e.g. Phi_xy, Phi_xz
+    float c_MijE, c_MikE;           // constants
+    float c_Psi_ijE, c_Psi_ikE;     // also constant, hoorah!
+    float c_Psi_ijM, c_Psi_ikM;     // and still constant!
+};
+
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+template<int DOESNOTHING>
+struct CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::LocalDataH<1, DOESNOTHING>
+{
+    float* Psi_ij, *Psi_ik;         // e.g. Phi_xy, Phi_xz
+    float c_MijE, *c_MikE;
+    float c_Psi_ijE, *c_Psi_ikE;     // also constant, hoorah!
+    float c_Psi_ijM, *c_Psi_ikM;     // and still constant!
+};
+
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+template<int DOESNOTHING>
+struct CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::LocalDataH<2, DOESNOTHING>
+{
+    float* Psi_ij, *Psi_ik;         // e.g. Phi_xy, Phi_xz
+    float *c_MijE, c_MikE;           // constants
+    float *c_Psi_ijE, c_Psi_ikE;     // also constant, hoorah!
+    float *c_Psi_ijM, c_Psi_ikM;     // and still constant!
+};
+
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+void CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+onStartRunlineE(LocalDataE<0> & data,
+    const SimpleAuxPMLRunline & rl, int dir0, int dir1, int dir2)
+{   
+    if (J_ATTEN)
     {
-        data.Phi_ij = &(mAccumEj[DIRECTION][rl.auxIndex]);
-        data.c_JijH = mC_JjH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Phi_ijH = mC_PhijH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Phi_ijJ = mC_PhijJ[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
+        data.Phi_ij = &(mAccumEj[dir0][rl.auxIndex]);
+        data.c_JijH = mC_JjH[dir0][rl.pmlIndex[dir1]];
+        data.c_Phi_ijH = mC_PhijH[dir0][rl.pmlIndex[dir1]];
+        data.c_Phi_ijJ = mC_PhijJ[dir0][rl.pmlIndex[dir1]];
     }
     
-    if (Z_ATTEN)
+    if (K_ATTEN)
     {
-        data.Phi_ik = &mAccumEk[DIRECTION][rl.auxIndex];
-        data.c_JikH = mC_JkH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Phi_ikH = mC_PhikH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Phi_ikJ = mC_PhikJ[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
+        data.Phi_ik = &mAccumEk[dir0][rl.auxIndex];
+        data.c_JikH = mC_JkH[dir0][rl.pmlIndex[dir2]];
+        data.c_Phi_ikH = mC_PhikH[dir0][rl.pmlIndex[dir2]];
+        data.c_Phi_ikJ = mC_PhikJ[dir0][rl.pmlIndex[dir2]];
     }
 }
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-onStartRunlineEy(LocalDataEy & data, const SimpleAuxPMLRunline & rl)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+void CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+onStartRunlineE(LocalDataE<1> & data,
+    const SimpleAuxPMLRunline & rl, int dir0, int dir1, int dir2)
 {
-    const int DIRECTION = 1;
-    if (Z_ATTEN)
+    if (K_ATTEN)
     {
-        data.Phi_ij = &mAccumEj[DIRECTION][rl.auxIndex];
-        data.c_JijH = mC_JjH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Phi_ijH = mC_PhijH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Phi_ijJ = mC_PhijJ[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-    }
-    
-    if (X_ATTEN)
-    {
-        data.Phi_ik = &mAccumEk[DIRECTION][rl.auxIndex];
-        data.c_JikH = &mC_JkH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Phi_ikH = &mC_PhikH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Phi_ikJ = &mC_PhikJ[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-    }
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-onStartRunlineEz(LocalDataEz & data, const SimpleAuxPMLRunline & rl)
-{
-    const int DIRECTION = 2;
-    if (X_ATTEN)
-    {
-        data.Phi_ij = &mAccumEj[DIRECTION][rl.auxIndex];
-        data.c_JijH = &mC_JjH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Phi_ijH = &mC_PhijH[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Phi_ijJ = &mC_PhijJ[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
+        data.Phi_ij = &mAccumEj[dir0][rl.auxIndex];
+        data.c_JijH = mC_JjH[dir0][rl.pmlIndex[dir1]];
+        data.c_Phi_ijH = mC_PhijH[dir0][rl.pmlIndex[dir1]];
+        data.c_Phi_ijJ = mC_PhijJ[dir0][rl.pmlIndex[dir1]];
     }
     
-    if (Y_ATTEN)
+    if (I_ATTEN)
     {
-        data.Phi_ik = &mAccumEk[DIRECTION][rl.auxIndex];
-        data.c_JikH = mC_JkH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Phi_ikH = mC_PhikH[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Phi_ikJ = mC_PhikJ[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
+        data.Phi_ik = &mAccumEk[dir0][rl.auxIndex];
+        data.c_JikH = &mC_JkH[dir0][rl.pmlIndex[dir2]];
+        data.c_Phi_ikH = &mC_PhikH[dir0][rl.pmlIndex[dir2]];
+        data.c_Phi_ikJ = &mC_PhikJ[dir0][rl.pmlIndex[dir2]];
     }
 }
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-beforeUpdateEx(LocalDataEx & data, float Ei, float dHj, float dHk)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+void CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+onStartRunlineE(LocalDataE<2> & data,
+    const SimpleAuxPMLRunline & rl, int dir0, int dir1, int dir2)
 {
+    if (I_ATTEN)
+    {
+        data.Phi_ij = &mAccumEj[dir0][rl.auxIndex];
+        data.c_JijH = &mC_JjH[dir0][rl.pmlIndex[dir1]];
+        data.c_Phi_ijH = &mC_PhijH[dir0][rl.pmlIndex[dir1]];
+        data.c_Phi_ijJ = &mC_PhijJ[dir0][rl.pmlIndex[dir1]];
+    }
+    
+    if (J_ATTEN)
+    {
+        data.Phi_ik = &mAccumEk[dir0][rl.auxIndex];
+        data.c_JikH = mC_JkH[dir0][rl.pmlIndex[dir2]];
+        data.c_Phi_ikH = mC_PhikH[dir0][rl.pmlIndex[dir2]];
+        data.c_Phi_ikJ = mC_PhikJ[dir0][rl.pmlIndex[dir2]];
+    }
 }
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-beforeUpdateEy(LocalDataEy & data, float Ei, float dHj, float dHk)
-{
-}
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-beforeUpdateEz(LocalDataEz & data, float Ei, float dHj, float dHk)
-{
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline float CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-updateJx(LocalDataEx & data, float Ei, float dHj, float dHk)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+inline float CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+updateJ(LocalDataE<0> & data, float Ei, float dHj, float dHk)
 {
     float Jij, Jik;
     
-    if (Y_ATTEN)
+    if (J_ATTEN)
     {
         Jij = data.c_JijH*dHk + *data.Phi_ij;
         *data.Phi_ij += (data.c_Phi_ijH*dHk - data.c_Phi_ijJ*Jij);
         data.Phi_ij++;
     }
     
-    if (Z_ATTEN)
+    if (K_ATTEN)
     {
         Jik = data.c_JikH*dHj + *data.Phi_ik;
         *data.Phi_ik += (data.c_Phi_ikH*dHj - data.c_Phi_ikJ*Jik);
         data.Phi_ik++;
     }
     
-    if (Y_ATTEN && Z_ATTEN)
+    if (J_ATTEN && K_ATTEN)
         return -Jij + Jik;
-    else if (Y_ATTEN)
+    else if (J_ATTEN)
         return -Jij;
-    else if (Z_ATTEN)
+    else if (K_ATTEN)
         return Jik;
     
     return 0.0;
 }
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline float CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-updateJy(LocalDataEy & data, float Ei, float dHj, float dHk)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+inline float CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+updateJ(LocalDataE<1> & data, float Ei, float dHj, float dHk)
 {
     float Jij, Jik;
     
-    if (Z_ATTEN)
+    if (K_ATTEN)
     {
         Jij = data.c_JijH*dHk + *data.Phi_ij;
         *data.Phi_ij += (data.c_Phi_ijH*dHk - data.c_Phi_ijJ*Jij);
         data.Phi_ij++;
     }
     
-    if (X_ATTEN)
+    if (I_ATTEN)
     {
         Jik = *data.c_JikH*dHj + *data.Phi_ik;
         *data.Phi_ik += (*data.c_Phi_ikH*dHj - *data.c_Phi_ikJ*Jik);
@@ -322,23 +294,23 @@ updateJy(LocalDataEy & data, float Ei, float dHj, float dHk)
         data.c_Phi_ikJ++;
     }
     
-    if (X_ATTEN && Z_ATTEN)
+    if (I_ATTEN && K_ATTEN)
         return -Jij + Jik;
-    else if (X_ATTEN)
+    else if (I_ATTEN)
         return Jik;
-    else if (Z_ATTEN)
+    else if (K_ATTEN)
         return -Jij;
     return 0.0;
 }
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline float CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-updateJz(LocalDataEz & data, float Ei, float dHj, float dHk)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+inline float CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+updateJ(LocalDataE<2> & data, float Ei, float dHj, float dHk)
 {
     // Be careful here.  We return -Jij, not Jij.
     float Jij, Jik;
     
-    if (X_ATTEN)
+    if (I_ATTEN)
     {
         Jij = *data.c_JijH*dHk + *data.Phi_ij;
         *data.Phi_ij += (*data.c_Phi_ijH*dHk - *data.c_Phi_ijJ*Jij);
@@ -348,191 +320,134 @@ updateJz(LocalDataEz & data, float Ei, float dHj, float dHk)
         data.c_Phi_ijJ++;
     }
     
-    if (Y_ATTEN)
+    if (J_ATTEN)
     {
         Jik = data.c_JikH*dHj + *data.Phi_ik;
         *data.Phi_ik += (data.c_Phi_ikH*dHj - data.c_Phi_ikJ*Jik);
         data.Phi_ik++;
     }
     
-    if (X_ATTEN && Y_ATTEN)
+    if (I_ATTEN && J_ATTEN)
         return -Jij + Jik;
-    else if (X_ATTEN)
+    else if (I_ATTEN)
         return -Jij;
-    else if (Y_ATTEN)
+    else if (J_ATTEN)
         return Jik;
     return 0.0;
 }
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-afterUpdateEx(LocalDataEx & data, float Ei, float dHj, float dHk)
+
+
+
+
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+void CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+onStartRunlineH(LocalDataH<0> & data,
+    const SimpleAuxPMLRunline & rl, int dir0, int dir1, int dir2)
 {
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-afterUpdateEy(LocalDataEy & data, float Ei, float dHj, float dHk)
-{
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-afterUpdateEz(LocalDataEz & data, float Ei, float dHj, float dHk)
-{
-}
-
-
-
-
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-initLocalHx(LocalDataHx & data)
-{
-    //LOG << X_ATTEN << " " << Y_ATTEN << " " << Z_ATTEN << "\n";
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-initLocalHy(LocalDataHy & data)
-{
-    //LOG << X_ATTEN << " " << Y_ATTEN << " " << Z_ATTEN << "\n";
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-initLocalHz(LocalDataHz & data)
-{
-    //LOG << X_ATTEN << " " << Y_ATTEN << " " << Z_ATTEN << "\n";
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-onStartRunlineHx(LocalDataHx & data, const SimpleAuxPMLRunline & rl)
-{
-    const int DIRECTION = 0;
-    if (Y_ATTEN)
+    if (J_ATTEN)
     {
-        data.Psi_ij = &mAccumHj[DIRECTION][rl.auxIndex];
-        data.c_MijE = mC_MjE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Psi_ijE = mC_PsijE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Psi_ijM = mC_PsijM[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
+        data.Psi_ij = &mAccumHj[dir0][rl.auxIndex];
+        data.c_MijE = mC_MjE[dir0][rl.pmlIndex[dir1]];
+        data.c_Psi_ijE = mC_PsijE[dir0][rl.pmlIndex[dir1]];
+        data.c_Psi_ijM = mC_PsijM[dir0][rl.pmlIndex[dir1]];
     }
     
-    if (Z_ATTEN)
+    if (K_ATTEN)
     {
-        data.Psi_ik = &mAccumHk[DIRECTION][rl.auxIndex];
-        data.c_MikE = mC_MkE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Psi_ikE = mC_PsikE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Psi_ikM = mC_PsikM[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
+        data.Psi_ik = &mAccumHk[dir0][rl.auxIndex];
+        data.c_MikE = mC_MkE[dir0][rl.pmlIndex[dir2]];
+        data.c_Psi_ikE = mC_PsikE[dir0][rl.pmlIndex[dir2]];
+        data.c_Psi_ikM = mC_PsikM[dir0][rl.pmlIndex[dir2]];
     }
 }
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-onStartRunlineHy(LocalDataHy & data, const SimpleAuxPMLRunline & rl)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+void CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+onStartRunlineH(LocalDataH<1> & data,
+    const SimpleAuxPMLRunline & rl, int dir0, int dir1, int dir2)
 {
-    const int DIRECTION = 1;
-    if (Z_ATTEN)
+    if (K_ATTEN)
     {
-        data.Psi_ij = &mAccumHj[DIRECTION][rl.auxIndex];
-        data.c_MijE = mC_MjE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Psi_ijE = mC_PsijE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Psi_ijM = mC_PsijM[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-    }
-    
-    if (X_ATTEN)
-    {
-        data.Psi_ik = &mAccumHk[DIRECTION][rl.auxIndex];
-        data.c_MikE = &mC_MkE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Psi_ikE = &mC_PsikE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Psi_ikM = &mC_PsikM[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-    }
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-onStartRunlineHz(LocalDataHz & data, const SimpleAuxPMLRunline & rl)
-{
-    const int DIRECTION = 2;
-    if (X_ATTEN)
-    {
-        data.Psi_ij = &mAccumHj[DIRECTION][rl.auxIndex];
-        data.c_MijE = &mC_MjE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Psi_ijE = &mC_PsijE[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
-        data.c_Psi_ijM = &mC_PsijM[DIRECTION][rl.pmlIndex[(DIRECTION+1)%3]];
+        data.Psi_ij = &mAccumHj[dir0][rl.auxIndex];
+        data.c_MijE = mC_MjE[dir0][rl.pmlIndex[dir1]];
+        data.c_Psi_ijE = mC_PsijE[dir0][rl.pmlIndex[dir1]];
+        data.c_Psi_ijM = mC_PsijM[dir0][rl.pmlIndex[dir1]];
     }
     
-    if (Y_ATTEN)
+    if (I_ATTEN)
     {
-        data.Psi_ik = &mAccumHk[DIRECTION][rl.auxIndex];
-        data.c_MikE = mC_MkE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Psi_ikE = mC_PsikE[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
-        data.c_Psi_ikM = mC_PsikM[DIRECTION][rl.pmlIndex[(DIRECTION+2)%3]];
+        data.Psi_ik = &mAccumHk[dir0][rl.auxIndex];
+        data.c_MikE = &mC_MkE[dir0][rl.pmlIndex[dir2]];
+        data.c_Psi_ikE = &mC_PsikE[dir0][rl.pmlIndex[dir2]];
+        data.c_Psi_ikM = &mC_PsikM[dir0][rl.pmlIndex[dir2]];
     }
 }
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-beforeUpdateHx(LocalDataHx & data, float Hi, float dEj, float dEk)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+void CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+onStartRunlineH(LocalDataH<2> & data,
+    const SimpleAuxPMLRunline & rl, int dir0, int dir1, int dir2)
 {
+    if (I_ATTEN)
+    {
+        data.Psi_ij = &mAccumHj[dir0][rl.auxIndex];
+        data.c_MijE = &mC_MjE[dir0][rl.pmlIndex[dir1]];
+        data.c_Psi_ijE = &mC_PsijE[dir0][rl.pmlIndex[dir1]];
+        data.c_Psi_ijM = &mC_PsijM[dir0][rl.pmlIndex[dir1]];
+    }
+    
+    if (J_ATTEN)
+    {
+        data.Psi_ik = &mAccumHk[dir0][rl.auxIndex];
+        data.c_MikE = mC_MkE[dir0][rl.pmlIndex[dir2]];
+        data.c_Psi_ikE = mC_PsikE[dir0][rl.pmlIndex[dir2]];
+        data.c_Psi_ikM = mC_PsikM[dir0][rl.pmlIndex[dir2]];
+    }
 }
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-beforeUpdateHy(LocalDataHy & data, float Hi, float dEj, float dEk)
-{
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-beforeUpdateHz(LocalDataHz & data, float Hi, float dEj, float dEk)
-{
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline float CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-updateKx(LocalDataHx & data, float Hi, float dEj, float dEk)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+inline float CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+updateK(LocalDataH<0> & data, float Hi, float dEj, float dEk)
 {
     float Mij, Mik;
-    if (Y_ATTEN)
+    if (J_ATTEN)
     {
         Mij = data.c_MijE*dEk + *data.Psi_ij;
         *data.Psi_ij += (data.c_Psi_ijE*dEk - data.c_Psi_ijM*Mij);
         data.Psi_ij++;
     }
     
-    if (Z_ATTEN)
+    if (K_ATTEN)
     {
         Mik = data.c_MikE*dEj + *data.Psi_ik;
         *data.Psi_ik += (data.c_Psi_ikE*dEj - data.c_Psi_ikM*Mik);
         data.Psi_ik++;
     }
     
-    if (Y_ATTEN && Z_ATTEN)
+    if (J_ATTEN && K_ATTEN)
         return Mij - Mik;
-    else if (Y_ATTEN)
+    else if (J_ATTEN)
         return Mij;
-    else if (Z_ATTEN)
+    else if (K_ATTEN)
         return -Mik;
     return 0.0;
 }
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline float CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-updateKy(LocalDataHy & data, float Hi, float dEj, float dEk)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+inline float CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+updateK(LocalDataH<1> & data, float Hi, float dEj, float dEk)
 {
     float Mij, Mik;
     
-    if (Z_ATTEN)
+    if (K_ATTEN)
     {
         Mij = data.c_MijE*dEk + *data.Psi_ij;
         *data.Psi_ij += (data.c_Psi_ijE*dEk - data.c_Psi_ijM*Mij);
         data.Psi_ij++;
     }
     
-    if (X_ATTEN)
+    if (I_ATTEN)
     {
         Mik = *data.c_MikE*dEj + *data.Psi_ik;
         *data.Psi_ik += (*data.c_Psi_ikE*dEj - *data.c_Psi_ikM*Mik);
@@ -542,22 +457,22 @@ updateKy(LocalDataHy & data, float Hi, float dEj, float dEk)
         data.Psi_ik++;
     }
     
-    if (Z_ATTEN && X_ATTEN)
+    if (K_ATTEN && I_ATTEN)
         return Mij - Mik;
-    else if (Z_ATTEN)
+    else if (K_ATTEN)
         return Mij;
-    else if (X_ATTEN)
+    else if (I_ATTEN)
         return -Mik;
     return 0.0;
 }
 
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline float CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-updateKz(LocalDataHz & data, float Hi, float dEj, float dEk)
+template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
+inline float CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
+updateK(LocalDataH<2> & data, float Hi, float dEj, float dEk)
 {
     float Mij, Mik;
     
-    if (X_ATTEN)
+    if (I_ATTEN)
     {
         Mij = *data.c_MijE*dEk + *data.Psi_ij;
         *data.Psi_ij += (*data.c_Psi_ijE*dEk - *data.c_Psi_ijM*Mij);
@@ -567,40 +482,21 @@ updateKz(LocalDataHz & data, float Hi, float dEj, float dEk)
         data.Psi_ij++;
     }
     
-    if (Y_ATTEN)
+    if (J_ATTEN)
     {
         Mik = data.c_MikE*dEj + *data.Psi_ik;
         *data.Psi_ik += (data.c_Psi_ikE*dEj - data.c_Psi_ikM*Mik);
         data.Psi_ik++;
     }
     
-    if (X_ATTEN && Y_ATTEN)
+    if (I_ATTEN && J_ATTEN)
         return Mij - Mik;
-    else if (X_ATTEN)
+    else if (I_ATTEN)
         return Mij;
-    else if (Y_ATTEN)
+    else if (J_ATTEN)
         return -Mik;
     return 0.0;
 }
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-afterUpdateHx(LocalDataHx & data, float Hi, float dEj, float dEk)
-{
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-afterUpdateHy(LocalDataHy & data, float Hi, float dEj, float dEk)
-{
-}
-
-template <bool X_ATTEN, bool Y_ATTEN, bool Z_ATTEN>
-inline void CFSRIPML<X_ATTEN, Y_ATTEN, Z_ATTEN>::
-afterUpdateHz(LocalDataHz & data, float Hi, float dEj, float dEk)
-{
-}
-
 
 
 

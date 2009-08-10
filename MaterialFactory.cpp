@@ -91,6 +91,7 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
     
     if (0 == parentPaint->isPML())
     {
+        
         if (bulkMaterial->getModelName() == "StaticDielectric")
         {
             setupMat = SetupMaterialPtr(

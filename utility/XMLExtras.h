@@ -74,6 +74,7 @@ void sGetMandatoryAttribute(const TiXmlElement* elem,
 	
 	if (!(istr >> val))
 	{
+        assert(!"Trouble.");
 		err << elem->Value() << " has invalid \"" << attribute
 			<<"\" attribute";
 		throw(Exception(sErr(err.str(), elem)));
@@ -95,6 +96,7 @@ bool sTryGetAttribute(const TiXmlElement* elem,
 		
 		if (!(istr >> val))
 		{
+            assert(!"Trouble.");
 			err << elem->Value() << " has invalid \"" << attribute
 				<< "\" attribute";
 			throw(Exception(sErr(err.str(), elem)));
@@ -120,6 +122,7 @@ void sGetOptionalAttribute(const TiXmlElement* elem,
 		
 		if (!(istr >> val))
 		{
+            assert(!"Trouble.");
 			err << elem->Value() << " has invalid \"" << attribute
 				<< "\" attribute";
 			throw(Exception(sErr(err.str(), elem)));

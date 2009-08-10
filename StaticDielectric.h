@@ -38,25 +38,19 @@ public:
     };
     
     void initLocalE(LocalDataE & data);
-    void onStartRunlineEx(LocalDataE & data, const SimpleRunline & rl);
-    void onStartRunlineEy(LocalDataE & data, const SimpleRunline & rl);
-    void onStartRunlineEz(LocalDataE & data, const SimpleRunline & rl);
-    void beforeUpdateE(LocalDataE & data, float Ei, float dHj, float dHk);    
-    float updateEx(LocalDataE & data, float Ei, float dHj, float dHk, float Ji);
-    float updateEy(LocalDataE & data, float Ei, float dHj, float dHk, float Ji);
-    float updateEz(LocalDataE & data, float Ei, float dHj, float dHk, float Ji);
+    void onStartRunlineE(LocalDataE & data, const SimpleRunline & rl, int dir);
+    void beforeUpdateE(LocalDataE & data, float Ei, float dHj, float dHk);
+    float updateE(LocalDataE & data, int dir, float Ei, float dHj, float dHk,
+        float Ji);
     void afterUpdateE(LocalDataE & data, float Ei, float dHj, float dHk);
     
     void initLocalH(LocalDataH & data);
-    void onStartRunlineHx(LocalDataH & data, const SimpleRunline & rl);
-    void onStartRunlineHy(LocalDataH & data, const SimpleRunline & rl);
-    void onStartRunlineHz(LocalDataH & data, const SimpleRunline & rl);
+    void onStartRunlineH(LocalDataH & data, const SimpleRunline & rl, int dir);
     void beforeUpdateH(LocalDataH & data, float Hi, float dEj, float dEk);
-    float updateHx(LocalDataH & data, float Hi, float dEj, float dEk, float Ki);
-    float updateHy(LocalDataH & data, float Hi, float dEj, float dEk, float Ki);
-    float updateHz(LocalDataH & data, float Hi, float dEj, float dEk, float Ki);
+    float updateH(LocalDataH & data, int dir, float Hi, float dEj, float dEk,
+        float Ki);
     void afterUpdateH(LocalDataH & data, float Hi, float dEj, float dEk);
-
+    
 private:
     Vector3f mDxyz;
     float mDt;
@@ -67,6 +61,7 @@ private:
     float m_mur;
 };
 
+
 inline void StaticDielectric::
 initLocalE(LocalDataE & data)
 {
@@ -74,11 +69,9 @@ initLocalE(LocalDataE & data)
 }
 
 inline void StaticDielectric::
-onStartRunlineEx(LocalDataE & data, const SimpleRunline & rl) {}
-inline void StaticDielectric::
-onStartRunlineEy(LocalDataE & data, const SimpleRunline & rl) {}
-inline void StaticDielectric::
-onStartRunlineEz(LocalDataE & data, const SimpleRunline & rl) {}
+onStartRunlineE(LocalDataE & data, const SimpleRunline & rl, int dir)
+{
+}
 
 inline void StaticDielectric::
 beforeUpdateE(LocalDataE & data, float Ei, float dHj, float dHk)
@@ -86,29 +79,8 @@ beforeUpdateE(LocalDataE & data, float Ei, float dHj, float dHk)
 }
 
 inline float StaticDielectric::
-updateEx(LocalDataE & data, float Ei, float dHj, float dHk, float Ji)
+updateE(LocalDataE & data, int dir, float Ei, float dHj, float dHk, float Ji)
 {
-    //LOG << "ce1 = " << data.ce1 << "\n";
-//    if (Ji != 0)
-//        LOG << "dHj " << dHj << " dHk " << dHk << " Ji " << Ji << "\n"; 
-    return Ei + data.ce1*(dHk - dHj - Ji);
-}
-
-inline float StaticDielectric::
-updateEy(LocalDataE & data, float Ei, float dHj, float dHk, float Ji)
-{
-    //LOG << "ce1 = " << data.ce1 << "\n";
-//    if (Ji != 0)
-//        LOG << "dHj " << dHj << " dHk " << dHk << " Ji " << Ji << "\n"; 
-    return Ei + data.ce1*(dHk - dHj - Ji);
-}
-
-inline float StaticDielectric::
-updateEz(LocalDataE & data, float Ei, float dHj, float dHk, float Ji)
-{
-    //LOG << "ce1 = " << data.ce1 << "\n";
-//    if (Ji != 0)
-//        LOG << "dHj " << dHj << " dHk " << dHk << " Ji " << Ji << "\n"; 
     return Ei + data.ce1*(dHk - dHj - Ji);
 }
 
@@ -117,7 +89,6 @@ afterUpdateE(LocalDataE & data, float Ei, float dHj, float dHk)
 {
 }
 
-
 inline void StaticDielectric::
 initLocalH(LocalDataH & data)
 {
@@ -125,11 +96,9 @@ initLocalH(LocalDataH & data)
 }
 
 inline void StaticDielectric::
-onStartRunlineHx(LocalDataH & data, const SimpleRunline & rl) {}
-inline void StaticDielectric::
-onStartRunlineHy(LocalDataH & data, const SimpleRunline & rl) {}
-inline void StaticDielectric::
-onStartRunlineHz(LocalDataH & data, const SimpleRunline & rl) {}
+onStartRunlineH(LocalDataH & data, const SimpleRunline & rl, int dir)
+{
+}
 
 inline void StaticDielectric::
 beforeUpdateH(LocalDataH & data, float Hi, float dEj, float dEk)
@@ -137,29 +106,8 @@ beforeUpdateH(LocalDataH & data, float Hi, float dEj, float dEk)
 }
 
 inline float StaticDielectric::
-updateHx(LocalDataH & data, float Hi, float dEj, float dEk, float Ki)
+updateH(LocalDataH & data, int dir, float Hi, float dEj, float dEk, float Ki)
 {
-    //LOG << "ch1 = " << data.ch1 << "\n";
-//    if (Ki != 0)
-//        LOG << "dEj " << dEj << " dEk " << dEk << " Ki " << Ki << "\n"; 
-    return Hi + data.ch1*(-dEk + dEj - Ki);
-}
-
-inline float StaticDielectric::
-updateHy(LocalDataH & data, float Hi, float dEj, float dEk, float Ki)
-{
-    //LOG << "ch1 = " << data.ch1 << "\n";
-//    if (Ki != 0)
-//        LOG << "dEj " << dEj << " dEk " << dEk << " Ki " << Ki << "\n";
-    return Hi + data.ch1*(-dEk + dEj - Ki);
-}
-
-inline float StaticDielectric::
-updateHz(LocalDataH & data, float Hi, float dEj, float dEk, float Ki)
-{
-    //LOG << "ch1 = " << data.ch1 << "\n";
-//    if (Ki != 0)
-//        LOG << "dEj " << dEj << " dEk " << dEk << " Ki " << Ki << "\n";
     return Hi + data.ch1*(-dEk + dEj - Ki);
 }
 

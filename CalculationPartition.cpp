@@ -137,7 +137,7 @@ sourceE(int timestep)
 void CalculationPartition::
 outputE(int timestep)
 {
-    //LOG << "Output E " << timestep << "\n";
+    LOG << "Output E " << timestep << "\n";
     int nn;
     for (nn = 0; nn < mOutputs.size(); nn++)
         mOutputs[nn]->outputEPhase(*this, timestep);
@@ -231,7 +231,7 @@ timedSourceE(int timestep)
 void CalculationPartition::
 timedOutputE(int timestep)
 {
-    //LOG << "Output E " << timestep << "\n";
+    LOG << "Timed output E " << timestep << "\n";
     int nn;
     double t1, t2;
     for (nn = 0; nn < mOutputs.size(); nn++)
@@ -241,6 +241,7 @@ timedOutputE(int timestep)
         t2 = getTimeInMicroseconds();
         mStatistics.addOutputMicroseconds(nn, t2-t1);
     }
+    printFields(cout, octantE(2), 1.0);
     /*
     LOG << "Output E (3)\n";
     printFields(cout, octantE(0), 1.0);

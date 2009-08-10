@@ -125,12 +125,11 @@ public:
     virtual void calcHPhase(int direction);
     virtual void allocateAuxBuffers();
     
-    void calcEx();
-    void calcEy();
-    void calcEz();
-    void calcHx();
-    void calcHy();
-    void calcHz();
+    template<int DIRECTION_PML>
+    void calcE(int fieldDirection);
+    
+    template<int MEMORY_DIRECTION>
+    void calcH(int fieldDirection);
     
     virtual std::string getModelName() const
         { return mMaterial.getModelName(); }

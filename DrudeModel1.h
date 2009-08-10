@@ -54,23 +54,19 @@ public:
     };
     
     void initLocalE(LocalDataE & data);
-    void onStartRunlineEx(LocalDataE & data, const SimpleAuxRunline & rl);
-    void onStartRunlineEy(LocalDataE & data, const SimpleAuxRunline & rl);
-    void onStartRunlineEz(LocalDataE & data, const SimpleAuxRunline & rl);
-    void beforeUpdateE(LocalDataE & data, float Ei, float dHj, float dHk);    
-    float updateEx(LocalDataE & data, float Ei, float dHj, float dHk, float Ji);
-    float updateEy(LocalDataE & data, float Ei, float dHj, float dHk, float Ji);
-    float updateEz(LocalDataE & data, float Ei, float dHj, float dHk, float Ji);
+    void onStartRunlineE(LocalDataE & data, const SimpleAuxRunline & rl,
+        int dir);
+    void beforeUpdateE(LocalDataE & data, float Ei, float dHj, float dHk);
+    float updateE(LocalDataE & data, int dir, float Ei, float dHj, float dHk,
+        float Ji);
     void afterUpdateE(LocalDataE & data, float Ei, float dHj, float dHk);
     
     void initLocalH(LocalDataH & data);
-    void onStartRunlineHx(LocalDataH & data, const SimpleAuxRunline & rl);
-    void onStartRunlineHy(LocalDataH & data, const SimpleAuxRunline & rl);
-    void onStartRunlineHz(LocalDataH & data, const SimpleAuxRunline & rl);
+    void onStartRunlineH(LocalDataH & data, const SimpleAuxRunline & rl,
+        int dir);
     void beforeUpdateH(LocalDataH & data, float Hi, float dEj, float dEk);
-    float updateHx(LocalDataH & data, float Hi, float dEj, float dEk, float Ki);
-    float updateHy(LocalDataH & data, float Hi, float dEj, float dEk, float Ki);
-    float updateHz(LocalDataH & data, float Hi, float dEj, float dEk, float Ki);
+    float updateH(LocalDataH & data, int dir, float Hi, float dEj, float dEk,
+        float Ki);
     void afterUpdateH(LocalDataH & data, float Hi, float dEj, float dEk);
     
 private:
@@ -98,21 +94,9 @@ initLocalE(LocalDataE & data)
 }
 
 inline void DrudeModel1::
-onStartRunlineEx(LocalDataE & data, const SimpleAuxRunline & rl)
+onStartRunlineE(LocalDataE & data, const SimpleAuxRunline & rl, int dir)
 {
-    data.Ji = &(mCurrents[0][rl.auxIndex]);
-}
-
-inline void DrudeModel1::
-onStartRunlineEy(LocalDataE & data, const SimpleAuxRunline & rl)
-{
-    data.Ji = &(mCurrents[1][rl.auxIndex]);
-}
-
-inline void DrudeModel1::
-onStartRunlineEz(LocalDataE & data, const SimpleAuxRunline & rl)
-{
-    data.Ji = &(mCurrents[2][rl.auxIndex]);
+    data.Ji = &(mCurrents[dir][rl.auxIndex]);
 }
 
 inline void DrudeModel1::
@@ -121,29 +105,11 @@ beforeUpdateE(LocalDataE & data, float Ei, float dHj, float dHk)
 }
 
 inline float DrudeModel1::
-updateEx(LocalDataE & data, float Ei, float dHj, float dHk, float Ji)
+updateE(LocalDataE & data, int dir, float Ei, float dHj, float dHk, float Ji)
 {
     //LOG << "ce1 = " << data.ce1 << "\n";
 //    if (Ji != 0)
 //        LOG << "dHj " << dHj << " dHk " << dHk << " Ji " << Ji << "\n"; 
-    return Ei + data.ce*(dHk - dHj - Ji - *data.Ji++);
-}
-
-inline float DrudeModel1::
-updateEy(LocalDataE & data, float Ei, float dHj, float dHk, float Ji)
-{
-    //LOG << "ce1 = " << data.ce1 << "\n";
-//    if (Ji != 0)
-//        LOG << "dHj " << dHj << " dHk " << dHk << " Ji " << Ji << "\n"; 
-    return Ei + data.ce*(dHk - dHj - Ji - *data.Ji++);
-}
-
-inline float DrudeModel1::
-updateEz(LocalDataE & data, float Ei, float dHj, float dHk, float Ji)
-{
-    //LOG << "ce1 = " << data.ce1 << "\n";
-//    if (Ji != 0)
-//        LOG << "dHj " << dHj << " dHk " << dHk << " Ji " << Ji << "\n";
     return Ei + data.ce*(dHk - dHj - Ji - *data.Ji++);
 }
 
@@ -152,7 +118,6 @@ afterUpdateE(LocalDataE & data, float Ei, float dHj, float dHk)
 {
 }
 
-
 inline void DrudeModel1::
 initLocalH(LocalDataH & data)
 {
@@ -160,11 +125,9 @@ initLocalH(LocalDataH & data)
 }
 
 inline void DrudeModel1::
-onStartRunlineHx(LocalDataH & data, const SimpleAuxRunline & rl) {}
-inline void DrudeModel1::
-onStartRunlineHy(LocalDataH & data, const SimpleAuxRunline & rl) {}
-inline void DrudeModel1::
-onStartRunlineHz(LocalDataH & data, const SimpleAuxRunline & rl) {}
+onStartRunlineH(LocalDataH & data, const SimpleAuxRunline & rl, int dir)
+{
+}
 
 inline void DrudeModel1::
 beforeUpdateH(LocalDataH & data, float Hi, float dEj, float dEk)
@@ -172,19 +135,7 @@ beforeUpdateH(LocalDataH & data, float Hi, float dEj, float dEk)
 }
 
 inline float DrudeModel1::
-updateHx(LocalDataH & data, float Hi, float dEj, float dEk, float Ki)
-{
-    return Hi + data.ch*(-dEk + dEj - Ki);
-}
-
-inline float DrudeModel1::
-updateHy(LocalDataH & data, float Hi, float dEj, float dEk, float Ki)
-{
-    return Hi + data.ch*(-dEk + dEj - Ki);
-}
-
-inline float DrudeModel1::
-updateHz(LocalDataH & data, float Hi, float dEj, float dEk, float Ki)
+updateH(LocalDataH & data, int dir, float Hi, float dEj, float dEk, float Ki)
 {
     return Hi + data.ch*(-dEk + dEj - Ki);
 }
