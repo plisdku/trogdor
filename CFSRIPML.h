@@ -22,7 +22,7 @@ public:
     CFSRIPMLBase(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
-        float dt);
+        float dt, int runlineDirection );
     virtual ~CFSRIPMLBase() {}
     
     std::string getModelName() const;
@@ -63,6 +63,7 @@ protected:
     MemoryBufferPtr mBufAccumEj[3], mBufAccumEk[3],
         mBufAccumHj[3], mBufAccumHk[3];
     Vector3i mPMLDirection;
+    int mRunlineDirection;
     
     Vector3f mDxyz;
     float mDt;
@@ -79,7 +80,7 @@ public:
     CFSRIPML(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
-        float dt);
+        float dt, int runlineDirection );
     
     // This will be specialized below.  The DOESNOTHING parameter is here for
     // a REALLY DUMB C++ REASON.  If it's not there, this won't compile.  I am
@@ -178,7 +179,15 @@ template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
 void CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
 onStartRunlineE(LocalDataE<0> & data,
     const SimpleAuxPMLRunline & rl, int dir0, int dir1, int dir2)
-{   
+{
+    /*
+    Vector3i pmlPML = cyclicPermute(mPMLDirection, (3-mRunlineDirection)%3);
+    LOG << "PML dir " << mPMLDirection << " feels like " << pmlPML << "\n";
+    LOG << "Field " << dir0 << " feels like 0.\n";
+    LOG << "So, set the accum variables right: sizes are\n"
+        "\t" << mAccumEj[dir0].size() << ", " << mAccumEk[dir0].size()
+        << "\n";
+    */
     if (J_ATTEN)
     {
         data.Phi_ij = &(mAccumEj[dir0][rl.auxIndex]);

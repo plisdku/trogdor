@@ -29,7 +29,7 @@ using namespace YeeUtilities;
 VoxelizedPartition::
 VoxelizedPartition(const GridDescription & gridDesc, 
 	const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
-	Rect3i allocRegion, Rect3i calcRegion) :
+	Rect3i allocRegion, Rect3i calcRegion, int runlineDirection) :
 	mVoxels(allocRegion, gridDesc.getHalfCellBounds(), 
 		gridDesc.getNonPMLHalfCells()),
 	mGridHalfCells(gridDesc.getHalfCellBounds()),
@@ -52,7 +52,7 @@ VoxelizedPartition(const GridDescription & gridDesc,
     mNumAllocHalfCells = mFieldAllocHalfCells.size()+1;
 	
     mLattice = InterleavedLatticePtr(new InterleavedLattice(gridDesc.getName(),
-        mFieldAllocHalfCells));
+        mFieldAllocHalfCells, runlineDirection));
     
 	mNonPMLHalfCells = gridDesc.getNonPMLHalfCells();
 	mOriginYee = gridDesc.getOriginYee();
@@ -498,7 +498,7 @@ void VoxelizedPartition::
 calculateMaterialIndices()
 {
 	mCentralIndices = PartitionCellCountPtr(new PartitionCellCount(mVoxels,
-		mAuxAllocRegion));
+		mAuxAllocRegion, mLattice->runlineDirection()));
 	
 	//cout << *mCentralIndices << endl;
 }
@@ -653,7 +653,7 @@ createSetupMaterials(const GridDescription & gridDesc)
 		{
 			mSetupMaterials[p] = MaterialFactory::newSetupMaterial(
 				mVoxels, mCentralIndices, gridDesc, p, numCellsE, numCellsH,
-                pmlRects);
+                pmlRects, mLattice->runlineDirection());
 		}
 	}
 }
@@ -688,6 +688,11 @@ generateRunlines()
         genRunlinesInOctant(octantE(direction));
         genRunlinesInOctant(octantH(direction));
     }
+    /*
+    map<Paint*, Pointer<SetupMaterial> >::const_iterator itr;
+    for (itr = mSetupMaterials.begin(); itr != mSetupMaterials.end(); itr++)
+        itr->second->printRunlines(cout);
+    */
 }
 
 void VoxelizedPartition::
@@ -715,7 +720,7 @@ genRunlinesInOctant(int octant)
     
     // d0 is the direction of memory allocation.  In the for-loops, this is
     // the innermost of the three Cartesian directions.
-    const int d0 = 0;
+    const int d0 = mLattice->runlineDirection();
     const int d1 = (d0+1)%3;
     const int d2 = (d0+2)%3;
 	
@@ -732,7 +737,7 @@ genRunlinesInOctant(int octant)
 		if (!needNewRunline)
 		{
 			if (xParentPaint == lastXParentPaint &&
-				material->canContinueRunline(*this, lastX, x, xPaint)) // kludge
+				material->canContinueRunline(*this, lastX, x, xPaint, d0))
 				material->continueRunline(x);
 			else
 			{

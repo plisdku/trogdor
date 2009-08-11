@@ -122,7 +122,7 @@ int main (int argc, char * const argv[])
 	if (variablesMap.count("nosim"))
 		prefs.runSim = 0;
 	prefs.runSim = (variablesMap.count("nosim") == 0);
-    prefs.memoryDirection = variablesMap["fastaxis"].as<char>();
+    prefs.runlineDirection = variablesMap["fastaxis"].as<char>();
     
 	
     FDTDApplication& app = FDTDApplication::getInstance();

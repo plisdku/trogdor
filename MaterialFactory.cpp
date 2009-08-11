@@ -31,7 +31,7 @@ template<class MaterialT, class RunlineT>
 static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
-        float dt);
+        float dt, int runlineDirection );
 
 #pragma mark *** Material Factory ***
 
@@ -41,7 +41,8 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 	Paint* parentPaint,
     std::vector<int> numCellsE,
     std::vector<int> numCellsH,
-    std::vector<Rect3i> pmlRects)
+    std::vector<Rect3i> pmlRects,
+    int runlineDirection )
 {
 	assert(parentPaint != 0L);
     
@@ -129,19 +130,19 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
         {
             setupMat = newCFSRIPML<StaticDielectric, SimpleAuxPMLRunline>(
                 parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
-                gridDesc.getDxyz(), gridDesc.getDt());
+                gridDesc.getDxyz(), gridDesc.getDt(), runlineDirection);
         }
         else if (bulkMaterial->getModelName() == "StaticLossyDielectric")
         {
             setupMat = newCFSRIPML<StaticLossyDielectric, SimpleAuxPMLRunline>(
                 parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
-                gridDesc.getDxyz(), gridDesc.getDt());
+                gridDesc.getDxyz(), gridDesc.getDt(), runlineDirection);
         }
         else if (bulkMaterial->getModelName() == "DrudeMetal1")
         {
             setupMat = newCFSRIPML<DrudeModel1, SimpleAuxPMLRunline>(
                 parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
-                gridDesc.getDxyz(), gridDesc.getDt());
+                gridDesc.getDxyz(), gridDesc.getDt(), runlineDirection);
         }
         else if (bulkMaterial->getModelName() == "PerfectConductor")
         {
@@ -190,15 +191,21 @@ template<class MaterialT, class RunlineT>
 static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
-        float dt)
+        float dt, int runlineDirection )
 {
     Vector3i pmlDirs = parentPaint->getPMLDirections();
+    Vector3i rotatedPMLDirs = cyclicPermute(pmlDirs, (3-runlineDirection)%3);
+    
+    LOG << "This PML absorbs along " << pmlDirs << " and the memory direction"
+        " is " << runlineDirection << ", so the rotated PML direction is "
+        << rotatedPMLDirs << ".\n";
+    
     SetupMaterial* m;
-    if (pmlDirs[0] != 0)
+    if (rotatedPMLDirs[0] != 0)
     {
-        if (pmlDirs[1] != 0)
+        if (rotatedPMLDirs[1] != 0)
         {
-            if (pmlDirs[2] != 0)
+            if (rotatedPMLDirs[2] != 0)
             {
                 m = new SimpleSetupPML<MaterialT, RunlineT, CFSRIPML<1,1,1> >(
                     parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
@@ -213,7 +220,7 @@ static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
         }
         else
         {
-            if (pmlDirs[2] != 0)
+            if (rotatedPMLDirs[2] != 0)
             {
                 m = new SimpleSetupPML<MaterialT, RunlineT, CFSRIPML<1,0,1> >(
                     parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
@@ -229,9 +236,9 @@ static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
     }
     else
     {
-        if (pmlDirs[1] != 0)
+        if (rotatedPMLDirs[1] != 0)
         {
-            if (pmlDirs[2] != 0)
+            if (rotatedPMLDirs[2] != 0)
             {
                 m = new SimpleSetupPML<MaterialT, RunlineT, CFSRIPML<0,1,1> >(
                     parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
@@ -246,7 +253,7 @@ static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
         }
         else
         {
-            if (pmlDirs[2] != 0)
+            if (rotatedPMLDirs[2] != 0)
             {
                 m = new SimpleSetupPML<MaterialT, RunlineT, CFSRIPML<0,0,1> >(
                     parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,

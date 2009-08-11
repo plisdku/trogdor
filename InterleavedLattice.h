@@ -36,13 +36,13 @@ public:
      * 
      * @param bufferNamePrefix "Surname" for the E and H MemoryBuffers
      * @param halfCellBounds Extent in world coordinates of the lattice
-     * @param allocationDirection Determines memory ordering; allowed values are
+     * @param runlineDirection Determines memory ordering; allowed values are
      *  0, 1 and 2 for x, y and z
      * @param nonZeroDimensions Set this to zero along unused directions for 1D
      *  or 2D grids
      */
     InterleavedLattice(const std::string & bufferNamePrefix,
-        Rect3i halfCellBounds, int allocationDirection = 0);
+        Rect3i halfCellBounds, int runlineDirection = 0);
     
     /**
      * @deprecated
@@ -99,6 +99,7 @@ public:
         const;
     
     Vector3i fieldStride() const { return mMemStride; }
+    int runlineDirection() const { return mRunlineDirection; }
     
     // Access to fields (once allocated)
     void allocate();
@@ -134,6 +135,7 @@ private:
     float* mHeadE[3];
     float* mHeadH[3];
     Vector3i mMemStride;
+    int mRunlineDirection; // 0, 1 or 2
     std::vector<float> mData;
 };
 typedef Pointer<InterleavedLattice> InterleavedLatticePtr;

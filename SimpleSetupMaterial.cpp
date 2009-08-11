@@ -102,7 +102,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 
 bool SimpleBulkSetupMaterial::
 canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
-	const Vector3i & newPos, Paint* newPaint) const
+	const Vector3i & newPos, Paint* newPaint, int runlineDirection) const
 {
     if (newPaint != mStartPaint)
         return 0;
@@ -178,15 +178,6 @@ printRunlines(std::ostream & out) const
 		}
 	}
 }
-/*
-MaterialPtr SimpleBulkSetupMaterial::
-makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
-    const
-{
-    cerr << "You shouldn't be here.  Overload for your material.";
-    exit(1);
-}
-*/
 
 #pragma mark *** Simple Bulk PML Material ***
 
@@ -260,20 +251,17 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
     
     // TODO: test that this gives the correct PML if we wrapped to the far
     // side of the grid somehow.  (What am I talking about???)
-    
-	/*
-	LOG << "runline for PML in " << mPMLRect << "\n";
-	LOGMORE << "dir " << pmlDir << "\n";
+    /*
+	LOGMORE << "dir " << mStartPaint->getPMLDirections() << "\n";
 	LOGMORE << "start " << mStartPoint << "\n";
-	LOGMORE << "grid size " << gridSize << "\n";
-	LOGMORE << "wrap start " << wrappedStartPoint << "\n";
 	LOGMORE << "depth " << mCurrentRunline.pmlDepthIndex << "\n";
-	*/
+    */
 }
 
 bool SimpleBulkPMLSetupMaterial::
 canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
-	const Vector3i & newPos, Paint* newPaint) const
+	const Vector3i & newPos, Paint* newPaint,
+    int runlineDirection) const
 {
     InterleavedLatticePtr mainLattice(vp.getLattice());
     if (newPaint != mStartPaint)
@@ -297,9 +285,8 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
     // y or z coordinate because that screws up the indexing into their
     // update constants.
     
-    int runlineDirection = 0;
-    int rd1 = (runlineDirection+1)%3;
-    int rd2 = (runlineDirection+2)%3;
+    const int rd1 = (runlineDirection+1)%3;
+    const int rd2 = (runlineDirection+2)%3;
     if (oldPos[rd1] != newPos[rd1] || oldPos[rd2] != newPos[rd2])
         return 0;
     

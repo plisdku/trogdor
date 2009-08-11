@@ -17,18 +17,21 @@ using namespace YeeUtilities;
 
 InterleavedLattice::
 InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
-    int allocationDirection) :
+    int runlineDirection) :
     mHalfCells(halfCellBounds),
     mNonZeroDimensions(1,1,1),
     mBuffersE(3),
     mBuffersH(3),
     mOctantBuffers(8),
-    mFieldsAreAllocated(0)
+    mFieldsAreAllocated(0),
+    mRunlineDirection(runlineDirection)
 {
     if (mHalfCells.num()%2 != Vector3i(0,0,0))
         throw(Exception("Interleaved lattice must span full Yee cells!"));
     mNumYeeCells = mHalfCells.num()/2;
     mNumHalfCells = mHalfCells.num();
+    
+    assert(runlineDirection >= 0 && runlineDirection < 3);
     
     //LOG << "Rect " << halfCellBounds << " yee " << mNumYeeCells << "\n";
     
@@ -55,7 +58,7 @@ InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
     // set the memory stride equal to zero along dimensions which are not used
     // (e.g. the z direction for a 2D, XY-plane lattice).
     
-    int alloc0 = allocationDirection;
+    int alloc0 = runlineDirection;
     int alloc1 = (alloc0+1)%3;
     int alloc2 = (alloc1+1)%3;
     mMemStride[alloc0] = STRIDE;

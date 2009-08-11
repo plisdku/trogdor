@@ -23,7 +23,8 @@ class PartitionCellCount
 {
 public:
     //PartitionCellCount(Rect3i halfCellBounds);
-	PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds);
+	PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds,
+        int runlineDirection );
 	
     //void countCells(const VoxelGrid & grid);
     
@@ -38,7 +39,7 @@ public:
     //void clear();
 	
 private:
-	void calcMaterialIndices(const VoxelGrid & grid);
+	void calcMaterialIndices(const VoxelGrid & grid, int runlineDirection );
 	void allocateAuxiliaryDataSpace(const VoxelGrid & grid);
 	
 	std::vector<Map<Paint*, long> > mNumCells;

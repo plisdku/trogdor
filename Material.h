@@ -55,7 +55,8 @@ public:
 		const Vector3i & startPos) = 0;
 	virtual bool canContinueRunline(const VoxelizedPartition & vp,
 		const Vector3i & oldPos,
-		const Vector3i & newPos, Paint* newPaint) const = 0;
+		const Vector3i & newPos, Paint* newPaint,
+        int runlineDirection) const = 0;
 	virtual void continueRunline(const Vector3i & newPos) = 0;
 	virtual void endRunline() = 0;
 	

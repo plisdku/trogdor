@@ -49,7 +49,7 @@ public:
     bool output2D;
     bool dumpGrid;
     bool runSim;
-    char memoryDirection;
+    char runlineDirection;
 };
 
 
@@ -87,12 +87,13 @@ private: // heh, "new private" stuff
 	Mat3i guessFastestOrientation(const SimulationDescription & sim) const;
 	
 	void voxelizeGrids(const SimulationDescPtr sim,
-		Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids);
+		Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
+        int runlineDirection);
 	
 	void voxelizeGridRecursor(
 		Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		GridDescPtr currentGrid, Vector3i numNodes, Vector3i thisNode,
-		Rect3i partitionWallsHalf);
+		Rect3i partitionWallsHalf, int runlineDirection);
 	
 	GridDescPtr makeAuxGridDescription(Vector3i collapsableDimensions,
 		GridDescPtr parentGrid, HuygensSurfaceDescPtr huygensSurface,

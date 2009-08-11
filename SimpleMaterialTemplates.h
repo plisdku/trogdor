@@ -114,12 +114,13 @@ class UpdateHarness : public WithRunline<RunlineT>
 {
 public:
     UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, Vector3f dxyz, float dt);
+        std::vector<int> numCellsH, Vector3f dxyz, float dt,
+        int runlineDirection );
     
     UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
-        float dt);
+        float dt, int runlineDirection );
     
     virtual void calcEPhase(int direction);
     virtual void calcHPhase(int direction);
@@ -137,6 +138,8 @@ private:
     Vector3f mDxyz;
     Vector3f mDxyz_inverse;
     float mDt;
+    
+    int mRunlineDirection;
     
     MaterialT mMaterial;
     PMLT mPML;

@@ -17,7 +17,8 @@ using namespace std;
 using namespace YeeUtilities;
 
 PartitionCellCount::
-PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds) :
+PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds,
+    int runlineDirection ) :
 	mNumCells(8),
 	mHalfCellBounds(halfCellBounds),
 	m_nnx(halfCellBounds.size(0)+1),
@@ -34,7 +35,7 @@ PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds) :
             << ", so this will likely fail." << endl;
     }
 	mMaterialIndexHalfCells.resize(m_nnx*m_nny*m_nnz);
-	calcMaterialIndices(grid);
+	calcMaterialIndices(grid, runlineDirection);
 	allocateAuxiliaryDataSpace(grid);
 }
 
@@ -94,7 +95,7 @@ getCurlBufferParentPaints() const
 
 
 void PartitionCellCount::
-calcMaterialIndices(const VoxelGrid & grid)
+calcMaterialIndices(const VoxelGrid & grid, int runlineDirection )
 {
 	for (int nn = 0; nn < 8; nn++)
 	{
@@ -108,7 +109,39 @@ calcMaterialIndices(const VoxelGrid & grid)
 			start[ss] += 1;
 		
 		//LOG << "Calculating from " << start << "\n";
-		
+        
+        const int d0 = runlineDirection;
+        const int d1 = (d0+1)%3;
+        const int d2 = (d0+2)%3;
+        
+        Vector3i x;
+        for (x[d2] = start[d2]; x[d2] <= mHalfCellBounds.p2[d2]; x[d2] += 2)
+        for (x[d1] = start[d1]; x[d1] <= mHalfCellBounds.p2[d1]; x[d1] += 2)
+        for (x[d0] = start[d0]; x[d0] <= mHalfCellBounds.p2[d0]; x[d0] += 2)
+        {
+			int linearIndex = (x[0]-o[0]) + (x[1]-o[1])*rSize[0] +
+				(x[2]-o[2])*rSize[0]*rSize[1];
+			
+			assert(linearIndex >= 0 &&
+				linearIndex < mMaterialIndexHalfCells.size());
+			
+			Paint* p =  grid(x[0],x[1],x[2])->withoutCurlBuffers();
+			
+			if (mNumCells[nn].count(p) == 0)
+			{
+				mNumCells[nn][p] = 1;
+				mMaterialIndexHalfCells[linearIndex] = 0;
+				//LOG << "Starting material " << hex << p << dec << "\n";
+				//LOGMORE << "at " << ii << " " << jj << " " << kk << ", "
+				//	<< "linear index " << linearIndex << "\n";
+			}
+			else
+			{
+				mMaterialIndexHalfCells[linearIndex] = mNumCells[nn][p];
+				mNumCells[nn][p]++;
+			}
+        }
+		/*
 		for (int kk = start[2]; kk <= mHalfCellBounds.p2[2]; kk += 2)
 		for (int jj = start[1]; jj <= mHalfCellBounds.p2[1]; jj += 2)
 		for (int ii = start[0]; ii <= mHalfCellBounds.p2[0]; ii += 2)
@@ -135,6 +168,7 @@ calcMaterialIndices(const VoxelGrid & grid)
 				mNumCells[nn][p]++;
 			}
 		}
+        */
 	}
 }
 

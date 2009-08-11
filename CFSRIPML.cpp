@@ -71,12 +71,15 @@ CFSRIPMLBase::
 CFSRIPMLBase(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
-        float dt) :
+        float dt, int runlineDirection ) :
     mPMLParams(pmlParams),
     mPMLDirection(parentPaint->getPMLDirections()),
     mDxyz(dxyz),
-    mDt(dt)
+    mDt(dt),
+    mRunlineDirection(runlineDirection)
 {
+    assert(runlineDirection >= 0 && runlineDirection < 3);
+    
     for (int nn = 0; nn < 3; nn++)
     {
         setNumCellsE(nn, numCellsE[nn], parentPaint);
@@ -208,6 +211,7 @@ setNumCellsH(int fieldDir, int numCells, Paint* parentPaint)
     }
 }
 
+// This entire function is unaffected by the memory allocation direction.
 void CFSRIPMLBase::
 setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
     Paint* parentPaint)
@@ -362,6 +366,8 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
 void CFSRIPMLBase::
 allocateAuxBuffers()
 {
+    Vector3i rotatedPMLDir = cyclicPermute(mPMLDirection,
+        (3-mRunlineDirection)%3);
     // Allocate auxiliary variables
     MemoryBufferPtr p;
     for (int fieldDir = 0; fieldDir < 3; fieldDir++)
@@ -400,9 +406,9 @@ CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
 CFSRIPML(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
-        float dt) :
+        float dt, int runlineDirection ) :
     CFSRIPMLBase(parentPaint, numCellsE, numCellsH, pmlHalfCells,
-        pmlParams, dxyz, dt)
+        pmlParams, dxyz, dt, runlineDirection)
 {
 }
 

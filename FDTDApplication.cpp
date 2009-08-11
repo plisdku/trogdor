@@ -54,7 +54,7 @@ SimulationPreferences()
     output2D = 0;
     dumpGrid = 0;
     runSim = 1;
-    memoryDirection = 'x';
+    runlineDirection = 'x';
 }
 
 
@@ -75,22 +75,28 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
 	
     t0 = getTimeInMicroseconds();
     
-    if (prefs.memoryDirection == 'x')
+    int runlineDirection = 0;
+    if (prefs.runlineDirection == 'x')
         LOG << "Not rotating.\n";
-    else if (prefs.memoryDirection == 'y')
+    else if (prefs.runlineDirection == 'y')
     {
         LOG << "Rotating once.\n";
-        sim->cycleCoordinates();
+        runlineDirection = 1;
+        //sim->cycleCoordinates();
     }
-    else if (prefs.memoryDirection == 'z')
+    else if (prefs.runlineDirection == 'z')
     {
         LOG << "Rotating twice.\n";
-        sim->cycleCoordinates();
-        sim->cycleCoordinates();
+        runlineDirection = 2;
+        //sim->cycleCoordinates();
+        //sim->cycleCoordinates();
     }
     else
         throw(Exception("Bad fastaxis direction (should be x, y or z)."));
-	voxelizeGrids(sim, voxelizedGrids); // includes setup runlines
+    
+    
+    // this step includes making setup runlines
+	voxelizeGrids(sim, voxelizedGrids, runlineDirection);
 	
 	// in here: do any setup that requires the voxelized grids
 	// extract all information that will be needed after the setup grid is gone
@@ -113,6 +119,12 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
             StructuralReports::saveMaterialBoundariesBeta(*itr->first,
                 *itr->second);
         }
+    }
+    
+    if (prefs.runSim == 0)
+    {
+        cout << "Not running simulation.\n";
+        return;
     }
     
     t0 = getTimeInMicroseconds();
@@ -187,10 +199,13 @@ guessFastestOrientation(const SimulationDescription & grid) const
 
 void FDTDApplication::
 voxelizeGrids(const SimulationDescPtr sim,
-	Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids)
+	Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
+    int runlineDirection)
 {
 	static const int USE_MPI = 0;
 	Rect3i myPartition, myCalcRegion;
+    
+    assert(runlineDirection >= 0 && runlineDirection < 3);
 	
 	if (USE_MPI)
 	{
@@ -226,7 +241,7 @@ voxelizeGrids(const SimulationDescPtr sim,
 			100000000, 100000000, 100000000);
 		
 		voxelizeGridRecursor(voxelizedGrids, g, numNodes, thisNode,
-			partitionWallsHalf);
+			partitionWallsHalf, runlineDirection);
 	}
     
     LOG << "Stage 2: Create setup Huygens surfaces and paint them in.\n";
@@ -247,7 +262,7 @@ voxelizeGrids(const SimulationDescPtr sim,
 void FDTDApplication::
 voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	GridDescPtr currentGrid, Vector3i numNodes, Vector3i thisNode, 
-	Rect3i partitionWallsHalf)
+	Rect3i partitionWallsHalf, int runlineDirection )
 {
 	Rect3i myPartitionHalfCells = clip(partitionWallsHalf,
         currentGrid->getHalfCellBounds());
@@ -287,7 +302,8 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	}
 	
 	VoxelizedPartitionPtr partition(new VoxelizedPartition(
-		*currentGrid, voxelizedGrids, myAllocatedHalfCells, myCalcHalfCells));
+		*currentGrid, voxelizedGrids, myAllocatedHalfCells, myCalcHalfCells,
+        runlineDirection));
 	voxelizedGrids[currentGrid] = partition;
     
     //cout << *partition << endl;
@@ -335,7 +351,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 				auxPartitionWallsHalf.p2[ll] = 1;
 			}
 			voxelizeGridRecursor(voxelizedGrids, gPtr, numNodes, thisNode,
-				auxPartitionWallsHalf);
+				auxPartitionWallsHalf, runlineDirection);
 		}
 		else if (currentGrid->getNumDimensions() == 1)
 		{
@@ -351,7 +367,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 			GridDescPtr gPtr = makeSourceGridDescription(
 				currentGrid, surfs[nn], srcGridName.str());
 			voxelizeGridRecursor(voxelizedGrids, gPtr, numNodes, thisNode,
-				partitionWallsHalf);
+				partitionWallsHalf, runlineDirection);
 		}
 		else if (surfs[nn]->getType() != kCustomTFSFSource)
 		{

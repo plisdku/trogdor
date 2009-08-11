@@ -32,7 +32,8 @@ public:
 		Paint* parentPaint,
         std::vector<int> numCellsE,
         std::vector<int> numCellsH,
-        std::vector<Rect3i> pmlRects);
+        std::vector<Rect3i> pmlRects,
+        int runlineDirection );
     
     static Map<Vector3i, Map<std::string, std::string> > defaultPMLParams();
 };

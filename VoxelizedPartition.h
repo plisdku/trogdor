@@ -42,7 +42,8 @@ class VoxelizedPartition
 public:
 	VoxelizedPartition(const GridDescription & gridDesc, 
 		const Map<GridDescPtr, Pointer<VoxelizedPartition> > & voxelizedGrids,
-		Rect3i allocRegion, Rect3i calcRegion);  // !
+		Rect3i allocRegion, Rect3i calcRegion,
+        int runlineDirection );  // !
 	
 	const std::vector<Vector3i> & getHuygensRegionSymmetries() const {
 		return mHuygensRegionSymmetries; }
