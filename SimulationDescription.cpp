@@ -62,7 +62,6 @@ setAllPointers()
 	for (nMaterial = 0; nMaterial < mMaterials.size(); nMaterial++)
 		materialMap[mMaterials[nMaterial]->getName()] = mMaterials[nMaterial];
 	
-	
 	// 2.  Point Huygens surfaces to appropriate grids
 	for (nGrid = 0; nGrid < mGrids.size(); nGrid++)
 		mGrids[nGrid]->setPointers(materialMap, gridMap);
@@ -88,18 +87,6 @@ setDuration(int numT)
 	mNumTimesteps = numT;
 }
 
-void SimulationDescription::
-cycleCoordinates()
-{
-    m_dxyz = cyclicPermute(m_dxyz, 1);
-	//m_dxyz = Vector3f(m_dxyz[2], m_dxyz[0], m_dxyz[1]);
-	unsigned int nn;
-	for (nn = 0; nn < mGrids.size(); nn++)
-		mGrids[nn]->cycleCoordinates();
-	for (nn = 0; nn < mMaterials.size(); nn++)
-		mMaterials[nn]->cycleCoordinates();
-}
-
 #pragma mark *** Grid ***
 
 GridDescription::
@@ -114,8 +101,7 @@ GridDescription(string name, Vector3i numYeeCells,
 	mNonPMLHalf(nonPMLHalf),
 	mOriginYee(originYee),
     mDxyz(dxyz),
-    mDt(dt),
-    mCoordinatePermutation(0)
+    mDt(dt)
 {
 	assert(Vector3i(2*mNumYeeCells) == mNumHalfCells); // caller's job...
 	
@@ -176,39 +162,6 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap,
 		mAssembly->setPointers(materialMap, gridMap);
 }
 
-void GridDescription::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	mNumYeeCells = permuteForward*mNumYeeCells;
-	mNumHalfCells = permuteForward*mNumHalfCells;
-	mCalcRegionHalf = permuteForward*mCalcRegionHalf;
-	mNonPMLHalf = permuteForward*mNonPMLHalf;
-	mOriginYee = permuteForward*mOriginYee;
-	
-	unsigned int nn;
-	
-	for (nn = 0; nn < mOutputs.size(); nn++)
-		mOutputs[nn]->cycleCoordinates();
-	for (nn = 0; nn < mSources.size(); nn++)
-		mSources[nn]->cycleCoordinates();
-	for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
-		mHuygensSurfaces[nn]->cycleCoordinates();
-	mAssembly->cycleCoordinates();
-    
-    Map<Vector3i, Map<string, string> > newPMLParams;
-    for (int sideNum = 0; sideNum < 6; sideNum++)
-        newPMLParams[cyclicPermute(cardinal(sideNum), 1)] =
-            mPMLParams[cardinal(sideNum)];
-    mPMLParams = newPMLParams;
-    
-    mDxyz = cyclicPermute(mDxyz, 1);
-    
-    mCoordinatePermutation = (mCoordinatePermutation+1)%3;
-}
-
 Rect3i GridDescription::
 getYeeBounds() const
 {
@@ -231,28 +184,10 @@ getNumDimensions() const
 	return nDim;
 }
 
-#pragma mark *** Region ***
-
-void Region::
-cycleCoordinates()
-{
-//    LOG << "Rotating region.\n";
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-    
-    mYeeCells = permuteForward*mYeeCells;
-    mStride = permuteForward*mStride;
-    
-//    LOGMORE << "Yee cells of " << hex << this << dec << " now "
-//        << mYeeCells << "\n";
-}
-
-
 #pragma mark *** Output ***
 
 OutputDescription::
 OutputDescription(std::string fields, std::string file) throw(Exception) :
-    mCoordinatePermutationNumber(0),
     mFile(file),
     mIsInterpolated(0),
     mInterpolationPoint(0.0,0.0,0.0), // specified but not used
@@ -265,7 +200,6 @@ OutputDescription(std::string fields, std::string file) throw(Exception) :
 OutputDescription::
 OutputDescription(std::string fields, std::string file,
     Region region, Duration duration) throw(Exception) :
-    mCoordinatePermutationNumber(0),
     mFile(file),
     mIsInterpolated(0),
     mInterpolationPoint(0.0,0.0,0.0), // specified but not used
@@ -279,7 +213,6 @@ OutputDescription::
 OutputDescription(std::string fields, std::string file,
     const std::vector<Region> & regions,
     const std::vector<Duration> & durations) throw(Exception) :
-    mCoordinatePermutationNumber(0),
     mFile(file),
     mIsInterpolated(0),
     mInterpolationPoint(0.0,0.0,0.0), // specified but not used
@@ -293,11 +226,11 @@ OutputDescription::
 OutputDescription(std::string fields, std::string file,
     Vector3f interpolationPoint, const std::vector<Region> & regions,
     const std::vector<Duration> & durations) throw(Exception) :
-    mCoordinatePermutationNumber(0),
     mFile(file),
     mWhichE(0,0,0),
     mWhichH(0,0,0),
     mWhichJ(0,0,0),
+    mWhichK(0,0,0),
     mWhichP(0,0,0),
     mWhichM(0,0,0),
     mIsInterpolated(1),
@@ -306,29 +239,6 @@ OutputDescription(std::string fields, std::string file,
     mDurations(durations)
 {
     determineWhichFields(fields);
-}
-
-void OutputDescription::
-cycleCoordinates()
-{
-    unsigned int nn;
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	mCoordinatePermutationNumber += 1;
-	mCoordinatePermutationNumber %= 3;
-    
-    mWhichE = permuteForward*mWhichE;
-    mWhichH = permuteForward*mWhichH;
-    mWhichJ = permuteForward*mWhichJ;
-    mWhichP = permuteForward*mWhichP;
-    mWhichM = permuteForward*mWhichM;
-    
-    mInterpolationPoint = permuteForward*mInterpolationPoint;
-    
-    LOG << "Rotating output.\n";
-    for (nn = 0; nn < mRegions.size(); nn++)
-        mRegions[nn].cycleCoordinates();
 }
 
 void OutputDescription::
@@ -387,19 +297,15 @@ determineWhichFields(std::string fields) throw(Exception)
     if (mIsInterpolated)
     if (mWhichJ != threeFalses ||
         mWhichP != threeFalses ||
-        mWhichM != threeFalses)
-        throw(Exception("Only E and H fields may be interpolated."));
+        mWhichM != threeFalses ||
+        mWhichK != threeFalses)
+        throw(Exception("Interpolation is only supported for E and H fields."));
 }
 
 #pragma mark *** MaterialOutput ***
 
 MaterialOutputDescription::
 MaterialOutputDescription()
-{
-}
-
-void MaterialOutputDescription::
-cycleCoordinates()
 {
 }
 
@@ -466,18 +372,6 @@ SourceFields(string fields, Vector3f polarization) :
             "must be 'electric' or 'magnetic'; field is ") + fields));
 }
 
-void SourceFields::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-    
-    mPolarization = permuteForward*mPolarization;
-    mWhichE = permuteForward*mWhichE;
-    mWhichH = permuteForward*mWhichH;
-}
-
-
 #pragma mark *** Source ***
 
 SourceDescription* SourceDescription::
@@ -504,28 +398,10 @@ newFormulaSource(string formula, SourceFields fields, bool isSoft,
         isSoft, regions, durations);
 }
 
-void SourceDescription::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	mCoordinatePermutationNumber += 1;
-	mCoordinatePermutationNumber %= 3;
-    
-    for (unsigned int nn = 0; nn < mRegions.size(); nn++)
-        mRegions[nn].cycleCoordinates();
-    
-    mFields.cycleCoordinates();
-    
-    LOG << "Not permuting coordinates of source formula!!\n";
-}
-
 SourceDescription::
 SourceDescription(SourceFields fields, string formula, string timeFile,
     string spaceTimeFile, bool isSoft, const vector<Region> & regions,
     const vector<Duration> & durations) throw(Exception) :
-    mCoordinatePermutationNumber(0),
     mFormula(formula),
     mTimeFile(timeFile),
     mSpaceFileDoThisLaterOkay("whatever you say, man"),
@@ -600,20 +476,6 @@ SourceCurrents(string fields, Vector3f polarization) :
             "must be 'electric' or 'magnetic'; field is ") + fields));
 }
 
-void SourceCurrents::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	//mCoordinatePermutationNumber += 1;
-	//mCoordinatePermutationNumber %= 3;
-    
-    mPolarization = permuteForward*mPolarization;
-    mWhichJ = permuteForward*mWhichJ;
-    mWhichK = permuteForward*mWhichK;
-}
-
 #pragma mark *** CurrentSource ***
 
 
@@ -641,29 +503,10 @@ newFormulaSource(string formula, SourceCurrents currents,
         regions, durations);
 }
 
-void CurrentSourceDescription::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	mCoordinatePermutationNumber += 1;
-	mCoordinatePermutationNumber %= 3;
-    
-    for (unsigned int nn = 0; nn < mRegions.size(); nn++)
-        mRegions[nn].cycleCoordinates();
-    
-    mCurrents.cycleCoordinates();
-    
-    LOG << "Not permuting coordinates of source formula!!\n";
-}
-
-
 CurrentSourceDescription::
 CurrentSourceDescription(SourceCurrents currents, string formula,
     string timeFile, string spaceTimeFile, const vector<Region> & regions,
     const vector<Duration> & durations) throw(Exception) :
-    mCoordinatePermutationNumber(0),
     mFormula(formula),
     mTimeFile(timeFile),
     mSpaceFileDoThisLaterOkay("whatever you say, man"),
@@ -679,7 +522,6 @@ CurrentSourceDescription(SourceCurrents currents, string formula,
 
 HuygensSurfaceDescription::
 HuygensSurfaceDescription() :
-    mCoordinatePermutationNumber(0),
     mDirection(0,0,0),
     mSymmetries(0,0,0)
 {
@@ -687,7 +529,6 @@ HuygensSurfaceDescription() :
 
 HuygensSurfaceDescription::
 HuygensSurfaceDescription(HuygensSurfaceSourceType type) :
-    mCoordinatePermutationNumber(0),
     mType(type),
     mDirection(0,0,0),
     mSymmetries(0,0,0)
@@ -724,34 +565,6 @@ void HuygensSurfaceDescription::
 omitSide(Vector3i direction)
 {
     mOmittedSides.insert(direction);
-}
-
-void HuygensSurfaceDescription::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	// Rotate the rects and vectors
-	mHalfCells = permuteForward*mHalfCells;
-    mDirection = permuteForward*mDirection;
-	mSymmetries = permuteForward*mSymmetries;
-	mFromHalfCells = permuteForward*mFromHalfCells;
-	
-	// Rotate the omitted sides
-	set<Vector3i> newOmittedSides;
-	for (set<Vector3i>::iterator itr = mOmittedSides.begin();
-		itr != mOmittedSides.end(); itr++)
-	{
-		newOmittedSides.insert(permuteForward * (*itr));
-	}
-	mOmittedSides = newOmittedSides;
-    
-    // Rotate the source fields
-    mFields.cycleCoordinates();
-    
-    mCoordinatePermutationNumber += 1;
-    mCoordinatePermutationNumber %= 3;
 }
 
 void HuygensSurfaceDescription::
@@ -869,7 +682,6 @@ MaterialDescription::
 MaterialDescription(string name, string inModelName,
 	const Map<string,string> & inParams,
     const Map<Vector3i, Map<string, string> > & inPMLParams) throw(Exception) :
-    mCoordinatePermutationNumber(0),
 	mName(name),
 	mModelName(inModelName),
 	mParams(inParams),
@@ -883,20 +695,6 @@ MaterialDescription(string name, string inModelName,
     validParams = sValidPMLParams(inPMLParams, errorString);
     if (!validParams)
         throw(Exception(errorString));
-}
-
-void MaterialDescription::
-cycleCoordinates()
-{
-	mCoordinatePermutationNumber = (mCoordinatePermutationNumber+1)%3;
-    
-    Map<Vector3i, Map<string, string> > newPMLParams;
-    
-    for (int sideNum = 0; sideNum < 6; sideNum++)
-        newPMLParams[cyclicPermute(cardinal(sideNum), 1)] =
-            mPMLParams[cardinal(sideNum)];
-    
-    mPMLParams = newPMLParams;
 }
 
 ostream &
@@ -948,13 +746,6 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap,
 	}
 }
 
-void AssemblyDescription::
-cycleCoordinates()
-{
-	for (unsigned int nn = 0; nn < mInstructions.size(); nn++)
-		mInstructions[nn]->cycleCoordinates();
-}
-
 ColorKey::
 ColorKey(string hexColor, string materialName, FillStyle style)
 	throw(Exception) :
@@ -993,12 +784,6 @@ Instruction(InstructionType inType) :
 {
 }
 
-void Instruction::
-cycleCoordinates()
-{
-	LOG << "Warning: base cycleCoordinates() shouldn't have been called!\n";
-}
-
 Block::
 Block(Rect3i halfCellRect, string material) throw(Exception) :
 	Instruction(kBlockType),
@@ -1023,15 +808,6 @@ Block(Rect3i yeeCellRect, FillStyle style, string material) throw(Exception) :
 	
 	if (!vec_ge(mFillRect.size(), 0))
 		throw(Exception("Some fill rect dimensions are negative."));
-}
-
-void Block::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	mFillRect = permuteForward*mFillRect;
 }
 
 const Rect3i & Block::
@@ -1086,16 +862,6 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap)
 		mKeys[nn].setPointers(materialMap);
 }
 
-void KeyImage::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	mYeeRect = permuteForward*mYeeRect;
-	mRow = permuteForward*mRow;
-	mCol = permuteForward*mCol;
-}
 
 HeightMap::
 HeightMap(Rect3i yeeCellRect, FillStyle style, string material,
@@ -1136,19 +902,6 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap)
 	mMaterial = materialMap[mMaterialName];
 }
 
-void HeightMap::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	mYeeRect = permuteForward*mYeeRect;
-	mRow = permuteForward*mRow;
-	mCol = permuteForward*mCol;
-	mUp = permuteForward*mUp;
-}
-
-
 Ellipsoid::
 Ellipsoid(Rect3i halfCellRect, string material) throw(Exception) :
 	Instruction(kEllipsoidType),
@@ -1180,17 +933,6 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap)
 {
 	mMaterial = materialMap[mMaterialName];
 }
-
-
-void Ellipsoid::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	mFillRect = permuteForward*mFillRect;
-}
-
 
 const Rect3i & Ellipsoid::
 getYeeRect() const
@@ -1276,16 +1018,6 @@ setPointers(const Map<string, GridDescPtr> & gridMap)
 	mGrid = gridMap[mGridName];
 }
 
-void CopyFrom::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	mSourceRect = permuteForward*mSourceRect;
-	mDestRect = permuteForward*mDestRect;
-}
-
 Extrude::
 Extrude(Rect3i halfCellExtrudeFrom, Rect3i halfCellExtrudeTo) throw(Exception) :
 	Instruction(kExtrudeType),
@@ -1299,16 +1031,6 @@ Extrude(Rect3i halfCellExtrudeFrom, Rect3i halfCellExtrudeTo) throw(Exception) :
 		throw(Exception("ExtrudeTo dimensions are negative"));
 	if (!mExtrudeTo.encloses(mExtrudeFrom))
 		throw(Exception("ExtrudeTo does not enclose ExtrudeFrom"));
-}
-
-void Extrude::
-cycleCoordinates()
-{
-	Mat3i permuteForward(Mat3i::cyclicPermutation());
-    Mat3i permuteBackward(inverse(permuteForward));
-	
-	mExtrudeFrom = permuteForward*mExtrudeFrom;
-	mExtrudeTo = permuteForward*mExtrudeTo;
 }
 
 #pragma mark *** Static methods ***

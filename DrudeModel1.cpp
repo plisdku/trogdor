@@ -61,6 +61,17 @@ getModelName() const
     return string("DrudeModel1");
 }
 
+
+void DrudeModel1::
+writeJ(int direction, std::ostream & binaryStream, long startingIndex,
+    const float* startingField, long length) const
+{
+    assert(startingIndex >= 0);
+    assert(startingIndex + length <= mCurrents[direction].size());
+    binaryStream.write((char*)&mCurrents[direction][startingIndex],
+        (std::streamsize)(length*sizeof(float)) );
+}
+
 void DrudeModel1::
 allocateAuxBuffers()
 {

@@ -45,15 +45,12 @@ SimpleEHOutput::
 SimpleEHOutput(const OutputDescription & desc,
     const VoxelizedPartition & vp,
     const CalculationPartition & cp) :
-    mCoordPermutation(desc.getPermutation()),
     mDatafile(),
     mCurrentSampleInterval(0),
     mIsInterpolated(desc.isInterpolated()),
     mInterpolationPoint(desc.getInterpolationPoint()),
     mWhichE(desc.getWhichE()),
     mWhichH(desc.getWhichH()),
-    mAllocYeeOrigin(vp.getAllocYeeCells().p1),
-    mAllocYeeCells(vp.getAllocYeeCells().size()+1),
     mDurations(desc.getDurations())
 {
     // Clip the regions to the current partition bounds (calc bounds, not
@@ -64,14 +61,8 @@ SimpleEHOutput(const OutputDescription & desc,
     for (int rr = 0; rr < desc.getRegions().size(); rr++)
     {
         Rect3i outRect(clip(desc.getRegions()[rr].getYeeCells(),
-            vp.getGridYeeCells()));
-        outRect.p1 = cyclicPermute(outRect.p1, 3-mCoordPermutation);
-        outRect.p2 = cyclicPermute(outRect.p2, 3-mCoordPermutation);
-        
-        Vector3i outStride(cyclicPermute(desc.getRegions()[rr].getStride(),
-            3-mCoordPermutation));
-        
-        mRegions.push_back(Region(outRect, outStride));
+            vp.getGridYeeCells()));        
+        mRegions.push_back(Region(outRect, desc.getRegions()[rr].getStride()));
     }
     LOG << "Truncating durations to simulation duration.  This is in the "
         "wrong place; can't it be done earlier?\n";
@@ -140,64 +131,45 @@ outputHPhase(const CalculationPartition & cp, int timestep)
 
 void SimpleEHOutput::
 writeE(const CalculationPartition & cp)
-{
-    // Variables prefixed by "out" are as seen by the output file and user.
-    // Variables prefixed by "in" are the corresponding permuted ones, to deal
-    // with "invisible" grid rotations.
-    
+{   
     const InterleavedLattice & lattice(cp.getLattice());
-    /*
-    int in0 = (3-mCoordPermutation)%3;  // direction corresponding to outside x
-    int in1 = (4-mCoordPermutation)%3;  // ... outside y
-    int in2 = (5-mCoordPermutation)%3;  // ... outside z
-    */
-    int in0 = mCoordPermutation;
-    int in1 = (mCoordPermutation+1)%3;
-    int in2 = (mCoordPermutation+2)%3;
-    
-    // If there is no grid rotation, in0 = 0, in1 = 1, in2 = 2 because the
-    // inside and outside xyz axes point the same directions...
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
         for (int outDir = 0; outDir < 3; outDir++)
-        {
-            //int inDir = (outDir + 3 - mCoordPermutation)%3;
-            int inDir = (outDir + mCoordPermutation)%3;
-            
+        {   
             // The regions have been counter-rotated
             Rect3i outRect = mRegions[rr].getYeeCells();
             Vector3i outStride = mRegions[rr].getStride();
             Vector3i p;
             
-            if (mWhichE[inDir] != 0)
+            if (mWhichE[outDir] != 0)
             {
                 if (!mIsInterpolated)
                 {
-                    for (p[in2] = outRect.p1[2]; p[in2] <= outRect.p2[2];
-                        p[in2] += outStride[2])
-                    for (p[in1] = outRect.p1[1]; p[in1] <= outRect.p2[1];
-                        p[in1] += outStride[1])
-                    for (p[in0] = outRect.p1[0]; p[in0] <= outRect.p2[0];
-                        p[in0] += outStride[0])
+                    for (p[2] = outRect.p1[2]; p[2] <= outRect.p2[2];
+                        p[2] += outStride[2])
+                    for (p[1] = outRect.p1[1]; p[1] <= outRect.p2[1];
+                        p[1] += outStride[1])
+                    for (p[0] = outRect.p1[0]; p[0] <= outRect.p2[0];
+                        p[0] += outStride[0])
                     {
-                        //float val = cp.getE(inDir, p);
-                        float val = lattice.getE(inDir, p);
+                        float val = lattice.getE(outDir, p);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));
                     }
                 }
                 else
                 {
-                    for (p[in2] = outRect.p1[2]; p[in2] <= outRect.p2[2];
-                        p[in2] += outStride[2])
-                    for (p[in1] = outRect.p1[1]; p[in1] <= outRect.p2[1];
-                        p[in1] += outStride[1])
-                    for (p[in0] = outRect.p1[0]; p[in0] <= outRect.p2[0];
-                        p[in0] += outStride[0])
+                    for (p[2] = outRect.p1[2]; p[2] <= outRect.p2[2];
+                        p[2] += outStride[2])
+                    for (p[1] = outRect.p1[1]; p[1] <= outRect.p2[1];
+                        p[1] += outStride[1])
+                    for (p[0] = outRect.p1[0]; p[0] <= outRect.p2[0];
+                        p[0] += outStride[0])
                     {
                         float val = lattice.getInterpolatedE(
-                            inDir, Vector3f(p)+mInterpolationPoint);
+                            outDir, Vector3f(p)+mInterpolationPoint);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));
                     }
@@ -211,62 +183,43 @@ writeE(const CalculationPartition & cp)
 void SimpleEHOutput::
 writeH(const CalculationPartition & cp)
 {
-    // Variables prefixed by "out" are as seen by the output file and user.
-    // Variables prefixed by "in" are the corresponding permuted ones, to deal
-    // with "invisible" grid rotations.
-    
     const InterleavedLattice& lattice(cp.getLattice());
-    
-    /*
-    int in0 = (3-mCoordPermutation)%3;  // direction corresponding to outside x
-    int in1 = (4-mCoordPermutation)%3;  // ... outside y
-    int in2 = (5-mCoordPermutation)%3;  // ... outside z
-    */
-    int in0 = mCoordPermutation;
-    int in1 = (mCoordPermutation+1)%3;
-    int in2 = (mCoordPermutation+2)%3;
-    
-    // If there is no grid rotation, in0 = 0, in1 = 1, in2 = 2 because the
-    // inside and outside xyz axes point the same directions...
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
         for (int outDir = 0; outDir < 3; outDir++)
         {
-            int inDir = (outDir + mCoordPermutation)%3;
-            
-            // The regions have been counter-rotated
             Rect3i outRect = mRegions[rr].getYeeCells();
             Vector3i outStride = mRegions[rr].getStride();
             Vector3i p;
             
-            if (mWhichH[inDir] != 0)
+            if (mWhichH[outDir] != 0)
             {
                 if (!mIsInterpolated)
                 {
-                    for (p[in2] = outRect.p1[2]; p[in2] <= outRect.p2[2];
-                        p[in2] += outStride[2])
-                    for (p[in1] = outRect.p1[1]; p[in1] <= outRect.p2[1];
-                        p[in1] += outStride[1])
-                    for (p[in0] = outRect.p1[0]; p[in0] <= outRect.p2[0];
-                        p[in0] += outStride[0])
+                    for (p[2] = outRect.p1[2]; p[2] <= outRect.p2[2];
+                        p[2] += outStride[2])
+                    for (p[1] = outRect.p1[1]; p[1] <= outRect.p2[1];
+                        p[1] += outStride[1])
+                    for (p[0] = outRect.p1[0]; p[0] <= outRect.p2[0];
+                        p[0] += outStride[0])
                     {
-                        float val = lattice.getH(inDir, p);
+                        float val = lattice.getH(outDir, p);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));
                     }
                 }
                 else
                 {
-                    for (p[in2] = outRect.p1[2]; p[in2] <= outRect.p2[2];
-                        p[in2] += outStride[2])
-                    for (p[in1] = outRect.p1[1]; p[in1] <= outRect.p2[1];
-                        p[in1] += outStride[1])
-                    for (p[in0] = outRect.p1[0]; p[in0] <= outRect.p2[0];
-                        p[in0] += outStride[0])
+                    for (p[2] = outRect.p1[2]; p[2] <= outRect.p2[2];
+                        p[2] += outStride[2])
+                    for (p[1] = outRect.p1[1]; p[1] <= outRect.p2[1];
+                        p[1] += outStride[1])
+                    for (p[0] = outRect.p1[0]; p[0] <= outRect.p2[0];
+                        p[0] += outStride[0])
                     {
                         float val = lattice.getInterpolatedH(
-                            inDir, Vector3f(p)+mInterpolationPoint);
+                            outDir, Vector3f(p)+mInterpolationPoint);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));
                     }
@@ -282,8 +235,7 @@ writeDescriptionFile(const VoxelizedPartition & vp,
     const CalculationPartition & cp, string specfile,
     string datafile, string materialfile) const
 {
-    int nn, dir;
-    int unpermute = 3-mCoordPermutation;
+    int nn;
         
     ofstream descFile(specfile.c_str());
     
@@ -308,60 +260,48 @@ writeDescriptionFile(const VoxelizedPartition & vp,
         for (nn = 0; nn < 3; nn++)
         if (mWhichE[nn])
         {
-            dir = (nn+3-mCoordPermutation)%3;  // undo permutation
-            descFile << "field e" << char('x' + dir) << " "
-                << eFieldPosition(dir) << " 0.0 \n";
+            descFile << "field e" << char('x' + nn) << " "
+                << eFieldPosition(nn) << " 0.0 \n";
         }
         
         // H fields
         for (nn = 0; nn < 3; nn++)
         if (mWhichH[nn])
         {
-            dir = (nn+3-mCoordPermutation)%3;  // undo permutation
-            descFile << "field h" << char('x' + dir) << " "
-                << hFieldPosition(dir) << " 0.5\n";
+            descFile << "field h" << char('x' + nn) << " "
+                << hFieldPosition(nn) << " 0.5\n";
         }
     }
     else
     {
-        Vector3f interp(cyclicPermute(mInterpolationPoint, unpermute));
         // E fields
         for (nn = 0; nn < 3; nn++)
         if (mWhichE[nn])
         {
-            dir = (nn+3-mCoordPermutation)%3;  // undo permutation
-            descFile << "field e" << char('x' + dir) << " " << interp
-                << " 0.0 \n";
+            descFile << "field e" << char('x' + nn) << " "
+                << mInterpolationPoint << " 0.0 \n";
         }
         
         // H fields
         for (nn = 0; nn < 3; nn++)
         if (mWhichH[nn])
         {
-            dir = (nn+3-mCoordPermutation)%3;  // undo permutation
-            descFile << "field h" << char('x' + dir) << " " << interp
-                << " 0.5 \n";
+            descFile << "field h" << char('x' + nn) << " "
+                << mInterpolationPoint << " 0.5 \n";
         }
     }
     
+    descFile << "unitVector0 " << Vector3i(1,0,0) << "\n"
+        << "unitVector1 " << Vector3i(0,1,0) << "\n"
+        << "unitVector2 " << Vector3i(0,0,1) << "\n";
+    
     for (nn = 0; nn < mRegions.size(); nn++)
     {
-        // For some reason I decided to unrotate the region, so this block
-        // is wrong.
-        /*
-        descFile << "region "
-            << cyclicPermute(mRegions[nn].getYeeCells()-vp.getOriginYee(),
-                unpermute)
-            << " stride "
-            << cyclicPermute(mRegions[nn].getStride(), unpermute)
-            << "\n";
-        */
         descFile << "region "
             << mRegions[nn].getYeeCells()-vp.getOriginYee()
             << " stride "
             << mRegions[nn].getStride()
             << "\n";
-        
     }
     
     for (nn = 0; nn < mDurations.size(); nn++)

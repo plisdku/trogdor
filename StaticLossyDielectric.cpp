@@ -43,3 +43,16 @@ getModelName() const
 {
     return string("StaticLossyDielectric");
 }
+
+void StaticLossyDielectric::
+writeJ(int direction, std::ostream & binaryStream, long startingIndex,
+    const float* startingField, long length) const
+{
+    for (int rr = 0; rr < length; rr++)
+    {
+        float value = m_sigma*startingField[rr];
+        binaryStream.write((char*) &value,
+            (std::streamsize)(sizeof(float)) );
+    }
+}
+

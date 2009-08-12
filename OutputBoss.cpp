@@ -14,6 +14,7 @@
 #include "SimulationDescription.h"
 
 #include "SimpleEHOutput.h"
+#include "CurrentPolarizationOutput.h"
 
 #include "Version.h"
 
@@ -30,6 +31,9 @@ newSetupOutput(const VoxelizedPartition & vp, const OutputDescPtr & desc)
     if (desc->getWhichJ() == threeFalses && desc->getWhichP() == threeFalses &&
         desc->getWhichP() == threeFalses && desc->getWhichM() == threeFalses)
         return SetupOutputPtr(new SimpleEHSetupOutput(desc));
+    else if (desc->getWhichH() == threeFalses &&
+        desc->getWhichE() == threeFalses)
+        return SetupOutputPtr(new CurrentPolarizationSetupOutput(desc, vp));
     
     LOG << "Using default (null) output... and crashing.\n";
     exit(1);

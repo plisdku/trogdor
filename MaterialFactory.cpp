@@ -196,7 +196,8 @@ static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
     Vector3i pmlDirs = parentPaint->getPMLDirections();
     Vector3i rotatedPMLDirs = cyclicPermute(pmlDirs, (3-runlineDirection)%3);
     
-    LOG << "This PML absorbs along " << pmlDirs << " and the memory direction"
+    LOGF << "This PML absorbs along " << pmlDirs
+        << " and the memory direction"
         " is " << runlineDirection << ", so the rotated PML direction is "
         << rotatedPMLDirs << ".\n";
     

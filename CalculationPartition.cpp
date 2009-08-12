@@ -45,12 +45,16 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     // Fill out other denizens.
     const Map<Paint*, SetupMaterialPtr> & delegs = vp.getDelegates();
     map<Paint*, SetupMaterialPtr>::const_iterator itr;
+    mMaterials.resize(delegs.size());
     for (itr = delegs.begin(); itr != delegs.end(); itr++)
     {
         //LOG << "Dealing with paint " << *itr->first << endl;
         MaterialPtr newMaterial = itr->second->makeCalcMaterial(vp, *this);
         newMaterial->setSubstanceName(itr->first->getFullName());
-        mMaterials.push_back(newMaterial);
+        newMaterial->setID(itr->second->id());
+        assert(newMaterial->id() >= 0);
+        assert(newMaterial->id() < mMaterials.size());
+        mMaterials[newMaterial->id()] = newMaterial;
     }
     
     const vector<SetupOutputPtr> & outs = vp.getSetupOutputs();

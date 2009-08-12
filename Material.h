@@ -14,6 +14,7 @@
 #include "geometry.h"
 
 #include <string>
+#include <iostream>
 
 class VoxelizedPartition;
 class CalculationPartition;
@@ -27,6 +28,8 @@ public:
     
     void setSubstanceName(const std::string & name) { mSubstanceName = name; }
     const std::string & getSubstanceName() const { return mSubstanceName; }
+    void setID(int id) { mID = id; }
+    int id() const { return mID; }
     
     virtual void calcEPhase(int direction) = 0;
     virtual void calcHPhase(int direction) = 0;
@@ -36,8 +39,14 @@ public:
     virtual long getNumHalfCellsH() const = 0;
     virtual std::string getModelName() const = 0;
     
+    virtual void writeJ(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+    virtual void writeK(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+    
     virtual void allocateAuxBuffers();
 private:
+    int mID;
     std::string mSubstanceName;
 };
 typedef Pointer<Material> MaterialPtr;
@@ -49,6 +58,9 @@ class SetupMaterial
 public:
 	SetupMaterial();
 	virtual ~SetupMaterial();
+    
+    void setID(int id) { mID = id; }
+    int id() const { return mID; }
 	
 	// Runline handling
 	virtual void startRunline(const VoxelizedPartition & vp,
@@ -65,6 +77,8 @@ public:
     // Setting up the runtime materials
     virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const = 0;
+private:
+    int mID;
 };
 typedef Pointer<SetupMaterial> SetupMaterialPtr;
 

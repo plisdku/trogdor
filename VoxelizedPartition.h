@@ -115,7 +115,10 @@ private:
 	void loadSpaceVaryingData();
 	void generateRunlines();
 	void genRunlinesInOctant(int octant);
-    
+    /*
+    void generateOutputRunlines();
+    void genOutputRunlinesInOctant(int octant);
+    */
     void createSetupOutputs(const std::vector<OutputDescPtr> & outputs);
     void createSetupSources(const std::vector<SourceDescPtr> & sources);
     

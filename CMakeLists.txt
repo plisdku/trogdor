@@ -62,6 +62,8 @@ CFSRIPML.h
 CFSRIPML.cpp
 ConvertOldXML.h
 ConvertOldXML.cpp
+CurrentPolarizationOutput.h
+CurrentPolarizationOutput.cpp
 DrudeModel1.h
 DrudeModel1.cpp
 FDTDApplication.h

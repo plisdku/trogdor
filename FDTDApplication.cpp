@@ -82,18 +82,14 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     {
         LOG << "Rotating once.\n";
         runlineDirection = 1;
-        //sim->cycleCoordinates();
     }
     else if (prefs.runlineDirection == 'z')
     {
         LOG << "Rotating twice.\n";
         runlineDirection = 2;
-        //sim->cycleCoordinates();
-        //sim->cycleCoordinates();
     }
     else
         throw(Exception("Bad fastaxis direction (should be x, y or z)."));
-    
     
     // this step includes making setup runlines
 	voxelizeGrids(sim, voxelizedGrids, runlineDirection);

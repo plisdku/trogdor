@@ -40,8 +40,6 @@ public:
 	void setDiscretization(Vector3f dxyz, float dt);
 	void setDuration(int numT);
 	
-	void cycleCoordinates();
-	
 	const std::vector<GridDescPtr> & getGrids() const { return mGrids; }
 	const std::vector<MaterialDescPtr> & getMaterials() const {
 		return mMaterials; }
@@ -83,9 +81,6 @@ public:
     
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap,
 		const Map<std::string, GridDescPtr> & gridMap);
-	
-	void cycleCoordinates();  // rotate entire sim, x->y, y->z, z->x
-    int getCoordinatePermutation() const { return mCoordinatePermutation; }
 	
 	// Accessors
 	const std::string & getName() const { return mName; }
@@ -131,8 +126,6 @@ private:
 	std::vector<SourceDescPtr> mSources;
     std::vector<HuygensSurfaceDescPtr> mHuygensSurfaces;
 	AssemblyDescPtr mAssembly;
-    
-    int mCoordinatePermutation;
 };
 
 class Duration
@@ -183,8 +176,6 @@ public:
         mYeeCells(yeeCells),
         mStride(stride) {}
     
-    void cycleCoordinates();
-    
     void setYeeCells(const Rect3i & rect) { mYeeCells = rect; }
     void setStride(const Vector3i & stride) { mStride = stride; }
     const Rect3i & getYeeCells() const { return mYeeCells; }
@@ -208,14 +199,12 @@ public:
     OutputDescription(std::string fields, std::string file,
         Vector3f interpolationPoint, const std::vector<Region> & regions,
         const std::vector<Duration> & durations) throw(Exception);
-        
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
-    int getPermutation() const { return mCoordinatePermutationNumber; }
     
     const std::string & getFile() const { return mFile; }
     Vector3i getWhichE() const { return mWhichE; }
     Vector3i getWhichH() const { return mWhichH; }
     Vector3i getWhichJ() const { return mWhichJ; }
+    Vector3i getWhichK() const { return mWhichK; }
     Vector3i getWhichP() const { return mWhichP; }
     Vector3i getWhichM() const { return mWhichM; }
     bool isInterpolated() const { return mIsInterpolated; }
@@ -225,11 +214,11 @@ public:
     
 private:
     void determineWhichFields(std::string fields) throw(Exception);
-    int mCoordinatePermutationNumber;
     std::string mFile;
     Vector3i mWhichE;
     Vector3i mWhichH;
     Vector3i mWhichJ;
+    Vector3i mWhichK;
     Vector3i mWhichP;
     Vector3i mWhichM;
     bool mIsInterpolated;
@@ -242,8 +231,6 @@ class MaterialOutputDescription
 {
 public:
     MaterialOutputDescription();
-    
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
 private:
 };
 
@@ -253,8 +240,6 @@ public:
     SourceFields();
     SourceFields(std::string fields);
     SourceFields(std::string fields, Vector3f polarization);
-    
-    void cycleCoordinates();
     
     bool usesPolarization() const { return mUsesPolarization; }
     Vector3f getPolarization() const
@@ -285,8 +270,6 @@ public:
         bool isSoft, const std::vector<Region> & regions,
         const std::vector<Duration> & durations) throw(Exception);
     
-    void cycleCoordinates();
-    
     const std::string & getFormula() const { return mFormula; }
     const std::string & getTimeFile() const { return mTimeFile; }
     const std::string & getSpaceTimeFile() const { return mSpaceTimeFile; }
@@ -299,8 +282,6 @@ public:
     const std::vector<Duration> & getDurations() const { return mDurations; }
     
 private:
-    int mCoordinatePermutationNumber;
-    
     std::string mFormula;
     std::string mTimeFile;
     std::string mSpaceFileDoThisLaterOkay;
@@ -320,8 +301,6 @@ public:
     SourceCurrents();
     SourceCurrents(std::string fields);
     SourceCurrents(std::string fields, Vector3f polarization);
-    
-    void cycleCoordinates();
     
     bool usesPolarization() const { return mUsesPolarization; }
     Vector3f getPolarization() const
@@ -349,8 +328,6 @@ public:
         SourceCurrents fields, const std::vector<Region> & regions,
         const std::vector<Duration> & durations);
     
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
-    
     const std::string & getFormula() const { return mFormula; }
     const std::string & getTimeFile() const { return mTimeFile; }
     const std::string & getSpaceTimeFile() const { return mSpaceTimeFile; }
@@ -361,7 +338,6 @@ private:
         const std::vector<Region> & regions,
         const std::vector<Duration> & durations) throw(Exception);
     
-    int mCoordinatePermutationNumber;
     std::string mFormula;
     std::string mTimeFile;
     std::string mSpaceFileDoThisLaterOkay;
@@ -410,7 +386,6 @@ public:
 	void setPointers(const Map<std::string, GridDescPtr> & gridMap);
 	void omitSide(int nSide);
     void omitSide(Vector3i dir);
-    void cycleCoordinates();
     void becomeLink(GridDescPtr sourceGrid,
         const Rect3i & sourceHalfCells);
     
@@ -452,7 +427,6 @@ public:
     
 private:
     // Common data
-    int mCoordinatePermutationNumber;
     HuygensSurfaceSourceType mType;
     Rect3i mHalfCells;
     std::set<Vector3i> mOmittedSides;
@@ -491,12 +465,9 @@ public:
     const Map<Vector3i, Map<std::string, std::string> > & getPMLParams() const
         { return mPMLParams; }
 	
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
-	
 	friend std::ostream & operator<<(std::ostream & out,
 		const MaterialDescription & mat);
 private:
-	int mCoordinatePermutationNumber; // 0,1 or 2
 	std::string mName;
 	std::string mModelName;
 	Map<std::string, std::string> mParams;
@@ -518,8 +489,6 @@ public:
 	void setInstructions(const std::vector<InstructionPtr> & instructions);
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap,
 		const Map<std::string, GridDescPtr> & gridMap);
-	
-	void cycleCoordinates();
 	
 	const std::vector<InstructionPtr> & getInstructions() const
 		{ return mInstructions; }
@@ -573,8 +542,7 @@ public:
 	Instruction(InstructionType inType);
 	InstructionType getType() const { return mType; }
     virtual ~Instruction() {}
-	
-	virtual void cycleCoordinates();  // rotate x->y, y->z, z->x
+    
 protected:
 	InstructionType mType;
 };
@@ -587,8 +555,6 @@ public:
 	Block(Rect3i yeeCellRect, FillStyle style, std::string material)
 		throw(Exception);
     
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
-	
 	const Rect3i & getYeeRect() const;
 	const Rect3i & getHalfRect() const;
 	FillStyle getFillStyle() const { return mStyle; }
@@ -612,8 +578,6 @@ public:
 		
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 	
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
-	
 	const Rect3i & getYeeRect() const { return mYeeRect; }
 	Vector3i getRowDirection() const { return mRow; }
 	Vector3i getColDirection() const { return mCol; }
@@ -636,8 +600,7 @@ public:
 		Vector3i colDirection, Vector3i upDirection) throw(Exception);
     
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
-	
+    
 	const Rect3i & getYeeRect() const { return mYeeRect; }
 	FillStyle getFillStyle() const { return mStyle; }
 	const std::string & getMaterialName() const { return mMaterialName; }
@@ -666,7 +629,6 @@ public:
 		throw(Exception);
 	
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
 	
 	//const Rect3i & getFillRect() const { return mFillRect; }
 	const Rect3i & getYeeRect() const;
@@ -693,7 +655,6 @@ public:
 		throw(Exception);
 	
 	void setPointers(const Map<std::string, GridDescPtr> & gridMap);
-	void cycleCoordinates();  // rotate x->y, y->z, z->x
 	
 	const Rect3i & getSourceHalfRect() const { return mSourceRect; }
 	const Rect3i & getDestHalfRect() const { return mDestRect; }
@@ -712,8 +673,6 @@ class Extrude : public Instruction
 public:
 	Extrude(Rect3i halfCellExtrudeFrom, Rect3i halfCellExtrudeTo)
 		throw(Exception);
-	
-	void cycleCoordinates();
 	
 	const Rect3i & getExtrudeFrom() const { return mExtrudeFrom; }
 	const Rect3i & getExtrudeTo() const { return mExtrudeTo; }

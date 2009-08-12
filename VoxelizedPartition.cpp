@@ -214,6 +214,7 @@ void VoxelizedPartition::
 calculateRunlines()
 {
     generateRunlines(); // * partition wraparound
+    //generateOutputRunlines();
 }
 
 
@@ -631,6 +632,7 @@ createSetupMaterials(const GridDescription & gridDesc)
     //cout << *mCentralIndices << endl;
     
 	//LOG << "Iterating over paints...\n";
+    int materialID = 0;
 	for (set<Paint*>::iterator itr = allPaints.begin(); itr != allPaints.end();
 		itr++)
 	{
@@ -654,6 +656,8 @@ createSetupMaterials(const GridDescription & gridDesc)
 			mSetupMaterials[p] = MaterialFactory::newSetupMaterial(
 				mVoxels, mCentralIndices, gridDesc, p, numCellsE, numCellsH,
                 pmlRects, mLattice->runlineDirection());
+            mSetupMaterials[p]->setID(materialID);
+            materialID++;
 		}
 	}
 }

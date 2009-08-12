@@ -141,34 +141,6 @@ calcMaterialIndices(const VoxelGrid & grid, int runlineDirection )
 				mNumCells[nn][p]++;
 			}
         }
-		/*
-		for (int kk = start[2]; kk <= mHalfCellBounds.p2[2]; kk += 2)
-		for (int jj = start[1]; jj <= mHalfCellBounds.p2[1]; jj += 2)
-		for (int ii = start[0]; ii <= mHalfCellBounds.p2[0]; ii += 2)
-		{
-			int linearIndex = (ii-o[0]) + (jj-o[1])*rSize[0] +
-				(kk-o[2])*rSize[0]*rSize[1];
-			
-			assert(linearIndex >= 0 &&
-				linearIndex < mMaterialIndexHalfCells.size());
-			
-			Paint* p =  grid(ii,jj,kk)->withoutCurlBuffers();
-			
-			if (mNumCells[nn].count(p) == 0)
-			{
-				mNumCells[nn][p] = 1;
-				mMaterialIndexHalfCells[linearIndex] = 0;
-				//LOG << "Starting material " << hex << p << dec << "\n";
-				//LOGMORE << "at " << ii << " " << jj << " " << kk << ", "
-				//	<< "linear index " << linearIndex << "\n";
-			}
-			else
-			{
-				mMaterialIndexHalfCells[linearIndex] = mNumCells[nn][p];
-				mNumCells[nn][p]++;
-			}
-		}
-        */
 	}
 }
 
@@ -176,7 +148,7 @@ calcMaterialIndices(const VoxelGrid & grid, int runlineDirection )
 void PartitionCellCount::
 allocateAuxiliaryDataSpace(const VoxelGrid & grid)
 {
-	LOG << "Allocating auxiliary space.\n";
+	LOGF << "Allocating auxiliary space (doing nothing).\n";
 	// So what functionality goes here?
 	// Well, my current thought is that the *material model* is what is aware
 	// of any space-varying data.  This baokuo both the boundary-type materials

@@ -17,8 +17,6 @@
 #include <vector>
 #include <fstream>
 
-class MaterialDescription;
-
 class SimpleEHSetupOutput;
 typedef Pointer<SimpleEHSetupOutput> SimpleEHSetupOutputPtr;
 
@@ -56,7 +54,6 @@ private:
         std::string specfile, std::string datafile, std::string materialfile)
         const;
     
-    int mCoordPermutation;
     std::ofstream mDatafile;
     long mCurrentSampleInterval;
     
@@ -65,8 +62,6 @@ private:
     Vector3i mWhichE;
     Vector3i mWhichH;
     
-    Vector3i mAllocYeeOrigin;
-    Vector3i mAllocYeeCells;
     std::vector<Region> mRegions;
     std::vector<Duration> mDurations;
 };
