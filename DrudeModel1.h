@@ -100,6 +100,8 @@ initLocalE(LocalDataE & data)
 inline void DrudeModel1::
 onStartRunlineE(LocalDataE & data, const SimpleAuxRunline & rl, int dir)
 {
+    //LOG << "Update dir " << dir << " index " << rl.auxIndex 
+    //    << " value " << *data.Ji << "\n";
     data.Ji = &(mCurrents[dir][rl.auxIndex]);
 }
 
@@ -113,13 +115,15 @@ updateE(LocalDataE & data, int dir, float Ei, float dHj, float dHk, float Ji)
 {
     //LOG << "ce1 = " << data.ce1 << "\n";
 //    if (Ji != 0)
-//        LOG << "dHj " << dHj << " dHk " << dHk << " Ji " << Ji << "\n"; 
-    return Ei + data.ce*(dHk - dHj - Ji - *data.Ji++);
+//        LOG << "dHj " << dHj << " dHk " << dHk << " Ji " << Ji << "\n";
+    return Ei + data.ce*(dHk - dHj - Ji - *data.Ji);
 }
 
 inline void DrudeModel1::
 afterUpdateE(LocalDataE & data, float Ei, float dHj, float dHk)
 {
+    *data.Ji = *data.Ji*data.cj1 + Ei*data.cj2;
+    data.Ji++;
 }
 
 inline void DrudeModel1::

@@ -68,6 +68,10 @@ writeJ(int direction, std::ostream & binaryStream, long startingIndex,
 {
     assert(startingIndex >= 0);
     assert(startingIndex + length <= mCurrents[direction].size());
+    //LOG << "E " << *startingField << " J " << mCurrents[direction][startingIndex] << "\n";
+    //LOGMORE << "index " << startingIndex << " direction " << direction << "\n";
+    //if (mCurrents[direction][startingIndex] != 0.0)
+    //    int flab = 5;
     binaryStream.write((char*)&mCurrents[direction][startingIndex],
         (std::streamsize)(length*sizeof(float)) );
 }
