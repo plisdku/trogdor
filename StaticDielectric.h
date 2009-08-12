@@ -25,6 +25,11 @@ public:
         Vector3f dxyz, float dt);
     
     std::string getModelName() const;
+    
+    void writeJ(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+    void writeK(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
     void allocateAuxBuffers();
     
     struct LocalDataE

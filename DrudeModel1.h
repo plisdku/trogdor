@@ -38,9 +38,11 @@ public:
     virtual ~DrudeModel1() {}
     
     std::string getModelName() const;
-    virtual void writeJ(int direction, std::ostream & binaryStream,
+    void writeJ(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;
-    virtual void allocateAuxBuffers();
+    void writeK(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+    void allocateAuxBuffers();
     
     struct LocalDataE
     {

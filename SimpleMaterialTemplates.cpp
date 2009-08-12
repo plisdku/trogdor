@@ -270,6 +270,26 @@ calcHPhase(int direction)
         calcH<2>(direction);
 }
 
+
+template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
+writeJ(int direction, std::ostream & binaryStream,
+    long startingIndex, const float* startingField, long length) const
+{
+    mMaterial.writeJ(direction, binaryStream, startingIndex, startingField,
+        length);
+}
+
+template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
+writeK(int direction, std::ostream & binaryStream,
+    long startingIndex, const float* startingField, long length) const
+{
+    mMaterial.writeK(direction, binaryStream, startingIndex, startingField,
+        length);
+}
+
+
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 allocateAuxBuffers()

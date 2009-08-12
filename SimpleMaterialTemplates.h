@@ -124,6 +124,12 @@ public:
     
     virtual void calcEPhase(int direction);
     virtual void calcHPhase(int direction);
+    
+    virtual void writeJ(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+    virtual void writeK(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+    
     virtual void allocateAuxBuffers();
     
     template<int DIRECTION_PML>

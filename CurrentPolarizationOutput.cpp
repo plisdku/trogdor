@@ -124,6 +124,9 @@ addRunlinesInOctant(int octant, Rect3i yeeCells,
             currentRunline.startingField = lattice.pointer(x);
             currentRunline.materialID = setupMaterials[xParentPaint]->id();
 			needNewRunline = 0;
+            
+//            LOG << "New runline at " << x << " material "
+//                << currentRunline.materialID << "\n";
 		}
         currentRunline.length++;
 		lastX = x;
@@ -193,6 +196,8 @@ setRunlinesE(int direction, const CalculationPartition & cp,
         rl.startingIndex = setupRunlines[nn].startingIndex;
         rl.startingField = setupRunlines[nn].startingField.getPointer();
         rl.length = setupRunlines[nn].length;
+//        LOG << "nn " << nn << " material " << rl.material->getSubstanceName()
+//            << "\n";
         mRunlinesE[direction][nn] = rl;
     }
 }
@@ -210,6 +215,10 @@ setRunlinesH(int direction, const CalculationPartition & cp,
         rl.startingIndex = setupRunlines[nn].startingIndex;
         rl.startingField = setupRunlines[nn].startingField.getPointer();
         rl.length = setupRunlines[nn].length;
+        
+//        LOG << "nn " << nn << " material " << rl.material->getSubstanceName()
+//            << "\n";
+        
         mRunlinesH[direction][nn] = rl;
     }
 }
