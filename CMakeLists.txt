@@ -60,6 +60,8 @@ InterleavedLattice.cpp
 main.cpp
 UpdateEquation.h
 UpdateEquation.cpp
+Material.h
+Material.cpp
 MaterialFactory.h
 MaterialFactory.cpp
 MemoryUtilities.h

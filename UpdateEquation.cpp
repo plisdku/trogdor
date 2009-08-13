@@ -7,7 +7,7 @@
  *
  */
 
-#include "Material.h"
+#include "UpdateEquation.h"
 
 UpdateEquation::
 UpdateEquation()

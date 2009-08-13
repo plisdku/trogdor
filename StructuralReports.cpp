@@ -12,7 +12,7 @@
 #include "SimulationDescription.h"
 #include "VoxelizedPartition.h"
 #include "YeeUtilities.h"
-#include "Material.h"
+#include "UpdateEquation.h"
 #include "ObjFile.h"
 
 #include <sstream>

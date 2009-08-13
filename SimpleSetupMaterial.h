@@ -10,7 +10,7 @@
 #ifndef _SIMPLESETUPMATERIAL_
 #define _SIMPLESETUPMATERIAL_
 
-#include "Material.h"     // we inherit Material and SetupMaterial
+#include "UpdateEquation.h"     // we inherit Material and SetupMaterial
 #include "Pointer.h"
 #include "geometry.h"
 #include "MemoryUtilities.h"

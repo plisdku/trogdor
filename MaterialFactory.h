@@ -10,7 +10,7 @@
 #ifndef _MATERIALFACTORY_
 #define _MATERIALFACTORY_
 
-#include "Material.h"
+#include "UpdateEquation.h"
 #include "Map.h"
 #include "geometry.h"
 #include "Pointer.h"

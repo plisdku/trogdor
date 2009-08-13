@@ -10,11 +10,12 @@
 #ifndef _STATICLOSSYDIELECTRIC_
 #define _STATICLOSSYDIELECTRIC_
 
+#include "Material.h"
 #include "SimulationDescription.h"
 #include "SimpleSetupMaterial.h"
 #include "SimpleMaterialTemplates.h"
 
-class StaticLossyDielectric
+class StaticLossyDielectric : public Material
 {
 public:
     StaticLossyDielectric(
@@ -25,8 +26,6 @@ public:
     std::string getModelName() const;
     
     void writeJ(int direction, std::ostream & binaryStream,
-        long startingIndex, const float* startingField, long length) const;
-    void writeK(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;
     
     void allocateAuxBuffers() {}

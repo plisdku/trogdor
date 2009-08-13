@@ -10,13 +10,14 @@
 #ifndef _STATICDIELECTRIC_
 #define _STATICDIELECTRIC_
 
+#include "Material.h"
 #include "SimulationDescription.h"
 #include "SimpleSetupMaterial.h"
 #include "SimpleMaterialTemplates.h"
 #include <string>
 #include "Log.h"
 
-class StaticDielectric
+class StaticDielectric : public Material
 {
 public:
     StaticDielectric(
@@ -26,10 +27,6 @@ public:
     
     std::string getModelName() const;
     
-    void writeJ(int direction, std::ostream & binaryStream,
-        long startingIndex, const float* startingField, long length) const;
-    void writeK(int direction, std::ostream & binaryStream,
-        long startingIndex, const float* startingField, long length) const;
     void allocateAuxBuffers();
     
     struct LocalDataE

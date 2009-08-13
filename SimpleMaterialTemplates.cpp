@@ -45,7 +45,7 @@ UpdateEquationPtr SimpleSetupMaterial<MaterialClass, RunlineT>::
 makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {    
-    WithRunline<RunlineT>* h =
+    UpdateHarnessBase<RunlineT>* h =
         new UpdateHarness<MaterialClass, RunlineT, NullPML, NullCurrent>(
         mParentPaint,
         mNumCellsE,
@@ -87,7 +87,7 @@ UpdateEquationPtr SimpleSetupPML<MaterialClass, RunlineT, PMLT>::
 makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
-    WithRunline<RunlineT>* h =
+    UpdateHarnessBase<RunlineT>* h =
         new UpdateHarness<MaterialClass, RunlineT, PMLT, NullCurrent>(
         mParentPaint,
         mNumCellsE,
@@ -110,16 +110,16 @@ makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & c
 }
 
 
-#pragma mark *** WithRunline ***
+#pragma mark *** UpdateHarnessBase ***
 
 template<class RunlineClass>
-WithRunline<RunlineClass>::
-WithRunline()
+UpdateHarnessBase<RunlineClass>::
+UpdateHarnessBase()
 {
 }
 
 template<class RunlineClass>
-void WithRunline<RunlineClass>::
+void UpdateHarnessBase<RunlineClass>::
 setRunlinesE(int direction, const std::vector<SBMRunlinePtr> & rls)
 {
     mRunlinesE[direction].resize(rls.size());
@@ -128,7 +128,7 @@ setRunlinesE(int direction, const std::vector<SBMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void WithRunline<RunlineClass>::
+void UpdateHarnessBase<RunlineClass>::
 setRunlinesH(int direction, const std::vector<SBMRunlinePtr> & rls)
 {
     mRunlinesH[direction].resize(rls.size());
@@ -137,7 +137,7 @@ setRunlinesH(int direction, const std::vector<SBMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void WithRunline<RunlineClass>::
+void UpdateHarnessBase<RunlineClass>::
 setRunlinesE(int direction, const std::vector<SBPMRunlinePtr> & rls)
 {
     mRunlinesE[direction].resize(rls.size());
@@ -146,7 +146,7 @@ setRunlinesE(int direction, const std::vector<SBPMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void WithRunline<RunlineClass>::
+void UpdateHarnessBase<RunlineClass>::
 setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
 {
     mRunlinesH[direction].resize(rls.size());
@@ -155,7 +155,7 @@ setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-long WithRunline<RunlineClass>::
+long UpdateHarnessBase<RunlineClass>::
 getNumRunlinesE() const
 {
     long total = 0;
@@ -165,7 +165,7 @@ getNumRunlinesE() const
 }
 
 template<class RunlineClass>
-long WithRunline<RunlineClass>::
+long UpdateHarnessBase<RunlineClass>::
 getNumRunlinesH() const
 {
     long total = 0;
@@ -175,7 +175,7 @@ getNumRunlinesH() const
 }
 
 template<class RunlineClass>
-long WithRunline<RunlineClass>::
+long UpdateHarnessBase<RunlineClass>::
 getNumHalfCellsE() const
 {
     long total = 0;
@@ -186,7 +186,7 @@ getNumHalfCellsE() const
 }
 
 template<class RunlineClass>
-long WithRunline<RunlineClass>::
+long UpdateHarnessBase<RunlineClass>::
 getNumHalfCellsH() const
 {
     long total = 0;
@@ -203,7 +203,7 @@ UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, Vector3f dxyz, float dt,
         int runlineDirection ) :
-    WithRunline<RunlineT>(),
+    UpdateHarnessBase<RunlineT>(),
     mDxyz(dxyz),
     mDt(dt),
     mRunlineDirection(runlineDirection),
@@ -220,7 +220,7 @@ UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection) :
-    WithRunline<RunlineT>(),
+    UpdateHarnessBase<RunlineT>(),
     mDxyz(dxyz),
     mDt(dt),
     mRunlineDirection(runlineDirection),
@@ -331,7 +331,7 @@ calcE(int fieldDirection)
     mCurrent.initLocalE(currentData);
     
     std::vector<RunlineT> & runlines =
-        WithRunline<RunlineT>::getRunlinesE(fieldDirection);
+        UpdateHarnessBase<RunlineT>::getRunlinesE(fieldDirection);
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
@@ -399,7 +399,7 @@ calcH(int fieldDirection)
     mCurrent.initLocalH(currentData);
     
     std::vector<RunlineT> & runlines =
-        WithRunline<RunlineT>::getRunlinesH(fieldDirection);
+        UpdateHarnessBase<RunlineT>::getRunlinesH(fieldDirection);
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);

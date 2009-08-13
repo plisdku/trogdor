@@ -13,7 +13,7 @@
 #include "SimulationDescription.h"
 #include "OutputBoss.h"
 #include "geometry.h"
-#include "Material.h"
+#include "UpdateEquation.h"
 #include "MemoryUtilities.h"
 #include <vector>
 #include <fstream>

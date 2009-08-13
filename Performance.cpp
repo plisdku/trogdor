@@ -8,7 +8,7 @@
  */
 
 #include "Performance.h"
-#include "Material.h"
+#include "UpdateEquation.h"
 
 // for accumulate()
 #include <numeric>

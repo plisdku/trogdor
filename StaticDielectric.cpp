@@ -25,6 +25,7 @@ StaticDielectric(
     const MaterialDescription & descrip,
     std::vector<int> numCellsE, std::vector<int> numCellsH,
     Vector3f dxyz, float dt) :
+    Material(),
     mDxyz(dxyz),
     mDt(dt),
     m_epsr(1.0),

@@ -10,6 +10,7 @@
 #ifndef _DRUDEMODEL1_
 #define _DRUDEMODEL1_
 
+#include "Material.h"
 #include "SimpleSetupMaterial.h"
 #include "SimpleMaterialTemplates.h"
 #include "SimulationDescriptionPredeclarations.h"
@@ -27,7 +28,7 @@
     \f]
 */
 
-class DrudeModel1
+class DrudeModel1 : public Material
 {
 public:
     DrudeModel1(
@@ -39,8 +40,6 @@ public:
     
     std::string getModelName() const;
     void writeJ(int direction, std::ostream & binaryStream,
-        long startingIndex, const float* startingField, long length) const;
-    void writeK(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;
     void allocateAuxBuffers();
     

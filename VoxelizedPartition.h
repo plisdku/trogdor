@@ -23,7 +23,7 @@
 #include "PartitionCellCount.h"
 #include "InterleavedLattice.h"
 
-#include "Material.h"
+#include "UpdateEquation.h"
 #include "OutputBoss.h"
 #include "SourceBoss.h"
 #include "HuygensSurface.h"

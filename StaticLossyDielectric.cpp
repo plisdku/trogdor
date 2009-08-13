@@ -21,6 +21,7 @@ StaticLossyDielectric(
         const MaterialDescription & descrip,
         std::vector<int> numCellsE, std::vector<int> numCellsH,
         Vector3f dxyz, float dt) :
+    Material(),
     m_epsr(1.0),
     m_mur(1.0),
     m_sigma(0.0)
@@ -54,14 +55,5 @@ writeJ(int direction, std::ostream & binaryStream, long startingIndex,
         binaryStream.write((char*) &value,
             (std::streamsize)(sizeof(float)) );
     }
-}
-
-void StaticLossyDielectric::
-writeK(int direction, std::ostream & binaryStream, long startingIndex,
-    const float* startingField, long length) const
-{
-    float zero = 0.0f;
-    for (long nn = 0; nn < length; nn++)
-        binaryStream.write((char*)&zero, (std::streamsize)sizeof(float));
 }
 
