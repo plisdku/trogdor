@@ -26,7 +26,7 @@ class Paint;
 class MaterialFactory
 {
 public:
-	static SetupMaterialPtr newSetupMaterial(const VoxelGrid & vg,
+	static SetupUpdateEquationPtr newSetupUpdateEquation(const VoxelGrid & vg,
 		const PartitionCellCountPtr cg,
         const GridDescription & gridDesc,
 		Paint* parentPaint,

@@ -90,7 +90,7 @@ addRunlinesInOctant(int octant, Rect3i yeeCells,
     
     const VoxelGrid & voxels(vp.getVoxelGrid());
     const PartitionCellCount & cellCount(*vp.getIndices());
-    const Map<Paint*, SetupMaterialPtr> & setupMaterials(vp.getDelegates());
+    const Map<Paint*, SetupUpdateEquationPtr> & setupMaterials(vp.getDelegates());
     const InterleavedLattice & lattice(*vp.getLattice());
     
     // d0 is the direction of memory allocation.  In the for-loops, this is
@@ -145,8 +145,8 @@ CurrentPolarizationOutput(const OutputDescription & desc,
     mCurrentSampleInterval(0),
     mWhichJ(desc.getWhichJ()),
     mWhichP(desc.getWhichP()),
-    mWhichM(desc.getWhichM()),
     mWhichK(desc.getWhichK()),
+    mWhichM(desc.getWhichM()),
     mDurations(desc.getDurations())
 {
     // Clip the regions to the current partition bounds (calc bounds, not

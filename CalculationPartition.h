@@ -41,7 +41,7 @@ public:
     InterleavedLattice& getLattice();
     
     // used by PartitionStatistics
-    const std::vector<MaterialPtr> getMaterials() const { return mMaterials; }
+    const std::vector<UpdateEquationPtr> getMaterials() const { return mMaterials; }
     
     // instruct all materials and outputs to allocate space for extra fields
     // and accumulation variables (e.g. for output interpolation, currents...)
@@ -79,7 +79,7 @@ private:
     float m_dt;
     long m_numT;
     
-    std::vector<MaterialPtr> mMaterials;
+    std::vector<UpdateEquationPtr> mMaterials;
     std::vector<OutputPtr> mOutputs;
     std::vector<SourcePtr> mHardSources;
     std::vector<SourcePtr> mSoftSources;

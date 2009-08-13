@@ -46,7 +46,7 @@ private:
 
 struct CPOutputRunline
 {
-    Material* material;
+    UpdateEquation* material;
     int startingIndex;
     float* startingField;
     int length;

@@ -329,7 +329,7 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     {
         const MaterialType & matType = mStructureGrid->getMaterialType(
             materials[mm]);
-        const SetupMaterialPtr setupMat = mMaterials[matType.getName()];
+        const SetupUpdateEquationPtr setupMat = mMaterials[matType.getName()];
         file << "afp.materials{" << mm+1 << "}.class = '" << 
             setupMat->getClass() << "';\n";
         file << "afp.materials{" << mm+1 << "}.name = '" <<
@@ -653,7 +653,7 @@ createSetupMaterials(const GridDescription & gridDesc)
         
 		if (mSetupMaterials.count(p) == 0)
 		{
-			mSetupMaterials[p] = MaterialFactory::newSetupMaterial(
+			mSetupMaterials[p] = MaterialFactory::newSetupUpdateEquation(
 				mVoxels, mCentralIndices, gridDesc, p, numCellsE, numCellsH,
                 pmlRects, mLattice->runlineDirection());
             mSetupMaterials[p]->setID(materialID);
@@ -693,7 +693,7 @@ generateRunlines()
         genRunlinesInOctant(octantH(direction));
     }
     /*
-    map<Paint*, Pointer<SetupMaterial> >::const_iterator itr;
+    map<Paint*, Pointer<SetupUpdateEquation> >::const_iterator itr;
     for (itr = mSetupMaterials.begin(); itr != mSetupMaterials.end(); itr++)
         itr->second->printRunlines(cout);
     */
@@ -712,7 +712,7 @@ genRunlinesInOctant(int octant)
 //	LOG << "Calc region " << mCalcHalfCells << endl;
 //	LOG << "Runlines in octant " << octant << " at start " << p1 << endl;
 	
-	SetupMaterial* material; // unsafe pointer for speed in this case.
+	SetupUpdateEquation* material; // unsafe pointer for speed in this case.
 	
 	// If there is a current runline
 	//	Ask the SetupMaterial whether the current cell belongs to it

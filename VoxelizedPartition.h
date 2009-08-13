@@ -68,7 +68,7 @@ public:
     Pointer<InterleavedLattice> getLattice() const { return mLattice; }
     
     // returns      the structures that store temp data for setting up materials
-    const Map<Paint*, Pointer<SetupMaterial> > & getDelegates() const
+    const Map<Paint*, Pointer<SetupUpdateEquation> > & getDelegates() const
         { return mSetupMaterials; }
     
     // returns      the structures that store temp data for setting up outputs
@@ -128,7 +128,7 @@ private:
     Pointer<InterleavedLattice> mLattice;
 	
     // THIS IS WHERE GRID DENIZENS LIVE
-	Map<Paint*, Pointer<SetupMaterial> > mSetupMaterials;
+	Map<Paint*, Pointer<SetupUpdateEquation> > mSetupMaterials;
 	std::vector<Pointer<SetupOutput> > mSetupOutputs;
     std::vector<Pointer<SetupSource> > mSoftSetupSources;
     std::vector<Pointer<SetupSource> > mHardSetupSources;

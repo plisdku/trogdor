@@ -20,11 +20,11 @@ class VoxelizedPartition;
 class CalculationPartition;
 class Paint;
 
-class Material
+class UpdateEquation
 {
 public:
-    Material();
-    virtual ~Material();
+    UpdateEquation();
+    virtual ~UpdateEquation();
     
     void setSubstanceName(const std::string & name) { mSubstanceName = name; }
     const std::string & getSubstanceName() const { return mSubstanceName; }
@@ -49,15 +49,15 @@ private:
     int mID;
     std::string mSubstanceName;
 };
-typedef Pointer<Material> MaterialPtr;
+typedef Pointer<UpdateEquation> UpdateEquationPtr;
 
 // This is that rare thing—a class in Trogdor which doesn't observe RAII.
 // Initializing it just has too darned many parameters.
-class SetupMaterial
+class SetupUpdateEquation
 {
 public:
-	SetupMaterial();
-	virtual ~SetupMaterial();
+	SetupUpdateEquation();
+	virtual ~SetupUpdateEquation();
     
     void setID(int id) { mID = id; }
     int id() const { return mID; }
@@ -75,12 +75,12 @@ public:
 	virtual void printRunlines(std::ostream & out) const = 0;
     
     // Setting up the runtime materials
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
+    virtual UpdateEquationPtr makeUpdateEquation(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const = 0;
 private:
     int mID;
 };
-typedef Pointer<SetupMaterial> SetupMaterialPtr;
+typedef Pointer<SetupUpdateEquation> SetupUpdateEquationPtr;
 
 
 

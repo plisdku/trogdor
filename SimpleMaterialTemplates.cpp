@@ -41,8 +41,8 @@ SimpleSetupMaterial(Paint* parentPaint, std::vector<int> numCellsE,
 }
 
 template<class MaterialClass, class RunlineT>
-MaterialPtr SimpleSetupMaterial<MaterialClass, RunlineT>::
-makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
+UpdateEquationPtr SimpleSetupMaterial<MaterialClass, RunlineT>::
+makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {    
     WithRunline<RunlineT>* h =
@@ -60,7 +60,7 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
         h->setRunlinesH(nn, getRunlinesH(nn));
     }
     
-    return MaterialPtr(h);
+    return UpdateEquationPtr(h);
 }
 
 #pragma mark *** SimpleSetupPML ***
@@ -83,8 +83,8 @@ SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
 
 
 template<class MaterialClass, class RunlineT, class PMLT>
-MaterialPtr SimpleSetupPML<MaterialClass, RunlineT, PMLT>::
-makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
+UpdateEquationPtr SimpleSetupPML<MaterialClass, RunlineT, PMLT>::
+makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
     WithRunline<RunlineT>* h =
@@ -104,9 +104,9 @@ makeCalcMaterial(const VoxelizedPartition & vp, const CalculationPartition & cp)
         h->setRunlinesH(nn, getRunlinesH(nn));
     }
     
-    return MaterialPtr(h);
+    return UpdateEquationPtr(h);
     
-    //return MaterialPtr(0L);
+    //return UpdateEquationPtr(0L);
 }
 
 

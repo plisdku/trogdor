@@ -166,7 +166,7 @@ addHuygensSurfaceMicroseconds(int source, double us)
 
 void PartitionStatistics::
 printForMatlab(std::ostream & str, const string & prefix,
-    const vector<MaterialPtr> & materials, long numT)
+    const vector<UpdateEquationPtr> & materials, long numT)
 {
     assert(materials.size() == mMaterialMicrosecondsE.size());
     

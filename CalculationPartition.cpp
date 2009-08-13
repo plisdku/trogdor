@@ -43,13 +43,14 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mHuygensSurfaces.at(nn)->allocate();
     
     // Fill out other denizens.
-    const Map<Paint*, SetupMaterialPtr> & delegs = vp.getDelegates();
-    map<Paint*, SetupMaterialPtr>::const_iterator itr;
+    const Map<Paint*, SetupUpdateEquationPtr> & delegs = vp.getDelegates();
+    map<Paint*, SetupUpdateEquationPtr>::const_iterator itr;
     mMaterials.resize(delegs.size());
     for (itr = delegs.begin(); itr != delegs.end(); itr++)
     {
         //LOG << "Dealing with paint " << *itr->first << endl;
-        MaterialPtr newMaterial = itr->second->makeCalcMaterial(vp, *this);
+        UpdateEquationPtr newMaterial =
+            itr->second->makeUpdateEquation(vp, *this);
         newMaterial->setSubstanceName(itr->first->getFullName());
         newMaterial->setID(itr->second->id());
         assert(newMaterial->id() >= 0);

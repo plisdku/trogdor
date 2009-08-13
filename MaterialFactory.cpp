@@ -28,15 +28,15 @@
 
 
 template<class MaterialT, class RunlineT>
-static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
+static SetupUpdateEquationPtr newCFSRIPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
 
 #pragma mark *** Material Factory ***
 
-SetupMaterialPtr MaterialFactory::
-newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
+SetupUpdateEquationPtr MaterialFactory::
+newSetupUpdateEquation(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
     const GridDescription & gridDesc,
 	Paint* parentPaint,
     std::vector<int> numCellsE,
@@ -46,7 +46,7 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
 {
 	assert(parentPaint != 0L);
     
-    SetupMaterialPtr setupMat;
+    SetupUpdateEquationPtr setupMat;
 	const MaterialDescription* bulkMaterial = parentPaint->getBulkMaterial();
     const Map<Vector3i, Map<string, string> > & gridPMLParams(
         gridDesc.getPMLParams());
@@ -95,28 +95,28 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
         
         if (bulkMaterial->getModelName() == "StaticDielectric")
         {
-            setupMat = SetupMaterialPtr(
+            setupMat = SetupUpdateEquationPtr(
                 new SimpleSetupMaterial<StaticDielectric, SimpleRunline>(
                     parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
                     gridDesc.getDt()));
         }
         else if (bulkMaterial->getModelName() == "StaticLossyDielectric")
         {
-            setupMat = SetupMaterialPtr(
+            setupMat = SetupUpdateEquationPtr(
                 new SimpleSetupMaterial<StaticLossyDielectric, SimpleRunline>(
                     parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
                     gridDesc.getDt()));
         }
         else if (bulkMaterial->getModelName() == "DrudeMetal1")
         {
-            setupMat = SetupMaterialPtr(
+            setupMat = SetupUpdateEquationPtr(
                 new SimpleSetupMaterial<DrudeModel1, SimpleAuxRunline>(
                     parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
                     gridDesc.getDt()));
         }
         else if (bulkMaterial->getModelName() == "PerfectConductor")
         {
-            setupMat = SetupMaterialPtr(new SetupPerfectConductor);
+            setupMat = SetupUpdateEquationPtr(new SetupPerfectConductor);
         }
         else
         {
@@ -146,7 +146,7 @@ newSetupMaterial(const VoxelGrid & vg, const PartitionCellCountPtr cg,
         }
         else if (bulkMaterial->getModelName() == "PerfectConductor")
         {
-            setupMat = SetupMaterialPtr(new SetupPerfectConductor);
+            setupMat = SetupUpdateEquationPtr(new SetupPerfectConductor);
         }
         else
         {
@@ -188,7 +188,7 @@ defaultPMLParams()
 #pragma mark *** Local templated functions ***
 
 template<class MaterialT, class RunlineT>
-static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
+static SetupUpdateEquationPtr newCFSRIPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
@@ -201,7 +201,7 @@ static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
         " is " << runlineDirection << ", so the rotated PML direction is "
         << rotatedPMLDirs << ".\n";
     
-    SetupMaterial* m;
+    SetupUpdateEquation* m;
     if (rotatedPMLDirs[0] != 0)
     {
         if (rotatedPMLDirs[1] != 0)
@@ -269,5 +269,5 @@ static SetupMaterialPtr newCFSRIPML(Paint* parentPaint,
             }
         }
     }
-    return SetupMaterialPtr(m);
+    return SetupUpdateEquationPtr(m);
 }

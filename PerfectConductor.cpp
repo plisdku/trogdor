@@ -18,8 +18,8 @@ using namespace std;
 
 
 
-MaterialPtr SetupPerfectConductor::
-makeCalcMaterial(const VoxelizedPartition & vp,
+UpdateEquationPtr SetupPerfectConductor::
+makeUpdateEquation(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
 {
     int numRunlinesE = getRunlinesE(0).size() + getRunlinesE(1).size()
@@ -38,14 +38,14 @@ makeCalcMaterial(const VoxelizedPartition & vp,
     for (int nn = 0; nn < getRunlinesH(direction).size(); nn++)
         numHalfCellsH += getRunlinesH(direction)[nn]->length;
     
-    return MaterialPtr(new PerfectConductor(numRunlinesE, numRunlinesH,
+    return UpdateEquationPtr(new PerfectConductor(numRunlinesE, numRunlinesH,
         numHalfCellsE, numHalfCellsH));
 }
 
 PerfectConductor::
 PerfectConductor(int numRunlinesE, int numRunlinesH, int numHalfCellsE,
     int numHalfCellsH) :
-    Material(),
+    UpdateEquation(),
     mNumRunlinesE(numRunlinesE),
     mNumRunlinesH(numRunlinesH),
     mNumHalfCellsE(numHalfCellsE),

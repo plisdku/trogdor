@@ -31,7 +31,7 @@ public:
     
     // This returns a material harness with a null PML, a null current and
     // the specified MaterialClass for the update equation.
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
+    virtual UpdateEquationPtr makeUpdateEquation(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
     
 private:
@@ -55,7 +55,7 @@ public:
     
     // This returns a material harness with the given PML, no current,
     // and the given MaterialClass for the update equation.
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
+    virtual UpdateEquationPtr makeUpdateEquation(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
 private:
     Paint* mParentPaint;
@@ -74,7 +74,7 @@ private:
 //  Material must have constructor with appropriate arguments (TBD?)
 //  RunlineClass needs to have constructor for given runline type
 template<class RunlineClass>
-class WithRunline : public Material
+class WithRunline : public UpdateEquation
 {
 public:
     WithRunline();

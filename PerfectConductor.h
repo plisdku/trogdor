@@ -18,11 +18,11 @@ class SetupPerfectConductor : public SimpleBulkSetupMaterial
 public:
     SetupPerfectConductor() {}
     
-    virtual MaterialPtr makeCalcMaterial(const VoxelizedPartition & vp,
+    virtual UpdateEquationPtr makeUpdateEquation(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
 };
 
-class PerfectConductor : public Material
+class PerfectConductor : public UpdateEquation
 {
 public:
     PerfectConductor(int numRunlinesE, int numRunlinesH, int numHalfCellsE,

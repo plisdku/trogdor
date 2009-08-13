@@ -27,7 +27,7 @@ using namespace YeeUtilities;
 
 SimpleBulkSetupMaterial::
 SimpleBulkSetupMaterial() :
-	SetupMaterial()
+	SetupUpdateEquation()
 {
 }
 
@@ -183,7 +183,7 @@ printRunlines(std::ostream & out) const
 
 SimpleBulkPMLSetupMaterial::
 SimpleBulkPMLSetupMaterial() :
-	SetupMaterial()
+	SetupUpdateEquation()
 {
 }
 

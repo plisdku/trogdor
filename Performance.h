@@ -14,8 +14,8 @@
 #include <vector>
 #include <iostream>
 
-class Material;
-typedef Pointer<Material> MaterialPtr;
+class UpdateEquation;
+typedef Pointer<UpdateEquation> UpdateEquationPtr;
 
 class GlobalStatistics
 {
@@ -60,7 +60,7 @@ public:
     void addHuygensSurfaceMicroseconds(int source, double us);
     
     void printForMatlab(std::ostream & str, const std::string & prefix,
-        const std::vector<MaterialPtr> & materials, long numT);
+        const std::vector<UpdateEquationPtr> & materials, long numT);
 private:
     std::vector<double> mMaterialMicrosecondsE;
     std::vector<double> mMaterialMicrosecondsH;

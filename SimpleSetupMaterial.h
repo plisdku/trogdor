@@ -24,13 +24,13 @@ typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
 
 class VoxelizedPartition;
 
-class SetupMaterial;
-typedef Pointer<SetupMaterial> SetupMaterialPtr;
+class SetupUpdateEquation;
+typedef Pointer<SetupUpdateEquation> SetupUpdateEquationPtr;
 
 class GridDescription;
 
 
-class SimpleBulkSetupMaterial : public SetupMaterial
+class SimpleBulkSetupMaterial : public SetupUpdateEquation
 {
 public:
 	SimpleBulkSetupMaterial();
@@ -65,7 +65,7 @@ protected:
 	bool mUsedNeighborIndices[6];
 };
 
-class SimpleBulkPMLSetupMaterial : public SetupMaterial
+class SimpleBulkPMLSetupMaterial : public SetupUpdateEquation
 {
 public:
 	SimpleBulkPMLSetupMaterial();

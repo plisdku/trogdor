@@ -1,5 +1,5 @@
 /*
- *  Material.cpp
+ *  UpdateEquation.cpp
  *  TROGDOR
  *
  *  Created by Paul Hansen on 7/18/09.
@@ -9,17 +9,17 @@
 
 #include "Material.h"
 
-Material::
-Material()
+UpdateEquation::
+UpdateEquation()
 {
 }
 
-Material::
-~Material()
+UpdateEquation::
+~UpdateEquation()
 {
 }
 
-void Material::
+void UpdateEquation::
 writeJ(int direction, std::ostream & binaryStream, long startingIndex,
     const float* startingField, long length) const
 {
@@ -28,7 +28,7 @@ writeJ(int direction, std::ostream & binaryStream, long startingIndex,
         binaryStream.write((char*)&zero, (std::streamsize)sizeof(float));
 }
 
-void Material::
+void UpdateEquation::
 writeK(int direction, std::ostream & binaryStream, long startingIndex,
     const float* startingField, long length) const
 {
@@ -37,17 +37,17 @@ writeK(int direction, std::ostream & binaryStream, long startingIndex,
         binaryStream.write((char*)&zero, (std::streamsize)sizeof(float));
 }
 
-void Material::
+void UpdateEquation::
 allocateAuxBuffers()
 {
 }
 
-SetupMaterial::
-SetupMaterial()
+SetupUpdateEquation::
+SetupUpdateEquation()
 {
 }
 
-SetupMaterial::
-~SetupMaterial()
+SetupUpdateEquation::
+~SetupUpdateEquation()
 {
 }
