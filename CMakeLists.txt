@@ -19,34 +19,13 @@ string(REGEX MATCHALL "[-]I[^ ;\n]+" rawIncdirs "${mcppflags}")
 string(REGEX REPLACE "[-]I([^ ;\n]+)" "\\1" magIncDirs "${rawIncdirs}")
 message("ImageMagick inc directories are ${magIncDirs}")
 
-#find_package( Boost )
-#if (Boost_FOUND)
-#	include_directories(${Boost_INCLUDE_DIRS})
-#endif()
-
-#set(Boost_USE_STATIC_LIBS OFF)
-#set(Boost_USE_MULTITHREADED ON)
-#find_package( Boost COMPONENTS date_time program_options thread)
-
-#if(Boost_FOUND)
-#	include_directories(${Boost_INCLUDE_DIRS})
-#	message("Boost includes are at ${Boost_INCLUDE_DIRS}")
-#	message("Boost libraries are ${Boost_LIBRARIES}")
-#	add_executable(foo foo.cc)
-#	target_link_libraries(trogdor ${Boost_LIBRARIES})
-#endif()
-
 include_directories(
 	${TROGDOR_SOURCE_DIR}
 	${TROGDOR_SOURCE_DIR}/utility
 	${TROGDOR_SOURCE_DIR}/tinyxml
 	${magIncDirs}
 	/usr/local/include/
-#	/usr/local/include/boost-1_38
 	/sw/include)
-
-#include_directories( ${magIncDirs} )
-#include_directories( ${magIncDirs} /sw/include )
 
 link_directories(
 ${TROGDOR_BINARY_DIR}/utility
@@ -79,8 +58,8 @@ HuygensLink.cpp
 InterleavedLattice.h
 InterleavedLattice.cpp
 main.cpp
-Material.h
-Material.cpp
+UpdateEquation.h
+UpdateEquation.cpp
 MaterialFactory.h
 MaterialFactory.cpp
 MemoryUtilities.h
@@ -160,30 +139,11 @@ target_link_libraries( trogdor
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-#    target_link_libraries( trogdor
-#        boost_date_time-xgcc40-mt
-#        boost_program_options-xgcc40-mt
-#        boost_thread-xgcc40-mt
-#    )
-    
-#    include_directories(
-#    	/usr/local/include/boost-1_38
-#    )
-    
     add_subdirectory( tests )
     enable_testing() # only need to do this once, but
     add_test(geom tests/testGeometry) # this once per test
     add_test(lattice tests/testInterleavedLattice) # this once per test
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
-#if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#    target_link_libraries( trogdor
-#        boost_date_time-mt
-#        boost_program_options-mt
-#        boost_thread-mt
-#    )
-#endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
 
 add_subdirectory( utility )
 add_subdirectory( tinyxml )
