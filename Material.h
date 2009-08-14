@@ -10,13 +10,13 @@
 #ifndef _MATERIAL_
 #define _MATERIAL_
 
-
+#include <iostream>
 
 class Material
 {
 public:
     Material();
-    virtual ~Material() = 0;
+    virtual ~Material();
     
     void writeJ(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;

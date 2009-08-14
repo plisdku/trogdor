@@ -31,6 +31,11 @@ SimpleBulkSetupMaterial() :
 {
 }
 
+SimpleBulkSetupMaterial::
+~SimpleBulkSetupMaterial()
+{
+}
+
 void SimpleBulkSetupMaterial::
 startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 {

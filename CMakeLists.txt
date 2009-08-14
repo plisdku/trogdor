@@ -100,6 +100,9 @@ StaticLossyDielectric.h
 StaticLossyDielectric.cpp
 StructuralReports.h
 StructuralReports.cpp
+UpdateHarness.h
+UpdateHarness.cpp
+UpdateHarness-inl.h
 Version.h
 VoxelGrid.h
 VoxelGrid.cpp

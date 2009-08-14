@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _MATERIAL_
-#define _MATERIAL_
+#ifndef _UPDATEEQUATION_
+#define _UPDATEEQUATION_
 
 #include "Pointer.h"
 #include "geometry.h"
@@ -41,7 +41,12 @@ public:
     
     virtual void writeJ(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;
+    virtual void writeP(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+    
     virtual void writeK(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+    virtual void writeM(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;
     
     virtual void allocateAuxBuffers();

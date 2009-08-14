@@ -11,11 +11,9 @@
 #define _PERFORMANCE_
 
 #include "Pointer.h"
+#include "UpdateEquation.h"
 #include <vector>
 #include <iostream>
-
-class UpdateEquation;
-typedef Pointer<UpdateEquation> UpdateEquationPtr;
 
 class GlobalStatistics
 {

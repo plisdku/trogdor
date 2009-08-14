@@ -9,6 +9,15 @@
 
 #include "Material.h"
 
+Material::
+Material()
+{
+}
+
+Material::
+~Material()
+{
+}
 
 void Material::
 writeJ(int direction, std::ostream & binaryStream, long startingIndex,

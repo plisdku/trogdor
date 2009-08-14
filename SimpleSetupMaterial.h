@@ -24,9 +24,6 @@ typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
 
 class VoxelizedPartition;
 
-class SetupUpdateEquation;
-typedef Pointer<SetupUpdateEquation> SetupUpdateEquationPtr;
-
 class GridDescription;
 
 
@@ -34,7 +31,8 @@ class SimpleBulkSetupMaterial : public SetupUpdateEquation
 {
 public:
 	SimpleBulkSetupMaterial();
-	
+	virtual ~SimpleBulkSetupMaterial();
+    
 	// Runline handling
 	virtual void startRunline(const VoxelizedPartition & vp,
 		const Vector3i & startPos);
