@@ -152,8 +152,8 @@ saveMaterialBoundariesBeta(const GridDescription & grid,
 	foutname << grid.getName() << "_faces.obj";
 	ofstream fout(foutname.str().c_str());
 	
-    const Map<Paint*, SetupUpdateEquationPtr> materials(vp.getDelegates());
-    map<Paint*, SetupUpdateEquationPtr>::const_iterator itr;
+    const Map<Paint*, RunlineEncoderPtr> materials(vp.getDelegates());
+    map<Paint*, RunlineEncoderPtr>::const_iterator itr;
     
     const VoxelGrid & vg(vp.getVoxelGrid());
 	//const StructureGrid& grid = *mStructureGrid;
@@ -162,7 +162,7 @@ saveMaterialBoundariesBeta(const GridDescription & grid,
 	for (itr = materials.begin(); itr != materials.end(); itr++)
 	{
 		Paint* paint = (*itr).first->withoutModifications();
-		SetupUpdateEquationPtr mat = (*itr).second;
+		RunlineEncoderPtr mat = (*itr).second;
         string name = paint->getFullName();
         Rect3i roi = grid.getNonPMLHalfCells();
 		Paint* lastMat;

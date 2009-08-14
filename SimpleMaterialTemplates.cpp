@@ -104,8 +104,6 @@ makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & c
     }
     
     return UpdateEquationPtr(h);
-    
-    //return UpdateEquationPtr(0L);
 }
 
 

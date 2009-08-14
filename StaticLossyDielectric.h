@@ -25,11 +25,20 @@ public:
     
     std::string getModelName() const;
     
+    /**
+     * Write the electric current, as calculated by \f$\sigma E\f$, to 
+     * binaryStream.  Note that the FDTD current is properly defined at
+     * timestep \f$n+1/2\f$, cotemporal with \f$H^{n+1/2}\f$, but that
+     * StaticLossyDielectric calculates it from \f$E^n\f$.  In the future
+     * this model should instead return the polarization \f$P\f$ which is
+     * cotemporal with \f$E\f$.
+     */
     void writeJ(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;
+//    void writeP(int direction, std::ostream & binaryStream,
+//        long startingIndex, const float* startingField, long length) const;
     
     void allocateAuxBuffers() {}
-    
     
     struct LocalDataE
     {

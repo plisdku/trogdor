@@ -60,12 +60,3 @@ allocateAuxBuffers()
 {
 }
 
-SetupUpdateEquation::
-SetupUpdateEquation()
-{
-}
-
-SetupUpdateEquation::
-~SetupUpdateEquation()
-{
-}

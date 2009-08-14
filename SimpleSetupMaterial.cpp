@@ -25,18 +25,18 @@ using namespace YeeUtilities;
 
 #pragma mark *** Simple Bulk Material ***
 
-SimpleBulkSetupMaterial::
-SimpleBulkSetupMaterial() :
-	SetupUpdateEquation()
+BulkRunlineEncoder::
+BulkRunlineEncoder() :
+	RunlineEncoder()
 {
 }
 
-SimpleBulkSetupMaterial::
-~SimpleBulkSetupMaterial()
+BulkRunlineEncoder::
+~BulkRunlineEncoder()
 {
 }
 
-void SimpleBulkSetupMaterial::
+void BulkRunlineEncoder::
 startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 {
 	int nSide;
@@ -105,7 +105,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
     */
 }
 
-bool SimpleBulkSetupMaterial::
+bool BulkRunlineEncoder::
 canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	const Vector3i & newPos, Paint* newPaint, int runlineDirection) const
 {
@@ -129,13 +129,13 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	return 1;
 }
 
-void SimpleBulkSetupMaterial::
+void BulkRunlineEncoder::
 continueRunline(const Vector3i & newPos)
 {
 	mCurrentRunline.length++;
 }
 
-void SimpleBulkSetupMaterial::
+void BulkRunlineEncoder::
 endRunline()
 {
     int oct = octant(mStartPoint);
@@ -149,7 +149,7 @@ endRunline()
         assert(!"Bad octant.");
 }
 
-void SimpleBulkSetupMaterial::
+void BulkRunlineEncoder::
 printRunlines(std::ostream & out) const
 {
     int dir;
@@ -186,13 +186,13 @@ printRunlines(std::ostream & out) const
 
 #pragma mark *** Simple Bulk PML Material ***
 
-SimpleBulkPMLSetupMaterial::
-SimpleBulkPMLSetupMaterial() :
-	SetupUpdateEquation()
+BulkPMLRunlineEncoder::
+BulkPMLRunlineEncoder() :
+	RunlineEncoder()
 {
 }
 
-void SimpleBulkPMLSetupMaterial::
+void BulkPMLRunlineEncoder::
 startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 {
 	int nSide;
@@ -263,7 +263,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
     */
 }
 
-bool SimpleBulkPMLSetupMaterial::
+bool BulkPMLRunlineEncoder::
 canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	const Vector3i & newPos, Paint* newPaint,
     int runlineDirection) const
@@ -298,13 +298,13 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	return 1;
 }
 
-void SimpleBulkPMLSetupMaterial::
+void BulkPMLRunlineEncoder::
 continueRunline(const Vector3i & newPos)
 {
 	mCurrentRunline.length++;
 }
 
-void SimpleBulkPMLSetupMaterial::
+void BulkPMLRunlineEncoder::
 endRunline()
 {
     int oct = octant(mStartPoint);
@@ -318,7 +318,7 @@ endRunline()
         assert(!"Bad octant.");
 }
 
-void SimpleBulkPMLSetupMaterial::
+void BulkPMLRunlineEncoder::
 printRunlines(std::ostream & out) const
 {
     int dir;

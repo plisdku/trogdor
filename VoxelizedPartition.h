@@ -23,6 +23,7 @@
 #include "PartitionCellCount.h"
 #include "InterleavedLattice.h"
 
+#include "RunlineEncoder.h"
 #include "UpdateEquation.h"
 #include "OutputBoss.h"
 #include "SourceBoss.h"
@@ -68,7 +69,7 @@ public:
     Pointer<InterleavedLattice> getLattice() const { return mLattice; }
     
     // returns      the structures that store temp data for setting up materials
-    const Map<Paint*, Pointer<SetupUpdateEquation> > & getDelegates() const
+    const Map<Paint*, Pointer<RunlineEncoder> > & getDelegates() const
         { return mSetupMaterials; }
     
     // returns      the structures that store temp data for setting up outputs
@@ -128,7 +129,7 @@ private:
     Pointer<InterleavedLattice> mLattice;
 	
     // THIS IS WHERE GRID DENIZENS LIVE
-	Map<Paint*, Pointer<SetupUpdateEquation> > mSetupMaterials;
+	Map<Paint*, Pointer<RunlineEncoder> > mSetupMaterials;
 	std::vector<Pointer<SetupOutput> > mSetupOutputs;
     std::vector<Pointer<SetupSource> > mSoftSetupSources;
     std::vector<Pointer<SetupSource> > mHardSetupSources;

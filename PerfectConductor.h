@@ -13,7 +13,7 @@
 #include "SimulationDescription.h"
 #include "SimpleSetupMaterial.h"
 
-class SetupPerfectConductor : public SimpleBulkSetupMaterial
+class SetupPerfectConductor : public BulkRunlineEncoder
 {
 public:
     SetupPerfectConductor() {}

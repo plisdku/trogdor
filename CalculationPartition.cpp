@@ -43,8 +43,8 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mHuygensSurfaces.at(nn)->allocate();
     
     // Fill out other denizens.
-    const Map<Paint*, SetupUpdateEquationPtr> & delegs = vp.getDelegates();
-    map<Paint*, SetupUpdateEquationPtr>::const_iterator itr;
+    const Map<Paint*, RunlineEncoderPtr> & delegs = vp.getDelegates();
+    map<Paint*, RunlineEncoderPtr>::const_iterator itr;
     mMaterials.resize(delegs.size());
     for (itr = delegs.begin(); itr != delegs.end(); itr++)
     {

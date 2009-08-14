@@ -45,6 +45,7 @@ getModelName() const
     return string("StaticLossyDielectric");
 }
 
+
 void StaticLossyDielectric::
 writeJ(int direction, std::ostream & binaryStream, long startingIndex,
     const float* startingField, long length) const
@@ -56,4 +57,6 @@ writeJ(int direction, std::ostream & binaryStream, long startingIndex,
             (std::streamsize)(sizeof(float)) );
     }
 }
+
+
 

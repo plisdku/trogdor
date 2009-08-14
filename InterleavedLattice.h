@@ -25,6 +25,12 @@
  * {@link BufferPointer}s are immediately available and will point to the
  * correct E and H field values after the allocate() method is called.
  *
+ * The number of Yee cells in the grid will be written \f$n_x, n_y, n_z\f$ in
+ * this document.
+ *
+ * The number of half cells in the grid will be written \f$nn_x, nn_y, nn_z\f$
+ * in this document.
+ *
  * @author Paul C. Hansen
  * @see MemoryBuffer, BufferPointer
  */
@@ -69,7 +75,7 @@ public:
     const Vector3i & numHalfCells() const { return mNumHalfCells; }
     /**
      * Get the number of Yee cells along each dimension.
-     * @returns eextent of the grid in Yee cells along x, y and z
+     * @returns extent of the grid in Yee cells along x, y and z
      */ 
     const Vector3i & numYeeCells() const { return mNumYeeCells; }
     
@@ -78,16 +84,41 @@ public:
     
     /**
      * Treating the grid as periodic in all directions, return the (unique)
-     * point inside the grid which is \f$N\f$
-     * numHalfCells() away from halfCell for some integer-valued vector
-     * \f$N\f$.
+     * point inside the grid which is \f$N \mathrm{numHalfCells}()\f$ away from
+     * halfCell for some integer-valued vector \f$N\f$.
      */
     Vector3i wrap(const Vector3i & halfCell) const;
+    
+    /**
+     * Returns the unique index of the given half cell \f$x, y, z\f$ inside the
+     * grid, calculated as \f$i = x + nn_x y + nn_x nn_y z\f$.
+     *
+     * @returns \f$x + nn_x y + nn_x nn_y z\f$
+     */
     long linearYeeIndex(const Vector3i & halfCell) const;
+    
+    /**
+     * Wraps the given half cell into the grid and returns its linear index.
+     *
+     * @returns \f$\mathrm{wrap}(x) + nn_x\mathrm{wrap}(y) +
+     *          nn_x nn_y\mathrm{wrap}(z)\f$
+     *
+     * @see wrap, linearYeeIndex
+     */
     long wrappedLinearYeeIndex(const Vector3i & halfCell) const;
     
     // Access to allocation skeleton
+    
+    /**
+     * @returns the unique BufferPointer associated with the field at halfCell.
+     */
     BufferPointer pointer(const Vector3i & halfCell) const;
+    
+    /**
+     * Wraps the input halfCell into the grid and returns its BufferPointer.
+     *
+     * @returns \f$\mathrm{wrap}(x,y,z) \dot (1, nn_x, nn_x nn_y)\f$
+     */
     BufferPointer wrappedPointer(const Vector3i & halfCell) const;
     
     BufferPointer pointerE(int fieldDirection, const Vector3i & yeeCell) const;

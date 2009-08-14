@@ -90,7 +90,7 @@ addRunlinesInOctant(int octant, Rect3i yeeCells,
     
     const VoxelGrid & voxels(vp.getVoxelGrid());
     const PartitionCellCount & cellCount(*vp.getIndices());
-    const Map<Paint*, SetupUpdateEquationPtr> & setupMaterials(vp.getDelegates());
+    const Map<Paint*, RunlineEncoderPtr> & setupMaterials(vp.getDelegates());
     const InterleavedLattice & lattice(*vp.getLattice());
     
     // d0 is the direction of memory allocation.  In the for-loops, this is

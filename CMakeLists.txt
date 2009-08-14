@@ -82,6 +82,8 @@ PhysicalConstants.h
 PhysicalConstants.cpp
 Runline.h
 Runline.cpp
+RunlineEncoder.h
+RunlineEncoder.cpp
 SetupConstants.h
 SimpleEHOutput.h
 SimpleEHOutput.cpp

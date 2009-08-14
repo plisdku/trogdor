@@ -10,6 +10,7 @@
 #ifndef _MATERIALFACTORY_
 #define _MATERIALFACTORY_
 
+#include "RunlineEncoder.h"
 #include "UpdateEquation.h"
 #include "Map.h"
 #include "geometry.h"
@@ -26,7 +27,7 @@ class Paint;
 class MaterialFactory
 {
 public:
-	static SetupUpdateEquationPtr newSetupUpdateEquation(const VoxelGrid & vg,
+	static RunlineEncoderPtr newRunlineEncoder(const VoxelGrid & vg,
 		const PartitionCellCountPtr cg,
         const GridDescription & gridDesc,
 		Paint* parentPaint,

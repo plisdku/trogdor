@@ -10,7 +10,7 @@
 #ifndef _SIMPLESETUPMATERIAL_
 #define _SIMPLESETUPMATERIAL_
 
-#include "UpdateEquation.h"     // we inherit Material and SetupMaterial
+#include "RunlineEncoder.h"
 #include "Pointer.h"
 #include "geometry.h"
 #include "MemoryUtilities.h"
@@ -27,11 +27,11 @@ class VoxelizedPartition;
 class GridDescription;
 
 
-class SimpleBulkSetupMaterial : public SetupUpdateEquation
+class BulkRunlineEncoder : public RunlineEncoder
 {
 public:
-	SimpleBulkSetupMaterial();
-	virtual ~SimpleBulkSetupMaterial();
+	BulkRunlineEncoder();
+	virtual ~BulkRunlineEncoder();
     
 	// Runline handling
 	virtual void startRunline(const VoxelizedPartition & vp,
@@ -63,10 +63,10 @@ protected:
 	bool mUsedNeighborIndices[6];
 };
 
-class SimpleBulkPMLSetupMaterial : public SetupUpdateEquation
+class BulkPMLRunlineEncoder : public RunlineEncoder
 {
 public:
-	SimpleBulkPMLSetupMaterial();
+	BulkPMLRunlineEncoder();
 	
 	// Runline handling
 	virtual void startRunline(const VoxelizedPartition & vp,
