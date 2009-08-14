@@ -9,15 +9,69 @@
 
 #include "UpdateHarness.h"
 
+template<class RunlineClass>
+class UpdateHarness_Runline : virtual public UpdateEquation
+{
+public:
+    UpdateHarness_Runline();
+    //  Because templated virtual functions are not allowed in C++, I have to
+    // overload the setRunlines functions manually.  What a pain!
+    
+    virtual void setRunlinesE(int direction,
+        const std::vector<SBMRunlinePtr> & rls);
+    virtual void setRunlinesE(int direction,
+        const std::vector<SBPMRunlinePtr> & rls);
+    
+    virtual void setRunlinesH(int direction,
+        const std::vector<SBMRunlinePtr> & rls);
+    virtual void setRunlinesH(int direction,
+        const std::vector<SBPMRunlinePtr> & rls);
+    
+    std::vector<RunlineClass> & getRunlinesE(int direction)
+        { return mRunlinesE[direction]; }
+    std::vector<RunlineClass> & getRunlinesH(int direction)
+        { return mRunlinesH[direction]; }
+    
+    virtual long getNumRunlinesE() const;
+    virtual long getNumRunlinesH() const;
+    virtual long getNumHalfCellsE() const;
+    virtual long getNumHalfCellsH() const;
+protected:
+    std::vector<RunlineClass> mRunlinesE[3];
+    std::vector<RunlineClass> mRunlinesH[3];
+};
+
+template<class MaterialClass>
+class UpdateHarness_Material : virtual public UpdateEquation
+{
+public:
+    UpdateHarness_Material(Paint* parentPaint, std::vector<int> numCellsE,
+        std::vector<int> numCellsH, Vector3f dxyz, float dt);
+        
+    virtual void writeJ(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+    virtual void writeP(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+    virtual void writeK(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+    virtual void writeM(int direction, std::ostream & binaryStream,
+        long startingIndex, const float* startingField, long length) const;
+        
+    virtual std::string getModelName() const;
+protected:
+    MaterialClass mMaterial;
+};
+
+#pragma mark *** UpdateHarness_Runline ***
 
 template<class RunlineClass>
-UpdateHarnessBase<RunlineClass>::
-UpdateHarnessBase()
+UpdateHarness_Runline<RunlineClass>::
+UpdateHarness_Runline()
 {
 }
 
 template<class RunlineClass>
-void UpdateHarnessBase<RunlineClass>::
+void UpdateHarness_Runline<RunlineClass>::
 setRunlinesE(int direction, const std::vector<SBMRunlinePtr> & rls)
 {
     mRunlinesE[direction].resize(rls.size());
@@ -26,7 +80,7 @@ setRunlinesE(int direction, const std::vector<SBMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void UpdateHarnessBase<RunlineClass>::
+void UpdateHarness_Runline<RunlineClass>::
 setRunlinesH(int direction, const std::vector<SBMRunlinePtr> & rls)
 {
     mRunlinesH[direction].resize(rls.size());
@@ -35,7 +89,7 @@ setRunlinesH(int direction, const std::vector<SBMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void UpdateHarnessBase<RunlineClass>::
+void UpdateHarness_Runline<RunlineClass>::
 setRunlinesE(int direction, const std::vector<SBPMRunlinePtr> & rls)
 {
     mRunlinesE[direction].resize(rls.size());
@@ -44,7 +98,7 @@ setRunlinesE(int direction, const std::vector<SBPMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void UpdateHarnessBase<RunlineClass>::
+void UpdateHarness_Runline<RunlineClass>::
 setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
 {
     mRunlinesH[direction].resize(rls.size());
@@ -53,7 +107,7 @@ setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-long UpdateHarnessBase<RunlineClass>::
+long UpdateHarness_Runline<RunlineClass>::
 getNumRunlinesE() const
 {
     long total = 0;
@@ -63,7 +117,7 @@ getNumRunlinesE() const
 }
 
 template<class RunlineClass>
-long UpdateHarnessBase<RunlineClass>::
+long UpdateHarness_Runline<RunlineClass>::
 getNumRunlinesH() const
 {
     long total = 0;
@@ -73,7 +127,7 @@ getNumRunlinesH() const
 }
 
 template<class RunlineClass>
-long UpdateHarnessBase<RunlineClass>::
+long UpdateHarness_Runline<RunlineClass>::
 getNumHalfCellsE() const
 {
     long total = 0;
@@ -84,7 +138,7 @@ getNumHalfCellsE() const
 }
 
 template<class RunlineClass>
-long UpdateHarnessBase<RunlineClass>::
+long UpdateHarness_Runline<RunlineClass>::
 getNumHalfCellsH() const
 {
     long total = 0;
@@ -94,18 +148,74 @@ getNumHalfCellsH() const
     return total;
 }
 
-#pragma mark *** SimplePML ***
+#pragma mark *** UpdateHarness_Material ***
+
+template<class MaterialT>
+UpdateHarness_Material<MaterialT>::
+UpdateHarness_Material(Paint* parentPaint, std::vector<int> numCellsE,
+    std::vector<int> numCellsH, Vector3f dxyz, float dt) :
+    UpdateEquation(),
+    mMaterial(*parentPaint->getBulkMaterial(), numCellsE, numCellsH, dxyz, dt)
+{
+}
+        
+template<class MaterialT>
+void UpdateHarness_Material<MaterialT>::
+writeJ(int direction, std::ostream & binaryStream,
+    long startingIndex, const float* startingField, long length) const
+{
+    mMaterial.writeJ(direction, binaryStream, startingIndex, startingField,
+        length);
+}
+
+template<class MaterialT>
+void UpdateHarness_Material<MaterialT>::
+writeP(int direction, std::ostream & binaryStream,
+    long startingIndex, const float* startingField, long length) const
+{
+    mMaterial.writeP(direction, binaryStream, startingIndex, startingField,
+        length);
+}
+
+template<class MaterialT>
+void UpdateHarness_Material<MaterialT>::
+writeK(int direction, std::ostream & binaryStream,
+    long startingIndex, const float* startingField, long length) const
+{
+    mMaterial.writeK(direction, binaryStream, startingIndex, startingField,
+        length);
+}
+
+template<class MaterialT>
+void UpdateHarness_Material<MaterialT>::
+writeM(int direction, std::ostream & binaryStream,
+    long startingIndex, const float* startingField, long length) const
+{
+    mMaterial.writeM(direction, binaryStream, startingIndex, startingField,
+        length);
+}
+
+template<class MaterialT>
+std::string UpdateHarness_Material<MaterialT>::
+getModelName() const
+{
+    return mMaterial.getModelName();
+}
+
+
+#pragma mark *** UpdateHarness ***
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, Vector3f dxyz, float dt,
         int runlineDirection ) :
-    UpdateHarnessBase<RunlineT>(),
+    UpdateHarness_Material<MaterialT>(parentPaint, numCellsE, numCellsH,
+        dxyz, dt),
+    UpdateHarness_Runline<RunlineT>(),
     mDxyz(dxyz),
     mDt(dt),
     mRunlineDirection(runlineDirection),
-    mMaterial(*parentPaint->getBulkMaterial(), numCellsE, numCellsH, dxyz, dt),
     mPML(),
     mCurrent()
 {
@@ -118,11 +228,12 @@ UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection) :
-    UpdateHarnessBase<RunlineT>(),
+    UpdateHarness_Material<MaterialT>(parentPaint, numCellsE, numCellsH,
+        dxyz, dt),
+    UpdateHarness_Runline<RunlineT>(),
     mDxyz(dxyz),
     mDt(dt),
     mRunlineDirection(runlineDirection),
-    mMaterial(*parentPaint->getBulkMaterial(), numCellsE, numCellsH, dxyz, dt),
     mPML(parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams, dxyz, dt,
         runlineDirection),
     mCurrent()
@@ -171,48 +282,13 @@ calcHPhase(int direction)
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
-writeJ(int direction, std::ostream & binaryStream,
-    long startingIndex, const float* startingField, long length) const
-{
-    mMaterial.writeJ(direction, binaryStream, startingIndex, startingField,
-        length);
-}
-
-template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
-writeP(int direction, std::ostream & binaryStream,
-    long startingIndex, const float* startingField, long length) const
-{
-    mMaterial.writeP(direction, binaryStream, startingIndex, startingField,
-        length);
-}
-
-template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
-writeK(int direction, std::ostream & binaryStream,
-    long startingIndex, const float* startingField, long length) const
-{
-    mMaterial.writeK(direction, binaryStream, startingIndex, startingField,
-        length);
-}
-
-template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
-writeM(int direction, std::ostream & binaryStream,
-    long startingIndex, const float* startingField, long length) const
-{
-    mMaterial.writeM(direction, binaryStream, startingIndex, startingField,
-        length);
-}
-
-
-template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 allocateAuxBuffers()
 {
-    mMaterial.allocateAuxBuffers();
+    UpdateHarness_Material<MaterialT>::mMaterial.allocateAuxBuffers();
     mPML.allocateAuxBuffers();
 }
+
+
 
 // The PML is already templated appropriately to know the memory direction.
 // Consequently all I need to worry about is telling it to use the MEM+0, MEM+1,
@@ -242,12 +318,12 @@ calcE(int fieldDirection)
     typename PMLT::template LocalDataE<FIELD_DIRECTION_PML> pmlData;
     typename CurrentT::LocalDataE currentData;
     
-    mMaterial.initLocalE(materialData);
+    UpdateHarness_Material<MaterialT>::mMaterial.initLocalE(materialData);
     //mPML.initLocalE(pmlData);
     mCurrent.initLocalE(currentData);
     
     std::vector<RunlineT> & runlines =
-        UpdateHarnessBase<RunlineT>::getRunlinesE(fieldDirection);
+        UpdateHarness_Runline<RunlineT>::getRunlinesE(fieldDirection);
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
@@ -258,7 +334,8 @@ calcE(int fieldDirection)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
 //        LOG << rl << "\n";
-        mMaterial.onStartRunlineE(materialData, rl, dir0);
+        UpdateHarness_Material<MaterialT>::mMaterial.onStartRunlineE(
+            materialData, rl, dir0);
         mPML.onStartRunlineE(pmlData, rl, dir0, dir1, dir2);
         //mCurrent.onStartRunlineE(currentData, rl, dir0, dir1, dir2);
         
@@ -268,15 +345,18 @@ calcE(int fieldDirection)
             float dHj = (*gjHigh - *gjLow)*dk_inv;
             float dHk = (*gkHigh - *gkLow)*dj_inv;
             
-            mMaterial.beforeUpdateE(materialData, *fi, dHj, dHk);
+            UpdateHarness_Material<MaterialT>::mMaterial.beforeUpdateE(
+                materialData, *fi, dHj, dHk);
             //mPML.beforeUpdateE(pmlData, *fi, dHj, dHk, dir0, dir1, dir2);
             mCurrent.beforeUpdateE(currentData, *fi, dHj, dHk);
             
-            *fi = mMaterial.updateE(materialData, fieldDirection, *fi, dHj, dHk,
+            *fi = UpdateHarness_Material<MaterialT>::mMaterial.updateE(
+                materialData, fieldDirection, *fi, dHj, dHk,
                 mPML.updateJ(pmlData, *fi, dHj, dHk) +
                 mCurrent.updateJ(currentData, *fi, dHj, dHk, dir0, dir1, dir2));
             
-            mMaterial.afterUpdateE(materialData, *fi, dHj, dHk);
+            UpdateHarness_Material<MaterialT>::mMaterial.afterUpdateE(
+                materialData, *fi, dHj, dHk);
             //mPML.afterUpdateE(pmlData, *fi, dHj, dHk, dir0, dir1, dir2);
             mCurrent.afterUpdateE(currentData, *fi, dHj, dHk);
             
@@ -310,12 +390,12 @@ calcH(int fieldDirection)
     typename PMLT::template LocalDataH<FIELD_DIRECTION_PML> pmlData;
     typename CurrentT::LocalDataH currentData;
     
-    mMaterial.initLocalH(materialData);
+    UpdateHarness_Material<MaterialT>::mMaterial.initLocalH(materialData);
     //mPML.initLocalH(pmlData);
     mCurrent.initLocalH(currentData);
     
     std::vector<RunlineT> & runlines =
-        UpdateHarnessBase<RunlineT>::getRunlinesH(fieldDirection);
+        UpdateHarness_Runline<RunlineT>::getRunlinesH(fieldDirection);
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
@@ -326,7 +406,8 @@ calcH(int fieldDirection)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
 //        LOG << rl << "\n";
-        mMaterial.onStartRunlineH(materialData, rl, dir0);
+        UpdateHarness_Material<MaterialT>::mMaterial.onStartRunlineH(
+            materialData, rl, dir0);
         mPML.onStartRunlineH(pmlData, rl, dir0, dir1, dir2);
         //mCurrent.onStartRunlineH(currentData, rl, dir0, dir1, dir2);
         
@@ -336,15 +417,18 @@ calcH(int fieldDirection)
             float dEj = (*gjHigh - *gjLow)*dk_inv;
             float dEk = (*gkHigh - *gkLow)*dj_inv;
             
-            mMaterial.beforeUpdateH(materialData, *fi, dEj, dEk);
+            UpdateHarness_Material<MaterialT>::mMaterial.beforeUpdateH(
+                materialData, *fi, dEj, dEk);
             //mPML.beforeUpdateH(pmlData, *fi, dEj, dEk, dir0, dir1, dir2);
             mCurrent.beforeUpdateH(currentData, *fi, dEj, dEk);
             
-            *fi = mMaterial.updateH(materialData, fieldDirection, *fi, dEj, dEk,
+            *fi = UpdateHarness_Material<MaterialT>::mMaterial.updateH(
+                materialData, fieldDirection, *fi, dEj, dEk,
                 mPML.updateK(pmlData, *fi, dEj, dEk) +
                 mCurrent.updateK(currentData, *fi, dEj, dEk, dir0, dir1, dir2));
             
-            mMaterial.afterUpdateH(materialData, *fi, dEj, dEk);
+            UpdateHarness_Material<MaterialT>::mMaterial.afterUpdateH(
+                materialData, *fi, dEj, dEk);
             //mPML.afterUpdateH(pmlData, *fi, dEj, dEk, dir0, dir1, dir2);
             mCurrent.afterUpdateH(currentData, *fi, dEj, dEk);
             

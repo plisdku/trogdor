@@ -63,11 +63,11 @@ protected:
     MemoryBufferPtr mBufAccumEj[3], mBufAccumEk[3],
         mBufAccumHj[3], mBufAccumHk[3];
     Vector3i mPMLDirection;
-    int mRunlineDirection;
     
     Vector3f mDxyz;
     float mDt;
-
+    
+    int mRunlineDirection;
 };
 
 // Completes the implementation of the PML interface.

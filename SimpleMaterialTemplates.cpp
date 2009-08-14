@@ -44,7 +44,7 @@ UpdateEquationPtr SimpleSetupMaterial<MaterialClass, RunlineT>::
 makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {    
-    UpdateHarnessBase<RunlineT>* h =
+    UpdateHarness<MaterialClass, RunlineT, NullPML, NullCurrent>* h =
         new UpdateHarness<MaterialClass, RunlineT, NullPML, NullCurrent>(
         mParentPaint,
         mNumCellsE,
@@ -86,7 +86,7 @@ UpdateEquationPtr SimpleSetupPML<MaterialClass, RunlineT, PMLT>::
 makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
-    UpdateHarnessBase<RunlineT>* h =
+    UpdateHarness<MaterialClass, RunlineT, PMLT, NullCurrent>* h =
         new UpdateHarness<MaterialClass, RunlineT, PMLT, NullCurrent>(
         mParentPaint,
         mNumCellsE,

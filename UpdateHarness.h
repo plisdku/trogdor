@@ -10,49 +10,44 @@
 #ifndef _UPDATEHARNESS_
 #define _UPDATEHARNESS_
 
-
+#include "UpdateEquation.h"
+#include "geometry.h"
+#include "Runline.h"
+#include "Paint.h"
+#include <vector>
 
 // TEMPLATE REQUIREMENTS:
 //  Material must have constructor with appropriate arguments (TBD?)
 //  RunlineClass needs to have constructor for given runline type
-template<class RunlineClass>
-class UpdateHarnessBase : public UpdateEquation
-{
-public:
-    UpdateHarnessBase();
-    //  Because templated virtual functions are not allowed in C++, I have to
-    // overload the setRunlines functions manually.  What a pain!
-    
-    virtual void setRunlinesE(int direction,
-        const std::vector<SBMRunlinePtr> & rls);
-    virtual void setRunlinesE(int direction,
-        const std::vector<SBPMRunlinePtr> & rls);
-    
-    virtual void setRunlinesH(int direction,
-        const std::vector<SBMRunlinePtr> & rls);
-    virtual void setRunlinesH(int direction,
-        const std::vector<SBPMRunlinePtr> & rls);
-    
-    std::vector<RunlineClass> & getRunlinesE(int direction)
-        { return mRunlinesE[direction]; }
-    std::vector<RunlineClass> & getRunlinesH(int direction)
-        { return mRunlinesH[direction]; }
-    
-    virtual long getNumRunlinesE() const;
-    virtual long getNumRunlinesH() const;
-    virtual long getNumHalfCellsE() const;
-    virtual long getNumHalfCellsH() const;
-protected:
-    std::vector<RunlineClass> mRunlinesE[3];
-    std::vector<RunlineClass> mRunlinesH[3];
-};
 
+// UpdateHarness is templatized by material, runline, PML and current source.
+// Really only the update equation requires new code for each combination.
+// So, divide some of the functionality among (shared) base classes.
+
+// This class implements
+// writeJ()
+// writeP()
+// writeK()
+// writeM()
+// getModelName()
+template<class MaterialT>
+class UpdateHarness_Material;
+
+// This class implements
+// getNumRunlinesE()
+// getNumRunlinesH()
+// getNumHalfCellsE()
+// getNumHalfCellsH()
+template<class RunlineT>
+class UpdateHarness_Runline;
 
 // this may be templatized by runline type as well.
 // TEMPLATE REQUIREMENTS:
 //  NonPMLMaterial must inherit or look like SimpleMaterial
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-class UpdateHarness : public UpdateHarnessBase<RunlineT>
+class UpdateHarness :
+    public UpdateHarness_Material<MaterialT>,
+    public UpdateHarness_Runline<RunlineT>
 {
 public:
     UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
@@ -66,27 +61,13 @@ public:
     
     virtual void calcEPhase(int direction);
     virtual void calcHPhase(int direction);
-    
-    virtual void writeJ(int direction, std::ostream & binaryStream,
-        long startingIndex, const float* startingField, long length) const;
-    virtual void writeP(int direction, std::ostream & binaryStream,
-        long startingIndex, const float* startingField, long length) const;
-    virtual void writeK(int direction, std::ostream & binaryStream,
-        long startingIndex, const float* startingField, long length) const;
-    virtual void writeM(int direction, std::ostream & binaryStream,
-        long startingIndex, const float* startingField, long length) const;
-    
     virtual void allocateAuxBuffers();
     
-    virtual std::string getModelName() const
-        { return mMaterial.getModelName(); }
-    
-    
 private:
-    template<int DIRECTION_PML>
+    template<int FIELD_DIRECTION_PML>
     void calcE(int fieldDirection);
     
-    template<int MEMORY_DIRECTION>
+    template<int FIELD_DIRECTION_PML>
     void calcH(int fieldDirection);
     
     Vector3f mDxyz;
@@ -95,7 +76,6 @@ private:
     
     int mRunlineDirection;
     
-    MaterialT mMaterial;
     PMLT mPML;
     CurrentT mCurrent;
 };
