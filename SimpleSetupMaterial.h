@@ -18,12 +18,8 @@
 #include <vector>
 
 class Paint;
-class VoxelGrid;
-class PartitionCellCount;
-typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
 
 class VoxelizedPartition;
-
 class GridDescription;
 
 

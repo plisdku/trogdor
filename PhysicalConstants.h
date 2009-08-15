@@ -17,9 +17,6 @@
 #ifndef _PHYSICALCONSTANTS_
 #define _PHYSICALCONSTANTS_
 
-/*  The ALL-IMPORTANT DEFINE: Turn on 4th order derivatives!   */
-//#define FDTD_FOURTHORDER
-/*  no, really, pay attention to this.  */
 
 #include <cmath>
 

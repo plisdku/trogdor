@@ -9,11 +9,9 @@
 
 #include "CalculationPartition.h"
 #include "SimulationDescription.h"
-#include "HuygensSurface.h"
-#include "InterleavedLattice.h"
+#include "VoxelizedPartition.h"
 
 #include "Log.h"
-#include "VoxelizedPartition.h"
 #include "Map.h"
 #include "YeeUtilities.h"
 
@@ -60,8 +58,11 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     
     const vector<SetupOutputPtr> & outs = vp.getSetupOutputs();
     for (nn = 0; nn < outs.size(); nn++)
-        mOutputs.push_back(outs[nn]->makeOutput(vp,
-            *this));
+    {
+        SetupOutputPtr o = outs[nn];
+        Output* out = o->makeOutput(vp, *this);
+        mOutputs.push_back(OutputPtr(out));
+    }
     
     const vector<SetupSourcePtr> & softSrcs = vp.getSoftSetupSources();
     for (nn = 0; nn < softSrcs.size(); nn++)
@@ -123,6 +124,9 @@ updateE(int timestep)
     for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
         mHuygensSurfaces[nn]->updateH(); // need to update H here before E.
     
+    for (nn = 0; nn < mCurrentSources.size(); nn++)
+        mCurrentSources[nn]->prepareJ(timestep);
+    
     for (int eNum = 0; eNum < 3; eNum++)
     for (nn = 0; nn < mMaterials.size(); nn++)
         mMaterials[nn]->calcEPhase(eNum);
@@ -160,6 +164,9 @@ updateH(int timestep)
     for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
         mHuygensSurfaces[nn]->updateE(); // need to update E here before H.
         
+    for (nn = 0; nn < mCurrentSources.size(); nn++)
+        mCurrentSources[nn]->prepareK(timestep);
+    
     for (int hNum = 0; hNum < 3; hNum++)
     for (nn = 0; nn < mMaterials.size(); nn++)
         mMaterials[nn]->calcHPhase(hNum);
@@ -197,6 +204,15 @@ timedUpdateE(int timestep)
         mHuygensSurfaces[nn]->updateH(); // need to update H here before E.
         t2 = getTimeInMicroseconds();
         mStatistics.addHuygensSurfaceMicroseconds(nn, t2-t1);
+    }
+    
+    
+    for (nn = 0; nn < mCurrentSources.size(); nn++)
+    {
+        t1 = getTimeInMicroseconds();
+        mCurrentSources[nn]->prepareJ(timestep);
+        t2 = getTimeInMicroseconds();
+        mStatistics.addCurrentSourceMicroseconds(nn, t2-t1);
     }
     
     for (int eNum = 0; eNum < 3; eNum++)
@@ -268,6 +284,14 @@ timedUpdateH(int timestep)
         mHuygensSurfaces[nn]->updateE(); // need to update E here before H.
         t2 = getTimeInMicroseconds();
         mStatistics.addHuygensSurfaceMicroseconds(nn, t2-t1);
+    }
+    
+    for (nn = 0; nn < mCurrentSources.size(); nn++)
+    {
+        t1 = getTimeInMicroseconds();
+        mCurrentSources[nn]->prepareK(timestep);
+        t2 = getTimeInMicroseconds();
+        mStatistics.addCurrentSourceMicroseconds(nn, t2-t1);
     }
         
     for (int hNum = 0; hNum < 3; hNum++)

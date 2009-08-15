@@ -27,6 +27,7 @@
 #include "UpdateEquation.h"
 #include "OutputBoss.h"
 #include "SourceBoss.h"
+#include "CurrentSource.h"
 #include "HuygensSurface.h"
 
 #include "MemoryUtilities.h"
@@ -84,6 +85,9 @@ public:
     const std::vector<Pointer<SetupSource> > & getHardSetupSources() const
         { return mHardSetupSources; }
     
+    const std::vector<Pointer<SetupCurrentSource> > & getSetupCurrentSources()
+        const { return mSetupCurrentSources; }
+    
     // returns      the structures that store temp data for setting up NBs
     const std::vector<Pointer<HuygensSurface> > & getHuygensSurfaces()
         const { return mHuygensSurfaces; }
@@ -109,19 +113,18 @@ private:
 	
 	void calculateMaterialIndices();
 	
-	void calculateHuygensSymmetries(const GridDescription & gridDesc);
+	void calculateHuygensSurfaceSymmetries(const GridDescription & gridDesc);
 	Vector3i huygensSymmetry(const HuygensSurfaceDescription & surf);
 	
 	void createSetupMaterials(const GridDescription & gridDesc);
 	void loadSpaceVaryingData();
 	void generateRunlines();
 	void genRunlinesInOctant(int octant);
-    /*
-    void generateOutputRunlines();
-    void genOutputRunlinesInOctant(int octant);
-    */
+    
     void createSetupOutputs(const std::vector<OutputDescPtr> & outputs);
     void createSetupSources(const std::vector<SourceDescPtr> & sources);
+    void createSetupCurrentSources(
+        const std::vector<CurrentSourceDescPtr> & currentSources);
     
 	VoxelGrid mVoxels;
 	Pointer<PartitionCellCount> mCentralIndices;
@@ -133,6 +136,7 @@ private:
 	std::vector<Pointer<SetupOutput> > mSetupOutputs;
     std::vector<Pointer<SetupSource> > mSoftSetupSources;
     std::vector<Pointer<SetupSource> > mHardSetupSources;
+    std::vector<Pointer<SetupCurrentSource> > mSetupCurrentSources;
     
     std::vector<Pointer<HuygensSurface> > mHuygensSurfaces;
     

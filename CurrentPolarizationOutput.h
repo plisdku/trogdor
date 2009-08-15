@@ -11,12 +11,16 @@
 #define _CURRENTPOLARIZATIONOUTPUT_
 
 #include "SimulationDescription.h"
+
 #include "OutputBoss.h"
-#include "geometry.h"
-#include "UpdateEquation.h"
 #include "MemoryUtilities.h"
+#include "geometry.h"
 #include <vector>
 #include <fstream>
+
+class UpdateEquation;
+class VoxelizedPartition;
+class CalculationPartition;
 
 struct SetupCPOutputRunline
 {

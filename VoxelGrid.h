@@ -16,6 +16,7 @@
 //#include "HuygensSurface.h"
 
 class HuygensSurface;
+class SetupCurrentSource;
 
 class VoxelGrid
 {
@@ -53,7 +54,7 @@ public:
 	
 	//void overlayHuygensSurface(const HuygensSurfaceDescription & surf);
 	void overlayHuygensSurface(const HuygensSurface & surf);
-	void overlayCurrentSource(const int & currentSource);
+	void overlayCurrentSource(const SetupCurrentSource & current);
 	void overlayPML();
 	
     // ii,jj,kk          global coordinates; will wrap around globally
@@ -67,6 +68,7 @@ public:
     // paint             the material including PML, TFSF and current sources
     // ii,jj,kk          global coordinates; will wrap around globally
 	void paintHalfCell(Paint* paint, int ii, int jj, int kk);
+    void paintHalfCell(Paint* paint, const Vector3i & pp);
     
     // paint             the material including PML, TFSF and current sources
     // iYee,jYee,kYee    Yee cell to fill in, expanded to PEC-like boundaries

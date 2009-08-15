@@ -13,10 +13,10 @@
 #include <iostream>
 #include <vector>
 #include <set>
-#include "Paint.h"
 #include "geometry.h"
 #include "Map.h"
 
+class Paint;
 class VoxelGrid;
 
 class PartitionCellCount

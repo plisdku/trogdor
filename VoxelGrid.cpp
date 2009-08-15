@@ -10,6 +10,7 @@
 #include "VoxelGrid.h"
 #include "SimulationDescription.h"
 #include "HuygensSurface.h"
+#include "CurrentSource.h"
 
 #include "Map.h"
 #include <vector>
@@ -371,7 +372,6 @@ overlayHuygensSurface(const HuygensSurface & surf)
 			{
 				Paint* p = (*this)(ii,jj,kk)->withCurlBuffer(sideNum, nb);
 				paintHalfCell(p, ii, jj, kk);
-				//(*this)(ii,jj,kk) = p;
 			}
 			
 			//LOG << "Huygens inner " << innerHalfRect << "\n";
@@ -385,7 +385,6 @@ overlayHuygensSurface(const HuygensSurface & surf)
 				Paint* q = (*this)(ii,jj,kk)->withCurlBuffer(oppositeSideNum,
 					nb);
 				paintHalfCell(q, ii, jj, kk);
-				//(*this)(ii,jj,kk) = q;
 			}
 			
 			//LOG << "Huygens outer " << outerHalfRect << "\n"; 
@@ -398,9 +397,51 @@ overlayHuygensSurface(const HuygensSurface & surf)
 }
 
 void VoxelGrid::
-overlayCurrentSource(const int & currentSource)
+overlayCurrentSource(const SetupCurrentSource & current)
 {
 	LOG << "Overlaying current source.\n";
+    Vector3i p;
+    int fieldDirection;
+    Rect3i yeeCells;
+    int rr;
+    
+    const CurrentSourceDescription & description = *current.getDescription();
+    
+    // Paint the source for electric currents
+    for (fieldDirection = 0; fieldDirection < 3; fieldDirection++)
+    if (description.getSourceCurrents().getWhichJ()[fieldDirection] != 0)
+    {
+        for (rr = 0; rr < description.getRegions().size(); rr++)
+        {
+            yeeCells = description.getRegions()[rr].getYeeCells();
+            for (p[2] = yeeCells.p1[2]; p[2] <= yeeCells.p2[2]; p[2]++)
+            for (p[1] = yeeCells.p1[1]; p[1] <= yeeCells.p2[1]; p[1]++)
+            for (p[0] = yeeCells.p1[0]; p[0] <= yeeCells.p2[0]; p[0]++)
+            {
+                Paint* paint = (*this)(yeeToHalf(p, octantE(fieldDirection)))
+                    ->withCurrentSource(current.getDescription());
+                paintHalfCell(paint, yeeToHalf(p, octantE(fieldDirection)));
+            }
+        }
+    }
+    
+    // Paint the source for magnetic currents
+    for (fieldDirection = 0; fieldDirection < 3; fieldDirection++)
+    if (description.getSourceCurrents().getWhichK()[fieldDirection] != 0)
+    {
+        for (rr = 0; rr < description.getRegions().size(); rr++)
+        {
+            yeeCells = description.getRegions()[rr].getYeeCells();
+            for (p[2] = yeeCells.p1[2]; p[2] <= yeeCells.p2[2]; p[2]++)
+            for (p[1] = yeeCells.p1[1]; p[1] <= yeeCells.p2[1]; p[1]++)
+            for (p[0] = yeeCells.p1[0]; p[0] <= yeeCells.p2[0]; p[0]++)
+            {
+                Paint* paint = (*this)(yeeToHalf(p, octantH(fieldDirection)))
+                    ->withCurrentSource(current.getDescription());
+                paintHalfCell(paint, yeeToHalf(p, octantH(fieldDirection)));
+            }
+        }
+    }
 }
 
 void VoxelGrid::
@@ -560,6 +601,12 @@ paintHalfCell(Paint* paint, int ii, int jj, int kk)
 				 = paint;
 		}
 	}
+}
+
+void VoxelGrid::
+paintHalfCell(Paint* paint, const Vector3i & pp)
+{
+    paintHalfCell(paint, pp[0], pp[1], pp[2]);
 }
 
 void VoxelGrid::

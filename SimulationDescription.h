@@ -72,6 +72,8 @@ public:
         { mOutputs = outputs; }
 	void setSources(const std::vector<SourceDescPtr> & sources)
         { mSources = sources; }
+    void setCurrentSources(const std::vector<CurrentSourceDescPtr> & currents)
+        { mCurrentSources = currents; }
 	void setHuygensSurfaces(
 		const std::vector<HuygensSurfaceDescPtr> & surfaces);
 	void setAssembly(AssemblyDescPtr assembly) {
@@ -99,8 +101,8 @@ public:
 	
 	const std::vector<OutputDescPtr> & getOutputs() const { return mOutputs; }
 	const std::vector<SourceDescPtr> & getSources() const { return mSources; }
-    //const std::vector<SourceDesc2Ptr> & getSources2() const
-    //    { return mSources2; }
+    const std::vector<CurrentSourceDescPtr> & getCurrentSources() const
+        { return mCurrentSources; }
 	const std::vector<HuygensSurfaceDescPtr> & getHuygensSurfaces() const
 		{ return mHuygensSurfaces; }
 	std::vector<HuygensSurfaceDescPtr> & getHuygensSurfaces()
@@ -121,9 +123,9 @@ private:
     
     Map<Vector3i, Map<std::string, std::string> > mPMLParams;
 	
-	
 	std::vector<OutputDescPtr> mOutputs;
 	std::vector<SourceDescPtr> mSources;
+    std::vector<CurrentSourceDescPtr> mCurrentSources;
     std::vector<HuygensSurfaceDescPtr> mHuygensSurfaces;
 	AssemblyDescPtr mAssembly;
 };
@@ -332,6 +334,9 @@ public:
     const std::string & getTimeFile() const { return mTimeFile; }
     const std::string & getSpaceTimeFile() const { return mSpaceTimeFile; }
     const SourceCurrents & getSourceCurrents() const { return mCurrents; }
+    
+    const std::vector<Region> & getRegions() const { return mRegions; }
+    const std::vector<Duration> & getDurations() const { return mDurations; }
 private:
     CurrentSourceDescription(SourceCurrents currents, std::string formula,
         std::string timeFile, std::string spaceTimeFile,

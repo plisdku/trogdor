@@ -42,11 +42,6 @@ private:
     void polarizedSourceE(CalculationPartition & cp, int timestep);
     void polarizedSourceH(CalculationPartition & cp, int timestep);
     
-    // I can't figure out a good way to make use of these functions, because
-    // the hard source has such weird behavior in Yee grids.
-    //void sourceE(Vector3f value);
-    //void sourceH(Vector3f value);
-    
     std::ifstream mFileStream;
     
     int mCurrentDuration;

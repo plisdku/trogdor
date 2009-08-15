@@ -14,7 +14,7 @@
 #include <iostream>
 #include <set>
 #include "Pointer.h"
-//class MemoryBuffer;
+
 class BufferPointer;
 
 class MemoryBuffer

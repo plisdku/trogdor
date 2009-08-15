@@ -11,8 +11,11 @@
 #include "SimulationDescription.h"
 #include "CalculationPartition.h"
 #include "VoxelizedPartition.h"
-#include "YeeUtilities.h"
 #include "InterleavedLattice.h"
+
+#include "UpdateEquation.h"
+
+#include "YeeUtilities.h"
 #include <cstdlib>
 #include <iostream>
 #include <fstream>

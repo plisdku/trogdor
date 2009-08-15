@@ -11,24 +11,22 @@
 #define _MATERIALFACTORY_
 
 #include "RunlineEncoder.h"
-#include "UpdateEquation.h"
-#include "Map.h"
-#include "geometry.h"
 #include "Pointer.h"
 #include "SimulationDescriptionPredeclarations.h"
+#include "Map.h"
+#include "geometry.h"
 #include <string>
 #include <vector>
 
 class VoxelGrid;
 class PartitionCellCount;
-typedef Pointer<PartitionCellCount> PartitionCellCountPtr;
 class Paint;
 
 class MaterialFactory
 {
 public:
 	static RunlineEncoderPtr newRunlineEncoder(const VoxelGrid & vg,
-		const PartitionCellCountPtr cg,
+		const PartitionCellCount & cg,
         const GridDescription & gridDesc,
 		Paint* parentPaint,
         std::vector<int> numCellsE,

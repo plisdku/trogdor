@@ -73,18 +73,10 @@ public:
      *  Functionality is delegated to executeParamFile(), initializeRuntime(),
      *  and runSimulation().
      */
-    /*
-    void runAll(std::string parameterFile, int numThreads, bool runSim,
-		bool output3D, bool dumpGrid, bool output2D,
-		int numTimestepsOverride = -1);
-	*/
 	void runNew(std::string parameterFile, const SimulationPreferences & prefs);
 
-private: // heh, "new private" stuff
-	
+private:
 	SimulationDescPtr loadSimulation(std::string parameterFile);
-	
-	Mat3i guessFastestOrientation(const SimulationDescription & sim) const;
 	
 	void voxelizeGrids(const SimulationDescPtr sim,
 		Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
@@ -155,16 +147,6 @@ private:
     int mNumT;
     
     GlobalStatistics mPerformance;
-	/*
-	std::vector<double> mTimestepStartTimes;
-	
-	double mUpdateETime;
-	double mUpdateHTime;
-	double mBufferETime;
-	double mBufferHTime;
-	double mOutputTime;
-	double mPrintTimestepTime;
-    */
     
 #pragma mark *** Singleton Stuff ***
 public:

@@ -14,6 +14,7 @@
 #include "YeeUtilities.h"
 #include "SimpleSetupMaterial.h"
 #include "MaterialFactory.h"
+#include "CurrentSourceFactory.h"
 #include "STLOutput.h"
 #include "InterleavedLattice.h"
 #include "HuygensSurface.h"
@@ -68,12 +69,8 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	*/
     
 	paintFromAssembly(gridDesc, voxelizedGrids);
-	calculateHuygensSymmetries(gridDesc); // * NOT MPI FRIENDLY YET
-	
+	calculateHuygensSurfaceSymmetries(gridDesc); // * NOT MPI FRIENDLY YET
     paintFromCurrentSources(gridDesc);
-	
-	//cout << mVoxels << endl;
-	
 	mVoxels.overlayPML(); // * grid-scale wraparound
 	
 	//cout << mVoxels << endl;
@@ -84,6 +81,7 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	
     createSetupOutputs(gridDesc.getOutputs());
     createSetupSources(gridDesc.getSources());
+    createSetupCurrentSources(gridDesc.getCurrentSources());
 }
 
 Rect3i VoxelizedPartition::
@@ -191,8 +189,6 @@ createHuygensSurfaces(const GridDescPtr & gridDescription,
     const vector<HuygensSurfaceDescPtr> & surfaces = 
         gridDescription->getHuygensSurfaces();
     
-//    LOG << "I am making " << surfaces.size() << " setup Huygens surfaces.\n";
-//    LOGMORE << "I am " << mGridHalfCells << " half cells across.\n";
     for (unsigned int nn = 0; nn < surfaces.size(); nn++)
     {
         ostringstream huygensSurfaceName;
@@ -204,9 +200,6 @@ createHuygensSurfaces(const GridDescPtr & gridDescription,
     }
     
     paintFromHuygensSurfaces(*gridDescription);
-    
-    //cout << mVoxels << "\n";
-    
 }
 
 
@@ -214,7 +207,6 @@ void VoxelizedPartition::
 calculateRunlines()
 {
     generateRunlines(); // * partition wraparound
-    //generateOutputRunlines();
 }
 
 
@@ -492,6 +484,10 @@ void VoxelizedPartition::
 paintFromCurrentSources(const GridDescription & gridDesc)
 {
 //	LOG << "Painting from current sources.  (Doing nothing.)\n";
+    for (int nn = 0; nn < mSetupCurrentSources.size(); nn++)
+    {
+        mVoxels.overlayCurrentSource(*mSetupCurrentSources[nn]);
+    }
 }
 
 
@@ -505,7 +501,7 @@ calculateMaterialIndices()
 }
 
 void VoxelizedPartition::
-calculateHuygensSymmetries(const GridDescription & gridDesc)
+calculateHuygensSurfaceSymmetries(const GridDescription & gridDesc)
 {
 	//LOG << "Calculating Huygens surface symmetries.\n";
 	
@@ -654,7 +650,7 @@ createSetupMaterials(const GridDescription & gridDesc)
 		if (mSetupMaterials.count(p) == 0)
 		{
 			mSetupMaterials[p] = MaterialFactory::newRunlineEncoder(
-				mVoxels, mCentralIndices, gridDesc, p, numCellsE, numCellsH,
+				mVoxels, *mCentralIndices, gridDesc, p, numCellsE, numCellsH,
                 pmlRects, mLattice->runlineDirection());
             mSetupMaterials[p]->setID(materialID);
             materialID++;
@@ -781,6 +777,16 @@ createSetupSources(const std::vector<SourceDescPtr> & sources)
         else
             mHardSetupSources.push_back(
                 SourceFactory::newSetupSource(*this, sources[nn]));
+    }
+}
+
+void VoxelizedPartition::
+createSetupCurrentSources(const std::vector<CurrentSourceDescPtr> & currents)
+{
+    for (unsigned int nn = 0; nn < currents.size(); nn++)
+    {
+        mSetupCurrentSources.push_back(CurrentSourceFactory::newCurrentSource(
+            /**this,*/ currents[nn]));
     }
 }
 

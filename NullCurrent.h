@@ -24,14 +24,7 @@ public:
     float updateJ(LocalDataE & data, float Ei, float dHj, float dHk,
         int dir0, int dir1, int dir2)
         { return 0.0; }
-    /*
-    float updateJx(LocalDataE & data, float Ei, float dHj, float dHk)
-        { return 0.0; }
-    float updateJy(LocalDataE & data, float Ei, float dHj, float dHk)
-        { return 0.0; }
-    float updateJz(LocalDataE & data, float Ei, float dHj, float dHk)
-        { return 0.0; }
-    */
+    
     void afterUpdateE(LocalDataE & data, float Ei, float dHj, float dHk) {}
     
     void initLocalH(LocalDataH & data) {}
@@ -40,14 +33,7 @@ public:
     float updateK(LocalDataH & data, float Hi, float dEj, float dEk,
         int dir0, int dir1, int dir2)
         { return 0.0; }
-    /*
-    float updateKx(LocalDataH & data, float Hi, float dEj, float dEk)
-        { return 0.0; }
-    float updateKy(LocalDataH & data, float Hi, float dEj, float dEk)
-        { return 0.0; }
-    float updateKz(LocalDataH & data, float Hi, float dEj, float dEk)
-        { return 0.0; }
-    */
+    
     void afterUpdateH(LocalDataH & data, float Hi, float dEj, float dEk) {}
 };
 

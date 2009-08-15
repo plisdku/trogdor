@@ -35,6 +35,9 @@ ${magLibDirs}
 /sw/lib)
 
 add_executable( trogdor
+BufferedCurrent.h
+BufferedCurrent.cpp
+BufferedCurrent-inl.h
 CalculationPartition.h
 CalculationPartition.cpp
 CFSRIPML.h
@@ -43,12 +46,18 @@ ConvertOldXML.h
 ConvertOldXML.cpp
 CurrentPolarizationOutput.h
 CurrentPolarizationOutput.cpp
+CurrentSource.h
+CurrentSource.cpp
+CurrentSourceFactory.h
+CurrentSourceFactory.cpp
 DrudeModel1.h
 DrudeModel1.cpp
 FDTDApplication.h
 FDTDApplication.cpp
 FileSource.h
 FileSource.cpp
+FormulaCurrentSource.h
+FormulaCurrentSource.cpp
 FormulaSource.h
 FormulaSource.cpp
 HuygensSurface.h
@@ -58,8 +67,6 @@ HuygensLink.cpp
 InterleavedLattice.h
 InterleavedLattice.cpp
 main.cpp
-UpdateEquation.h
-UpdateEquation.cpp
 Material.h
 Material.cpp
 MaterialFactory.h
@@ -102,6 +109,8 @@ StaticLossyDielectric.h
 StaticLossyDielectric.cpp
 StructuralReports.h
 StructuralReports.cpp
+UpdateEquation.h
+UpdateEquation.cpp
 UpdateHarness.h
 UpdateHarness.cpp
 UpdateHarness-inl.h

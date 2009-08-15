@@ -69,7 +69,6 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     t0 = getTimeInMicroseconds();
 	SimulationDescPtr sim = loadSimulation(parameterFile);
     mNumT = sim->getDuration();
-	//Mat3i orientation = guessFastestOrientation(*sim);
     t1 = getTimeInMicroseconds();
     mPerformance.setReadDescriptionMicroseconds(t1-t0);
 	
@@ -186,12 +185,6 @@ loadSimulation(string parameterFile)
 	return sim;
 }
 
-Mat3i FDTDApplication::
-guessFastestOrientation(const SimulationDescription & grid) const
-{
-	LOG << "Defaulting to standard orientation.\n";
-	return Mat3i::eye(); // identity matrix
-}
 
 void FDTDApplication::
 voxelizeGrids(const SimulationDescPtr sim,

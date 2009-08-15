@@ -25,7 +25,7 @@ Paint(PaintType inType) :
 	mType(inType),
 	mPMLDirections(0,0,0),
 	mCurlBuffers(6),
-	mCurrentBufferIndex(-1),
+	mCurrentSource(0L),
 	mBulkMaterial(0L)
 {
 	assert(!"This is evil.");
@@ -45,7 +45,7 @@ Paint(const Paint & copyMe)
 	mType = copyMe.mType;
 	mPMLDirections = copyMe.mPMLDirections;
 	mCurlBuffers = copyMe.mCurlBuffers;
-	mCurrentBufferIndex = copyMe.mCurrentBufferIndex;
+	mCurrentSource = copyMe.mCurrentSource;
 	mBulkMaterial = copyMe.mBulkMaterial;
 }
 
@@ -57,7 +57,7 @@ Paint(const MaterialDescPtr & material) :
 	mType(kBulkPaintType),
 	mPMLDirections(0,0,0),
 	mCurlBuffers(6),
-	mCurrentBufferIndex(-1),
+	mCurrentSource(0L),
 	mBulkMaterial(material)
 {
 	assert(material != 0L);
@@ -104,7 +104,7 @@ withPML(Vector3i pmlDir) const
 }
 
 Paint* Paint::
-withCurlBuffer(int side, NeighborBufferPtr & curlBuffer) const
+withCurlBuffer(int side, const NeighborBuffer* curlBuffer) const
 {
 	assert(mCurlBuffers[side] == 0L);
 	PaintPtr p(new Paint(*this));
@@ -117,14 +117,14 @@ withCurlBuffer(int side, NeighborBufferPtr & curlBuffer) const
 }
 
 Paint* Paint::
-withCurrentSource(int currentSource) const
+withCurrentSource(CurrentSourceDescPtr currentSource) const
 {
-	assert(mCurrentBufferIndex == -1);
+	assert(mCurrentSource == 0L);
 	PaintPtr p(new Paint(*this));
-	p->mCurrentBufferIndex = currentSource;
+	p->mCurrentSource = currentSource;
 	
-	assert(!"We don't properly handle the base update paint.  It might not"
-		" exist yet, that's the problem, so deal with that at some point.");
+//	assert(!"We don't properly handle the base update paint.  It might not"
+//		" exist yet, that's the problem, so deal with that at some point.");
 	
 	if (mPalette.count(*p) != 0)
 		return mPalette[*p];
@@ -144,7 +144,7 @@ equivalentUpdateTo(const Paint & rhs) const
 		return 0;
 	if (mPMLDirections != rhs.mPMLDirections)
 		return 0;
-	if (mCurrentBufferIndex != rhs.mCurrentBufferIndex)
+	if (mCurrentSource != rhs.mCurrentSource)
 		return 0;
 	return 1;
 }
@@ -207,9 +207,9 @@ operator<(const Paint & lhs, const Paint & rhs)
 		return 1;
 	else if (lhs.mCurlBuffers > rhs.mCurlBuffers)
 		return 0;
-	else if (lhs.mCurrentBufferIndex < rhs.mCurrentBufferIndex)
+	else if (lhs.mCurrentSource < rhs.mCurrentSource)
 		return 1;
-	else if (lhs.mCurrentBufferIndex > rhs.mCurrentBufferIndex)
+	else if (lhs.mCurrentSource > rhs.mCurrentSource)
 		return 0;
 	else if (lhs.mBulkMaterial < rhs.mBulkMaterial) // if unused, these are 0L
 		return 1;
@@ -240,6 +240,9 @@ operator<<(ostream & out, const Paint & p)
 		out << " (side " << nSide << " buffer " << hex <<
 			(void*)p.mCurlBuffers[nSide] << dec << ")";
 	}
+    
+    if (p.mCurrentSource != 0L)
+        out << " (current source too!)"; 
 	
 	return out;
 }

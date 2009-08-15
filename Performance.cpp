@@ -158,6 +158,11 @@ addSoftSourceMicroseconds(int source, double us)
     mSoftSourceMicroseconds[source] += us;
 }
 void PartitionStatistics::
+addCurrentSourceMicroseconds(int source, double us)
+{
+    mCurrentSourceMicroseconds[source] += us;
+}
+void PartitionStatistics::
 addHuygensSurfaceMicroseconds(int source, double us)
 {
     mHuygensSurfaceMicroseconds[source] += us;
@@ -180,6 +185,9 @@ printForMatlab(std::ostream & str, const string & prefix,
         mHardSourceMicroseconds.end(), 0.0);
     double totalSoftSource_us = accumulate(mSoftSourceMicroseconds.begin(),
         mSoftSourceMicroseconds.end(), 0.0);
+    double totalCurrentSource_us = accumulate(
+        mCurrentSourceMicroseconds.begin(),
+        mCurrentSourceMicroseconds.end(), 0.0);
     double totalHuygensSurface_us = accumulate(
         mHuygensSurfaceMicroseconds.begin(), mHuygensSurfaceMicroseconds.end(),
         0.0);
@@ -190,7 +198,10 @@ printForMatlab(std::ostream & str, const string & prefix,
     str << prefix << "outputTime = " << totalOut_us*1e-6 << ";\n";
     str << prefix << "hardSourceTime = " << totalHardSource_us*1e-6 << ";\n";
     str << prefix << "softSourceTime = " << totalSoftSource_us*1e-6<< ";\n";
-    str << prefix << "sourceTime = " << (totalHardSource_us+totalSoftSource_us)
+    str << prefix << "currentSourceTime = " << totalCurrentSource_us*1e-6
+        << ";\n";
+    str << prefix << "sourceTime = " <<
+        (totalHardSource_us + totalSoftSource_us + totalCurrentSource_us)
         *1e-6 << ";\n";
     str << prefix << "huygensSurfaceTime = " << totalHuygensSurface_us*1e-6
         << ";\n";

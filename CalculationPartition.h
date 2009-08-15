@@ -10,25 +10,20 @@
 #ifndef _CALCULATIONPARTITION_
 #define _CALCULATIONPARTITION_
 
+#include "UpdateEquation.h"
+#include "OutputBoss.h"
+#include "SourceBoss.h"
+#include "CurrentSource.h"
+#include "HuygensSurface.h"
+#include "InterleavedLattice.h"
 #include "Performance.h"
-#include "SimpleSetupMaterial.h"
+
 #include "Pointer.h"
-#include "Map.h"
 #include <vector>
+#include <string>
+#include <iostream>
 
 class VoxelizedPartition;
-class NeighborBufferDescription;
-typedef Pointer<NeighborBufferDescription> NeighborBufferDescPtr;
-
-class Output;
-typedef Pointer<Output> OutputPtr;
-class Source;
-typedef Pointer<Source> SourcePtr;
-class HuygensSurface;
-typedef Pointer<HuygensSurface> HuygensSurfacePtr;
-
-class InterleavedLattice;
-typedef Pointer<InterleavedLattice> InterleavedLatticePtr;
 
 class CalculationPartition
 {
@@ -41,7 +36,8 @@ public:
     InterleavedLattice& getLattice();
     
     // used by PartitionStatistics
-    const std::vector<UpdateEquationPtr> getMaterials() const { return mMaterials; }
+    const std::vector<UpdateEquationPtr> getMaterials() const
+        { return mMaterials; }
     
     // instruct all materials and outputs to allocate space for extra fields
     // and accumulation variables (e.g. for output interpolation, currents...)
@@ -83,6 +79,7 @@ private:
     std::vector<OutputPtr> mOutputs;
     std::vector<SourcePtr> mHardSources;
     std::vector<SourcePtr> mSoftSources;
+    std::vector<CurrentSourcePtr> mCurrentSources;
     std::vector<HuygensSurfacePtr> mHuygensSurfaces;
     
     PartitionStatistics mStatistics;

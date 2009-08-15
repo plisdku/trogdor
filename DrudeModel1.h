@@ -11,12 +11,13 @@
 #define _DRUDEMODEL1_
 
 #include "Material.h"
-#include "SimpleSetupMaterial.h"
-#include "SimpleMaterialTemplates.h"
-#include "SimulationDescriptionPredeclarations.h"
+#include "Runline.h"
 #include "Map.h"
 #include "MemoryUtilities.h"
 #include <string>
+#include <vector>
+
+class MaterialDescription;
 
 /**
     Drude metal model with one pole or whatever.

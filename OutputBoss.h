@@ -15,11 +15,10 @@
 
 class VoxelizedPartition;
 class CalculationPartition;
-typedef Pointer<CalculationPartition> CalculationPartitionPtr;
 
+// Two predeclarations (definitions below)
 class SetupOutput;
 typedef Pointer<SetupOutput> SetupOutputPtr;
-
 class Output;
 typedef Pointer<Output> OutputPtr;
 

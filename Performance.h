@@ -48,6 +48,7 @@ public:
     void setNumOutputs(int num);
     void setNumHardSources(int num);
     void setNumSoftSources(int num);
+    void setNumCurrentSources(int num);
     void setNumHuygensSurfaces(int num);
     
     void addMaterialMicrosecondsE(int material, double us);
@@ -55,6 +56,7 @@ public:
     void addOutputMicroseconds(int output, double us);
     void addHardSourceMicroseconds(int source, double us);
     void addSoftSourceMicroseconds(int source, double us);
+    void addCurrentSourceMicroseconds(int source, double us);
     void addHuygensSurfaceMicroseconds(int source, double us);
     
     void printForMatlab(std::ostream & str, const std::string & prefix,
@@ -65,6 +67,7 @@ private:
     std::vector<double> mOutputMicroseconds;
     std::vector<double> mHardSourceMicroseconds;
     std::vector<double> mSoftSourceMicroseconds;
+    std::vector<double> mCurrentSourceMicroseconds;
 	std::vector<double> mHuygensSurfaceMicroseconds;
 };
 

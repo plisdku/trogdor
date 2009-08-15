@@ -196,6 +196,7 @@ loadGrids(const TiXmlElement* parent, const SimulationDescription & sim) const
 		// exceptions.
 		gridDesc->setOutputs(loadOutputs(elem));
 		gridDesc->setSources(loadSources(elem));
+        gridDesc->setCurrentSources(loadCurrentSources(elem));
 		gridDesc->setAssembly(loadAssembly(elem, allGridNames,
 			allMaterialNames));
         try {

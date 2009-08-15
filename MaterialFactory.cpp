@@ -36,7 +36,8 @@ static RunlineEncoderPtr newCFSRIPML(Paint* parentPaint,
 #pragma mark *** Material Factory ***
 
 RunlineEncoderPtr MaterialFactory::
-newRunlineEncoder(const VoxelGrid & vg, const PartitionCellCountPtr cg, 
+newRunlineEncoder(const VoxelGrid & vg,
+    const PartitionCellCount & cg, 
     const GridDescription & gridDesc,
 	Paint* parentPaint,
     std::vector<int> numCellsE,

@@ -34,7 +34,6 @@
 
 #include "SimulationDescriptionPredeclarations.h"
 
-//#include "HuygensSurface.h"
 #include "geometry.h"
 #include <vector>
 #include <iostream>
@@ -70,9 +69,8 @@ public:
 	Paint* withoutModifications() const { return mBasePaint; }
 	Paint* withoutCurlBuffers() const { return mBaseUpdatePaint; }
 	Paint* withPML(Vector3i pmlDir) const;
-	//Paint* withCurlBuffer(int side, NeighborBufferDescPtr & curlBuffer) const;
-    Paint* withCurlBuffer(int side, NeighborBufferPtr & curlBuffer) const;
-	Paint* withCurrentSource(int currentSource) const;
+    Paint* withCurlBuffer(int side, const NeighborBuffer* curlBuffer) const;
+	Paint* withCurrentSource(CurrentSourceDescPtr currentSource) const;
 	
 	static const Map<Paint, PaintPtr> & getPalette() {
 		return mPalette; }
@@ -81,7 +79,6 @@ public:
 	
 	PaintType getType() const { return mType; }
 	Vector3i getPMLDirections() const { return mPMLDirections; }
-	//const NeighborBufferDescPtr & getCurlBuffer(int side) const;
     const NeighborBuffer* getCurlBuffer(int side) const;
 	const MaterialDescription* getBulkMaterial() const;
 	
@@ -98,9 +95,8 @@ private:
 	
 	PaintType mType;
 	Vector3i mPMLDirections;
-	//std::vector<NeighborBufferDescPtr> mCurlBuffers;
-    std::vector<NeighborBufferPtr> mCurlBuffers;
-	int mCurrentBufferIndex;
+    std::vector<NeighborBuffer*> mCurlBuffers;
+	CurrentSourceDescPtr mCurrentSource;
 	
 	// for BulkPaint
 	MaterialDescPtr mBulkMaterial;
