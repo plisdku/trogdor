@@ -11,9 +11,10 @@
 #define _STATICLOSSYDIELECTRIC_
 
 #include "Material.h"
-#include "SimulationDescription.h"
-#include "SimpleSetupMaterial.h"
+#include "BulkRunlineEncoders.h"
 #include "SimpleMaterialTemplates.h"
+
+class MaterialDescription;
 
 class StaticLossyDielectric : public Material
 {

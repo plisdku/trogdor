@@ -10,6 +10,7 @@
 #ifndef _PARTITIONCELLCOUNT_
 #define _PARTITIONCELLCOUNT_
 
+#include "Pointer.h"
 #include <iostream>
 #include <vector>
 #include <set>
@@ -22,7 +23,6 @@ class VoxelGrid;
 class PartitionCellCount
 {
 public:
-    //PartitionCellCount(Rect3i halfCellBounds);
 	PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds,
         int runlineDirection );
 	

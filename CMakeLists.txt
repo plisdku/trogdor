@@ -38,6 +38,8 @@ add_executable( trogdor
 BufferedCurrent.h
 BufferedCurrent.cpp
 BufferedCurrent-inl.h
+BulkRunlineEncoders.h
+BulkRunlineEncoders.cpp
 CalculationPartition.h
 CalculationPartition.cpp
 CFSRIPML.h
@@ -96,8 +98,6 @@ SimpleEHOutput.h
 SimpleEHOutput.cpp
 SimpleMaterialTemplates.h
 SimpleMaterialTemplates.cpp
-SimpleSetupMaterial.h
-SimpleSetupMaterial.cpp
 SimulationDescription.h
 SimulationDescription.cpp
 SimulationDescriptionPredeclarations.h

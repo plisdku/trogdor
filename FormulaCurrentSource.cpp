@@ -9,3 +9,9 @@
 
 #include "FormulaCurrentSource.h"
 
+SetupFormulaCurrentSource::
+SetupFormulaCurrentSource(const CurrentSourceDescPtr & description) :
+    SetupCurrentSource(description)
+{
+    LOG << "Doing my thing, just doing my thing!\n";
+}

@@ -7,10 +7,9 @@
  *
  */
 
-#include "SimpleSetupMaterial.h"
+#include "BulkRunlineEncoders.h"
 #include "SimulationDescription.h"
 
-//#include "CalculationPartition.h"
 #include "HuygensSurface.h"
 #include "InterleavedLattice.h"
 #include "VoxelizedPartition.h"

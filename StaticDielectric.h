@@ -11,11 +11,12 @@
 #define _STATICDIELECTRIC_
 
 #include "Material.h"
-#include "SimulationDescription.h"
-#include "SimpleSetupMaterial.h"
+#include "BulkRunlineEncoders.h"
 #include "SimpleMaterialTemplates.h"
 #include <string>
 #include "Log.h"
+
+class MaterialDescription;
 
 class StaticDielectric : public Material
 {

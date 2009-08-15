@@ -12,7 +12,7 @@
 #include "SimulationDescription.h"
 #include "Log.h"
 #include "YeeUtilities.h"
-#include "SimpleSetupMaterial.h"
+#include "BulkRunlineEncoders.h"
 #include "MaterialFactory.h"
 #include "CurrentSourceFactory.h"
 #include "STLOutput.h"

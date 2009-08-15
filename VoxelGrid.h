@@ -13,7 +13,6 @@
 #include "SimulationDescriptionPredeclarations.h"
 #include "Paint.h"
 #include "Exception.h"
-//#include "HuygensSurface.h"
 
 class HuygensSurface;
 class SetupCurrentSource;

@@ -11,7 +11,7 @@
 #define _PERFECTCONDUCTOR_
 
 #include "SimulationDescription.h"
-#include "SimpleSetupMaterial.h"
+#include "BulkRunlineEncoders.h"
 
 class SetupPerfectConductor : public BulkRunlineEncoder
 {

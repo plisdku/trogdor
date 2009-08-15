@@ -35,6 +35,7 @@ class CurrentPolarizationSetupOutput : public SetupOutput
 public:
     CurrentPolarizationSetupOutput(const OutputDescPtr & desc,
         const VoxelizedPartition & vp);
+    virtual ~CurrentPolarizationSetupOutput();
     
     virtual OutputPtr makeOutput(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;

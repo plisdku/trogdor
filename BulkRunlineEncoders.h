@@ -1,5 +1,5 @@
 /*
- *  SimpleSetupMaterial.h
+ *  BulkRunlineEncoders.h
  *  TROGDOR
  *
  *  Created by Paul Hansen on 4/8/09.

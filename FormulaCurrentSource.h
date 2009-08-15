@@ -13,10 +13,10 @@
 #include "CurrentSource.h"
 #include "calc.hh"
 
-class FormulaCurrentSource : public CurrentSource
+class SetupFormulaCurrentSource : public SetupCurrentSource
 {
 public:
-    FormulaCurrentSource();
+    SetupFormulaCurrentSource(const CurrentSourceDescPtr & description);
     
 private:
     calc_defs::Calculator<float> mCalculator;

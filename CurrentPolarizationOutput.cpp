@@ -62,6 +62,12 @@ CurrentPolarizationSetupOutput(const OutputDescPtr & desc,
     }
 }
 
+CurrentPolarizationSetupOutput::
+~CurrentPolarizationSetupOutput()
+{
+    LOG << "Destroy destroy destroy!\n";
+}
+
 OutputPtr CurrentPolarizationSetupOutput::
 makeOutput(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const

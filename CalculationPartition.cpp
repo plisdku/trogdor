@@ -59,9 +59,12 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     const vector<SetupOutputPtr> & outs = vp.getSetupOutputs();
     for (nn = 0; nn < outs.size(); nn++)
     {
-        SetupOutputPtr o = outs[nn];
-        Output* out = o->makeOutput(vp, *this);
-        mOutputs.push_back(OutputPtr(out));
+//        SetupOutputPtr o = outs[nn];
+//        LOG << o.refcount() << "\n";
+//        OutputPtr out = o->makeOutput(vp, *this);
+//        mOutputs.push_back(OutputPtr(out));
+        OutputPtr out = outs[nn]->makeOutput(vp, *this);
+        mOutputs.push_back(out);
     }
     
     const vector<SetupSourcePtr> & softSrcs = vp.getSoftSetupSources();

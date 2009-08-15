@@ -9,6 +9,7 @@
 
 #include "CurrentSourceFactory.h"
 
+#include "FormulaCurrentSource.h"
 
 Pointer<SetupCurrentSource> CurrentSourceFactory::
 newCurrentSource(const CurrentSourceDescPtr & description)
@@ -16,4 +17,6 @@ newCurrentSource(const CurrentSourceDescPtr & description)
     if (description->getSpaceTimeFile() != "")
         throw(Exception("Cannot yet create space-varying source currents."));
     
+    return Pointer<SetupCurrentSource>(
+        new SetupFormulaCurrentSource(description));
 }

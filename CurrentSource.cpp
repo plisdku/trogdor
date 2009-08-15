@@ -11,7 +11,8 @@
 
 
 SetupCurrentSource::
-SetupCurrentSource(const CurrentSourceDescPtr & description)
+SetupCurrentSource(const CurrentSourceDescPtr & description) :
+    mDescription(description)
 {
 }
 

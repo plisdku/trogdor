@@ -8,6 +8,7 @@
  */
 
 #include "StaticDielectric.h"
+#include "SimulationDescription.h"
 #include "CalculationPartition.h"
 #include "Paint.h"
 #include "Log.h"
