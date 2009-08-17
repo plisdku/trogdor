@@ -121,10 +121,8 @@ withCurrentSource(CurrentSourceDescPtr currentSource) const
 {
 	assert(mCurrentSource == 0L);
 	PaintPtr p(new Paint(*this));
+	p->mBaseUpdatePaint = p;
 	p->mCurrentSource = currentSource;
-	
-//	assert(!"We don't properly handle the base update paint.  It might not"
-//		" exist yet, that's the problem, so deal with that at some point.");
 	
 	if (mPalette.count(*p) != 0)
 		return mPalette[*p];
@@ -166,6 +164,12 @@ hasCurlBuffer(int side) const
 	assert(side >= 0);
 	assert(side < 6);
 	return (mCurlBuffers[side] != 0L);
+}
+
+bool Paint::
+hasCurrentSource() const
+{
+    return (mCurrentSource != 0L);
 }
 
 const NeighborBuffer* Paint::

@@ -53,11 +53,11 @@ CurrentPolarizationSetupOutput(const OutputDescPtr & desc,
             if (desc->getWhichM()[direction] != 0)
                 addRunlinesInOctant(octantH(direction), yeeCells,
                     mRunlinesH[direction], vp);
-            
-            LOG << "RunlinesE " << direction << ": " <<
-                mRunlinesE[direction].size() << "\n";
-            LOG << "RunlinesH " << direction << ": " <<
-                mRunlinesH[direction].size() << "\n";
+//            
+//            LOG << "RunlinesE " << direction << ": " <<
+//                mRunlinesE[direction].size() << "\n";
+//            LOG << "RunlinesH " << direction << ": " <<
+//                mRunlinesH[direction].size() << "\n";
         }
     }
 }
@@ -65,7 +65,7 @@ CurrentPolarizationSetupOutput(const OutputDescPtr & desc,
 CurrentPolarizationSetupOutput::
 ~CurrentPolarizationSetupOutput()
 {
-    LOG << "Destroy destroy destroy!\n";
+//    LOG << "Destroy destroy destroy!\n";
 }
 
 OutputPtr CurrentPolarizationSetupOutput::
@@ -99,7 +99,8 @@ addRunlinesInOctant(int octant, Rect3i yeeCells,
     
     const VoxelGrid & voxels(vp.getVoxelGrid());
     const PartitionCellCount & cellCount(*vp.getIndices());
-    const Map<Paint*, RunlineEncoderPtr> & setupMaterials(vp.getDelegates());
+    const Map<Paint*, RunlineEncoderPtr> & setupMaterials(
+        vp.getSetupMaterials());
     const InterleavedLattice & lattice(*vp.getLattice());
     
     // d0 is the direction of memory allocation.  In the for-loops, this is
@@ -160,7 +161,7 @@ CurrentPolarizationOutput(const OutputDescription & desc,
 {
     // Clip the regions to the current partition bounds (calc bounds, not
     //     allocation bounds!)
-    LOG << "Clipping output regions to partition bounds.  This is not in the"
+    LOGF << "Clipping output regions to partition bounds.  This is not in the"
         " right place; it should be performed earlier somehow.\n";
     assert(desc.getRegions().size() > 0);
     for (int rr = 0; rr < desc.getRegions().size(); rr++)
@@ -169,7 +170,7 @@ CurrentPolarizationOutput(const OutputDescription & desc,
             vp.getGridYeeCells()));        
         mRegions.push_back(Region(outRect, desc.getRegions()[rr].getStride()));
     }
-    LOG << "Truncating durations to simulation duration.  This is in the "
+    LOGF << "Truncating durations to simulation duration.  This is in the "
         "wrong place; can't it be done earlier?\n";
     int numTimesteps = cp.getDuration();
     for (int dd = 0; dd < mDurations.size(); dd++)

@@ -23,7 +23,7 @@ class Paint;
 
 // Inheritance from BulkRunlineEncoder provides the runline rules and
 // the storage of setup runlines.
-template<class MaterialClass, class RunlineT>
+template<class MaterialClass, class RunlineT, class CurrentT>
 class SimpleSetupMaterial : public BulkRunlineEncoder
 {
 public:
@@ -45,7 +45,7 @@ private:
 
 // Inheritance from BulkPMLRunlineEncoder provides the runline rules and
 // the storage of setup runlines.
-template<class MaterialClass, class RunlineT, class PMLFactory>
+template<class MaterialClass, class RunlineT, class CurrentT, class PMLT>
 class SimpleSetupPML : public BulkPMLRunlineEncoder
 {
 public:

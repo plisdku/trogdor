@@ -26,8 +26,8 @@
 
 #pragma mark *** SimpleSetupMaterial ***
 
-template<class MaterialClass, class RunlineT>
-SimpleSetupMaterial<MaterialClass, RunlineT>::
+template<class MaterialClass, class RunlineT, class CurrentT>
+SimpleSetupMaterial<MaterialClass, RunlineT, CurrentT>::
 SimpleSetupMaterial(Paint* parentPaint, std::vector<int> numCellsE,
     std::vector<int> numCellsH, Vector3f dxyz, float dt) :
     mParentPaint(parentPaint),
@@ -39,13 +39,13 @@ SimpleSetupMaterial(Paint* parentPaint, std::vector<int> numCellsE,
     assert(mParentPaint != 0L);
 }
 
-template<class MaterialClass, class RunlineT>
-UpdateEquationPtr SimpleSetupMaterial<MaterialClass, RunlineT>::
+template<class MaterialClass, class RunlineT, class CurrentT>
+UpdateEquationPtr SimpleSetupMaterial<MaterialClass, RunlineT, CurrentT>::
 makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {    
-    UpdateHarness<MaterialClass, RunlineT, NullPML, NullCurrent>* h =
-        new UpdateHarness<MaterialClass, RunlineT, NullPML, NullCurrent>(
+    UpdateHarness<MaterialClass, RunlineT, NullPML, CurrentT>* h =
+        new UpdateHarness<MaterialClass, RunlineT, NullPML, CurrentT>(
         mParentPaint,
         mNumCellsE,
         mNumCellsH,
@@ -64,8 +64,8 @@ makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & c
 
 #pragma mark *** SimpleSetupPML ***
 
-template<class MaterialClass, class RunlineT, class PMLT>
-SimpleSetupPML<MaterialClass, RunlineT, PMLT>::
+template<class MaterialClass, class RunlineT, class CurrentT, class PMLT>
+SimpleSetupPML<MaterialClass, RunlineT, CurrentT, PMLT>::
 SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
@@ -81,13 +81,13 @@ SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
 }
 
 
-template<class MaterialClass, class RunlineT, class PMLT>
-UpdateEquationPtr SimpleSetupPML<MaterialClass, RunlineT, PMLT>::
+template<class MaterialClass, class RunlineT, class CurrentT, class PMLT>
+UpdateEquationPtr SimpleSetupPML<MaterialClass, RunlineT, CurrentT, PMLT>::
 makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
-    UpdateHarness<MaterialClass, RunlineT, PMLT, NullCurrent>* h =
-        new UpdateHarness<MaterialClass, RunlineT, PMLT, NullCurrent>(
+    UpdateHarness<MaterialClass, RunlineT, PMLT, CurrentT>* h =
+        new UpdateHarness<MaterialClass, RunlineT, PMLT, CurrentT>(
         mParentPaint,
         mNumCellsE,
         mNumCellsH,

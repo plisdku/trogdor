@@ -152,7 +152,7 @@ saveMaterialBoundariesBeta(const GridDescription & grid,
 	foutname << grid.getName() << "_faces.obj";
 	ofstream fout(foutname.str().c_str());
 	
-    const Map<Paint*, RunlineEncoderPtr> materials(vp.getDelegates());
+    const Map<Paint*, RunlineEncoderPtr> materials(vp.getSetupMaterials());
     map<Paint*, RunlineEncoderPtr>::const_iterator itr;
     
     const VoxelGrid & vg(vp.getVoxelGrid());

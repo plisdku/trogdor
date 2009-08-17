@@ -41,16 +41,35 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mHuygensSurfaces.at(nn)->allocate();
     
     // Fill out other denizens.
-    const Map<Paint*, RunlineEncoderPtr> & delegs = vp.getDelegates();
-    map<Paint*, RunlineEncoderPtr>::const_iterator itr;
-    mMaterials.resize(delegs.size());
-    for (itr = delegs.begin(); itr != delegs.end(); itr++)
+    
+    Map<CurrentSourceDescPtr, CurrentSource*> sourceMap;
+    
+    const vector<SetupCurrentSourcePtr> & curSrcs = vp.getSetupCurrentSources();
+    for (nn = 0; nn < curSrcs.size(); nn++)
     {
-        //LOG << "Dealing with paint " << *itr->first << endl;
+        CurrentSourcePtr src = curSrcs[nn]->makeCurrentSource(vp, *this);
+        sourceMap[curSrcs[nn]->getDescription()] = src;
+        mCurrentSources.push_back(src);
+    }
+    
+    const Map<Paint*, RunlineEncoderPtr> & setupMaterials
+        = vp.getSetupMaterials();
+    map<Paint*, RunlineEncoderPtr>::const_iterator itr;
+    mMaterials.resize(setupMaterials.size());
+    for (itr = setupMaterials.begin(); itr != setupMaterials.end(); itr++)
+    {
         UpdateEquationPtr newMaterial =
             itr->second->makeUpdateEquation(vp, *this);
         newMaterial->setSubstanceName(itr->first->getFullName());
         newMaterial->setID(itr->second->id());
+        
+        if (itr->first->hasCurrentSource())
+        {
+            assert(sourceMap.count(itr->first->getCurrentSource()) != 0);
+            newMaterial->setCurrentSource(
+                sourceMap[itr->first->getCurrentSource()]);
+        }
+        
         assert(newMaterial->id() >= 0);
         assert(newMaterial->id() < mMaterials.size());
         mMaterials[newMaterial->id()] = newMaterial;
@@ -59,10 +78,6 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     const vector<SetupOutputPtr> & outs = vp.getSetupOutputs();
     for (nn = 0; nn < outs.size(); nn++)
     {
-//        SetupOutputPtr o = outs[nn];
-//        LOG << o.refcount() << "\n";
-//        OutputPtr out = o->makeOutput(vp, *this);
-//        mOutputs.push_back(OutputPtr(out));
         OutputPtr out = outs[nn]->makeOutput(vp, *this);
         mOutputs.push_back(out);
     }
@@ -79,10 +94,14 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mHardSources.push_back(hardSrcs[nn]->makeSource(vp, *this));
     }
     
+    
+    
+    
     mStatistics.setNumMaterials(mMaterials.size());
     mStatistics.setNumOutputs(mOutputs.size());
     mStatistics.setNumHardSources(mHardSources.size());
     mStatistics.setNumSoftSources(mSoftSources.size());
+    mStatistics.setNumCurrentSources(mCurrentSources.size());
     mStatistics.setNumHuygensSurfaces(mHuygensSurfaces.size());
 }
 
@@ -265,12 +284,13 @@ timedOutputE(int timestep)
         t2 = getTimeInMicroseconds();
         mStatistics.addOutputMicroseconds(nn, t2-t1);
     }
-    /*
-    LOG << "Output E (3)\n";
-    printFields(cout, octantE(0), 1.0);
-    printFields(cout, octantE(1), 1.0);
-    printFields(cout, octantE(2), 1.0);
-    */
+    
+    //printFields(cout, octantE(2), 1.0);
+    
+    //LOG << "Output E (3)\n";
+    //printFields(cout, octantE(0), 1.0);
+    //printFields(cout, octantE(1), 1.0);
+    //printFields(cout, octantE(2), 1.0);
 }
 
 void CalculationPartition::

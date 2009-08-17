@@ -70,7 +70,7 @@ public:
     Pointer<InterleavedLattice> getLattice() const { return mLattice; }
     
     // returns      the structures that store temp data for setting up materials
-    const Map<Paint*, Pointer<RunlineEncoder> > & getDelegates() const
+    const Map<Paint*, Pointer<RunlineEncoder> > & getSetupMaterials() const
         { return mSetupMaterials; }
     
     // returns      the structures that store temp data for setting up outputs

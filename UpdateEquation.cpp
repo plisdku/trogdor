@@ -8,6 +8,7 @@
  */
 
 #include "UpdateEquation.h"
+#include "CurrentSource.h"
 
 UpdateEquation::
 UpdateEquation()
@@ -53,6 +54,11 @@ writeM(int direction, std::ostream & binaryStream, long startingIndex,
     float zero = 0.0f;
     for (long nn = 0; nn < length; nn++)
         binaryStream.write((char*)&zero, (std::streamsize)sizeof(float));
+}
+
+void UpdateEquation::
+setCurrentSource(CurrentSource* source)
+{
 }
 
 void UpdateEquation::

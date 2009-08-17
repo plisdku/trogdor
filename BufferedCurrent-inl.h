@@ -11,8 +11,9 @@
 
 
 inline void BufferedCurrent::
-initLocalE(LocalDataE & data)
+initLocalE(LocalDataE & data, int dir0)
 {
+    data.J = mSourceOfData->getJ(dir0);
 }
 
 inline void BufferedCurrent::
@@ -29,18 +30,20 @@ inline float BufferedCurrent::
 updateJ(LocalDataE & data, float Ei, float dHj, float dHk,
     int dir0, int dir1, int dir2)
 {
-    return *data.J;
+    return data.J;
+    //return *data.J;
 }
 
 inline void BufferedCurrent::
 afterUpdateE(LocalDataE & data, float Ei, float dHj, float dHk)
 {
-    data.J += data.stride;
+    //data.J += data.stride;
 }
 
 inline void BufferedCurrent::
-initLocalH(LocalDataH & data)
+initLocalH(LocalDataH & data, int dir0)
 {
+    data.K = mSourceOfData->getK(dir0);
 }
 
 inline void BufferedCurrent::
@@ -57,12 +60,13 @@ inline float BufferedCurrent::
 updateK(LocalDataH & data, float Hi, float dEj, float dEk,
     int dir0, int dir1, int dir2)
 {
-    return *data.K;
+    return data.K;
+    //return *data.K;
 }
 
 inline void BufferedCurrent::
 afterUpdateH(LocalDataH & data, float Hi, float dEj, float dEk)
 {
-    data.K += data.stride;
+    //data.K += data.stride;
 }
 

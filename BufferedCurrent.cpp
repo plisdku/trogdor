@@ -10,14 +10,25 @@
 #include "BufferedCurrent.h"
 
 BufferedCurrent::
-BufferedCurrent()
+BufferedCurrent() :
+    mSourceOfData(0L)
 {
+//    LOG << "Actually creating the buffered current.\n";
+}
+
+void BufferedCurrent::
+setCurrentSource(CurrentSource* sourceOfData)
+{
+    mSourceOfData = sourceOfData;
+    
+    //LOG << "Value is " << mSourceOfData->getValue() << "!\n";
 }
 
 void BufferedCurrent::
 allocateAuxBuffers()
 {
-    mSingleTimestepData.resize(mBuffer.getLength(), 0.0f);
+    //LOG << "Allocating the single timestep buffer.\n";
+    //mSingleTimestepData.resize(mBuffer.getLength(), 0.0f);
 }
 
 

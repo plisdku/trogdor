@@ -289,6 +289,14 @@ allocateAuxBuffers()
 }
 
 
+template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
+void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
+setCurrentSource(CurrentSource* source)
+{
+    mCurrent.setCurrentSource(source);
+}
+
+
 
 // The PML is already templated appropriately to know the memory direction.
 // Consequently all I need to worry about is telling it to use the MEM+0, MEM+1,
@@ -320,7 +328,7 @@ calcE(int fieldDirection)
     
     UpdateHarness_Material<MaterialT>::mMaterial.initLocalE(materialData);
     //mPML.initLocalE(pmlData);
-    mCurrent.initLocalE(currentData);
+    mCurrent.initLocalE(currentData, dir0);
     
     std::vector<RunlineT> & runlines =
         UpdateHarness_Runline<RunlineT>::getRunlinesE(fieldDirection);
@@ -337,7 +345,7 @@ calcE(int fieldDirection)
         UpdateHarness_Material<MaterialT>::mMaterial.onStartRunlineE(
             materialData, rl, dir0);
         mPML.onStartRunlineE(pmlData, rl, dir0, dir1, dir2);
-        //mCurrent.onStartRunlineE(currentData, rl, dir0, dir1, dir2);
+        mCurrent.onStartRunlineE(currentData, rl);
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)
@@ -392,7 +400,7 @@ calcH(int fieldDirection)
     
     UpdateHarness_Material<MaterialT>::mMaterial.initLocalH(materialData);
     //mPML.initLocalH(pmlData);
-    mCurrent.initLocalH(currentData);
+    mCurrent.initLocalH(currentData, dir0);
     
     std::vector<RunlineT> & runlines =
         UpdateHarness_Runline<RunlineT>::getRunlinesH(fieldDirection);
@@ -409,7 +417,7 @@ calcH(int fieldDirection)
         UpdateHarness_Material<MaterialT>::mMaterial.onStartRunlineH(
             materialData, rl, dir0);
         mPML.onStartRunlineH(pmlData, rl, dir0, dir1, dir2);
-        //mCurrent.onStartRunlineH(currentData, rl, dir0, dir1, dir2);
+        mCurrent.onStartRunlineH(currentData, rl);
         
         const int len(rl.length);
         for (int mm = 0; mm < len; mm++)

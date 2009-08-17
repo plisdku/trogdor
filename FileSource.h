@@ -53,8 +53,6 @@ private:
     
     std::vector<Region> mRegions;
     std::vector<Duration> mDurations;
-    
-    Map<std::string, std::string> mParams;
 };
 
 

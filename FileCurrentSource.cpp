@@ -1,13 +1,14 @@
 /*
- *  FormulaCurrentSource.cpp
+ *  FileCurrentSource.cpp
  *  TROGDOR
  *
- *  Created by Paul Hansen on 8/14/09.
+ *  Created by Paul Hansen on 8/17/09.
  *  Copyright 2009 Stanford University. All rights reserved.
  *
  */
 
-#include "FormulaCurrentSource.h"
+#include "FileCurrentSource.h"
+
 
 #include "VoxelizedPartition.h"
 #include "CalculationPartition.h"
@@ -15,57 +16,50 @@
 #include <iostream>
 using namespace std;
 
-SetupFormulaCurrentSource::
-SetupFormulaCurrentSource(const CurrentSourceDescPtr & description) :
+SetupFileCurrentSource::
+SetupFileCurrentSource(const CurrentSourceDescPtr & description) :
     SetupCurrentSource(description)
 {
-//    LOG << "Doing my thing, just doing my thing!\n";
+    LOG << "Doing my thing, just doing my thing!\n";
 }
 
-Pointer<CurrentSource> SetupFormulaCurrentSource::
+Pointer<CurrentSource> SetupFileCurrentSource::
 makeCurrentSource(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
 {
-    return Pointer<CurrentSource>(new FormulaCurrentSource(getDescription(),
+    LOG << "Making one!\n";
+    
+    return Pointer<CurrentSource>(new FileCurrentSource(getDescription(),
         vp, cp));
 }
 
-FormulaCurrentSource::
-FormulaCurrentSource(const CurrentSourceDescPtr & description,
+FileCurrentSource::
+FileCurrentSource(const CurrentSourceDescPtr & description,
     const VoxelizedPartition & vp, const CalculationPartition & cp) :
     mFormula(description->getFormula()),
     mCurrents(description->getSourceCurrents()),
     mDt(cp.getDt()),
     mDurations(description->getDurations()),
     mCurrentDuration(0)
-{   
+{
+    if (description->isSpaceVarying())
+        throw(Exception("Space-varying file current source not yet"
+            " supported.\n"));
+        
+    mFileStream.open(description->getTimeFile().c_str(), ios::binary);
+    if (mFileStream.good())
+        LOGF << "Opened binary file " << description->getTimeFile() << ".\n";
+    else
+        throw(Exception(string("Could not open binary file")
+            + description->getTimeFile()));
+    
     for (int dd = 0; dd < mDurations.size(); dd++)
     if (mDurations[dd].getLast() > (cp.getDuration()-1))
         mDurations[dd].setLast(cp.getDuration()-1);
-    
-	// The calculator will eventually update "n" and "t" to be the current
-	// timestep and current time; we can set them here to test the formula.
-	mCalculator.set("n", 0);
-	mCalculator.set("t", 0);
-	
-	LOGF << "Formula is " << mFormula << endl;
-	
-	bool err = mCalculator.parse(mFormula);
-	if (err)
-	{
-		LOG << "Error found.";
-		cerr << "Calculator cannot parse\n"
-			<< mFormula << "\n"
-			<< "Error message:\n";
-		mCalculator.report_error(cerr);
-		cerr << "Quitting.\n";
-		assert(!"Assert death.");
-		exit(1);
-	}
 }
 
 
-void FormulaCurrentSource::
+void FileCurrentSource::
 prepareJ(long timestep)
 {
     mJ = Vector3f(0.0f, 0.0f, 0.0f);
@@ -89,7 +83,7 @@ prepareJ(long timestep)
     }
 }
 
-void FormulaCurrentSource::
+void FileCurrentSource::
 prepareK(long timestep)
 {
     mK = Vector3f(0.0f, 0.0f, 0.0f);
@@ -111,14 +105,14 @@ prepareK(long timestep)
     }
 }
 
-float FormulaCurrentSource::
+float FileCurrentSource::
 getJ(int direction) const
 {
     assert(direction >= 0 && direction < 3);
     return mJ[direction];
 }
 
-float FormulaCurrentSource::
+float FileCurrentSource::
 getK(int direction) const
 {
     assert(direction >= 0 && direction < 3);
@@ -126,18 +120,17 @@ getK(int direction) const
 }
 
 
-void FormulaCurrentSource::
+void FileCurrentSource::
 updateJ(long timestep)
 {
     float val;
     
-	mCalculator.set("n", timestep);
-	mCalculator.set("t", mDt*timestep);
-	mCalculator.parse(mFormula);
+	if (mFileStream.good())
+		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
+    else
+        throw(Exception("Cannot read further from file."));
     
-	val = mCalculator.get_value();
-    
-//    LOG << "Value: " << val << "\n";
+    LOG << "Value: " << val << "\n";
     
     if (mCurrents.usesPolarization())
         mJ = val*mCurrents.getPolarization();
@@ -145,21 +138,20 @@ updateJ(long timestep)
         mJ = Vector3f(val,val,val);
 }
 
-void FormulaCurrentSource::
+void FileCurrentSource::
 updateK(long timestep)
 {
     float val;
     
-	mCalculator.set("n", timestep);
-	mCalculator.set("t", mDt*timestep);
-	mCalculator.parse(mFormula);
+	if (mFileStream.good())
+		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
+    else
+        throw(Exception("Cannot read further from file."));
     
-	val = mCalculator.get_value();
-//    LOG << "Value: " << val << "\n";
+    LOG << "Value: " << val << "\n";
     
     if (mCurrents.usesPolarization())
         mK = val*mCurrents.getPolarization();
     else
         mK = Vector3f(val,val,val);
 }
-

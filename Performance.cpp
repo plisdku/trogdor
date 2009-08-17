@@ -127,6 +127,11 @@ setNumSoftSources(int num)
     mSoftSourceMicroseconds.resize(num, 0.0);
 }
 void PartitionStatistics::
+setNumCurrentSources(int num)
+{
+    mCurrentSourceMicroseconds.resize(num, 0.0);
+}
+void PartitionStatistics::
 setNumHuygensSurfaces(int num)
 {
     mHuygensSurfaceMicroseconds.resize(num, 0.0);
@@ -135,12 +140,12 @@ setNumHuygensSurfaces(int num)
 void PartitionStatistics::
 addMaterialMicrosecondsE(int material, double us)
 {
-    mMaterialMicrosecondsE[material] += us;
+    mMaterialMicrosecondsE.at(material) += us;
 }
 void PartitionStatistics::
 addMaterialMicrosecondsH(int material, double us)
 {
-    mMaterialMicrosecondsH[material] += us;
+    mMaterialMicrosecondsH.at(material) += us;
 }
 void PartitionStatistics::
 addOutputMicroseconds(int output, double us)
@@ -150,22 +155,22 @@ addOutputMicroseconds(int output, double us)
 void PartitionStatistics::
 addHardSourceMicroseconds(int source, double us)
 {
-    mHardSourceMicroseconds[source] += us;
+    mHardSourceMicroseconds.at(source) += us;
 }
 void PartitionStatistics::
 addSoftSourceMicroseconds(int source, double us)
 {
-    mSoftSourceMicroseconds[source] += us;
+    mSoftSourceMicroseconds.at(source) += us;
 }
 void PartitionStatistics::
 addCurrentSourceMicroseconds(int source, double us)
 {
-    mCurrentSourceMicroseconds[source] += us;
+    mCurrentSourceMicroseconds.at(source) += us;
 }
 void PartitionStatistics::
 addHuygensSurfaceMicroseconds(int source, double us)
 {
-    mHuygensSurfaceMicroseconds[source] += us;
+    mHuygensSurfaceMicroseconds.at(source) += us;
 }
 
 

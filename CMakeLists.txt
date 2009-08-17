@@ -56,6 +56,8 @@ DrudeModel1.h
 DrudeModel1.cpp
 FDTDApplication.h
 FDTDApplication.cpp
+FileCurrentSource.h
+FileCurrentSource.cpp
 FileSource.h
 FileSource.cpp
 FormulaCurrentSource.h

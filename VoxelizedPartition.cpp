@@ -70,7 +70,10 @@ VoxelizedPartition(const GridDescription & gridDesc,
     
 	paintFromAssembly(gridDesc, voxelizedGrids);
 	calculateHuygensSurfaceSymmetries(gridDesc); // * NOT MPI FRIENDLY YET
+    
+    createSetupCurrentSources(gridDesc.getCurrentSources());
     paintFromCurrentSources(gridDesc);
+    
 	mVoxels.overlayPML(); // * grid-scale wraparound
 	
 	//cout << mVoxels << endl;
@@ -81,7 +84,6 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	
     createSetupOutputs(gridDesc.getOutputs());
     createSetupSources(gridDesc.getSources());
-    createSetupCurrentSources(gridDesc.getCurrentSources());
 }
 
 Rect3i VoxelizedPartition::
@@ -483,7 +485,8 @@ paintFromHuygensSurfaces(const GridDescription & gridDesc)
 void VoxelizedPartition::
 paintFromCurrentSources(const GridDescription & gridDesc)
 {
-//	LOG << "Painting from current sources.  (Doing nothing.)\n";
+//	LOG << "Painting from current sources.  (Doing something?)\n";
+//    LOG << "We have " << mSetupCurrentSources.size() << " sources.\n";
     for (int nn = 0; nn < mSetupCurrentSources.size(); nn++)
     {
         mVoxels.overlayCurrentSource(*mSetupCurrentSources[nn]);
@@ -633,7 +636,6 @@ createSetupMaterials(const GridDescription & gridDesc)
 		itr++)
 	{
 		Paint* p = *itr;
-		
         vector<int> numCellsE(3), numCellsH(3);
         
         int fieldDir;
@@ -680,8 +682,8 @@ generateRunlines()
 	// Walk the grid (ONCE only would be splendid) and step the appropriate
 	// encoders.  (Where do setup runlines go?)
 	
-	LOG << "Check it out, we're sticking to the calc region.  I'm not sure "
-		"yet precisely how to use this in the MPI context—work it out later.\n";
+//	LOG << "Check it out, we're sticking to the calc region.  I'm not sure "
+//		"yet precisely how to use this in the MPI context—work it out later.\n";
 	
     for (int direction = 0; direction < 3; direction++)
     {

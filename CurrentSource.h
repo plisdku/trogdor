@@ -59,11 +59,13 @@ public:
     virtual Pointer<CurrentSource> makeCurrentSource(
         const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
+        
     
     CurrentSourceDescPtr getDescription() const { return mDescription; }
 private:
     CurrentSourceDescPtr mDescription;
 };
+typedef Pointer<SetupCurrentSource> SetupCurrentSourcePtr;
 
 
 class CurrentSource
@@ -74,6 +76,9 @@ public:
     
     virtual void prepareJ(long timestep);
     virtual void prepareK(long timestep);
+    
+    virtual float getJ(int direction) const;
+    virtual float getK(int direction) const;
 private:
     
 };

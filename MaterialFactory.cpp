@@ -23,15 +23,43 @@
 #include "DrudeModel1.h"
 #include "PerfectConductor.h"
 
+// Headers for the available current types
+#include "NullCurrent.h"
+#include "BufferedCurrent.h"
+
 // Headers for the available PML types
+//#include "NullPML.h"    // not needed in this file.
 #include "CFSRIPML.h"
 
 
+/*
 template<class MaterialT, class RunlineT>
 static RunlineEncoderPtr newCFSRIPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
+*/
+
+// These three functions successively determine the material, current and
+// PML for a RunlineEncoder.
+static RunlineEncoderPtr newMaterialCurrentPML(Paint* parentPaint,
+    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
+        float dt, int runlineDirection );
+
+template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT>
+static RunlineEncoderPtr newCurrentPML(Paint* parentPaint,
+    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
+        float dt, int runlineDirection );
+        
+template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT,
+    class CurrentT>
+static RunlineEncoderPtr newPML(Paint* parentPaint,
+    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
+        float dt, int runlineDirection );
+
 
 #pragma mark *** Material Factory ***
 
@@ -89,8 +117,12 @@ newRunlineEncoder(const VoxelGrid & vg,
         //LOG << "PML is " << pmlParams << "\n";
     }
     
-	//LOG << "Getting delegate for " << *parentPaint << ".\n"; 
+    setupMat = newMaterialCurrentPML(parentPaint, numCellsE, numCellsH,
+        pmlRects, pmlParams, gridDesc.getDxyz(), gridDesc.getDt(),
+        runlineDirection);
     
+	//LOG << "Getting delegate for " << *parentPaint << ".\n"; 
+    /*
     if (0 == parentPaint->isPML())
     {
         
@@ -155,7 +187,7 @@ newRunlineEncoder(const VoxelGrid & vg,
                 bulkMaterial->getModelName()));
         }
     }
-    
+    */
     
     return setupMat;
 }
@@ -188,6 +220,164 @@ defaultPMLParams()
 
 #pragma mark *** Local templated functions ***
 
+
+static RunlineEncoderPtr newMaterialCurrentPML(Paint* parentPaint,
+    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlRects,
+        Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
+        float dt, int runlineDirection )
+{
+	const MaterialDescription* bulkMaterial = parentPaint->getBulkMaterial();
+    RunlineEncoderPtr setupMaterial;
+    
+    if (bulkMaterial->getModelName() == "StaticDielectric")
+    {
+        setupMaterial = newCurrentPML<StaticDielectric, SimpleRunline,
+            SimpleAuxPMLRunline>(
+                parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
+                dxyz, dt, runlineDirection);
+    }
+    else if (bulkMaterial->getModelName() == "StaticLossyDielectric")
+    {
+        setupMaterial = newCurrentPML<StaticLossyDielectric, SimpleRunline,
+            SimpleAuxPMLRunline>(
+                parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
+                dxyz, dt, runlineDirection);
+    }
+    else if (bulkMaterial->getModelName() == "DrudeMetal1")
+    {
+        setupMaterial = newCurrentPML<DrudeModel1, SimpleAuxRunline,
+            SimpleAuxPMLRunline>(
+                parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
+                dxyz, dt, runlineDirection);
+    }
+    else if (bulkMaterial->getModelName() == "PerfectConductor")
+    {
+        setupMaterial = RunlineEncoderPtr(new SetupPerfectConductor);
+    }
+    else
+    {
+        throw(Exception(string("Unsupported PML material model: ") + 
+            bulkMaterial->getModelName()));
+    }
+    
+    return setupMaterial;
+}
+
+template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT>
+static RunlineEncoderPtr newCurrentPML(Paint* parentPaint,
+    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
+        float dt, int runlineDirection )
+{
+    //const MaterialDescription* bulkMaterial = parentPaint->getBulkMaterial();
+    RunlineEncoderPtr setupMaterial;
+    
+//    LOG << "Here, with paint " << *parentPaint << "\n";
+    
+    if (0 == parentPaint->hasCurrentSource())
+    {
+        setupMaterial = newPML<MaterialT, NonPMLRunlineT, PMLRunlineT,
+            NullCurrent>(parentPaint, numCellsE, numCellsH, pmlHalfCells,
+                pmlParams, dxyz, dt, runlineDirection);
+    }
+    else
+    {
+        setupMaterial = newPML<MaterialT, NonPMLRunlineT, PMLRunlineT,
+            BufferedCurrent>(parentPaint, numCellsE, numCellsH, pmlHalfCells,
+                pmlParams, dxyz, dt, runlineDirection);
+    }
+    
+    return setupMaterial;
+}
+        
+template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT,
+    class CurrentT>
+static RunlineEncoderPtr newPML(Paint* parentPaint,
+    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+        Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
+        float dt, int runlineDirection )
+{
+    Vector3i pmlDirs = parentPaint->getPMLDirections();
+    Vector3i rotatedPMLDirs = cyclicPermute(pmlDirs, (3-runlineDirection)%3);
+    RunlineEncoder* m;
+    
+    if (0 == parentPaint->isPML())
+    {
+        m = new SimpleSetupMaterial<MaterialT, NonPMLRunlineT, CurrentT>(
+            parentPaint, numCellsE, numCellsH, dxyz, dt);
+    }
+    else
+    {
+        LOGF << "This PML absorbs along " << pmlDirs
+            << " and the memory direction"
+            " is " << runlineDirection << ", so the rotated PML direction is "
+            << rotatedPMLDirs << ".\n";
+        
+        bool hasX = (rotatedPMLDirs[0] != 0);
+        bool hasY = (rotatedPMLDirs[1] != 0);
+        bool hasZ = (rotatedPMLDirs[2] != 0);
+        
+        if (hasX && hasY && hasZ)
+        {
+            m = new SimpleSetupPML<MaterialT, PMLRunlineT, CurrentT,
+                CFSRIPML<1,1,1> >(
+                parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                dxyz, dt);
+        }
+        else if (hasX && hasY)
+        {
+            m = new SimpleSetupPML<MaterialT, PMLRunlineT, CurrentT,
+                CFSRIPML<1,1,0> >(
+                parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                dxyz, dt);
+        }
+        else if (hasX && hasZ)
+        {
+            m = new SimpleSetupPML<MaterialT, PMLRunlineT, CurrentT,
+                CFSRIPML<1,0,1> >(
+                parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                dxyz, dt);
+        }
+        else if (hasX)
+        {
+            m = new SimpleSetupPML<MaterialT, PMLRunlineT, CurrentT,
+                CFSRIPML<1,0,0> >(
+                parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                dxyz, dt);
+        }
+        else if (hasY && hasZ)
+        {
+            m = new SimpleSetupPML<MaterialT, PMLRunlineT, CurrentT,
+                CFSRIPML<0,1,1> >(
+                parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                dxyz, dt);
+        }
+        else if (hasY)
+        {
+            m = new SimpleSetupPML<MaterialT, PMLRunlineT, CurrentT,
+                CFSRIPML<0,1,0> >(
+                parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                dxyz, dt);
+        }
+        else if (hasZ)
+        {
+            m = new SimpleSetupPML<MaterialT, PMLRunlineT, CurrentT,
+                CFSRIPML<0,0,1> >(
+                parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams,
+                dxyz, dt);
+        }
+        else
+        {
+            m = 0L;
+            assert(!"PML must have a direction.");
+            cerr << "PML must have a direction.\n";
+            exit(1);
+        }
+    }
+    return RunlineEncoderPtr(m);
+}
+
+/*
 template<class MaterialT, class RunlineT>
 static RunlineEncoderPtr newCFSRIPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
@@ -272,3 +462,4 @@ static RunlineEncoderPtr newCFSRIPML(Paint* parentPaint,
     }
     return RunlineEncoderPtr(m);
 }
+*/

@@ -18,6 +18,7 @@
 
 class VoxelizedPartition;
 class CalculationPartition;
+class CurrentSource;
 
 class UpdateEquation
 {
@@ -29,6 +30,8 @@ public:
     const std::string & getSubstanceName() const { return mSubstanceName; }
     void setID(int id) { mID = id; }
     int id() const { return mID; }
+    
+    virtual void setCurrentSource(CurrentSource* source);
     
     virtual void allocateAuxBuffers();
     virtual void calcEPhase(int direction) = 0;

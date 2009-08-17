@@ -1,22 +1,22 @@
 /*
- *  FormulaCurrentSource.h
+ *  FileCurrentSource.h
  *  TROGDOR
  *
- *  Created by Paul Hansen on 8/14/09.
+ *  Created by Paul Hansen on 8/17/09.
  *  Copyright 2009 Stanford University. All rights reserved.
  *
  */
 
-#ifndef _FORMULACURRENTSOURCE_
-#define _FORMULACURRENTSOURCE_
+#ifndef _FILECURRENTSOURCE_
+#define _FILECURRENTSOURCE_
 
 #include "CurrentSource.h"
-#include "calc.hh"
+#include <fstream>
 
-class SetupFormulaCurrentSource : public SetupCurrentSource
+class SetupFileCurrentSource : public SetupCurrentSource
 {
 public:
-    SetupFormulaCurrentSource(const CurrentSourceDescPtr & description);
+    SetupFileCurrentSource(const CurrentSourceDescPtr & description);
     
     virtual Pointer<CurrentSource> makeCurrentSource(
         const VoxelizedPartition & vp,
@@ -25,10 +25,10 @@ private:
 };
 
 
-class FormulaCurrentSource : public CurrentSource
+class FileCurrentSource : public CurrentSource
 {
 public:
-    FormulaCurrentSource(const CurrentSourceDescPtr & description,
+    FileCurrentSource(const CurrentSourceDescPtr & description,
         const VoxelizedPartition & vp, const CalculationPartition & cp);
     
     virtual void prepareJ(long timestep);
@@ -41,7 +41,7 @@ private:
     void updateK(long timestep);
     
     std::string mFormula;
-    calc_defs::Calculator<float> mCalculator;
+    std::ifstream mFileStream;
     SourceCurrents mCurrents;
     
     float mDt;

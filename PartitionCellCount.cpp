@@ -87,6 +87,7 @@ getCurlBufferParentPaints() const
 		for (map<Paint*,long>::const_iterator ii = m.begin(); ii != m.end();
 			ii++)
 		{
+//            LOG << "paint " << *ii->first << "\n";
 			paints.insert(ii->first);
 		}
 	}

@@ -76,15 +76,15 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     
     int runlineDirection = 0;
     if (prefs.runlineDirection == 'x')
-        LOG << "Not rotating.\n";
+        LOGF << "Not rotating.\n";
     else if (prefs.runlineDirection == 'y')
     {
-        LOG << "Rotating once.\n";
+        LOGF << "Rotating once.\n";
         runlineDirection = 1;
     }
     else if (prefs.runlineDirection == 'z')
     {
-        LOG << "Rotating twice.\n";
+        LOGF << "Rotating twice.\n";
         runlineDirection = 2;
     }
     else
@@ -164,7 +164,7 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
         reportPerformance(calculationGrids);
     }
     
-    LOG << "Done with simulation.\n";
+    LOGF << "Done with simulation.\n";
 	Paint::clearPalette(); // avert embarassing segfaults at the end
 }
 
@@ -213,7 +213,7 @@ voxelizeGrids(const SimulationDescPtr sim,
 	GridDescPtr g;
     unsigned int ii;
     
-	LOG << "Stage 1: paint in the structure and recurse for aux grids.\n";
+	LOGF << "Stage 1: paint in the structure and recurse for aux grids.\n";
 	for (ii = 0; ii < sim->getGrids().size(); ii++)
 	{
 		g = sim->getGrids()[ii];
@@ -221,7 +221,7 @@ voxelizeGrids(const SimulationDescPtr sim,
 		// the recursor paints the setup grid and creates new grids as needed
 		// to implement all TFSF sources.
 		
-		LOG << "Determining non-MPI partition size.\n";
+//		LOG << "Determining non-MPI partition size.\n";
 		
 		Vector3i numNodes(1,1,1);
 		Vector3i thisNode(0,0,0);
@@ -233,7 +233,7 @@ voxelizeGrids(const SimulationDescPtr sim,
 			partitionWallsHalf, runlineDirection);
 	}
     
-    LOG << "Stage 2: Create setup Huygens surfaces and paint them in.\n";
+    LOGF << "Stage 2: Create setup Huygens surfaces and paint them in.\n";
     map<GridDescPtr, VoxelizedPartitionPtr>::iterator itr;
     for (itr = voxelizedGrids.begin(); itr != voxelizedGrids.end(); itr++)
     {
@@ -241,7 +241,7 @@ voxelizeGrids(const SimulationDescPtr sim,
             voxelizedGrids);
     }
     
-    LOG << "Stage 3: make the runlines.\n";
+    LOGF << "Stage 3: make the runlines.\n";
     for (itr = voxelizedGrids.begin(); itr != voxelizedGrids.end(); itr++)
     {
         itr->second->calculateRunlines();
@@ -278,7 +278,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	static const int EXTRUDE_PML = 1;
 	if (EXTRUDE_PML)
 	{
-		LOG << "Adding an Extrude command to implement PML.\n";
+		LOGF << "Adding an Extrude command to implement PML.\n";
 		
 		InstructionPtr extendThisRegion(new Extrude(
 			currentGrid->getNonPMLHalfCells(),
@@ -308,9 +308,8 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	for (unsigned int nn = 0; nn < surfs.size(); nn++)
     if (surfs[nn]->getType() == kLink)
     {
-        LOG << "Links don't recurse.\n";
+//        LOG << "Links don't recurse.\n";
     }
-	//if (surfs[nn]->getType() == kTFSFSource) // only TFSFSources turn into links
     else
 	{
 		Vector3i sourceSymm = surfs[nn]->getSymmetries();
@@ -662,7 +661,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 void FDTDApplication::
 trimVoxelizedGrids(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs)
 {
-    LOG << "Trimming the fat from " << vgs.size() << " grids.\n";
+    LOGF << "Trimming the fat from " << vgs.size() << " grids.\n";
     map<GridDescPtr, VoxelizedPartitionPtr>::iterator itr;
     for (itr = vgs.begin(); itr != vgs.end(); itr++)
     {
@@ -676,7 +675,7 @@ makeCalculationGrids(const SimulationDescPtr sim,
     Map<string, CalculationPartitionPtr> & calcs,
     const Map<GridDescPtr, VoxelizedPartitionPtr> & voxParts)
 {
-    LOG << "Making calc grids for " << voxParts.size() << " grids.\n";
+    LOGF << "Making calc grids for " << voxParts.size() << " grids.\n";
     map<GridDescPtr, VoxelizedPartitionPtr>::const_iterator itr;
     for (itr = voxParts.begin(); itr != voxParts.end(); itr++)
     {

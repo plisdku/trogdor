@@ -330,6 +330,8 @@ public:
         SourceCurrents fields, const std::vector<Region> & regions,
         const std::vector<Duration> & durations);
     
+    bool isSpaceVarying() const
+        { return (mSpaceTimeFile != ""); }
     const std::string & getFormula() const { return mFormula; }
     const std::string & getTimeFile() const { return mTimeFile; }
     const std::string & getSpaceTimeFile() const { return mSpaceTimeFile; }

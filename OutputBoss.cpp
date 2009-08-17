@@ -67,7 +67,7 @@ outputHPhase(const CalculationPartition & cp, int timestep)
 void Output::
 allocateAuxBuffers()
 {
-    LOG << "Not allocating output buffer.  (What buffer?)\n";
+//    LOG << "Not allocating output buffer.  (What buffer?)\n";
 }
 
 

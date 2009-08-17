@@ -34,6 +34,7 @@
 
 #include "SimulationDescriptionPredeclarations.h"
 
+#include "CurrentSource.h"
 #include "geometry.h"
 #include <vector>
 #include <iostream>
@@ -81,10 +82,13 @@ public:
 	Vector3i getPMLDirections() const { return mPMLDirections; }
     const NeighborBuffer* getCurlBuffer(int side) const;
 	const MaterialDescription* getBulkMaterial() const;
+    const CurrentSourceDescPtr getCurrentSource() const
+        { return mCurrentSource; }
 	
 	bool equivalentUpdateTo(const Paint & rhs) const;
 	bool hasCurlBuffer() const;
 	bool hasCurlBuffer(int side) const;
+    bool hasCurrentSource() const;
 	bool isPML() const;
 	
 private:

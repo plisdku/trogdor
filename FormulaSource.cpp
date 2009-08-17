@@ -58,7 +58,7 @@ FormulaSource(const SourceDescription & desc, const VoxelizedPartition & vp,
     for (int dd = 0; dd < mDurations.size(); dd++)
     if (mDurations[dd].getLast() > (cp.getDuration()-1))
         mDurations[dd].setLast(cp.getDuration()-1);
-        
+    
 	// The calculator will eventually update "n" and "t" to be the current
 	// timestep and current time; we can set them here to test the formula.
 	mCalculator.set("n", 0);

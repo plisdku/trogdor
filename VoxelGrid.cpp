@@ -399,7 +399,7 @@ overlayHuygensSurface(const HuygensSurface & surf)
 void VoxelGrid::
 overlayCurrentSource(const SetupCurrentSource & current)
 {
-	LOG << "Overlaying current source.\n";
+//	LOG << "Overlaying current source.\n";
     Vector3i p;
     int fieldDirection;
     Rect3i yeeCells;

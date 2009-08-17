@@ -41,6 +41,7 @@ class UpdateHarness_Material;
 template<class RunlineT>
 class UpdateHarness_Runline;
 
+
 // this may be templatized by runline type as well.
 // TEMPLATE REQUIREMENTS:
 //  NonPMLMaterial must inherit or look like SimpleMaterial
@@ -61,6 +62,7 @@ public:
     
     virtual void calcEPhase(int direction);
     virtual void calcHPhase(int direction);
+    virtual void setCurrentSource(CurrentSource* source);
     virtual void allocateAuxBuffers();
     
 private:
