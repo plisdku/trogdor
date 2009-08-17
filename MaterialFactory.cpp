@@ -280,14 +280,13 @@ static RunlineEncoderPtr newCurrentPML(Paint* parentPaint,
             NullCurrent>(parentPaint, numCellsE, numCellsH, pmlHalfCells,
                 pmlParams, dxyz, dt, runlineDirection);
     }
-    /*
     else
     {
         setupMaterial = newPML<MaterialT, NonPMLRunlineT, PMLRunlineT,
             BufferedCurrent>(parentPaint, numCellsE, numCellsH, pmlHalfCells,
                 pmlParams, dxyz, dt, runlineDirection);
     }
-    */
+    
     
     return setupMaterial;
 }
