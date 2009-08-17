@@ -55,8 +55,8 @@ SimpleEHOutput(const OutputDescription & desc,
 {
     // Clip the regions to the current partition bounds (calc bounds, not
     //     allocation bounds!)
-    LOG << "Clipping output regions to partition bounds.  This is not in the"
-        " right place; it should be performed earlier somehow.\n";
+//    LOG << "Clipping output regions to partition bounds.  This is not in the"
+//        " right place; it should be performed earlier somehow.\n";
     assert(desc.getRegions().size() > 0);
     for (int rr = 0; rr < desc.getRegions().size(); rr++)
     {
@@ -64,8 +64,8 @@ SimpleEHOutput(const OutputDescription & desc,
             vp.getGridYeeCells()));        
         mRegions.push_back(Region(outRect, desc.getRegions()[rr].getStride()));
     }
-    LOG << "Truncating durations to simulation duration.  This is in the "
-        "wrong place; can't it be done earlier?\n";
+//    LOG << "Truncating durations to simulation duration.  This is in the "
+//        "wrong place; can't it be done earlier?\n";
     int numTimesteps = cp.getDuration();
     for (int dd = 0; dd < mDurations.size(); dd++)
     if (mDurations[dd].getLast() > (numTimesteps-1))
