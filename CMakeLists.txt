@@ -127,18 +127,25 @@ YeeUtilities.h
 YeeUtilities.cpp
 )
 
-find_package( Boost )
-message("Boost root is .${BOOSTROOT}".)
-if (Boost_FOUND)
-	include_directories(${Boost_INCLUDE_DIRS})
-else(Boost_FOUND)
-	message("\nCan't find Boost!")
-endif(Boost_FOUND)
 
-set(BOOST_INCLUDEDIR /usr/local/include/boost)
-set(BOOST_ROOT /usr/local)
-set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_USE_MULTITHREADED ON)
+set(CMAKE_INCLUDE_PATH /sw/include)
+set(CMAKE_LIBRARY_PATH /sw/lib)
+
+find_package( Boost )
+if (NOT Boost_FOUND)
+	set(ENV{BOOST_ROOT} /sw)
+endif(NOT Boost_FOUND)
+
+find_package( Boost )
+if (NOT Boost_FOUND)
+	message("Can't find Boost yet at root $ENV{BOOST_ROOT}.")
+endif(NOT Boost_FOUND)
+
+
+#set(Boost_USE_STATIC_LIBS OFF)
+#set(BOOST_ROOT /usr/local)
+#set(BOOST_INCLUDE_DIR /usr/local/include/boost)
+#set(Boost_USE_MULTITHREADED ON)
 find_package( Boost COMPONENTS date_time program_options thread)
 
 if(Boost_FOUND)
@@ -156,12 +163,14 @@ target_link_libraries( trogdor
     ${magDepLibs}
 )
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_subdirectory( tests )
-    enable_testing() # only need to do this once, but
-    add_test(geom tests/testGeometry) # this once per test
-    add_test(lattice tests/testInterleavedLattice) # this once per test
-endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+# this won't work without a recent boost version with the unit test framework
+
+#if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#    add_subdirectory( tests )
+#    enable_testing() # only need to do this once, but
+#    add_test(geom tests/testGeometry) # this once per test
+#    add_test(lattice tests/testInterleavedLattice) # this once per test
+#endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 add_subdirectory( utility )
 add_subdirectory( tinyxml )

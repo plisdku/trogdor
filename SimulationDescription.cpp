@@ -1039,7 +1039,11 @@ static Vector3i sConvertColor(const Magick::Color & inColor)
 {
     Vector3i outColor;
     
-#if (MagickLibVersion == 0x628)
+#if (MagickLibVersion == 0x618)
+    outColor[0] = ScaleQuantumToChar(inColor.redQuantum());
+    outColor[1] = ScaleQuantumToChar(inColor.blueQuantum());
+    outColor[2] = ScaleQuantumToChar(inColor.greenQuantum());
+#elif (MagickLibVersion == 0x628)
     outColor[0] = MagickLib::ScaleQuantumToChar(inColor.redQuantum());
     outColor[1] = MagickLib::ScaleQuantumToChar(inColor.blueQuantum());
     outColor[2] = MagickLib::ScaleQuantumToChar(inColor.greenQuantum());
