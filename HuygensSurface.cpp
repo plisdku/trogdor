@@ -28,7 +28,7 @@ newHuygensSurface(string namePrefix,
     HuygensSurfacePtr hs(new HuygensSurface(namePrefix, vp, grids, desc));
     HuygensUpdatePtr update;
     
-    if (desc->getType() == kLink)
+    if (desc->type() == kLink)
     {
         update = HuygensUpdatePtr(new HuygensLink(*hs));
         hs->setUpdater(update);
@@ -45,7 +45,7 @@ HuygensSurface(string namePrefix, const VoxelizedPartition & vp,
     const HuygensSurfaceDescPtr & surfaceDescription) :
     mHalfCells(surfaceDescription->getHalfCells()),
     mNeighborBuffers(6),
-    mDestLattice(vp.getLattice())
+    mDestLattice(vp.lattice())
 {
     static const Rect3i UNUSED_SOURCE_RECT_ARGUMENT(0,0,0,0,0,0);
     Rect3i sourceHalfCells(UNUSED_SOURCE_RECT_ARGUMENT);
@@ -53,7 +53,7 @@ HuygensSurface(string namePrefix, const VoxelizedPartition & vp,
     if (surfaceDescription->getSourceGrid() != 0L)
     {
         mSourceLattice =  grids[surfaceDescription->getSourceGrid()]->
-            getLattice();
+            lattice();
         sourceHalfCells = surfaceDescription->getFromHalfCells();
     }
     
@@ -84,7 +84,7 @@ allocate()
     for (int nn = 0; nn < 6; nn++)
     if (hasBuffer(nn))
     {
-        mNeighborBuffers.at(nn)->getLattice()->allocate();
+        mNeighborBuffers.at(nn)->lattice()->allocate();
     }
 }
 

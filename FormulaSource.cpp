@@ -40,24 +40,24 @@ FormulaSource(const SourceDescription & desc, const VoxelizedPartition & vp,
     const CalculationPartition & cp) :
     Source(),
     mCurrentDuration(0),
-    mFormula(desc.getFormula()),
+    mFormula(desc.formula()),
     mCalculator(),
-    mFields(desc.getSourceFields()),
-    mDt(cp.getDt()),
+    mFields(desc.sourceFields()),
+    mDt(cp.dt()),
     mIsSpaceVarying(desc.isSpaceVarying()),
     mIsSoft(desc.isSoftSource()),
-    mRegions(desc.getRegions()),
-    mDurations(desc.getDurations())
+    mRegions(desc.regions()),
+    mDurations(desc.durations())
 {
     for (int rr = 0; rr < mRegions.size(); rr++)
     {
-        Rect3i rect(clip(vp.getGridYeeCells(), mRegions[rr].getYeeCells()));
+        Rect3i rect(clip(vp.gridYeeCells(), mRegions[rr].yeeCells()));
         mRegions[rr].setYeeCells(rect);
     }
     
     for (int dd = 0; dd < mDurations.size(); dd++)
-    if (mDurations[dd].getLast() > (cp.getDuration()-1))
-        mDurations[dd].setLast(cp.getDuration()-1);
+    if (mDurations[dd].last() > (cp.duration()-1))
+        mDurations[dd].setLast(cp.duration()-1);
     
 	// The calculator will eventually update "n" and "t" to be the current
 	// timestep and current time; we can set them here to test the formula.
@@ -84,19 +84,19 @@ FormulaSource(const SourceDescription & desc, const VoxelizedPartition & vp,
 void FormulaSource::
 sourceEPhase(CalculationPartition & cp, int timestep)
 {
-    if (norm2(mFields.getWhichE()) == 0)
+    if (norm2(mFields.whichE()) == 0)
         return;
     
     if (mCurrentDuration >= mDurations.size())
         return;
-    while (timestep > mDurations[mCurrentDuration].getLast())
+    while (timestep > mDurations[mCurrentDuration].last())
     {
         mCurrentDuration++;
         if (mCurrentDuration >= mDurations.size())
             return;
     }
     
-    if (timestep >= mDurations[mCurrentDuration].getFirst())
+    if (timestep >= mDurations[mCurrentDuration].first())
     {
         if (mFields.usesPolarization())
             polarizedSourceE(cp, timestep);
@@ -108,19 +108,19 @@ sourceEPhase(CalculationPartition & cp, int timestep)
 void FormulaSource::
 sourceHPhase(CalculationPartition & cp, int timestep)
 {
-    if (norm2(mFields.getWhichH()) == 0)
+    if (norm2(mFields.whichH()) == 0)
         return;
     
     if (mCurrentDuration >= mDurations.size())
         return;
-    while (timestep > mDurations[mCurrentDuration].getLast())
+    while (timestep > mDurations[mCurrentDuration].last())
     {
         mCurrentDuration++;
         if (mCurrentDuration >= mDurations.size())
             return;
     }
     
-    if (timestep >= mDurations[mCurrentDuration].getFirst())
+    if (timestep >= mDurations[mCurrentDuration].first())
     {
         if (mFields.usesPolarization())
             polarizedSourceH(cp, timestep);
@@ -134,7 +134,7 @@ uniformSourceE(CalculationPartition & cp, int timestep)
 {
     //LOG << "Source E\n";
     float val;
-    InterleavedLattice & lattice(cp.getLattice());
+    InterleavedLattice & lattice(cp.lattice());
     
 	mCalculator.set("n", timestep);
 	mCalculator.set("t", mDt*timestep);
@@ -146,9 +146,9 @@ uniformSourceE(CalculationPartition & cp, int timestep)
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
-        Rect3i rect = mRegions[rr].getYeeCells();
+        Rect3i rect = mRegions[rr].yeeCells();
         for (int dir = 0; dir < 3; dir++)
-        if (mFields.getWhichE()[dir] != 0)
+        if (mFields.whichE()[dir] != 0)
         {
             Vector3i xx;
             if (!mIsSoft)
@@ -179,7 +179,7 @@ uniformSourceH(CalculationPartition & cp, int timestep)
 {
     //LOG << "Source H\n";
     float val;
-    InterleavedLattice & lattice(cp.getLattice());
+    InterleavedLattice & lattice(cp.lattice());
     
 	mCalculator.set("n", timestep);
 	mCalculator.set("t", mDt*(0.5f + timestep));
@@ -190,9 +190,9 @@ uniformSourceH(CalculationPartition & cp, int timestep)
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
-        Rect3i rect = mRegions[rr].getYeeCells();
+        Rect3i rect = mRegions[rr].yeeCells();
         for (int dir = 0; dir < 3; dir++)
-        if (mFields.getWhichH()[dir] != 0)
+        if (mFields.whichH()[dir] != 0)
         {
             Vector3i xx;
             if (!mIsSoft)
@@ -219,9 +219,9 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
     //assert(mIsSoft);
     
     ////LOG << "Source E\n";
-    Vector3f polarization = mFields.getPolarization();
+    Vector3f polarization = mFields.polarization();
     float val;
-    InterleavedLattice & lattice(cp.getLattice());
+    InterleavedLattice & lattice(cp.lattice());
     
 	mCalculator.set("n", timestep);
 	mCalculator.set("t", mDt*timestep);
@@ -233,7 +233,7 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
-        Rect3i rect = mRegions[rr].getYeeCells();
+        Rect3i rect = mRegions[rr].yeeCells();
         for (int dir = 0; dir < 3; dir++)
         {
             Vector3i xx;
@@ -264,9 +264,9 @@ polarizedSourceH(CalculationPartition & cp, int timestep)
     //assert(mIsSoft);
     
     //LOG << "Source H\n";
-    Vector3f polarization = mFields.getPolarization();
+    Vector3f polarization = mFields.polarization();
     float val;
-    InterleavedLattice & lattice(cp.getLattice());
+    InterleavedLattice & lattice(cp.lattice());
     
 	mCalculator.set("n", timestep);
 	mCalculator.set("t", mDt*timestep);
@@ -278,7 +278,7 @@ polarizedSourceH(CalculationPartition & cp, int timestep)
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
-        Rect3i rect = mRegions[rr].getYeeCells();
+        Rect3i rect = mRegions[rr].yeeCells();
         for (int dir = 0; dir < 3; dir++)
         {
             Vector3i xx;

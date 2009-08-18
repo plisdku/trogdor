@@ -32,14 +32,14 @@ DrudeModel1(
     m_omegap(0.0),
     m_tauc(0.0)
 {
-    if (descrip.getParams().count("epsinf"))
-        istringstream(descrip.getParams()["epsinf"]) >> m_epsrinf;
-    if (descrip.getParams().count("mur"))
-        istringstream(descrip.getParams()["mur"]) >> m_mur;
-    if (descrip.getParams().count("omegap"))
-        istringstream(descrip.getParams()["omegap"]) >> m_omegap;
-    if (descrip.getParams().count("tauc"))
-        istringstream(descrip.getParams()["tauc"]) >> m_tauc;
+    if (descrip.params().count("epsinf"))
+        istringstream(descrip.params()["epsinf"]) >> m_epsrinf;
+    if (descrip.params().count("mur"))
+        istringstream(descrip.params()["mur"]) >> m_mur;
+    if (descrip.params().count("omegap"))
+        istringstream(descrip.params()["omegap"]) >> m_omegap;
+    if (descrip.params().count("tauc"))
+        istringstream(descrip.params()["tauc"]) >> m_tauc;
     
     for (int nn = 0; nn < 3; nn++)
     {
@@ -56,7 +56,7 @@ DrudeModel1(
 }
 
 string DrudeModel1::
-getModelName() const
+modelName() const
 {
     return string("DrudeModel1");
 }
@@ -82,7 +82,7 @@ allocateAuxBuffers()
     //LOG << "Allocating currents.\n";
     for (int nn = 0; nn < 3; nn++)
     {
-        mCurrents[nn].resize(mCurrentBuffers[nn]->getLength());
+        mCurrents[nn].resize(mCurrentBuffers[nn]->length());
         mCurrentBuffers[nn]->setHeadPointer(&(mCurrents[nn][0]));
     }
 }

@@ -32,7 +32,7 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	Rect3i allocRegion, Rect3i calcRegion, int runlineDirection) :
 	mVoxels(allocRegion, gridDesc.getHalfCellBounds(), 
-		gridDesc.getNonPMLHalfCells()),
+		gridDesc.nonPMLHalfCells()),
 	mGridHalfCells(gridDesc.getHalfCellBounds()),
 	mFieldAllocHalfCells(expandToYeeRect(allocRegion)),
 	mAuxAllocRegion(allocRegion),
@@ -52,11 +52,11 @@ VoxelizedPartition(const GridDescription & gridDesc,
     
     mNumAllocHalfCells = mFieldAllocHalfCells.size()+1;
 	
-    mLattice = InterleavedLatticePtr(new InterleavedLattice(gridDesc.getName(),
+    mLattice = InterleavedLatticePtr(new InterleavedLattice(gridDesc.name(),
         mFieldAllocHalfCells, runlineDirection));
     
-	mNonPMLHalfCells = gridDesc.getNonPMLHalfCells();
-	mOriginYee = gridDesc.getOriginYee();
+	mNonPMLHalfCells = gridDesc.nonPMLHalfCells();
+	mOriginYee = gridDesc.originYee();
 	
     /*
     LOG << "Partition geometry:\n";
@@ -82,12 +82,12 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	createSetupMaterials(gridDesc);
 	loadSpaceVaryingData(); // * grid-scale wraparound
 	
-    createSetupOutputs(gridDesc.getOutputs());
+    createSetupOutputs(gridDesc.outputs());
     createSetupSources(gridDesc.getSources());
 }
 
 Rect3i VoxelizedPartition::
-getGridYeeCells() const
+gridYeeCells() const
 {
     return halfToYee(mGridHalfCells);
 }
@@ -194,7 +194,7 @@ createHuygensSurfaces(const GridDescPtr & gridDescription,
     for (unsigned int nn = 0; nn < surfaces.size(); nn++)
     {
         ostringstream huygensSurfaceName;
-        huygensSurfaceName << gridDescription->getName() << " HS " << nn;
+        huygensSurfaceName << gridDescription->name() << " HS " << nn;
         mHuygensSurfaces.push_back(
             HuygensSurfaceFactory::newHuygensSurface(
                 huygensSurfaceName.str(), *this, grids,
@@ -223,7 +223,7 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
 	// 5.  Required sample locations: Ex, Ey, Ez, Hx, Hy, Hz
     
     ostringstream fileNameStream;
-    fileNameStream << surf->getFile() << ".m";
+    fileNameStream << surf->file() << ".m";
     
     ofstream file;
     file.open(fileNameStream.str().c_str());
@@ -235,17 +235,17 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     LOG << "WARNING: Data requests are not coordinate-rotated.\n";
     
     file << "clear afp;\n";
-    file << "afp.dxdydzdt = [" << gridDescription->getDxyz()[0] << " "
-        << gridDescription->getDxyz()[1] << " " << gridDescription->getDxyz()[2]
+    file << "afp.dxdydzdt = [" << gridDescription->dxyz()[0] << " "
+        << gridDescription->dxyz()[1] << " " << gridDescription->dxyz()[2]
         << "];\n";
     
-    int numT = surf->getDuration().getLast() - surf->getDuration().getFirst()
+    int numT = surf->duration().last() - surf->duration().first()
         + 1;
     file << "afp.numT = [" << numT << "];\n";
     
     file << "afp.halfCells = " << surf->getHalfCells() << ";\n";
     file << "afp.tfRect = afp.halfCells;\n";
-    file << "afp.inputFile = '" << surf->getFile() << "';\n";
+    file << "afp.inputFile = '" << surf->file() << "';\n";
     /*
     // Now write the materials and their parameters.
     int ii, jj, kk;
@@ -303,7 +303,7 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
                 mStructureGrid->getMaterialType(mat);
             if (matType.isTFSF())
                 parentTag = mStructureGrid->getMaterialIndex(
-                    matType.getName());
+                    matType.name());
             else
                 parentTag = mat;
             
@@ -323,11 +323,11 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     {
         const MaterialType & matType = mStructureGrid->getMaterialType(
             materials[mm]);
-        const RunlineEncoderPtr setupMat = mMaterials[matType.getName()];
+        const RunlineEncoderPtr setupMat = mMaterials[matType.name()];
         file << "afp.materials{" << mm+1 << "}.class = '" << 
             setupMat->getClass() << "';\n";
         file << "afp.materials{" << mm+1 << "}.name = '" <<
-            setupMat->getName() << "';\n";
+            setupMat->name() << "';\n";
         
         const Map<string, string> & params = setupMat->getParameters();
         Map<string, string>::const_iterator itr;
@@ -434,7 +434,7 @@ paintFromAssembly(const GridDescription & gridDesc,
 	
 	for (unsigned int nn = 0; nn < instructions.size(); nn++)
 	{
-		switch(instructions[nn]->getType())
+		switch(instructions[nn]->type())
 		{
 			case kBlockType:
 				mVoxels.paintBlock(gridDesc, 
@@ -621,7 +621,7 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 void VoxelizedPartition::
 createSetupMaterials(const GridDescription & gridDesc)
 {
-	set<Paint*> allPaints = mCentralIndices->getCurlBufferParentPaints();
+	set<Paint*> allPaints = mCentralIndices->curlBufferParentPaints();
 	
 	// Cache PML rects (this is really just to simplify notation further down).
 	vector<Rect3i> pmlRects;

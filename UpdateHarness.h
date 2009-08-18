@@ -29,7 +29,7 @@
 // writeP()
 // writeK()
 // writeM()
-// getModelName()
+// modelName()
 template<class MaterialT>
 class UpdateHarness_Material;
 

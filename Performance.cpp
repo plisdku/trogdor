@@ -222,7 +222,7 @@ printForMatlab(std::ostream & str, const string & prefix,
         str << prefix << "material{" << nn+1 << "}.name ='"
             << materials[nn]->getSubstanceName() << "';\n";
         str << prefix << "material{" << nn+1 << "}.model = '"
-            << materials[nn]->getModelName() << "';\n";
+            << materials[nn]->modelName() << "';\n";
         str << prefix << "material{" << nn+1 << "}.numRunlinesE = "
             << materials[nn]->getNumRunlinesE() << ";\n";
         str << prefix << "material{" << nn+1 << "}.numRunlinesH = "

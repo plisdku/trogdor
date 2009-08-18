@@ -45,9 +45,9 @@ public:
 		return mMaterials; }
 	
     const std::string & getVersion() const { return mVersionString; }
-	float getDt() const { return m_dt; }
-	Vector3f getDxyz() const { return m_dxyz; }
-	int getDuration() const { return mNumTimesteps; }
+	float dt() const { return m_dt; }
+	Vector3f dxyz() const { return m_dxyz; }
+	int duration() const { return mNumTimesteps; }
 	
 private:
     std::string mVersionString;
@@ -85,21 +85,21 @@ public:
 		const Map<std::string, GridDescPtr> & gridMap);
 	
 	// Accessors
-	const std::string & getName() const { return mName; }
+	const std::string & name() const { return mName; }
 	Vector3i getNumYeeCells() const { return mNumYeeCells; }
 	Vector3i getNumHalfCells() const { return mNumHalfCells; }
-	Rect3i getYeeBounds() const;
+	Rect3i yeeBounds() const;
 	Rect3i getHalfCellBounds() const;
 	const Rect3i & getCalcHalfCells() const { return mCalcRegionHalf; }
-	const Rect3i & getNonPMLHalfCells() const { return mNonPMLHalf; }
-    const Map<Vector3i, Map<std::string, std::string> > & getPMLParams() const
+	const Rect3i & nonPMLHalfCells() const { return mNonPMLHalf; }
+    const Map<Vector3i, Map<std::string, std::string> > & pmlParams() const
         { return mPMLParams; }
-	Vector3i getOriginYee() const { return mOriginYee; }
+	Vector3i originYee() const { return mOriginYee; }
 	int getNumDimensions() const;
-    Vector3f getDxyz() const { return mDxyz; }
-    float getDt() const { return mDt; }
+    Vector3f dxyz() const { return mDxyz; }
+    float dt() const { return mDt; }
 	
-	const std::vector<OutputDescPtr> & getOutputs() const { return mOutputs; }
+	const std::vector<OutputDescPtr> & outputs() const { return mOutputs; }
 	const std::vector<SourceDescPtr> & getSources() const { return mSources; }
     const std::vector<CurrentSourceDescPtr> & getCurrentSources() const
         { return mCurrentSources; }
@@ -150,9 +150,9 @@ public:
         return Duration(0, INT_MAX, period);
     }
     
-    int getFirst() const { return mFirst; }
-    int getLast() const { return mLast; }
-    int getPeriod() const { return mPeriod; }
+    int first() const { return mFirst; }
+    int last() const { return mLast; }
+    int period() const { return mPeriod; }
     
     void setFirst(int first) { mFirst = first; }
     void setLast(int last) { mLast = last; }
@@ -180,8 +180,8 @@ public:
     
     void setYeeCells(const Rect3i & rect) { mYeeCells = rect; }
     void setStride(const Vector3i & stride) { mStride = stride; }
-    const Rect3i & getYeeCells() const { return mYeeCells; }
-    const Vector3i & getStride() const { return mStride; }
+    const Rect3i & yeeCells() const { return mYeeCells; }
+    const Vector3i & stride() const { return mStride; }
 private:
     Rect3i mYeeCells;
     Vector3i mStride;
@@ -202,17 +202,17 @@ public:
         Vector3f interpolationPoint, const std::vector<Region> & regions,
         const std::vector<Duration> & durations) throw(Exception);
     
-    const std::string & getFile() const { return mFile; }
-    Vector3i getWhichE() const { return mWhichE; }
-    Vector3i getWhichH() const { return mWhichH; }
-    Vector3i getWhichJ() const { return mWhichJ; }
-    Vector3i getWhichK() const { return mWhichK; }
-    Vector3i getWhichP() const { return mWhichP; }
-    Vector3i getWhichM() const { return mWhichM; }
+    const std::string & file() const { return mFile; }
+    Vector3i whichE() const { return mWhichE; }
+    Vector3i whichH() const { return mWhichH; }
+    Vector3i whichJ() const { return mWhichJ; }
+    Vector3i whichK() const { return mWhichK; }
+    Vector3i whichP() const { return mWhichP; }
+    Vector3i whichM() const { return mWhichM; }
     bool isInterpolated() const { return mIsInterpolated; }
-    Vector3f getInterpolationPoint() const { return mInterpolationPoint; }
-    const std::vector<Region> & getRegions() const { return mRegions; }
-    const std::vector<Duration> & getDurations() const { return mDurations; }
+    Vector3f interpolationPoint() const { return mInterpolationPoint; }
+    const std::vector<Region> & regions() const { return mRegions; }
+    const std::vector<Duration> & durations() const { return mDurations; }
     
 private:
     void determineWhichFields(std::string fields) throw(Exception);
@@ -244,10 +244,10 @@ public:
     SourceFields(std::string fields, Vector3f polarization);
     
     bool usesPolarization() const { return mUsesPolarization; }
-    Vector3f getPolarization() const
+    Vector3f polarization() const
         { assert(mUsesPolarization); return mPolarization; }
-    Vector3i getWhichE() const { return mWhichE; }
-    Vector3i getWhichH() const { return mWhichH; }
+    Vector3i whichE() const { return mWhichE; }
+    Vector3i whichH() const { return mWhichH; }
 private:
     bool mUsesPolarization;
     Vector3f mPolarization;
@@ -272,16 +272,16 @@ public:
         bool isSoft, const std::vector<Region> & regions,
         const std::vector<Duration> & durations) throw(Exception);
     
-    const std::string & getFormula() const { return mFormula; }
-    const std::string & getTimeFile() const { return mTimeFile; }
-    const std::string & getSpaceTimeFile() const { return mSpaceTimeFile; }
-    const SourceFields & getSourceFields() const { return mFields; }
+    const std::string & formula() const { return mFormula; }
+    const std::string & timeFile() const { return mTimeFile; }
+    const std::string & spaceTimeFile() const { return mSpaceTimeFile; }
+    const SourceFields & sourceFields() const { return mFields; }
     bool isHardSource() const { return !mIsSoft; }
     bool isSoftSource() const { return mIsSoft; }
     bool isSpaceVarying() const { return (mSpaceTimeFile != ""); }
     
-    const std::vector<Region> & getRegions() const { return mRegions; }
-    const std::vector<Duration> & getDurations() const { return mDurations; }
+    const std::vector<Region> & regions() const { return mRegions; }
+    const std::vector<Duration> & durations() const { return mDurations; }
     
 private:
     std::string mFormula;
@@ -305,10 +305,10 @@ public:
     SourceCurrents(std::string fields, Vector3f polarization);
     
     bool usesPolarization() const { return mUsesPolarization; }
-    Vector3f getPolarization() const
+    Vector3f polarization() const
         { assert(mUsesPolarization); return mPolarization; }
-    Vector3i getWhichJ() const { return mWhichJ; }
-    Vector3i getWhichK() const { return mWhichK; }
+    Vector3i whichJ() const { return mWhichJ; }
+    Vector3i whichK() const { return mWhichK; }
 private:
     bool mUsesPolarization;
     Vector3f mPolarization;
@@ -332,13 +332,13 @@ public:
     
     bool isSpaceVarying() const
         { return (mSpaceTimeFile != ""); }
-    const std::string & getFormula() const { return mFormula; }
-    const std::string & getTimeFile() const { return mTimeFile; }
-    const std::string & getSpaceTimeFile() const { return mSpaceTimeFile; }
-    const SourceCurrents & getSourceCurrents() const { return mCurrents; }
+    const std::string & formula() const { return mFormula; }
+    const std::string & timeFile() const { return mTimeFile; }
+    const std::string & spaceTimeFile() const { return mSpaceTimeFile; }
+    const SourceCurrents & sourceCurrents() const { return mCurrents; }
     
-    const std::vector<Region> & getRegions() const { return mRegions; }
-    const std::vector<Duration> & getDurations() const { return mDurations; }
+    const std::vector<Region> & regions() const { return mRegions; }
+    const std::vector<Duration> & durations() const { return mDurations; }
 private:
     CurrentSourceDescription(SourceCurrents currents, std::string formula,
         std::string timeFile, std::string spaceTimeFile,
@@ -397,18 +397,18 @@ public:
         const Rect3i & sourceHalfCells);
     
     // Common accessors
-    HuygensSurfaceSourceType getType() const { return mType; }
+    HuygensSurfaceSourceType type() const { return mType; }
     const Rect3i & getHalfCells() const { return mHalfCells; }
     const std::set<Vector3i> & getOmittedSides() const { return mOmittedSides; }
     bool isTotalField() const { return mIsTotalField; }
     bool isScatteredField() const { return !mIsTotalField; }
     
     // TFSFSource accessors
-    SourceFields getSourceFields() const
+    SourceFields sourceFields() const
         { assert(mType == kTFSFSource); return mFields; }
-    std::string getTimeFile() const
+    std::string timeFile() const
         { assert(mType == kTFSFSource); return mTimeFile; }
-    std::string getFormula() const
+    std::string formula() const
         { assert(mType == kTFSFSource); return mFormula; }
     Vector3i getDirection() const
         { assert(mType == kTFSFSource); return mDirection; }
@@ -417,12 +417,12 @@ public:
     Vector3i getSymmetries() const
         { assert(mType == kTFSFSource || mType == kCustomTFSFSource);
           return mSymmetries; }
-    Duration getDuration() const
+    Duration duration() const
         { assert(mType == kCustomTFSFSource || mType == kTFSFSource);
           return mDuration; }
     
     // Custom source accessors
-    std::string getFile() const
+    std::string file() const
         { assert(mType == kCustomTFSFSource); return mFile; }
     
     // Link accessors
@@ -466,10 +466,10 @@ public:
         const Map<Vector3i, Map<std::string, std::string> > & inPMLParams)
         throw(Exception);
 	
-	std::string getName() const { return mName; }
-	std::string getModelName() const { return mModelName; }
-	const Map<std::string, std::string> & getParams() const { return mParams; }
-    const Map<Vector3i, Map<std::string, std::string> > & getPMLParams() const
+	std::string name() const { return mName; }
+	std::string modelName() const { return mModelName; }
+	const Map<std::string, std::string> & params() const { return mParams; }
+    const Map<Vector3i, Map<std::string, std::string> > & pmlParams() const
         { return mPMLParams; }
 	
 	friend std::ostream & operator<<(std::ostream & out,
@@ -523,10 +523,10 @@ public:
 	ColorKey(Vector3i rgbColor, std::string materialName, FillStyle style)
 		throw(Exception);
     
-	Vector3i getColor() const { return mColor; }
-	const std::string & getMaterialName() const { return mMaterialName; }
-	const MaterialDescPtr & getMaterial() const { return mMaterial; }
-	FillStyle getFillStyle() const { return mFillStyle; }
+	Vector3i color() const { return mColor; }
+	const std::string & materialName() const { return mMaterialName; }
+	const MaterialDescPtr & material() const { return mMaterial; }
+	FillStyle fillStyle() const { return mFillStyle; }
 	
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 private:
@@ -547,7 +547,7 @@ class Instruction
 {
 public:
 	Instruction(InstructionType inType);
-	InstructionType getType() const { return mType; }
+	InstructionType type() const { return mType; }
     virtual ~Instruction() {}
     
 protected:
@@ -562,11 +562,11 @@ public:
 	Block(Rect3i yeeCellRect, FillStyle style, std::string material)
 		throw(Exception);
     
-	const Rect3i & getYeeRect() const;
-	const Rect3i & getHalfRect() const;
-	FillStyle getFillStyle() const { return mStyle; }
-	const std::string & getMaterialName() const { return mMaterialName; }
-	const MaterialDescPtr & getMaterial() const { return mMaterial; }
+	const Rect3i & yeeRect() const;
+	const Rect3i & halfRect() const;
+	FillStyle fillStyle() const { return mStyle; }
+	const std::string & materialName() const { return mMaterialName; }
+	const MaterialDescPtr & material() const { return mMaterial; }
 	
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 private:
@@ -585,11 +585,11 @@ public:
 		
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 	
-	const Rect3i & getYeeRect() const { return mYeeRect; }
-	Vector3i getRowDirection() const { return mRow; }
-	Vector3i getColDirection() const { return mCol; }
-	const std::string & getImageFileName() const { return mImageFileName; }
-	const std::vector<ColorKey> & getKeys() const { return mKeys; }
+	const Rect3i & yeeRect() const { return mYeeRect; }
+	Vector3i rowDirection() const { return mRow; }
+	Vector3i columnDirection() const { return mCol; }
+	const std::string & imageFileName() const { return mImageFileName; }
+	const std::vector<ColorKey> & keys() const { return mKeys; }
 	
 private:
 	Rect3i mYeeRect;
@@ -608,14 +608,14 @@ public:
     
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
     
-	const Rect3i & getYeeRect() const { return mYeeRect; }
-	FillStyle getFillStyle() const { return mStyle; }
-	const std::string & getMaterialName() const { return mMaterialName; }
-	const MaterialDescPtr & getMaterial() const { return mMaterial; }
-	const std::string & getImageFileName() const { return mImageFileName; }
-	Vector3i getRowDirection() const { return mRow; }
-	Vector3i getColDirection() const { return mCol; }
-	Vector3i getUpDirection() const { return mUp; }
+	const Rect3i & yeeRect() const { return mYeeRect; }
+	FillStyle fillStyle() const { return mStyle; }
+	const std::string & materialName() const { return mMaterialName; }
+	const MaterialDescPtr & material() const { return mMaterial; }
+	const std::string & imageFileName() const { return mImageFileName; }
+	Vector3i rowDirection() const { return mRow; }
+	Vector3i columnDirection() const { return mCol; }
+	Vector3i upDirection() const { return mUp; }
 	
 private:
 	Rect3i mYeeRect;
@@ -638,11 +638,11 @@ public:
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 	
 	//const Rect3i & getFillRect() const { return mFillRect; }
-	const Rect3i & getYeeRect() const;
-	const Rect3i & getHalfRect() const;
-	FillStyle getFillStyle() const { return mStyle; }
-	const std::string & getMaterialName() const { return mMaterialName; }
-	const MaterialDescPtr & getMaterial() const { return mMaterial; }
+	const Rect3i & yeeRect() const;
+	const Rect3i & halfRect() const;
+	FillStyle fillStyle() const { return mStyle; }
+	const std::string & materialName() const { return mMaterialName; }
+	const MaterialDescPtr & material() const { return mMaterial; }
 	
 private:
 	Rect3i mFillRect;
@@ -663,8 +663,8 @@ public:
 	
 	void setPointers(const Map<std::string, GridDescPtr> & gridMap);
 	
-	const Rect3i & getSourceHalfRect() const { return mSourceRect; }
-	const Rect3i & getDestHalfRect() const { return mDestRect; }
+	const Rect3i & sourceHalfRect() const { return mSourceRect; }
+	const Rect3i & destHalfRect() const { return mDestRect; }
 	const std::string & getGridName() const { return mGridName; }
 	const GridDescPtr & getGrid() const { return mGrid; }
 	
@@ -681,8 +681,8 @@ public:
 	Extrude(Rect3i halfCellExtrudeFrom, Rect3i halfCellExtrudeTo)
 		throw(Exception);
 	
-	const Rect3i & getExtrudeFrom() const { return mExtrudeFrom; }
-	const Rect3i & getExtrudeTo() const { return mExtrudeTo; }
+	const Rect3i & extrudeFrom() const { return mExtrudeFrom; }
+	const Rect3i & extrudeTo() const { return mExtrudeTo; }
 private:
 	Rect3i mExtrudeFrom;
 	Rect3i mExtrudeTo;

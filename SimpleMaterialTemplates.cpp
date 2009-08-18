@@ -51,7 +51,7 @@ makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & c
         mNumCellsH,
         mDxyz,
         mDt,
-        cp.getLattice().runlineDirection());
+        cp.lattice().runlineDirection());
     
     for (int nn = 0; nn < 3; nn++)
     {
@@ -95,7 +95,7 @@ makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & c
         mPMLParams,
         mDxyz,
         mDt,
-        cp.getLattice().runlineDirection());
+        cp.lattice().runlineDirection());
     
     for (int nn = 0; nn < 3; nn++)
     {

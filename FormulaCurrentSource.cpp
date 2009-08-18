@@ -26,22 +26,22 @@ Pointer<CurrentSource> SetupFormulaCurrentSource::
 makeCurrentSource(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
 {
-    return Pointer<CurrentSource>(new FormulaCurrentSource(getDescription(),
+    return Pointer<CurrentSource>(new FormulaCurrentSource(description(),
         vp, cp));
 }
 
 FormulaCurrentSource::
 FormulaCurrentSource(const CurrentSourceDescPtr & description,
     const VoxelizedPartition & vp, const CalculationPartition & cp) :
-    mFormula(description->getFormula()),
-    mCurrents(description->getSourceCurrents()),
-    mDt(cp.getDt()),
-    mDurations(description->getDurations()),
+    mFormula(description->formula()),
+    mCurrents(description->sourceCurrents()),
+    mDt(cp.dt()),
+    mDurations(description->durations()),
     mCurrentDuration(0)
 {   
     for (int dd = 0; dd < mDurations.size(); dd++)
-    if (mDurations[dd].getLast() > (cp.getDuration()-1))
-        mDurations[dd].setLast(cp.getDuration()-1);
+    if (mDurations[dd].last() > (cp.duration()-1))
+        mDurations[dd].setLast(cp.duration()-1);
     
 	// The calculator will eventually update "n" and "t" to be the current
 	// timestep and current time; we can set them here to test the formula.
@@ -69,21 +69,21 @@ void FormulaCurrentSource::
 prepareJ(long timestep)
 {
     mJ = Vector3f(0.0f, 0.0f, 0.0f);
-    if (norm2(mCurrents.getWhichJ()) == 0)
+    if (norm2(mCurrents.whichJ()) == 0)
         return;
     
     if (mCurrentDuration >= mDurations.size())
     {
         return;
     }
-    while (timestep > mDurations[mCurrentDuration].getLast())
+    while (timestep > mDurations[mCurrentDuration].last())
     {
         mCurrentDuration++;
         if (mCurrentDuration >= mDurations.size())
             return;
     }
     
-    if (timestep >= mDurations[mCurrentDuration].getFirst())
+    if (timestep >= mDurations[mCurrentDuration].first())
     {
         updateJ(timestep);
     }
@@ -93,19 +93,19 @@ void FormulaCurrentSource::
 prepareK(long timestep)
 {
     mK = Vector3f(0.0f, 0.0f, 0.0f);
-    if (norm2(mCurrents.getWhichK()) == 0)
+    if (norm2(mCurrents.whichK()) == 0)
         return;
     
     if (mCurrentDuration >= mDurations.size())
         return;
-    while (timestep > mDurations[mCurrentDuration].getLast())
+    while (timestep > mDurations[mCurrentDuration].last())
     {
         mCurrentDuration++;
         if (mCurrentDuration >= mDurations.size())
             return;
     }
     
-    if (timestep >= mDurations[mCurrentDuration].getFirst())
+    if (timestep >= mDurations[mCurrentDuration].first())
     {
         updateK(timestep);
     }
@@ -140,7 +140,7 @@ updateJ(long timestep)
 //    LOG << "Value: " << val << "\n";
     
     if (mCurrents.usesPolarization())
-        mJ = val*mCurrents.getPolarization();
+        mJ = val*mCurrents.polarization();
     else
         mJ = Vector3f(val,val,val);
 }
@@ -158,7 +158,7 @@ updateK(long timestep)
 //    LOG << "Value: " << val << "\n";
     
     if (mCurrents.usesPolarization())
-        mK = val*mCurrents.getPolarization();
+        mK = val*mCurrents.polarization();
     else
         mK = Vector3f(val,val,val);
 }

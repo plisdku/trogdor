@@ -39,7 +39,7 @@ public:
     
     virtual ~DrudeModel1() {}
     
-    std::string getModelName() const;
+    std::string modelName() const;
     void writeJ(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;
     void allocateAuxBuffers();

@@ -27,13 +27,13 @@ public:
 	MemoryBuffer(const MemoryBuffer & copyMe);
     ~MemoryBuffer();
 	
-	unsigned long getLength() const { return mLength; }
-	unsigned long getStride() const { return mStride; }
-	const std::string & getDescription() const { return mDescription; }
+	unsigned long length() const { return mLength; }
+	unsigned long stride() const { return mStride; }
+	const std::string & description() const { return mDescription; }
 	void setDescription(const std::string & inDesc) { mDescription = inDesc; }
     
     void setHeadPointer(float* ptr);
-    float* getHeadPointer() const { return mHeadPointer; }
+    float* headPointer() const { return mHeadPointer; }
 	
     static const std::set<MemoryBuffer*> & getAllBuffers()
         { return sAllBuffers; }
@@ -73,9 +73,9 @@ public:
 	BufferPointer(const MemoryBuffer & buffer, unsigned long offset);
 	BufferPointer(const BufferPointer & copyMe);
 	
-	unsigned long getOffset() const { return mOffset; }
-	const MemoryBuffer * getBuffer() const { return mBuffer; }
-    float* getPointer() const;// { return mBuffer->getHeadPointer() + mOffset; }
+	unsigned long offset() const { return mOffset; }
+	const MemoryBuffer * buffer() const { return mBuffer; }
+    float* pointer() const;// { return mBuffer->headPointer() + mOffset; }
 	
 	void setOffset(unsigned long offset);
 	

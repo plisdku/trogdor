@@ -48,32 +48,32 @@ SimpleEHOutput(const OutputDescription & desc,
     mDatafile(),
     mCurrentSampleInterval(0),
     mIsInterpolated(desc.isInterpolated()),
-    mInterpolationPoint(desc.getInterpolationPoint()),
-    mWhichE(desc.getWhichE()),
-    mWhichH(desc.getWhichH()),
-    mDurations(desc.getDurations())
+    mInterpolationPoint(desc.interpolationPoint()),
+    mWhichE(desc.whichE()),
+    mWhichH(desc.whichH()),
+    mDurations(desc.durations())
 {
     // Clip the regions to the current partition bounds (calc bounds, not
     //     allocation bounds!)
 //    LOG << "Clipping output regions to partition bounds.  This is not in the"
 //        " right place; it should be performed earlier somehow.\n";
-    assert(desc.getRegions().size() > 0);
-    for (int rr = 0; rr < desc.getRegions().size(); rr++)
+    assert(desc.regions().size() > 0);
+    for (int rr = 0; rr < desc.regions().size(); rr++)
     {
-        Rect3i outRect(clip(desc.getRegions()[rr].getYeeCells(),
-            vp.getGridYeeCells()));        
-        mRegions.push_back(Region(outRect, desc.getRegions()[rr].getStride()));
+        Rect3i outRect(clip(desc.regions()[rr].yeeCells(),
+            vp.gridYeeCells()));        
+        mRegions.push_back(Region(outRect, desc.regions()[rr].stride()));
     }
 //    LOG << "Truncating durations to simulation duration.  This is in the "
 //        "wrong place; can't it be done earlier?\n";
-    int numTimesteps = cp.getDuration();
+    int numTimesteps = cp.duration();
     for (int dd = 0; dd < mDurations.size(); dd++)
-    if (mDurations[dd].getLast() > (numTimesteps-1))
+    if (mDurations[dd].last() > (numTimesteps-1))
         mDurations[dd].setLast(numTimesteps-1);
     
-    string specfile(desc.getFile() + string(".txt"));
-    string datafile(desc.getFile());
-    string materialfile(desc.getFile() + string(".mat"));
+    string specfile(desc.file() + string(".txt"));
+    string datafile(desc.file());
+    string materialfile(desc.file() + string(".mat"));
     
     writeDescriptionFile(vp, cp, specfile, datafile, materialfile);
     
@@ -94,15 +94,15 @@ outputEPhase(const CalculationPartition & cp, int timestep)
         return;
     if (mCurrentSampleInterval >= mDurations.size())
         return;
-    while (timestep > mDurations[mCurrentSampleInterval].getLast())
+    while (timestep > mDurations[mCurrentSampleInterval].last())
     {
         mCurrentSampleInterval++;
         if (mCurrentSampleInterval >= mDurations.size())
             return;
     }
     
-    int firstT = mDurations[mCurrentSampleInterval].getFirst();
-    int period = mDurations[mCurrentSampleInterval].getPeriod();
+    int firstT = mDurations[mCurrentSampleInterval].first();
+    int period = mDurations[mCurrentSampleInterval].period();
     
     if (timestep >= firstT && (timestep - firstT)%period == 0)
         writeE(cp);
@@ -115,15 +115,15 @@ outputHPhase(const CalculationPartition & cp, int timestep)
         return;
     if (mCurrentSampleInterval >= mDurations.size())
         return;
-    while (timestep > mDurations[mCurrentSampleInterval].getLast())
+    while (timestep > mDurations[mCurrentSampleInterval].last())
     {
         mCurrentSampleInterval++;
         if (mCurrentSampleInterval >= mDurations.size())
             return;
     }
     
-    int firstT = mDurations[mCurrentSampleInterval].getFirst();
-    int period = mDurations[mCurrentSampleInterval].getPeriod();
+    int firstT = mDurations[mCurrentSampleInterval].first();
+    int period = mDurations[mCurrentSampleInterval].period();
     
     if (timestep >= firstT && (timestep - firstT)%period == 0)
         writeH(cp);
@@ -132,15 +132,15 @@ outputHPhase(const CalculationPartition & cp, int timestep)
 void SimpleEHOutput::
 writeE(const CalculationPartition & cp)
 {   
-    const InterleavedLattice & lattice(cp.getLattice());
+    const InterleavedLattice & lattice(cp.lattice());
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
         for (int outDir = 0; outDir < 3; outDir++)
         {   
             // The regions have been counter-rotated
-            Rect3i outRect = mRegions[rr].getYeeCells();
-            Vector3i outStride = mRegions[rr].getStride();
+            Rect3i outRect = mRegions[rr].yeeCells();
+            Vector3i outStride = mRegions[rr].stride();
             Vector3i p;
             
             if (mWhichE[outDir] != 0)
@@ -183,14 +183,14 @@ writeE(const CalculationPartition & cp)
 void SimpleEHOutput::
 writeH(const CalculationPartition & cp)
 {
-    const InterleavedLattice& lattice(cp.getLattice());
+    const InterleavedLattice& lattice(cp.lattice());
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
         for (int outDir = 0; outDir < 3; outDir++)
         {
-            Rect3i outRect = mRegions[rr].getYeeCells();
-            Vector3i outStride = mRegions[rr].getStride();
+            Rect3i outRect = mRegions[rr].yeeCells();
+            Vector3i outStride = mRegions[rr].stride();
             Vector3i p;
             
             if (mWhichH[outDir] != 0)
@@ -251,8 +251,8 @@ writeDescriptionFile(const VoxelizedPartition & vp,
     descFile << "datafile " << datafile << "\n";
     //descFile << "date " << to_iso_extended_string(today) << " "
     descFile << "date " << to_iso_extended_string(now) << "\n";
-    descFile << "dxyz " << cp.getDxyz() << "\n";
-    descFile << "dt " << cp.getDt() << "\n";
+    descFile << "dxyz " << cp.dxyz() << "\n";
+    descFile << "dt " << cp.dt() << "\n";
     
     if (!mIsInterpolated)
     {
@@ -298,18 +298,18 @@ writeDescriptionFile(const VoxelizedPartition & vp,
     for (nn = 0; nn < mRegions.size(); nn++)
     {
         descFile << "region "
-            << mRegions[nn].getYeeCells()-vp.getOriginYee()
+            << mRegions[nn].yeeCells()-vp.originYee()
             << " stride "
-            << mRegions[nn].getStride()
+            << mRegions[nn].stride()
             << "\n";
     }
     
     for (nn = 0; nn < mDurations.size(); nn++)
     {
         descFile << "duration from "
-            << mDurations[nn].getFirst() << " to "
-            << mDurations[nn].getLast() << " period "
-            << mDurations[nn].getPeriod() << "\n";
+            << mDurations[nn].first() << " to "
+            << mDurations[nn].last() << " period "
+            << mDurations[nn].period() << "\n";
     }
     
     descFile.close();

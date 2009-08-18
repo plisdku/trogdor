@@ -50,31 +50,31 @@ public:
 	const std::vector<Vector3i> & getHuygensRegionSymmetries() const {
 		return mHuygensRegionSymmetries; }
 	
-	const Rect3i & getGridHalfCells() const { return mGridHalfCells; }
-    Rect3i getGridYeeCells() const;
+	const Rect3i & gridHalfCells() const { return mGridHalfCells; }
+    Rect3i gridYeeCells() const;
     const Rect3i & getAllocHalfCells() const { return mFieldAllocHalfCells; }
     Rect3i getAllocYeeCells() const;
-    Vector3i getOriginYee() const { return mOriginYee; }
+    Vector3i originYee() const { return mOriginYee; }
 	bool partitionHasPML(int faceNum) const;
 	Rect3i getPMLHalfCellsOnFace(int faceNum) const;
 	Rect3i getPartitionPMLHalfCellsOnFace(int faceNum) const;
 	Rect3i getPMLHalfCells(Vector3i pmlDir) const;
     
     // returns      which material goes in which cell in this partition
-	const VoxelGrid & getVoxelGrid() const { return mVoxels; }
+	const VoxelGrid & voxelGrid() const { return mVoxels; }
     
     // returns      the index of each cell by material type (air #1, air #2...)
 	const Pointer<PartitionCellCount> & getIndices() const
 		{ return mCentralIndices; }
     
-    Pointer<InterleavedLattice> getLattice() const { return mLattice; }
+    Pointer<InterleavedLattice> lattice() const { return mLattice; }
     
     // returns      the structures that store temp data for setting up materials
-    const Map<Paint*, Pointer<RunlineEncoder> > & getSetupMaterials() const
+    const Map<Paint*, Pointer<RunlineEncoder> > & setupMaterials() const
         { return mSetupMaterials; }
     
     // returns      the structures that store temp data for setting up outputs
-    const std::vector<Pointer<SetupOutput> > & getSetupOutputs() const
+    const std::vector<Pointer<SetupOutput> > & setupOutputs() const
         { return mSetupOutputs; }
     
     // returns      the structures that store temp data for setting up sources
@@ -85,7 +85,7 @@ public:
     const std::vector<Pointer<SetupSource> > & getHardSetupSources() const
         { return mHardSetupSources; }
     
-    const std::vector<Pointer<SetupCurrentSource> > & getSetupCurrentSources()
+    const std::vector<Pointer<SetupCurrentSource> > & setupCurrentSources()
         const { return mSetupCurrentSources; }
     
     // returns      the structures that store temp data for setting up NBs

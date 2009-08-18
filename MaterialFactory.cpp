@@ -78,7 +78,7 @@ newRunlineEncoder(const VoxelGrid & vg,
     RunlineEncoderPtr setupMat;
 	const MaterialDescription* bulkMaterial = parentPaint->getBulkMaterial();
     const Map<Vector3i, Map<string, string> > & gridPMLParams(
-        gridDesc.getPMLParams());
+        gridDesc.pmlParams());
     Map<Vector3i, Map<string, string> > pmlParams;
     
     //LOG << "Hey, grid pml: \n";
@@ -95,7 +95,7 @@ newRunlineEncoder(const VoxelGrid & vg,
     {
         pmlParams = defaultPMLParams();
         const Map<Vector3i, Map<string, string> > & matParams =
-            bulkMaterial->getPMLParams();
+            bulkMaterial->pmlParams();
         
         for (int sideNum = 0; sideNum < 6; sideNum++)
         {
@@ -118,7 +118,7 @@ newRunlineEncoder(const VoxelGrid & vg,
     }
     
     setupMat = newMaterialCurrentPML(parentPaint, numCellsE, numCellsH,
-        pmlRects, pmlParams, gridDesc.getDxyz(), gridDesc.getDt(),
+        pmlRects, pmlParams, gridDesc.dxyz(), gridDesc.dt(),
         runlineDirection);
     
 	//LOG << "Getting delegate for " << *parentPaint << ".\n"; 
@@ -126,65 +126,65 @@ newRunlineEncoder(const VoxelGrid & vg,
     if (0 == parentPaint->isPML())
     {
         
-        if (bulkMaterial->getModelName() == "StaticDielectric")
+        if (bulkMaterial->modelName() == "StaticDielectric")
         {
             setupMat = RunlineEncoderPtr(
                 new SimpleSetupMaterial<StaticDielectric, SimpleRunline>(
-                    parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
-                    gridDesc.getDt()));
+                    parentPaint, numCellsE, numCellsH, gridDesc.dxyz(),
+                    gridDesc.dt()));
         }
-        else if (bulkMaterial->getModelName() == "StaticLossyDielectric")
+        else if (bulkMaterial->modelName() == "StaticLossyDielectric")
         {
             setupMat = RunlineEncoderPtr(
                 new SimpleSetupMaterial<StaticLossyDielectric, SimpleRunline>(
-                    parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
-                    gridDesc.getDt()));
+                    parentPaint, numCellsE, numCellsH, gridDesc.dxyz(),
+                    gridDesc.dt()));
         }
-        else if (bulkMaterial->getModelName() == "DrudeMetal1")
+        else if (bulkMaterial->modelName() == "DrudeMetal1")
         {
             setupMat = RunlineEncoderPtr(
                 new SimpleSetupMaterial<DrudeModel1, SimpleAuxRunline>(
-                    parentPaint, numCellsE, numCellsH, gridDesc.getDxyz(),
-                    gridDesc.getDt()));
+                    parentPaint, numCellsE, numCellsH, gridDesc.dxyz(),
+                    gridDesc.dt()));
         }
-        else if (bulkMaterial->getModelName() == "PerfectConductor")
+        else if (bulkMaterial->modelName() == "PerfectConductor")
         {
             setupMat = RunlineEncoderPtr(new SetupPerfectConductor);
         }
         else
         {
             throw(Exception(string("Unsupported material model: ") + 
-                bulkMaterial->getModelName()));
+                bulkMaterial->modelName()));
         }
     }
     else
     {
-        if (bulkMaterial->getModelName() == "StaticDielectric")
+        if (bulkMaterial->modelName() == "StaticDielectric")
         {
             setupMat = newCFSRIPML<StaticDielectric, SimpleAuxPMLRunline>(
                 parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
-                gridDesc.getDxyz(), gridDesc.getDt(), runlineDirection);
+                gridDesc.dxyz(), gridDesc.dt(), runlineDirection);
         }
-        else if (bulkMaterial->getModelName() == "StaticLossyDielectric")
+        else if (bulkMaterial->modelName() == "StaticLossyDielectric")
         {
             setupMat = newCFSRIPML<StaticLossyDielectric, SimpleAuxPMLRunline>(
                 parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
-                gridDesc.getDxyz(), gridDesc.getDt(), runlineDirection);
+                gridDesc.dxyz(), gridDesc.dt(), runlineDirection);
         }
-        else if (bulkMaterial->getModelName() == "DrudeMetal1")
+        else if (bulkMaterial->modelName() == "DrudeMetal1")
         {
             setupMat = newCFSRIPML<DrudeModel1, SimpleAuxPMLRunline>(
                 parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
-                gridDesc.getDxyz(), gridDesc.getDt(), runlineDirection);
+                gridDesc.dxyz(), gridDesc.dt(), runlineDirection);
         }
-        else if (bulkMaterial->getModelName() == "PerfectConductor")
+        else if (bulkMaterial->modelName() == "PerfectConductor")
         {
             setupMat = RunlineEncoderPtr(new SetupPerfectConductor);
         }
         else
         {
             throw(Exception(string("Unsupported PML material model: ") + 
-                bulkMaterial->getModelName()));
+                bulkMaterial->modelName()));
         }
     }
     */
@@ -229,35 +229,35 @@ static RunlineEncoderPtr newMaterialCurrentPML(Paint* parentPaint,
 	const MaterialDescription* bulkMaterial = parentPaint->getBulkMaterial();
     RunlineEncoderPtr setupMaterial;
     
-    if (bulkMaterial->getModelName() == "StaticDielectric")
+    if (bulkMaterial->modelName() == "StaticDielectric")
     {
         setupMaterial = newCurrentPML<StaticDielectric, SimpleRunline,
             SimpleAuxPMLRunline>(
                 parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
                 dxyz, dt, runlineDirection);
     }
-    else if (bulkMaterial->getModelName() == "StaticLossyDielectric")
+    else if (bulkMaterial->modelName() == "StaticLossyDielectric")
     {
         setupMaterial = newCurrentPML<StaticLossyDielectric, SimpleRunline,
             SimpleAuxPMLRunline>(
                 parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
                 dxyz, dt, runlineDirection);
     }
-    else if (bulkMaterial->getModelName() == "DrudeMetal1")
+    else if (bulkMaterial->modelName() == "DrudeMetal1")
     {
         setupMaterial = newCurrentPML<DrudeModel1, SimpleAuxRunline,
             SimpleAuxPMLRunline>(
                 parentPaint, numCellsE, numCellsH, pmlRects, pmlParams,
                 dxyz, dt, runlineDirection);
     }
-    else if (bulkMaterial->getModelName() == "PerfectConductor")
+    else if (bulkMaterial->modelName() == "PerfectConductor")
     {
         setupMaterial = RunlineEncoderPtr(new SetupPerfectConductor);
     }
     else
     {
         throw(Exception(string("Unsupported PML material model: ") + 
-            bulkMaterial->getModelName()));
+            bulkMaterial->modelName()));
     }
     
     return setupMaterial;

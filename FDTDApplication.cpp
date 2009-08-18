@@ -68,7 +68,7 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
 	
     t0 = getTimeInMicroseconds();
 	SimulationDescPtr sim = loadSimulation(parameterFile);
-    mNumT = sim->getDuration();
+    mNumT = sim->duration();
     t1 = getTimeInMicroseconds();
     mPerformance.setReadDescriptionMicroseconds(t1-t0);
 	
@@ -267,7 +267,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	
     /*
     LOG << "Recursing:\n";
-	LOGMORE << "Recursing for grid " << currentGrid->getName() << ".\n";
+	LOGMORE << "Recursing for grid " << currentGrid->name() << ".\n";
 	LOGMORE << "I am partition " << thisNode << " of " << numNodes << ".\n";
 	LOGMORE << "My node partition region is " << partitionWallsHalf << "\n";
 	LOGMORE << "My partition is " << myPartitionHalfCells << ".\n";
@@ -281,7 +281,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		LOGF << "Adding an Extrude command to implement PML.\n";
 		
 		InstructionPtr extendThisRegion(new Extrude(
-			currentGrid->getNonPMLHalfCells(),
+			currentGrid->nonPMLHalfCells(),
 			currentGrid->getHalfCellBounds() ));
 		vector<InstructionPtr> assemblyStuff(
 			currentGrid->getAssembly()->getInstructions());
@@ -306,7 +306,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	assert(surfs.size() == gridSymmetries.size());
 	
 	for (unsigned int nn = 0; nn < surfs.size(); nn++)
-    if (surfs[nn]->getType() == kLink)
+    if (surfs[nn]->type() == kLink)
     {
 //        LOG << "Links don't recurse.\n";
     }
@@ -326,7 +326,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		{
 			//LOG << "Collapsing the grid.\n";		
 			ostringstream auxGridName;
-			auxGridName << currentGrid->getName() << "_autoaux_" << nn;
+			auxGridName << currentGrid->name() << "_autoaux_" << nn;
 			GridDescPtr gPtr = makeAuxGridDescription(collapsible,
 				currentGrid, surfs[nn], auxGridName.str());
 			
@@ -343,11 +343,11 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		}
 		else if (currentGrid->getNumDimensions() == 1)
 		{
-            assert(surfs[nn]->getType() != kLink); // how could this happen?
+            assert(surfs[nn]->type() != kLink); // how could this happen?
             
 			//LOG << "Need to create last aux grid.\n";
 			ostringstream srcGridName;
-			srcGridName << currentGrid->getName() << "_autosrc";
+			srcGridName << currentGrid->name() << "_autosrc";
 			
 			// makeSourceGridDescription will decide based on the
 			// number of omitted sides whether to again make a TFSF
@@ -357,7 +357,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 			voxelizeGridRecursor(voxelizedGrids, gPtr, numNodes, thisNode,
 				partitionWallsHalf, runlineDirection);
 		}
-		else if (surfs[nn]->getType() != kCustomTFSFSource)
+		else if (surfs[nn]->type() != kCustomTFSFSource)
 		{
 			cerr << "Error: we need a TFSF source, but the grid is not "
 				"collapsible and the current grid is not 1D yet.  Dying.\n";
@@ -365,7 +365,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		}
         else
         {
-            assert(surfs[nn]->getType() == kCustomTFSFSource);
+            assert(surfs[nn]->type() == kCustomTFSFSource);
             voxelizedGrids[currentGrid]->writeDataRequest(surfs[nn],
                 currentGrid);
         }
@@ -380,7 +380,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	int nn;
     //Mat3i collapser(Mat3i::diagonal(1-collapsible));
     Mat3i collapser(Mat3i::diagonal(!collapsible));
-    Vector3i originYee(collapser*parentGrid->getOriginYee());
+    Vector3i originYee(collapser*parentGrid->originYee());
 	
 	const set<Vector3i> & omittedSides = huygensSurface->getOmittedSides();
 	
@@ -453,20 +453,20 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 		gridHalfCells, // calc region
 		nonPMLHalfCells,
 		originYee,
-        parentGrid->getDxyz(),
-        parentGrid->getDt()));
+        parentGrid->dxyz(),
+        parentGrid->dt()));
 	
 	HuygensSurfaceDescPtr childSource;
-	if (huygensSurface->getType() == kTFSFSource)
+	if (huygensSurface->type() == kTFSFSource)
 	{
 		//	Omitting the "back side" is harmless in aux grids, and desirable
 		//  for 1D aux grids in the terminal recursion.
 		set<Vector3i> newSourceOmittedSides(omittedSides);
 		newSourceOmittedSides.insert(huygensSurface->getDirection());
-        if (huygensSurface->getFormula() != "")
+        if (huygensSurface->formula() != "")
             childSource = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
-                newTFSFFormulaSource(huygensSurface->getSourceFields(),
-                    huygensSurface->getFormula(),
+                newTFSFFormulaSource(huygensSurface->sourceFields(),
+                    huygensSurface->formula(),
                     huygensSurface->getDirection(),
                     tfHalfCells,
                     ///huygensSurface->getHalfCells(),
@@ -474,22 +474,22 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
                     huygensSurface->isTotalField()));
         else
             childSource = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
-                newTFSFTimeSource(huygensSurface->getSourceFields(),
-                    huygensSurface->getTimeFile(),
+                newTFSFTimeSource(huygensSurface->sourceFields(),
+                    huygensSurface->timeFile(),
                     huygensSurface->getDirection(),
                     tfHalfCells,
                     //huygensSurface->getHalfCells(),
                     newSourceOmittedSides,
                     huygensSurface->isTotalField()));
     }
-	else if (huygensSurface->getType() == kCustomTFSFSource)
+	else if (huygensSurface->type() == kCustomTFSFSource)
 	{
 		childSource = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
             newCustomTFSFSource(
-			huygensSurface->getFile(),
+			huygensSurface->file(),
 			huygensSurface->getSymmetries(),
             tfHalfCells,
-            huygensSurface->getDuration(),
+            huygensSurface->duration(),
 			huygensSurface->getOmittedSides(),
             huygensSurface->isTotalField()));
 	}
@@ -514,12 +514,12 @@ GridDescPtr FDTDApplication::
 makeSourceGridDescription(GridDescPtr parentGrid,
 	HuygensSurfaceDescPtr huygensSurface, string srcGridName)
 {
-	assert(huygensSurface->getType() == kTFSFSource);
+	assert(huygensSurface->type() == kTFSFSource);
 	int nn;
 	
 	const set<Vector3i> & omittedSides = huygensSurface->getOmittedSides();
 	Vector3i srcDir = huygensSurface->getDirection();
-	Vector3i origin = parentGrid->getOriginYee();
+	Vector3i origin = parentGrid->originYee();
     
     //LOG << omittedSides << "\n";
 	
@@ -601,8 +601,8 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 		gridBounds, // calc region
 		nonPMLRect,
 		origin,
-        parentGrid->getDxyz(),
-        parentGrid->getDt()));
+        parentGrid->dxyz(),
+        parentGrid->dt()));
 	
 	vector<HuygensSurfaceDescPtr> huygensSurfaces; // might end up empty!
 	vector<SourceDescPtr> hardSources; // or this will be empty.
@@ -620,13 +620,13 @@ makeSourceGridDescription(GridDescPtr parentGrid,
         vector<Region> regions(1, Region(Rect3i(srcYeeCell,srcYeeCell)));
         
 		SourceDescPtr sPtr(new SourceDescription(
-            huygensSurface->getSourceFields(),
-			huygensSurface->getFormula(),
-			huygensSurface->getTimeFile(),
+            huygensSurface->sourceFields(),
+			huygensSurface->formula(),
+			huygensSurface->timeFile(),
 			"", // HuygensSurface has no spaceTimeFile (TFSFSource anyway)
             SIGNIFIESHARDSOURCE,
             regions,
-            vector<Duration>(1,huygensSurface->getDuration())));
+            vector<Duration>(1,huygensSurface->duration())));
 		hardSources.push_back(sPtr);
 	}
 	else
@@ -681,8 +681,8 @@ makeCalculationGrids(const SimulationDescPtr sim,
     {
         CalculationPartitionPtr calcPart(
             new CalculationPartition(*itr->second,
-                sim->getDxyz(), sim->getDt(), sim->getDuration()));
-        calcs[itr->first->getName()] = calcPart;
+                sim->dxyz(), sim->dt(), sim->duration()));
+        calcs[itr->first->name()] = calcPart;
     }
 }
 

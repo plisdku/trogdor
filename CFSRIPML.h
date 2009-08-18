@@ -25,7 +25,7 @@ public:
         float dt, int runlineDirection );
     virtual ~CFSRIPMLBase() {}
     
-    std::string getModelName() const;
+    std::string modelName() const;
     
     virtual void allocateAuxBuffers();
         

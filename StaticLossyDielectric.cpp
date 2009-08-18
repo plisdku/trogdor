@@ -26,12 +26,12 @@ StaticLossyDielectric(
     m_mur(1.0),
     m_sigma(0.0)
 {
-    if (descrip.getParams().count("epsr"))
-        istringstream(descrip.getParams()["epsr"]) >> m_epsr;
-    if (descrip.getParams().count("mur"))
-        istringstream(descrip.getParams()["mur"]) >> m_mur;
-    if (descrip.getParams().count("sigma"))
-        istringstream(descrip.getParams()["sigma"]) >> m_sigma;
+    if (descrip.params().count("epsr"))
+        istringstream(descrip.params()["epsr"]) >> m_epsr;
+    if (descrip.params().count("mur"))
+        istringstream(descrip.params()["mur"]) >> m_mur;
+    if (descrip.params().count("sigma"))
+        istringstream(descrip.params()["sigma"]) >> m_sigma;
     
     m_ce1 = (2*m_epsr*Constants::eps0 - m_sigma*dt) /
         (2*m_epsr*Constants::eps0 + m_sigma*dt);
@@ -40,7 +40,7 @@ StaticLossyDielectric(
 }
 
 string StaticLossyDielectric::
-getModelName() const
+modelName() const
 {
     return string("StaticLossyDielectric");
 }

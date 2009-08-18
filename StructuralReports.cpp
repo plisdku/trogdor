@@ -33,16 +33,16 @@ void StructuralReports::
 saveOutputCrossSections(const GridDescription & grid,
     const VoxelizedPartition & vp)
 {
-    const vector<OutputDescPtr> & outs = grid.getOutputs();
+    const vector<OutputDescPtr> & outs = grid.outputs();
     
     // For each output, select all regions which are 2D.  We'll output cross-
     // sections for these.
     for (int nn = 0; nn < outs.size(); nn++)
-    for (int mm = 0; mm < outs[nn]->getRegions().size(); mm++)
-    if (outs[nn]->getRegions()[mm].getYeeCells().numNonSingularDims() == 2)
+    for (int mm = 0; mm < outs[nn]->regions().size(); mm++)
+    if (outs[nn]->regions()[mm].yeeCells().numNonSingularDims() == 2)
     {
-        const Region & region(outs[nn]->getRegions()[mm]);
-        Rect3i r(region.getYeeCells());
+        const Region & region(outs[nn]->regions()[mm]);
+        Rect3i r(region.yeeCells());
         
         //LOG << "printing.\n";
         int nCols, nRows;
@@ -109,7 +109,7 @@ saveOutputCrossSections(const GridDescription & grid,
         // No, I mean I am not writing them because I don't want to have to
         // define an "edge" cell at the "edge" of the output region.
         Vector3i v1, v2, v3, v4; // this is cheezy.
-        const VoxelGrid & vox(vp.getVoxelGrid());
+        const VoxelGrid & vox(vp.voxelGrid());
         for (int rr = 1; rr < nRows-2; rr++)
         {
             //  rowStart and here are in half cells
@@ -136,7 +136,7 @@ saveOutputCrossSections(const GridDescription & grid,
             }
         }
         ostringstream fileName; 
-        fileName << outs[nn]->getFile() << "_region_" << mm << ".bmp";
+        fileName << outs[nn]->file() << "_region_" << mm << ".bmp";
         image.write(fileName.str().c_str());
     }
 }
@@ -149,13 +149,13 @@ saveMaterialBoundariesBeta(const GridDescription & grid,
 	int ii,jj,kk;
     
 	ostringstream foutname;
-	foutname << grid.getName() << "_faces.obj";
+	foutname << grid.name() << "_faces.obj";
 	ofstream fout(foutname.str().c_str());
 	
-    const Map<Paint*, RunlineEncoderPtr> materials(vp.getSetupMaterials());
+    const Map<Paint*, RunlineEncoderPtr> materials(vp.setupMaterials());
     map<Paint*, RunlineEncoderPtr>::const_iterator itr;
     
-    const VoxelGrid & vg(vp.getVoxelGrid());
+    const VoxelGrid & vg(vp.voxelGrid());
 	//const StructureGrid& grid = *mStructureGrid;
 	
 	// We'll write the materials one at a time.
@@ -164,7 +164,7 @@ saveMaterialBoundariesBeta(const GridDescription & grid,
 		Paint* paint = (*itr).first->withoutModifications();
 		RunlineEncoderPtr mat = (*itr).second;
         string name = paint->getFullName();
-        Rect3i roi = grid.getNonPMLHalfCells();
+        Rect3i roi = grid.nonPMLHalfCells();
 		Paint* lastMat;
         Paint* curMat;
 		

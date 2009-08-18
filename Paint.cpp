@@ -67,7 +67,7 @@ string Paint::
 getFullName() const
 {
     ostringstream str;
-    str << mBulkMaterial->getName();
+    str << mBulkMaterial->name();
     
 	if (mType == kBulkPaintType)
 		str << " bulk";

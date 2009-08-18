@@ -64,6 +64,8 @@ FormulaCurrentSource.h
 FormulaCurrentSource.cpp
 FormulaSource.h
 FormulaSource.cpp
+GeneralRunlineEncoder.h
+GeneralRunlineEncoder.cpp
 HuygensSurface.h
 HuygensSurface.cpp
 HuygensLink.h

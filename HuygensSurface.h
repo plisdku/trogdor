@@ -52,11 +52,11 @@ public:
     bool hasBuffer(int side) const { return mNeighborBuffers.at(side) != 0L; }
     NeighborBufferPtr buffer(int side) const
         { return mNeighborBuffers.at(side); }
-    const std::vector<NeighborBufferPtr> & getNeighborBuffers() const
+    const std::vector<NeighborBufferPtr> & neighborBuffers() const
         { return mNeighborBuffers; }
     
-    InterleavedLatticePtr getDestLattice() const { return mDestLattice; }
-    InterleavedLatticePtr getSourceLattice() const { return mSourceLattice; }
+    InterleavedLatticePtr destLattice() const { return mDestLattice; }
+    InterleavedLatticePtr sourceLattice() const { return mSourceLattice; }
     void allocate();
     
     void setUpdater(HuygensUpdatePtr update) { mUpdate = update; }
@@ -99,7 +99,7 @@ public:
     float getSourceFactorE(int fieldDirection) const;
     float getSourceFactorH(int fieldDirection) const;
     
-    InterleavedLatticePtr getLattice() const { return mLattice; }
+    InterleavedLatticePtr lattice() const { return mLattice; }
 private:
     Rect3i getEdgeHalfCells(const Rect3i & halfCells, int nSide);
     void initFactors(const Rect3i & huygensHalfCells, int sideNum,

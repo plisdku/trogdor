@@ -175,7 +175,7 @@ setNumCellsE(int fieldDir, int numCells, Paint* parentPaint)
     int kDir = (jDir+1)%3;
     char fieldChar = '0' + fieldDir;
     Vector3i pmlDir = parentPaint->getPMLDirections();
-    string prefix = parentPaint->getBulkMaterial()->getName() + " accum E";
+    string prefix = parentPaint->getBulkMaterial()->name() + " accum E";
     
     if (pmlDir[jDir])
     {
@@ -197,7 +197,7 @@ setNumCellsH(int fieldDir, int numCells, Paint* parentPaint)
     int kDir = (jDir+1)%3;
     char fieldChar = '0' + fieldDir;
     Vector3i pmlDir = parentPaint->getPMLDirections();
-    string prefix = parentPaint->getBulkMaterial()->getName() + " accum H";
+    string prefix = parentPaint->getBulkMaterial()->name() + " accum H";
     
     if (pmlDir[jDir])
     {
@@ -378,22 +378,22 @@ allocateAuxBuffers()
         if (mPMLDirection[jDir] != 0)
         {
             p = mBufAccumEj[fieldDir];
-            mAccumEj[fieldDir].resize(p->getLength());
+            mAccumEj[fieldDir].resize(p->length());
             p->setHeadPointer(&(mAccumEj[fieldDir][0]));
             
             p = mBufAccumHj[fieldDir];
-            mAccumHj[fieldDir].resize(p->getLength());
+            mAccumHj[fieldDir].resize(p->length());
             p->setHeadPointer(&(mAccumHj[fieldDir][0]));
         }
         
         if (mPMLDirection[kDir] != 0)
         {
             p = mBufAccumEk[fieldDir];
-            mAccumEk[fieldDir].resize(p->getLength());
+            mAccumEk[fieldDir].resize(p->length());
             p->setHeadPointer(&(mAccumEk[fieldDir][0]));
             
             p = mBufAccumHk[fieldDir];
-            mAccumHk[fieldDir].resize(p->getLength());
+            mAccumHk[fieldDir].resize(p->length());
             p->setHeadPointer(&(mAccumHk[fieldDir][0]));
         }
     }

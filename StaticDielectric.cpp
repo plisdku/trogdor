@@ -32,10 +32,10 @@ StaticDielectric(
     m_epsr(1.0),
     m_mur(1.0)
 {
-    if (descrip.getParams().count("epsr"))
-        istringstream(descrip.getParams()["epsr"]) >> m_epsr;
-    if (descrip.getParams().count("mur"))
-        istringstream(descrip.getParams()["mur"]) >> m_mur;
+    if (descrip.params().count("epsr"))
+        istringstream(descrip.params()["epsr"]) >> m_epsr;
+    if (descrip.params().count("mur"))
+        istringstream(descrip.params()["mur"]) >> m_mur;
     
     m_ce1 = dt/m_epsr/Constants::eps0;
     m_ch1 = dt/m_mur/Constants::mu0;
@@ -44,7 +44,7 @@ StaticDielectric(
 }
 
 string StaticDielectric::
-getModelName() const
+modelName() const
 {
     return "StaticDielectric";
 }

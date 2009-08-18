@@ -28,11 +28,11 @@ newSetupOutput(const VoxelizedPartition & vp, const OutputDescPtr & desc)
 {
     Vector3i threeFalses(0,0,0);
     
-    if (desc->getWhichJ() == threeFalses && desc->getWhichP() == threeFalses &&
-        desc->getWhichP() == threeFalses && desc->getWhichM() == threeFalses)
+    if (desc->whichJ() == threeFalses && desc->whichP() == threeFalses &&
+        desc->whichP() == threeFalses && desc->whichM() == threeFalses)
         return SetupOutputPtr(new SimpleEHSetupOutput(desc));
-    else if (desc->getWhichH() == threeFalses &&
-        desc->getWhichE() == threeFalses)
+    else if (desc->whichH() == threeFalses &&
+        desc->whichE() == threeFalses)
         return SetupOutputPtr(new CurrentPolarizationSetupOutput(desc, vp));
     
     LOG << "Using default (null) output... and crashing.\n";

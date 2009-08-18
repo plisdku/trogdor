@@ -62,21 +62,21 @@ void VoxelGrid::
 paintBlock(const GridDescription & gridDesc,
 	const Block & instruction)
 {
-	Paint* paint = Paint::getPaint(instruction.getMaterial());
+	Paint* paint = Paint::getPaint(instruction.material());
 	
 	Rect3i halfCells;
-	if (instruction.getFillStyle() == kPECStyle)
+	if (instruction.fillStyle() == kPECStyle)
 	{
-		halfCells = yeeToHalf(instruction.getYeeRect());
+		halfCells = yeeToHalf(instruction.yeeRect());
 		halfCells.p2 += Vector3i(1,1,1);
 	}
-	else if (instruction.getFillStyle() == kPMCStyle)
+	else if (instruction.fillStyle() == kPMCStyle)
 	{
-		halfCells = yeeToHalf(instruction.getYeeRect());
+		halfCells = yeeToHalf(instruction.yeeRect());
 		halfCells.p1 -= Vector3i(1,1,1);
 	}
-	else if (instruction.getFillStyle() == kHalfCellStyle)
-		halfCells = instruction.getHalfRect();
+	else if (instruction.fillStyle() == kHalfCellStyle)
+		halfCells = instruction.halfRect();
 	else
 		assert(!"Unknown fill style!");
 	
@@ -96,10 +96,10 @@ void VoxelGrid::
 paintKeyImage(const GridDescription & gridDesc,
 	const KeyImage & instruction)
 {
-	Rect3i yeeRect = instruction.getYeeRect();
-	vector<ColorKey> keys = instruction.getKeys();
-	Vector3i u1 = instruction.getRowDirection();
-	Vector3i u2 = -instruction.getColDirection();
+	Rect3i yeeRect = instruction.yeeRect();
+	vector<ColorKey> keys = instruction.keys();
+	Vector3i u1 = instruction.rowDirection();
+	Vector3i u2 = -instruction.columnDirection();
 	Vector3i u3 = cross(u1, u2);
 	assert(norm2(u3) == 1);
 	int nUp = abs(dot(u3, yeeRect.p2-yeeRect.p1)) + 1;
@@ -115,11 +115,11 @@ paintKeyImage(const GridDescription & gridDesc,
 	// now the image!
 	Magick::Image keyImage;
 	try {
-		keyImage.read(instruction.getImageFileName());
+		keyImage.read(instruction.imageFileName());
 		for (unsigned int nKey = 0; nKey < keys.size(); nKey++)
 		{
-			FillStyle style = keys[nKey].getFillStyle();
-			Paint* paint = Paint::getPaint(keys[nKey].getMaterial());
+			FillStyle style = keys[nKey].fillStyle();
+			Paint* paint = Paint::getPaint(keys[nKey].material());
 			
 			// iterate over rows and columns of the image; extrude into grid
 			for (unsigned int row = 0; row < keyImage.rows(); row++)
@@ -128,7 +128,7 @@ paintKeyImage(const GridDescription & gridDesc,
 				Vector3i color = sConvertColor(
 					keyImage.pixelColor(col, row)); // column is x in img
 				
-				if (color == keys[nKey].getColor())
+				if (color == keys[nKey].color())
 				{
 					Vector3i p = fillOrigin +
 						matrixImgToGrid*Vector3i(col, row, 0);
@@ -157,10 +157,10 @@ void VoxelGrid::
 paintHeightMap(const GridDescription & gridDesc,
 	const HeightMap & instruction)
 {
-	Rect3i yeeRect = instruction.getYeeRect();
-	Vector3i u1 = instruction.getRowDirection();
-	Vector3i u2 = -instruction.getColDirection();
-	Vector3i u3 = instruction.getUpDirection();
+	Rect3i yeeRect = instruction.yeeRect();
+	Vector3i u1 = instruction.rowDirection();
+	Vector3i u2 = -instruction.columnDirection();
+	Vector3i u3 = instruction.upDirection();
 	
 	int nUp = abs(dot(u3, yeeRect.p2-yeeRect.p1)) + 1;
 	
@@ -175,9 +175,9 @@ paintHeightMap(const GridDescription & gridDesc,
 	// now the image!
 	Magick::Image heightMap;
 	try {
-		heightMap.read(instruction.getImageFileName());
-		FillStyle style = instruction.getFillStyle();
-		Paint* paint = Paint::getPaint(instruction.getMaterial());
+		heightMap.read(instruction.imageFileName());
+		FillStyle style = instruction.fillStyle();
+		Paint* paint = Paint::getPaint(instruction.material());
 		
 		// iterate over rows and columns of the image; extrude into grid
 		for (unsigned int row = 0; row < heightMap.rows(); row++)
@@ -211,14 +211,14 @@ paintEllipsoid(const GridDescription & gridDesc,
 {
 	int ii, jj, kk, iYee, jYee, kYee;
 	LOG << "Warning: this probably has bugs in it.\n";
-	Paint* paint = Paint::getPaint(instruction.getMaterial());
+	Paint* paint = Paint::getPaint(instruction.material());
 	
-	if (instruction.getFillStyle() == kPECStyle ||
-		instruction.getFillStyle() == kPMCStyle)
+	if (instruction.fillStyle() == kPECStyle ||
+		instruction.fillStyle() == kPMCStyle)
 	{
-		//halfCells = instruction.getYeeRect();
+		//halfCells = instruction.yeeRect();
 		//halfCells.p2 += Vector3i(1,1,1);
-		Rect3i yeeRect = instruction.getYeeRect();
+		Rect3i yeeRect = instruction.yeeRect();
 		Vector3i centerTimesTwo = yeeRect.p1 + yeeRect.p2;
 		Vector3i extent = yeeRect.p2 - yeeRect.p1 + Vector3i(1,1,1);
 		Vector3d radii = 0.5*Vector3d(extent[0], extent[1], extent[2]);
@@ -226,8 +226,8 @@ paintEllipsoid(const GridDescription & gridDesc,
 			centerTimesTwo[2]);
 		
 		// Don't clip: we clip in the paint routines.
-		//Rect3i fillRect(clip(gridDesc.getYeeBounds(), yeeRect.p1),
-		//	clip(gridDesc.getYeeBounds(), yeeRect.p2));
+		//Rect3i fillRect(clip(gridDesc.yeeBounds(), yeeRect.p1),
+		//	clip(gridDesc.yeeBounds(), yeeRect.p2));
 		Rect3i fillRect(yeeRect);
 		
 		for (kYee = fillRect.p1[2]; kYee <= fillRect.p2[2]; kYee++)
@@ -241,15 +241,15 @@ paintEllipsoid(const GridDescription & gridDesc,
 			v[2] /= radii[2];
 			
 			if (norm2(v) <= 1.00001) // give it room for error
-			if (instruction.getFillStyle() == kPECStyle)
+			if (instruction.fillStyle() == kPECStyle)
 				paintPEC(paint, iYee, jYee, kYee);
 			else
 				paintPEC(paint, iYee, jYee, kYee);
 		}
 	}
-	else if (instruction.getFillStyle() == kHalfCellStyle)
+	else if (instruction.fillStyle() == kHalfCellStyle)
 	{
-		Rect3i halfCells = instruction.getYeeRect();
+		Rect3i halfCells = instruction.yeeRect();
 		halfCells.p2 += Vector3i(1,1,1);
 		halfCells = halfCells;
 		
@@ -261,7 +261,7 @@ paintEllipsoid(const GridDescription & gridDesc,
 		// Don't clip: we clip in the paint routines
 		//halfCells = clip(halfCells, mAllocRegion);
 				
-		if (instruction.getFillStyle() == kHalfCellStyle)
+		if (instruction.fillStyle() == kHalfCellStyle)
 		{
 			for (kk = halfCells.p1[2]; kk <= halfCells.p2[2]; kk++)
 			for (jj = halfCells.p1[1]; jj <= halfCells.p2[1]; jj++)
@@ -284,8 +284,8 @@ paintCopyFrom(const GridDescription & gridDesc,
 	const CopyFrom & instruction,
 	const VoxelGrid & grid2)
 {
-	Rect3i copyFrom = instruction.getSourceHalfRect();
-	Rect3i copyTo = instruction.getDestHalfRect();
+	Rect3i copyFrom = instruction.sourceHalfRect();
+	Rect3i copyTo = instruction.destHalfRect();
 	int nn;
 	
 	for (nn = 0; nn < 3; nn++)
@@ -330,8 +330,8 @@ void VoxelGrid::
 paintExtrude(const GridDescription & gridDesc, const Extrude & instruction)
 {
 	int ii,jj,kk;
-	Rect3i fill = instruction.getExtrudeTo();
-	Rect3i from = instruction.getExtrudeFrom();
+	Rect3i fill = instruction.extrudeTo();
+	Rect3i from = instruction.extrudeFrom();
 	
 	// These two clipping steps here are why the Extrude instruction is not
 	// enabled for MPI.
@@ -405,21 +405,21 @@ overlayCurrentSource(const SetupCurrentSource & current)
     Rect3i yeeCells;
     int rr;
     
-    const CurrentSourceDescription & description = *current.getDescription();
+    const CurrentSourceDescription & description = *current.description();
     
     // Paint the source for electric currents
     for (fieldDirection = 0; fieldDirection < 3; fieldDirection++)
-    if (description.getSourceCurrents().getWhichJ()[fieldDirection] != 0)
+    if (description.sourceCurrents().whichJ()[fieldDirection] != 0)
     {
-        for (rr = 0; rr < description.getRegions().size(); rr++)
+        for (rr = 0; rr < description.regions().size(); rr++)
         {
-            yeeCells = description.getRegions()[rr].getYeeCells();
+            yeeCells = description.regions()[rr].yeeCells();
             for (p[2] = yeeCells.p1[2]; p[2] <= yeeCells.p2[2]; p[2]++)
             for (p[1] = yeeCells.p1[1]; p[1] <= yeeCells.p2[1]; p[1]++)
             for (p[0] = yeeCells.p1[0]; p[0] <= yeeCells.p2[0]; p[0]++)
             {
                 Paint* paint = (*this)(yeeToHalf(p, octantE(fieldDirection)))
-                    ->withCurrentSource(current.getDescription());
+                    ->withCurrentSource(current.description());
                 paintHalfCell(paint, yeeToHalf(p, octantE(fieldDirection)));
             }
         }
@@ -427,17 +427,17 @@ overlayCurrentSource(const SetupCurrentSource & current)
     
     // Paint the source for magnetic currents
     for (fieldDirection = 0; fieldDirection < 3; fieldDirection++)
-    if (description.getSourceCurrents().getWhichK()[fieldDirection] != 0)
+    if (description.sourceCurrents().whichK()[fieldDirection] != 0)
     {
-        for (rr = 0; rr < description.getRegions().size(); rr++)
+        for (rr = 0; rr < description.regions().size(); rr++)
         {
-            yeeCells = description.getRegions()[rr].getYeeCells();
+            yeeCells = description.regions()[rr].yeeCells();
             for (p[2] = yeeCells.p1[2]; p[2] <= yeeCells.p2[2]; p[2]++)
             for (p[1] = yeeCells.p1[1]; p[1] <= yeeCells.p2[1]; p[1]++)
             for (p[0] = yeeCells.p1[0]; p[0] <= yeeCells.p2[0]; p[0]++)
             {
                 Paint* paint = (*this)(yeeToHalf(p, octantH(fieldDirection)))
-                    ->withCurrentSource(current.getDescription());
+                    ->withCurrentSource(current.description());
                 paintHalfCell(paint, yeeToHalf(p, octantH(fieldDirection)));
             }
         }

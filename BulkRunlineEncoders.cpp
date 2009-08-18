@@ -39,9 +39,9 @@ void BulkRunlineEncoder::
 startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 {
 	int nSide;
-	const VoxelGrid & voxelGrid(vp.getVoxelGrid());
+	const VoxelGrid & voxelGrid(vp.voxelGrid());
 	const PartitionCellCount & cellCountGrid(*vp.getIndices());
-    InterleavedLatticePtr mainLattice(vp.getLattice());
+    InterleavedLatticePtr mainLattice(vp.lattice());
 	
 	mStartPoint = startPos;
 	mStartPaint = voxelGrid(startPos);
@@ -67,7 +67,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		{
 			mUsedNeighborIndices[nSide] = 0;
             bp[nSide] = mStartPaint->getCurlBuffer(nSide)->
-                getLattice()->wrappedPointer(mStartPoint+cardinal(nSide));
+                lattice()->wrappedPointer(mStartPoint+cardinal(nSide));
 		}
 		else
 		{
@@ -110,7 +110,7 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 {
     if (newPaint != mStartPaint)
         return 0;
-    InterleavedLatticePtr mainLattice(vp.getLattice());
+    InterleavedLatticePtr mainLattice(vp.lattice());
     
 	for (int nSide = 0; nSide < 6; nSide++)
 	if (mUsedNeighborIndices[nSide])
@@ -195,9 +195,9 @@ void BulkPMLRunlineEncoder::
 startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 {
 	int nSide;
-	const VoxelGrid & voxelGrid(vp.getVoxelGrid());
+	const VoxelGrid & voxelGrid(vp.voxelGrid());
 	const PartitionCellCount & cellCountGrid(*vp.getIndices());
-    InterleavedLatticePtr mainLattice(vp.getLattice());
+    InterleavedLatticePtr mainLattice(vp.lattice());
 	
 	mStartPoint = startPos;
 	mStartPaint = voxelGrid(startPos);
@@ -222,7 +222,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		else if (mStartPaint->hasCurlBuffer(nSide))
 		{
 			mUsedNeighborIndices[nSide] = 0;
-			bp[nSide] = mStartPaint->getCurlBuffer(nSide)->getLattice()->
+			bp[nSide] = mStartPaint->getCurlBuffer(nSide)->lattice()->
                 wrappedPointer(mStartPoint+cardinal(nSide));
 		}
 		else
@@ -244,8 +244,8 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
     // The start point of the runline *may* be outside the grid, *if* we are
     // performing calculations on ghost points!  This may happen in data-push
     // adjoint update equations.  In any case, usually the wrap does nothing.
-    assert(vec_eq(vp.getGridHalfCells().p1, 0));
-    Vector3i gridNumHalfCells = vp.getGridHalfCells().size() + 1;
+    assert(vec_eq(vp.gridHalfCells().p1, 0));
+    Vector3i gridNumHalfCells = vp.gridHalfCells().size() + 1;
     Vector3i wrappedStart = (mStartPoint+gridNumHalfCells) % gridNumHalfCells;
     assert(octant(wrappedStart) == octant(mStartPoint));
     Rect3i pmlYeeCells = halfToYee(
@@ -267,7 +267,7 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	const Vector3i & newPos, Paint* newPaint,
     int runlineDirection) const
 {
-    InterleavedLatticePtr mainLattice(vp.getLattice());
+    InterleavedLatticePtr mainLattice(vp.lattice());
     if (newPaint != mStartPaint)
         return 0;
     

@@ -58,9 +58,9 @@ setAllPointers()
 	Map<string, MaterialDescPtr> materialMap;
 	
 	for (nGrid = 0; nGrid < mGrids.size(); nGrid++)
-		gridMap[mGrids[nGrid]->getName()] = mGrids[nGrid];
+		gridMap[mGrids[nGrid]->name()] = mGrids[nGrid];
 	for (nMaterial = 0; nMaterial < mMaterials.size(); nMaterial++)
-		materialMap[mMaterials[nMaterial]->getName()] = mMaterials[nMaterial];
+		materialMap[mMaterials[nMaterial]->name()] = mMaterials[nMaterial];
 	
 	// 2.  Point Huygens surfaces to appropriate grids
 	for (nGrid = 0; nGrid < mGrids.size(); nGrid++)
@@ -155,7 +155,7 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap,
 	const Map<string, GridDescPtr> & gridMap)
 {
 	for (unsigned int nn = 0; nn < mHuygensSurfaces.size(); nn++)
-	if (mHuygensSurfaces[nn]->getType() == kLink)
+	if (mHuygensSurfaces[nn]->type() == kLink)
 		mHuygensSurfaces[nn]->setPointers(gridMap);
 	
 	if (mAssembly != 0L)
@@ -163,7 +163,7 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap,
 }
 
 Rect3i GridDescription::
-getYeeBounds() const
+yeeBounds() const
 {
 	return Rect3i(Vector3i(0,0,0), mNumYeeCells-Vector3i(1,1,1));
 }
@@ -573,7 +573,7 @@ becomeLink(GridDescPtr sourceGrid, const Rect3i & sourceHalfCells)
     mType = kLink;
     mFromHalfCells = sourceHalfCells;
     mSourceGrid = sourceGrid;
-    mSourceGridName = sourceGrid->getName();
+    mSourceGridName = sourceGrid->name();
     
 //    LOG << "Source half cells " << sourceHalfCells << "\n";
 //    LOG << "Dest half cells " << mHalfCells << "\n";
@@ -700,7 +700,7 @@ MaterialDescription(string name, string inModelName,
 ostream &
 operator<<(ostream & out, const MaterialDescription & mat)
 {
-	out << mat.getName();
+	out << mat.name();
 	return out;
 }
 
@@ -721,7 +721,7 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap,
 	for (unsigned int nn = 0; nn < mInstructions.size(); nn++)
 	{
 		InstructionPtr ii = mInstructions[nn];
-		switch (ii->getType())
+		switch (ii->type())
 		{
 			case kBlockType:
 				((Block &)*ii).setPointers(materialMap);
@@ -811,14 +811,14 @@ Block(Rect3i yeeCellRect, FillStyle style, string material) throw(Exception) :
 }
 
 const Rect3i & Block::
-getYeeRect() const
+yeeRect() const
 {
 	assert(mStyle != kHalfCellStyle);
 	return mFillRect;
 }
 
 const Rect3i & Block::
-getHalfRect() const
+halfRect() const
 {
 	assert(mStyle == kHalfCellStyle);
 	return mFillRect;
@@ -935,14 +935,14 @@ setPointers(const Map<string, MaterialDescPtr> & materialMap)
 }
 
 const Rect3i & Ellipsoid::
-getYeeRect() const
+yeeRect() const
 {
 	assert(mStyle != kHalfCellStyle);
 	return mFillRect;
 }
 
 const Rect3i & Ellipsoid::
-getHalfRect() const
+halfRect() const
 {
 	assert(mStyle == kHalfCellStyle);
 	return mFillRect;
@@ -986,7 +986,7 @@ CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
 	Instruction(kCopyFromType),
 	mSourceRect(halfCellSourceRegion),
 	mDestRect(halfCellDestRegion),
-	mGridName(grid->getName()),
+	mGridName(grid->name()),
 	mGrid(grid)
 {
 	// Easy validation: no inside-out rects

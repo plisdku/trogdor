@@ -36,21 +36,21 @@ CurrentPolarizationSetupOutput(const OutputDescPtr & desc,
 {
     // Make the runlines!
     
-    assert(desc->getRegions().size() > 0);
-    for (int rr = 0; rr < desc->getRegions().size(); rr++)
+    assert(desc->regions().size() > 0);
+    for (int rr = 0; rr < desc->regions().size(); rr++)
     {
-        Rect3i yeeCells(clip(desc->getRegions()[rr].getYeeCells(),
-            vp.getGridYeeCells()));
+        Rect3i yeeCells(clip(desc->regions()[rr].yeeCells(),
+            vp.gridYeeCells()));
         
         for (int direction = 0; direction < 3; direction++)
         {
-            if (desc->getWhichJ()[direction] != 0 ||
-                desc->getWhichP()[direction] != 0)
+            if (desc->whichJ()[direction] != 0 ||
+                desc->whichP()[direction] != 0)
             {
                 addRunlinesInOctant(octantE(direction), yeeCells,
                     mRunlinesE[direction], vp);
             }
-            if (desc->getWhichM()[direction] != 0)
+            if (desc->whichM()[direction] != 0)
                 addRunlinesInOctant(octantH(direction), yeeCells,
                     mRunlinesH[direction], vp);
 //            
@@ -97,15 +97,15 @@ addRunlinesInOctant(int octant, Rect3i yeeCells,
 	if (p1[nn] % 2 != offset[nn])
 		p1[nn]++;
     
-    const VoxelGrid & voxels(vp.getVoxelGrid());
+    const VoxelGrid & voxels(vp.voxelGrid());
     const PartitionCellCount & cellCount(*vp.getIndices());
     const Map<Paint*, RunlineEncoderPtr> & setupMaterials(
-        vp.getSetupMaterials());
-    const InterleavedLattice & lattice(*vp.getLattice());
+        vp.setupMaterials());
+    const InterleavedLattice & lattice(*vp.lattice());
     
     // d0 is the direction of memory allocation.  In the for-loops, this is
     // the innermost of the three Cartesian directions.
-    const int d0 = vp.getLattice()->runlineDirection();
+    const int d0 = vp.lattice()->runlineDirection();
     const int d1 = (d0+1)%3;
     const int d2 = (d0+2)%3;
     
@@ -153,33 +153,33 @@ CurrentPolarizationOutput(const OutputDescription & desc,
     const CalculationPartition & cp) :
     mDatafile(),
     mCurrentSampleInterval(0),
-    mWhichJ(desc.getWhichJ()),
-    mWhichP(desc.getWhichP()),
-    mWhichK(desc.getWhichK()),
-    mWhichM(desc.getWhichM()),
-    mDurations(desc.getDurations())
+    mWhichJ(desc.whichJ()),
+    mWhichP(desc.whichP()),
+    mWhichK(desc.whichK()),
+    mWhichM(desc.whichM()),
+    mDurations(desc.durations())
 {
     // Clip the regions to the current partition bounds (calc bounds, not
     //     allocation bounds!)
     LOGF << "Clipping output regions to partition bounds.  This is not in the"
         " right place; it should be performed earlier somehow.\n";
-    assert(desc.getRegions().size() > 0);
-    for (int rr = 0; rr < desc.getRegions().size(); rr++)
+    assert(desc.regions().size() > 0);
+    for (int rr = 0; rr < desc.regions().size(); rr++)
     {
-        Rect3i outRect(clip(desc.getRegions()[rr].getYeeCells(),
-            vp.getGridYeeCells()));        
-        mRegions.push_back(Region(outRect, desc.getRegions()[rr].getStride()));
+        Rect3i outRect(clip(desc.regions()[rr].yeeCells(),
+            vp.gridYeeCells()));        
+        mRegions.push_back(Region(outRect, desc.regions()[rr].stride()));
     }
     LOGF << "Truncating durations to simulation duration.  This is in the "
         "wrong place; can't it be done earlier?\n";
-    int numTimesteps = cp.getDuration();
+    int numTimesteps = cp.duration();
     for (int dd = 0; dd < mDurations.size(); dd++)
-    if (mDurations[dd].getLast() > (numTimesteps-1))
+    if (mDurations[dd].last() > (numTimesteps-1))
         mDurations[dd].setLast(numTimesteps-1);
     
-    string specfile(desc.getFile() + string(".txt"));
-    string datafile(desc.getFile());
-    string materialfile(desc.getFile() + string(".mat"));
+    string specfile(desc.file() + string(".txt"));
+    string datafile(desc.file());
+    string materialfile(desc.file() + string(".mat"));
     
     writeDescriptionFile(vp, cp, specfile, datafile, materialfile);
     
@@ -204,7 +204,7 @@ setRunlinesE(int direction, const CalculationPartition & cp,
         CPOutputRunline rl;
         rl.material = cp.getMaterials().at(setupRunlines[nn].materialID);
         rl.startingIndex = setupRunlines[nn].startingIndex;
-        rl.startingField = setupRunlines[nn].startingField.getPointer();
+        rl.startingField = setupRunlines[nn].startingField.pointer();
         rl.length = setupRunlines[nn].length;
 //        LOG << "nn " << nn << " material " << rl.material->getSubstanceName()
 //            << "\n";
@@ -223,7 +223,7 @@ setRunlinesH(int direction, const CalculationPartition & cp,
         CPOutputRunline rl;
         rl.material = cp.getMaterials().at(setupRunlines[nn].materialID);
         rl.startingIndex = setupRunlines[nn].startingIndex;
-        rl.startingField = setupRunlines[nn].startingField.getPointer();
+        rl.startingField = setupRunlines[nn].startingField.pointer();
         rl.length = setupRunlines[nn].length;
         
 //        LOG << "nn " << nn << " material " << rl.material->getSubstanceName()
@@ -240,15 +240,15 @@ outputEPhase(const CalculationPartition & cp, int timestep)
         return;
     if (mCurrentSampleInterval >= mDurations.size())
         return;
-    while (timestep > mDurations[mCurrentSampleInterval].getLast())
+    while (timestep > mDurations[mCurrentSampleInterval].last())
     {
         mCurrentSampleInterval++;
         if (mCurrentSampleInterval >= mDurations.size())
             return;
     }
     
-    int firstT = mDurations[mCurrentSampleInterval].getFirst();
-    int period = mDurations[mCurrentSampleInterval].getPeriod();
+    int firstT = mDurations[mCurrentSampleInterval].first();
+    int period = mDurations[mCurrentSampleInterval].period();
     
     if (timestep >= firstT && (timestep - firstT)%period == 0)
         writeJ(cp);
@@ -261,15 +261,15 @@ outputHPhase(const CalculationPartition & cp, int timestep)
         return;
     if (mCurrentSampleInterval >= mDurations.size())
         return;
-    while (timestep > mDurations[mCurrentSampleInterval].getLast())
+    while (timestep > mDurations[mCurrentSampleInterval].last())
     {
         mCurrentSampleInterval++;
         if (mCurrentSampleInterval >= mDurations.size())
             return;
     }
     
-    int firstT = mDurations[mCurrentSampleInterval].getFirst();
-    int period = mDurations[mCurrentSampleInterval].getPeriod();
+    int firstT = mDurations[mCurrentSampleInterval].first();
+    int period = mDurations[mCurrentSampleInterval].period();
     
     if (timestep >= firstT && (timestep - firstT)%period == 0)
         writeK(cp);
@@ -322,7 +322,7 @@ writeDescriptionFile(const VoxelizedPartition & vp,
 {
     int nn;
     
-    Vector3i unitVector0 = cardinal(2*vp.getLattice()->runlineDirection()+1);
+    Vector3i unitVector0 = cardinal(2*vp.lattice()->runlineDirection()+1);
     Vector3i unitVector1 = cyclicPermute(unitVector0, 1);
     Vector3i unitVector2 = cyclicPermute(unitVector1, 1);
     
@@ -340,8 +340,8 @@ writeDescriptionFile(const VoxelizedPartition & vp,
     descFile << "datafile " << datafile << "\n";
     //descFile << "date " << to_iso_extended_string(today) << " "
     descFile << "date " << to_iso_extended_string(now) << "\n";
-    descFile << "dxyz " << cp.getDxyz() << "\n";
-    descFile << "dt " << cp.getDt() << "\n";
+    descFile << "dxyz " << cp.dxyz() << "\n";
+    descFile << "dt " << cp.dt() << "\n";
     
     // E fields
     for (nn = 0; nn < 3; nn++)
@@ -366,18 +366,18 @@ writeDescriptionFile(const VoxelizedPartition & vp,
     for (nn = 0; nn < mRegions.size(); nn++)
     {
         descFile << "region "
-            << mRegions[nn].getYeeCells()-vp.getOriginYee()
+            << mRegions[nn].yeeCells()-vp.originYee()
             << " stride "
-            << mRegions[nn].getStride()
+            << mRegions[nn].stride()
             << "\n";
     }
     
     for (nn = 0; nn < mDurations.size(); nn++)
     {
         descFile << "duration from "
-            << mDurations[nn].getFirst() << " to "
-            << mDurations[nn].getLast() << " period "
-            << mDurations[nn].getPeriod() << "\n";
+            << mDurations[nn].first() << " to "
+            << mDurations[nn].last() << " period "
+            << mDurations[nn].period() << "\n";
     }
     
     descFile.close();

@@ -28,7 +28,7 @@ void BufferedCurrent::
 allocateAuxBuffers()
 {
     //LOG << "Allocating the single timestep buffer.\n";
-    //mSingleTimestepData.resize(mBuffer.getLength(), 0.0f);
+    //mSingleTimestepData.resize(mBuffer.length(), 0.0f);
 }
 
 

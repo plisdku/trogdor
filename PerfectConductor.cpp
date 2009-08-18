@@ -54,7 +54,7 @@ PerfectConductor(int numRunlinesE, int numRunlinesH, int numHalfCellsE,
 }
 
 string PerfectConductor::
-getModelName() const
+modelName() const
 {
     return string("PerfectConductor");
 }

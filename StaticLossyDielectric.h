@@ -24,7 +24,7 @@ public:
         std::vector<int> numCellsE, std::vector<int> numCellsH,
         Vector3f dxyz, float dt);
     
-    std::string getModelName() const;
+    std::string modelName() const;
     
     /**
      * Write the electric current, as calculated by \f$\sigma E\f$, to 

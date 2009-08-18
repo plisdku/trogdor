@@ -26,16 +26,16 @@ void HuygensLink::
 updateE(HuygensSurface & hs)
 {
     //LOG << "Update E.\n";
-    const std::vector<NeighborBufferPtr> & nbs(hs.getNeighborBuffers());
-    InterleavedLatticePtr destLattice(hs.getDestLattice());
-    InterleavedLatticePtr sourceLattice(hs.getSourceLattice());
+    const std::vector<NeighborBufferPtr> & nbs(hs.neighborBuffers());
+    InterleavedLatticePtr destLattice(hs.destLattice());
+    InterleavedLatticePtr sourceLattice(hs.sourceLattice());
     
     for (int bufNum = 0; bufNum < nbs.size(); bufNum++)
     if (nbs.at(bufNum) != 0L)
     {
         for (int fieldDirection = 0; fieldDirection < 3; fieldDirection++)
         {
-            InterleavedLatticePtr bufferLattice = nbs[bufNum]->getLattice();
+            InterleavedLatticePtr bufferLattice = nbs[bufNum]->lattice();
             // other lattices: mDestLattice, mSourceLattice
             
             Rect3i destYeeCells = halfToYee(nbs[bufNum]->getDestHalfCells(),
@@ -82,20 +82,20 @@ updateE(HuygensSurface & hs)
                         fieldDirection, yee+sourceYeeCells.p1);
                     BufferPointer dest = destLattice->wrappedPointerE(
                         fieldDirection, yee+destYeeCells.p1);
-                    LOG << MemoryBuffer::identify(buf.getPointer()) << " is "
-                        << *(buf.getPointer()) << "\n";
-                    LOG << MemoryBuffer::identify(src.getPointer()) << " is "
-                        << *(src.getPointer()) << "\n";
-                    LOG << MemoryBuffer::identify(dest.getPointer()) << " is "
-                        << *(dest.getPointer()) << "\n";
+                    LOG << MemoryBuffer::identify(buf.pointer()) << " is "
+                        << *(buf.pointer()) << "\n";
+                    LOG << MemoryBuffer::identify(src.pointer()) << " is "
+                        << *(src.pointer()) << "\n";
+                    LOG << MemoryBuffer::identify(dest.pointer()) << " is "
+                        << *(dest.pointer()) << "\n";
                     
                     LOG << "Source field " << srcField << " dest " << destField
                         << " buf field " << bufField << "\n";
                     
                     LOG << "Source " << sourceYeeCells.p1+yee << " dest "
                         << destYeeCells.p1+yee << "\n";
-                    if (bufField != *(buf.getPointer()))
-                        assert(bufField == *(buf.getPointer()));
+                    if (bufField != *(buf.pointer()))
+                        assert(bufField == *(buf.pointer()));
                 }
                 */
             }
@@ -107,16 +107,16 @@ void HuygensLink::
 updateH(HuygensSurface & hs)
 {
     //LOG << "Update H.\n";
-    const std::vector<NeighborBufferPtr> & nbs(hs.getNeighborBuffers());
-    InterleavedLatticePtr destLattice(hs.getDestLattice());
-    InterleavedLatticePtr sourceLattice(hs.getSourceLattice());
+    const std::vector<NeighborBufferPtr> & nbs(hs.neighborBuffers());
+    InterleavedLatticePtr destLattice(hs.destLattice());
+    InterleavedLatticePtr sourceLattice(hs.sourceLattice());
     
     for (int bufNum = 0; bufNum < nbs.size(); bufNum++)
     if (nbs.at(bufNum) != 0L)
     {
         for (int fieldDirection = 0; fieldDirection < 3; fieldDirection++)
         {
-            InterleavedLatticePtr bufferLattice = nbs[bufNum]->getLattice();
+            InterleavedLatticePtr bufferLattice = nbs[bufNum]->lattice();
             // other lattices: mDestLattice, mSourceLattice
             
             Rect3i destYeeCells = halfToYee(nbs[bufNum]->getDestHalfCells(),
@@ -158,12 +158,12 @@ updateH(HuygensSurface & hs)
                         fieldDirection, yee+sourceYeeCells.p1);
                     BufferPointer dest = destLattice->wrappedPointerH(
                         fieldDirection, yee+destYeeCells.p1);
-                    LOG << MemoryBuffer::identify(buf.getPointer()) << " is "
-                        << *(buf.getPointer()) << "\n";
-                    LOG << MemoryBuffer::identify(src.getPointer()) << " is "
-                        << *(src.getPointer()) << "\n";
-                    LOG << MemoryBuffer::identify(dest.getPointer()) << " is "
-                        << *(dest.getPointer()) << "\n";
+                    LOG << MemoryBuffer::identify(buf.pointer()) << " is "
+                        << *(buf.pointer()) << "\n";
+                    LOG << MemoryBuffer::identify(src.pointer()) << " is "
+                        << *(src.pointer()) << "\n";
+                    LOG << MemoryBuffer::identify(dest.pointer()) << " is "
+                        << *(dest.pointer()) << "\n";
                     
                     LOG << "Source " << sourceYeeCells.p1+yee << " dest "
                         << destYeeCells.p1+yee << "\n";

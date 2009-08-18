@@ -57,7 +57,7 @@ public:
     virtual void writeM(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;
         
-    virtual std::string getModelName() const;
+    virtual std::string modelName() const;
 protected:
     MaterialClass mMaterial;
 };
@@ -197,9 +197,9 @@ writeM(int direction, std::ostream & binaryStream,
 
 template<class MaterialT>
 std::string UpdateHarness_Material<MaterialT>::
-getModelName() const
+modelName() const
 {
-    return mMaterial.getModelName();
+    return mMaterial.modelName();
 }
 
 

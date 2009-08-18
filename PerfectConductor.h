@@ -28,7 +28,7 @@ public:
     PerfectConductor(int numRunlinesE, int numRunlinesH, int numHalfCellsE,
         int numHalfCellsH);
     
-    virtual std::string getModelName() const;
+    virtual std::string modelName() const;
     virtual void calcEPhase(int phasePart = 0);
     virtual void calcHPhase(int phasePart = 0);
     

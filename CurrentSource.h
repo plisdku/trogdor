@@ -61,7 +61,7 @@ public:
         const CalculationPartition & cp) const;
         
     
-    CurrentSourceDescPtr getDescription() const { return mDescription; }
+    CurrentSourceDescPtr description() const { return mDescription; }
 private:
     CurrentSourceDescPtr mDescription;
 };

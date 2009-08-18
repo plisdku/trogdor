@@ -185,8 +185,8 @@ loadGrids(const TiXmlElement* parent, const SimulationDescription & sim) const
 		try {
 			gridDesc = GridDescPtr(new GridDescription(name,
 				numYeeCells, calcRegionHalfCells,
-				nonPMLHalfCells, origin, sim.getDxyz(),
-                sim.getDt()));
+				nonPMLHalfCells, origin, sim.dxyz(),
+                sim.dt()));
 		} catch (Exception & e) {
 			throw(Exception(sErr(e.what(), elem)));
 		}

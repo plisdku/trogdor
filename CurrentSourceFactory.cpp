@@ -15,14 +15,14 @@
 Pointer<SetupCurrentSource> CurrentSourceFactory::
 newCurrentSource(const CurrentSourceDescPtr & description)
 {
-    if (description->getSpaceTimeFile() != "")
+    if (description->spaceTimeFile() != "")
         throw(Exception("Cannot yet create space-varying source currents."));
     
-    if (description->getFormula() != "")
+    if (description->formula() != "")
         return Pointer<SetupCurrentSource>(
             new SetupFormulaCurrentSource(description));
-    else if (description->getTimeFile() != "" ||
-        description->getSpaceTimeFile() != "")
+    else if (description->timeFile() != "" ||
+        description->spaceTimeFile() != "")
     {
         return Pointer<SetupCurrentSource>(
             new SetupFileCurrentSource(description));

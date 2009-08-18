@@ -13,13 +13,13 @@ using namespace std;
 
 SimpleRunline::
 SimpleRunline(const SBMRunline & setupRunline) :
-    fi(setupRunline.f_i.getPointer()),
+    fi(setupRunline.f_i.pointer()),
     length(setupRunline.length)
 {
-    gj[0] = setupRunline.f_j[0].getPointer();
-    gj[1] = setupRunline.f_j[1].getPointer();
-    gk[0] = setupRunline.f_k[0].getPointer();
-    gk[1] = setupRunline.f_k[1].getPointer();
+    gj[0] = setupRunline.f_j[0].pointer();
+    gj[1] = setupRunline.f_j[1].pointer();
+    gk[0] = setupRunline.f_k[0].pointer();
+    gk[1] = setupRunline.f_k[1].pointer();
 }
 
 SimpleAuxRunline::

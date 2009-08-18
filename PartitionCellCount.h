@@ -33,7 +33,7 @@ public:
 	
 	long getNumCells(Paint* paint, int octant) const;
 	Map<Paint*, long> getAllNumCells(int octant) const;
-	std::set<Paint*> getCurlBufferParentPaints() const;
+	std::set<Paint*> curlBufferParentPaints() const;
     
     // deletes the grid of material half cells; retains dimensions
     //void clear();

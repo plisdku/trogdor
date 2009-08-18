@@ -40,51 +40,51 @@ FileSource(const SourceDescription & desc, const VoxelizedPartition & vp,
     Source(),
     mFileStream(),
     mCurrentDuration(0),
-    mFields(desc.getSourceFields()),
-    mDt(cp.getDt()),
+    mFields(desc.sourceFields()),
+    mDt(cp.dt()),
     mIsSpaceVarying(desc.isSpaceVarying()),
     mIsSoft(desc.isSoftSource()),
-    mRegions(desc.getRegions()),
-    mDurations(desc.getDurations())
+    mRegions(desc.regions()),
+    mDurations(desc.durations())
 {
     if (desc.isSpaceVarying())
         throw(Exception("Space-varying file source not yet supported.\n"));
     
-    mFileStream.open(desc.getTimeFile().c_str(), ios::binary);
+    mFileStream.open(desc.timeFile().c_str(), ios::binary);
     if (mFileStream.good())
-        LOGF << "Opened binary file " << desc.getTimeFile() << ".\n";
+        LOGF << "Opened binary file " << desc.timeFile() << ".\n";
     else
         throw(Exception(string("Could not open binary file")
-            + desc.getTimeFile()));
+            + desc.timeFile()));
     
     for (int rr = 0; rr < mRegions.size(); rr++)
     {
-        Rect3i rect(clip(vp.getGridYeeCells(), mRegions[rr].getYeeCells()));
+        Rect3i rect(clip(vp.gridYeeCells(), mRegions[rr].yeeCells()));
         mRegions[rr].setYeeCells(rect);
     }
     
     for (int dd = 0; dd < mDurations.size(); dd++)
-    if (mDurations[dd].getLast() > (cp.getDuration()-1))
-        mDurations[dd].setLast(cp.getDuration()-1);
+    if (mDurations[dd].last() > (cp.duration()-1))
+        mDurations[dd].setLast(cp.duration()-1);
 }
 
 
 void FileSource::
 sourceEPhase(CalculationPartition & cp, int timestep)
 {
-    if (norm2(mFields.getWhichE()) == 0)
+    if (norm2(mFields.whichE()) == 0)
         return;
     
     if (mCurrentDuration >= mDurations.size())
         return;
-    while (timestep > mDurations[mCurrentDuration].getLast())
+    while (timestep > mDurations[mCurrentDuration].last())
     {
         mCurrentDuration++;
         if (mCurrentDuration >= mDurations.size())
             return;
     }
     
-    if (timestep >= mDurations[mCurrentDuration].getFirst())
+    if (timestep >= mDurations[mCurrentDuration].first())
     {
         if (mFields.usesPolarization())
             polarizedSourceE(cp, timestep);
@@ -96,19 +96,19 @@ sourceEPhase(CalculationPartition & cp, int timestep)
 void FileSource::
 sourceHPhase(CalculationPartition & cp, int timestep)
 {
-    if (norm2(mFields.getWhichH()) == 0)
+    if (norm2(mFields.whichH()) == 0)
         return;
     
     if (mCurrentDuration >= mDurations.size())
         return;
-    while (timestep > mDurations[mCurrentDuration].getLast())
+    while (timestep > mDurations[mCurrentDuration].last())
     {
         mCurrentDuration++;
         if (mCurrentDuration >= mDurations.size())
             return;
     }
     
-    if (timestep >= mDurations[mCurrentDuration].getFirst())
+    if (timestep >= mDurations[mCurrentDuration].first())
     {
         if (mFields.usesPolarization())
             polarizedSourceH(cp, timestep);
@@ -122,7 +122,7 @@ uniformSourceE(CalculationPartition & cp, int timestep)
 {
     //LOG << "Source E\n";
     float val;
-    InterleavedLattice& lattice(cp.getLattice());
+    InterleavedLattice& lattice(cp.lattice());
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
@@ -133,9 +133,9 @@ uniformSourceE(CalculationPartition & cp, int timestep)
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
-        Rect3i rect = mRegions[rr].getYeeCells();
+        Rect3i rect = mRegions[rr].yeeCells();
         for (int dir = 0; dir < 3; dir++)
-        if (mFields.getWhichE()[dir] != 0)
+        if (mFields.whichE()[dir] != 0)
         {
             Vector3i xx;
             if (!mIsSoft)
@@ -166,7 +166,7 @@ uniformSourceH(CalculationPartition & cp, int timestep)
 {
     //LOG << "Source H\n";
     float val;
-    InterleavedLattice& lattice(cp.getLattice());
+    InterleavedLattice& lattice(cp.lattice());
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
@@ -177,9 +177,9 @@ uniformSourceH(CalculationPartition & cp, int timestep)
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
-        Rect3i rect = mRegions[rr].getYeeCells();
+        Rect3i rect = mRegions[rr].yeeCells();
         for (int dir = 0; dir < 3; dir++)
-        if (mFields.getWhichH()[dir] != 0)
+        if (mFields.whichH()[dir] != 0)
         {
             Vector3i xx;
             if (!mIsSoft)
@@ -206,9 +206,9 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
     //assert(mIsSoft);
     
     ////LOG << "Source E\n";
-    Vector3f polarization = mFields.getPolarization();
+    Vector3f polarization = mFields.polarization();
     float val;
-    InterleavedLattice & lattice(cp.getLattice());
+    InterleavedLattice & lattice(cp.lattice());
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
@@ -219,7 +219,7 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
-        Rect3i rect = mRegions[rr].getYeeCells();
+        Rect3i rect = mRegions[rr].yeeCells();
         for (int dir = 0; dir < 3; dir++)
         {
             Vector3i xx;
@@ -250,9 +250,9 @@ polarizedSourceH(CalculationPartition & cp, int timestep)
     //assert(mIsSoft);
     
     //LOG << "Source H\n";
-    Vector3f polarization = mFields.getPolarization();
+    Vector3f polarization = mFields.polarization();
     float val;
-    InterleavedLattice & lattice(cp.getLattice());
+    InterleavedLattice & lattice(cp.lattice());
     
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
@@ -263,7 +263,7 @@ polarizedSourceH(CalculationPartition & cp, int timestep)
     
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
-        Rect3i rect = mRegions[rr].getYeeCells();
+        Rect3i rect = mRegions[rr].yeeCells();
         for (int dir = 0; dir < 3; dir++)
         {
             Vector3i xx;

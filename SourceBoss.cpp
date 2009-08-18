@@ -25,9 +25,9 @@ SetupSourcePtr SourceFactory::
 newSetupSource(const VoxelizedPartition & vp, const SourceDescPtr & desc)
 {
     
-    if (desc->getFormula() != "")
+    if (desc->formula() != "")
         return SetupSourcePtr(new FormulaSetupSource(desc));
-    else if (desc->getTimeFile() != "" || desc->getSpaceTimeFile() != "")
+    else if (desc->timeFile() != "" || desc->spaceTimeFile() != "")
     {
         return SetupSourcePtr(new FileSetupSource(desc));
     }

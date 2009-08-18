@@ -78,7 +78,7 @@ public:
 	
 	static void clearPalette() { mPalette.clear(); }
 	
-	PaintType getType() const { return mType; }
+	PaintType type() const { return mType; }
 	Vector3i getPMLDirections() const { return mPMLDirections; }
     const NeighborBuffer* getCurlBuffer(int side) const;
 	const MaterialDescription* getBulkMaterial() const;

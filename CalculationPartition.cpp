@@ -30,7 +30,7 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     m_dt(dt),
     m_numT(numT),
     mHuygensSurfaces(vp.getHuygensSurfaces()),
-    mLattice(vp.getLattice())
+    mLattice(vp.lattice())
 {
 //    LOG << "New calc partition.\n";
     unsigned int nn;
@@ -44,16 +44,16 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     
     Map<CurrentSourceDescPtr, CurrentSource*> sourceMap;
     
-    const vector<SetupCurrentSourcePtr> & curSrcs = vp.getSetupCurrentSources();
+    const vector<SetupCurrentSourcePtr> & curSrcs = vp.setupCurrentSources();
     for (nn = 0; nn < curSrcs.size(); nn++)
     {
         CurrentSourcePtr src = curSrcs[nn]->makeCurrentSource(vp, *this);
-        sourceMap[curSrcs[nn]->getDescription()] = src;
+        sourceMap[curSrcs[nn]->description()] = src;
         mCurrentSources.push_back(src);
     }
     
     const Map<Paint*, RunlineEncoderPtr> & setupMaterials
-        = vp.getSetupMaterials();
+        = vp.setupMaterials();
     map<Paint*, RunlineEncoderPtr>::const_iterator itr;
     mMaterials.resize(setupMaterials.size());
     for (itr = setupMaterials.begin(); itr != setupMaterials.end(); itr++)
@@ -75,7 +75,7 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mMaterials[newMaterial->id()] = newMaterial;
     }
     
-    const vector<SetupOutputPtr> & outs = vp.getSetupOutputs();
+    const vector<SetupOutputPtr> & outs = vp.setupOutputs();
     for (nn = 0; nn < outs.size(); nn++)
     {
         OutputPtr out = outs[nn]->makeOutput(vp, *this);
@@ -111,13 +111,13 @@ CalculationPartition::
 }
 
 const InterleavedLattice & CalculationPartition::
-getLattice() const
+lattice() const
 {
     return *mLattice; 
 }
 
 InterleavedLattice & CalculationPartition::
-getLattice()
+lattice()
 {
     return *mLattice; 
 }

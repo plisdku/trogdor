@@ -52,7 +52,7 @@ public:
     virtual void writeM(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;
         
-    virtual std::string getModelName() const = 0;
+    virtual std::string modelName() const = 0;
     
 private:
     int mID;

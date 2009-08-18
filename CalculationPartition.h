@@ -32,8 +32,8 @@ public:
         Vector3f dxyz, float dt, long numT);
     ~CalculationPartition();
     
-    const InterleavedLattice& getLattice() const;
-    InterleavedLattice& getLattice();
+    const InterleavedLattice& lattice() const;
+    InterleavedLattice& lattice();
     
     // used by PartitionStatistics
     const std::vector<UpdateEquationPtr> getMaterials() const
@@ -44,13 +44,13 @@ public:
     void allocateAuxBuffers();
     
     // returns        cell size in meters (same for all grids, all partitions)
-    Vector3f getDxyz() const { return m_dxyz; }
+    Vector3f dxyz() const { return m_dxyz; }
     
     // returns        timestep duration in seconds (all grids/partitions same)
-    float getDt() const { return m_dt; }
+    float dt() const { return m_dt; }
     
     // returns        number of timesteps in simulation, including initial cond.
-    long getDuration() const { return m_numT; }
+    long duration() const { return m_numT; }
     
     void updateE(int timestep);
     void sourceE(int timestep);

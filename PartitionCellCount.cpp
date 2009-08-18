@@ -78,7 +78,7 @@ getAllNumCells(int octant) const
 }
 
 set<Paint*> PartitionCellCount::
-getCurlBufferParentPaints() const
+curlBufferParentPaints() const
 {
 	std::set<Paint*> paints;
 	for (int octant = 0; octant < 8; octant++)
@@ -182,7 +182,7 @@ std::ostream & operator<< (std::ostream & out, const PartitionCellCount & grid)
 	int nnj = grid.mHalfCellBounds.size(1)+1;
 	//int nnk = grid.mHalfCellBounds.size(2)+1;
 	
-	set<Paint*> parentPaints = grid.getCurlBufferParentPaints();
+	set<Paint*> parentPaints = grid.curlBufferParentPaints();
 	for (set<Paint*>::iterator itr = parentPaints.begin();
 		itr != parentPaints.end(); itr++)
 	{

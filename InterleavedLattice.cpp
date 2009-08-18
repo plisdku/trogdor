@@ -193,22 +193,22 @@ allocate()
     
     for (nn = 0; nn < 3; nn++)
     {
-        bufsize += mBuffersE.at(nn)->getLength();
-        bufsize += mBuffersH.at(nn)->getLength();
+        bufsize += mBuffersE.at(nn)->length();
+        bufsize += mBuffersH.at(nn)->length();
     }
     mData.resize(bufsize);
     
     for (nn = 0; nn < 3; nn++)
     {
         mBuffersE.at(nn)->setHeadPointer(&(mData.at(offset)));
-        mHeadE[nn] = mBuffersE.at(nn)->getHeadPointer();
-        offset += mBuffersE.at(nn)->getLength();
+        mHeadE[nn] = mBuffersE.at(nn)->headPointer();
+        offset += mBuffersE.at(nn)->length();
     }
     for (nn = 0; nn < 3; nn++)
     {
         mBuffersH.at(nn)->setHeadPointer(&(mData.at(offset)));
-        mHeadH[nn] = mBuffersH.at(nn)->getHeadPointer();
-        offset += mBuffersH.at(nn)->getLength();
+        mHeadH[nn] = mBuffersH.at(nn)->headPointer();
+        offset += mBuffersH.at(nn)->length();
     }
     mFieldsAreAllocated = 1;
 }

@@ -26,7 +26,7 @@ public:
 	VoxelGrid(Rect3i allocRegion, Rect3i gridHalfCells, Rect3i nonPML);
 	
     // returns           global bounds of partition's calculation region
-	const Rect3i & getGridHalfCells() { return mGridHalfCells; }
+	const Rect3i & gridHalfCells() { return mGridHalfCells; }
     
     // returns           global bounds of partition's allocated fields
 	const Rect3i & getAllocRegion() { return mAllocRegion; }
