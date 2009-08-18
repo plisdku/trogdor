@@ -27,7 +27,7 @@ public:
     virtual ~UpdateEquation();
     
     void setSubstanceName(const std::string & name) { mSubstanceName = name; }
-    const std::string & getSubstanceName() const { return mSubstanceName; }
+    const std::string & substanceName() const { return mSubstanceName; }
     void setID(int id) { mID = id; }
     int id() const { return mID; }
     
@@ -37,10 +37,10 @@ public:
     virtual void calcEPhase(int direction) = 0;
     virtual void calcHPhase(int direction) = 0;
     
-    virtual long getNumRunlinesE() const = 0;
-    virtual long getNumRunlinesH() const = 0;
-    virtual long getNumHalfCellsE() const = 0;
-    virtual long getNumHalfCellsH() const = 0;
+    virtual long numRunlinesE() const = 0;
+    virtual long numRunlinesH() const = 0;
+    virtual long numHalfCellsE() const = 0;
+    virtual long numHalfCellsH() const = 0;
     
     virtual void writeJ(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;

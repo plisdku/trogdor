@@ -61,7 +61,7 @@ public:
  *  into three stages (subroutines):  execution of the parameter file
  *  instructions, creation of the runtime structures, and running the sim.
  *
- *  This is a singleton class; access is through getInstance().
+ *  This is a singleton class; access is through instance().
  */
 class FDTDApplication
 {
@@ -150,7 +150,7 @@ private:
     
 #pragma mark *** Singleton Stuff ***
 public:
-    static FDTDApplication & getInstance();
+    static FDTDApplication & instance();
 private:
     FDTDApplication();
     virtual ~FDTDApplication();

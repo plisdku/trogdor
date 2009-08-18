@@ -31,8 +31,8 @@ public:
 	long operator() (int ii, int jj, int kk) const;
 	long operator() (const Vector3i & pp) const;
 	
-	long getNumCells(Paint* paint, int octant) const;
-	Map<Paint*, long> getAllNumCells(int octant) const;
+	long numCells(Paint* paint, int octant) const;
+	Map<Paint*, long> allNumCells(int octant) const;
 	std::set<Paint*> curlBufferParentPaints() const;
     
     // deletes the grid of material half cells; retains dimensions

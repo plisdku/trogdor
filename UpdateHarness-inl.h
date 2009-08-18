@@ -27,15 +27,15 @@ public:
     virtual void setRunlinesH(int direction,
         const std::vector<SBPMRunlinePtr> & rls);
     
-    std::vector<RunlineClass> & getRunlinesE(int direction)
+    std::vector<RunlineClass> & runlinesE(int direction)
         { return mRunlinesE[direction]; }
-    std::vector<RunlineClass> & getRunlinesH(int direction)
+    std::vector<RunlineClass> & runlinesH(int direction)
         { return mRunlinesH[direction]; }
     
-    virtual long getNumRunlinesE() const;
-    virtual long getNumRunlinesH() const;
-    virtual long getNumHalfCellsE() const;
-    virtual long getNumHalfCellsH() const;
+    virtual long numRunlinesE() const;
+    virtual long numRunlinesH() const;
+    virtual long numHalfCellsE() const;
+    virtual long numHalfCellsH() const;
 protected:
     std::vector<RunlineClass> mRunlinesE[3];
     std::vector<RunlineClass> mRunlinesH[3];
@@ -108,7 +108,7 @@ setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
 
 template<class RunlineClass>
 long UpdateHarness_Runline<RunlineClass>::
-getNumRunlinesE() const
+numRunlinesE() const
 {
     long total = 0;
     for (int direction = 0; direction < 3; direction++)
@@ -118,7 +118,7 @@ getNumRunlinesE() const
 
 template<class RunlineClass>
 long UpdateHarness_Runline<RunlineClass>::
-getNumRunlinesH() const
+numRunlinesH() const
 {
     long total = 0;
     for (int direction = 0; direction < 3; direction++)
@@ -128,7 +128,7 @@ getNumRunlinesH() const
 
 template<class RunlineClass>
 long UpdateHarness_Runline<RunlineClass>::
-getNumHalfCellsE() const
+numHalfCellsE() const
 {
     long total = 0;
     for (int direction = 0; direction < 3; direction++)
@@ -139,7 +139,7 @@ getNumHalfCellsE() const
 
 template<class RunlineClass>
 long UpdateHarness_Runline<RunlineClass>::
-getNumHalfCellsH() const
+numHalfCellsH() const
 {
     long total = 0;
     for (int direction = 0; direction < 3; direction++)
@@ -155,7 +155,7 @@ UpdateHarness_Material<MaterialT>::
 UpdateHarness_Material(Paint* parentPaint, std::vector<int> numCellsE,
     std::vector<int> numCellsH, Vector3f dxyz, float dt) :
     UpdateEquation(),
-    mMaterial(*parentPaint->getBulkMaterial(), numCellsE, numCellsH, dxyz, dt)
+    mMaterial(*parentPaint->bulkMaterial(), numCellsE, numCellsH, dxyz, dt)
 {
 }
         
@@ -331,7 +331,7 @@ calcE(int fieldDirection)
     mCurrent.initLocalE(currentData, dir0);
     
     std::vector<RunlineT> & runlines =
-        UpdateHarness_Runline<RunlineT>::getRunlinesE(fieldDirection);
+        UpdateHarness_Runline<RunlineT>::runlinesE(fieldDirection);
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
@@ -403,7 +403,7 @@ calcH(int fieldDirection)
     mCurrent.initLocalH(currentData, dir0);
     
     std::vector<RunlineT> & runlines =
-        UpdateHarness_Runline<RunlineT>::getRunlinesH(fieldDirection);
+        UpdateHarness_Runline<RunlineT>::runlinesH(fieldDirection);
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);

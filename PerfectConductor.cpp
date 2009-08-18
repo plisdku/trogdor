@@ -22,21 +22,21 @@ UpdateEquationPtr SetupPerfectConductor::
 makeUpdateEquation(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
 {
-    int numRunlinesE = getRunlinesE(0).size() + getRunlinesE(1).size()
-        + getRunlinesE(2).size();
-    int numRunlinesH = getRunlinesH(0).size() + getRunlinesH(1).size()
-        + getRunlinesH(2).size();
+    int numRunlinesE = runlinesE(0).size() + runlinesE(1).size()
+        + runlinesE(2).size();
+    int numRunlinesH = runlinesH(0).size() + runlinesH(1).size()
+        + runlinesH(2).size();
     
     int numHalfCellsE = 0;
     int numHalfCellsH = 0;
     
     for (int direction = 0; direction < 3; direction++)
-    for (int nn = 0; nn < getRunlinesE(direction).size(); nn++)
-        numHalfCellsE += getRunlinesE(direction)[nn]->length;
+    for (int nn = 0; nn < runlinesE(direction).size(); nn++)
+        numHalfCellsE += runlinesE(direction)[nn]->length;
     
     for (int direction = 0; direction < 3; direction++)
-    for (int nn = 0; nn < getRunlinesH(direction).size(); nn++)
-        numHalfCellsH += getRunlinesH(direction)[nn]->length;
+    for (int nn = 0; nn < runlinesH(direction).size(); nn++)
+        numHalfCellsH += runlinesH(direction)[nn]->length;
     
     return UpdateEquationPtr(new PerfectConductor(numRunlinesE, numRunlinesH,
         numHalfCellsE, numHalfCellsH));

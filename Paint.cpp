@@ -64,7 +64,7 @@ Paint(const MaterialDescPtr & material) :
 }
 
 string Paint::
-getFullName() const
+fullName() const
 {
     ostringstream str;
     str << mBulkMaterial->name();
@@ -81,7 +81,7 @@ getFullName() const
 }
 
 Paint* Paint::
-getPaint(const MaterialDescPtr & material)
+paint(const MaterialDescPtr & material)
 {
 	PaintPtr bulkPaint(new Paint(material));
 	if (mPalette.count(*bulkPaint) != 0)
@@ -173,7 +173,7 @@ hasCurrentSource() const
 }
 
 const NeighborBuffer* Paint::
-getCurlBuffer(int side) const
+curlBuffer(int side) const
 {
 	assert(side >= 0);
 	assert(side < 6);
@@ -181,7 +181,7 @@ getCurlBuffer(int side) const
 }
 
 const MaterialDescription* Paint::
-getBulkMaterial() const
+bulkMaterial() const
 {
     return mBulkMaterial;
 }

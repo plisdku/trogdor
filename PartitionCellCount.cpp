@@ -61,7 +61,7 @@ operator() (const Vector3i & pp) const
 }
 
 long PartitionCellCount::
-getNumCells(Paint* paint, int octant) const
+numCells(Paint* paint, int octant) const
 {
 	assert(octant >= 0 && octant < 8);
 	
@@ -71,7 +71,7 @@ getNumCells(Paint* paint, int octant) const
 }
 
 Map<Paint*, long> PartitionCellCount::
-getAllNumCells(int octant) const
+allNumCells(int octant) const
 {
 	assert(octant >= 0 && octant < 8);
 	return mNumCells[octant];

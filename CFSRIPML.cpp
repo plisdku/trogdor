@@ -73,7 +73,7 @@ CFSRIPMLBase(Paint* parentPaint, std::vector<int> numCellsE,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection ) :
     mPMLParams(pmlParams),
-    mPMLDirection(parentPaint->getPMLDirections()),
+    mPMLDirection(parentPaint->pmlDirections()),
     mDxyz(dxyz),
     mDt(dt),
     mRunlineDirection(runlineDirection)
@@ -174,8 +174,8 @@ setNumCellsE(int fieldDir, int numCells, Paint* parentPaint)
     int jDir = (fieldDir+1)%3;
     int kDir = (jDir+1)%3;
     char fieldChar = '0' + fieldDir;
-    Vector3i pmlDir = parentPaint->getPMLDirections();
-    string prefix = parentPaint->getBulkMaterial()->name() + " accum E";
+    Vector3i pmlDir = parentPaint->pmlDirections();
+    string prefix = parentPaint->bulkMaterial()->name() + " accum E";
     
     if (pmlDir[jDir])
     {
@@ -196,8 +196,8 @@ setNumCellsH(int fieldDir, int numCells, Paint* parentPaint)
     int jDir = (fieldDir+1)%3;
     int kDir = (jDir+1)%3;
     char fieldChar = '0' + fieldDir;
-    Vector3i pmlDir = parentPaint->getPMLDirections();
-    string prefix = parentPaint->getBulkMaterial()->name() + " accum H";
+    Vector3i pmlDir = parentPaint->pmlDirections();
+    string prefix = parentPaint->bulkMaterial()->name() + " accum H";
     
     if (pmlDir[jDir])
     {
@@ -216,7 +216,7 @@ void CFSRIPMLBase::
 setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
     Paint* parentPaint)
 {
-    Vector3i pmlDir = parentPaint->getPMLDirections();
+    Vector3i pmlDir = parentPaint->pmlDirections();
     
     if (dot(pmlDir, cardinal(faceNum)) <= 0) // check which side it is
         return;
@@ -231,7 +231,7 @@ setPMLHalfCells(int faceNum, Rect3i halfCellsOnSide,
     
     const int ONE = 1; // if I set it to 0, the PML layer includes depth==0.
     
-    //LOG << "------------ " << parentPaint->getPMLDirections() << "\n";
+    //LOG << "------------ " << parentPaint->pmlDirections() << "\n";
     
     calc_defs::Calculator<float> calculator;
     calculator.set("eps0", Constants::eps0);

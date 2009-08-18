@@ -40,11 +40,11 @@ public:
 	void setDiscretization(Vector3f dxyz, float dt);
 	void setDuration(int numT);
 	
-	const std::vector<GridDescPtr> & getGrids() const { return mGrids; }
-	const std::vector<MaterialDescPtr> & getMaterials() const {
+	const std::vector<GridDescPtr> & grids() const { return mGrids; }
+	const std::vector<MaterialDescPtr> & materials() const {
 		return mMaterials; }
 	
-    const std::string & getVersion() const { return mVersionString; }
+    const std::string & version() const { return mVersionString; }
 	float dt() const { return m_dt; }
 	Vector3f dxyz() const { return m_dxyz; }
 	int duration() const { return mNumTimesteps; }
@@ -86,28 +86,28 @@ public:
 	
 	// Accessors
 	const std::string & name() const { return mName; }
-	Vector3i getNumYeeCells() const { return mNumYeeCells; }
-	Vector3i getNumHalfCells() const { return mNumHalfCells; }
+	Vector3i numYeeCells() const { return mNumYeeCells; }
+	Vector3i numHalfCells() const { return mNumHalfCells; }
 	Rect3i yeeBounds() const;
-	Rect3i getHalfCellBounds() const;
-	const Rect3i & getCalcHalfCells() const { return mCalcRegionHalf; }
+	Rect3i halfCellBounds() const;
+	const Rect3i & calcHalfCells() const { return mCalcRegionHalf; }
 	const Rect3i & nonPMLHalfCells() const { return mNonPMLHalf; }
     const Map<Vector3i, Map<std::string, std::string> > & pmlParams() const
         { return mPMLParams; }
 	Vector3i originYee() const { return mOriginYee; }
-	int getNumDimensions() const;
+	int numDimensions() const;
     Vector3f dxyz() const { return mDxyz; }
     float dt() const { return mDt; }
 	
 	const std::vector<OutputDescPtr> & outputs() const { return mOutputs; }
-	const std::vector<SourceDescPtr> & getSources() const { return mSources; }
-    const std::vector<CurrentSourceDescPtr> & getCurrentSources() const
+	const std::vector<SourceDescPtr> & sources() const { return mSources; }
+    const std::vector<CurrentSourceDescPtr> & currentSources() const
         { return mCurrentSources; }
-	const std::vector<HuygensSurfaceDescPtr> & getHuygensSurfaces() const
+	const std::vector<HuygensSurfaceDescPtr> & huygensSurfaces() const
 		{ return mHuygensSurfaces; }
-	std::vector<HuygensSurfaceDescPtr> & getHuygensSurfaces()
+	std::vector<HuygensSurfaceDescPtr> & huygensSurfaces()
 		{ return mHuygensSurfaces; }
-	const AssemblyDescPtr getAssembly() const { return mAssembly; }
+	const AssemblyDescPtr assembly() const { return mAssembly; }
 	
 private:
 	std::string mName;
@@ -398,8 +398,8 @@ public:
     
     // Common accessors
     HuygensSurfaceSourceType type() const { return mType; }
-    const Rect3i & getHalfCells() const { return mHalfCells; }
-    const std::set<Vector3i> & getOmittedSides() const { return mOmittedSides; }
+    const Rect3i & halfCells() const { return mHalfCells; }
+    const std::set<Vector3i> & omittedSides() const { return mOmittedSides; }
     bool isTotalField() const { return mIsTotalField; }
     bool isScatteredField() const { return !mIsTotalField; }
     
@@ -410,11 +410,11 @@ public:
         { assert(mType == kTFSFSource); return mTimeFile; }
     std::string formula() const
         { assert(mType == kTFSFSource); return mFormula; }
-    Vector3i getDirection() const
+    Vector3i direction() const
         { assert(mType == kTFSFSource); return mDirection; }
     
     // Custom or ordinary TFSFSource accessor
-    Vector3i getSymmetries() const
+    Vector3i symmetries() const
         { assert(mType == kTFSFSource || mType == kCustomTFSFSource);
           return mSymmetries; }
     Duration duration() const
@@ -426,11 +426,11 @@ public:
         { assert(mType == kCustomTFSFSource); return mFile; }
     
     // Link accessors
-    std::string getSourceGridName() const
+    std::string sourceGridName() const
         { assert(mType == kLink); return mSourceGridName; }
-    GridDescPtr getSourceGrid() const
+    GridDescPtr sourceGrid() const
         { assert(mType == kLink); return mSourceGrid; }
-    Rect3i getFromHalfCells() const { return mFromHalfCells; }
+    Rect3i fromHalfCells() const { return mFromHalfCells; }
     
 private:
     // Common data
@@ -497,7 +497,7 @@ public:
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap,
 		const Map<std::string, GridDescPtr> & gridMap);
 	
-	const std::vector<InstructionPtr> & getInstructions() const
+	const std::vector<InstructionPtr> & instructions() const
 		{ return mInstructions; }
 	
 	
@@ -637,7 +637,7 @@ public:
 	
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 	
-	//const Rect3i & getFillRect() const { return mFillRect; }
+	//const Rect3i & fillRect() const { return mFillRect; }
 	const Rect3i & yeeRect() const;
 	const Rect3i & halfRect() const;
 	FillStyle fillStyle() const { return mStyle; }
@@ -665,8 +665,8 @@ public:
 	
 	const Rect3i & sourceHalfRect() const { return mSourceRect; }
 	const Rect3i & destHalfRect() const { return mDestRect; }
-	const std::string & getGridName() const { return mGridName; }
-	const GridDescPtr & getGrid() const { return mGrid; }
+	const std::string & gridName() const { return mGridName; }
+	const GridDescPtr & grid() const { return mGrid; }
 	
 private:
 	Rect3i mSourceRect;

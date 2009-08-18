@@ -125,7 +125,7 @@ int main (int argc, char * const argv[])
     prefs.runlineDirection = variablesMap["fastaxis"].as<char>();
     
 	
-    FDTDApplication& app = FDTDApplication::getInstance();
+    FDTDApplication& app = FDTDApplication::instance();
 	app.runNew(paramFileName, prefs);
     //app.runAll(paramFileName, numThreads, runSim, output3D, dumpGrid,
 	//	output2D, numTimestepsOverride);

@@ -76,7 +76,7 @@ newRunlineEncoder(const VoxelGrid & vg,
 	assert(parentPaint != 0L);
     
     RunlineEncoderPtr setupMat;
-	const MaterialDescription* bulkMaterial = parentPaint->getBulkMaterial();
+	const MaterialDescription* bulkMaterial = parentPaint->bulkMaterial();
     const Map<Vector3i, Map<string, string> > & gridPMLParams(
         gridDesc.pmlParams());
     Map<Vector3i, Map<string, string> > pmlParams;
@@ -226,7 +226,7 @@ static RunlineEncoderPtr newMaterialCurrentPML(Paint* parentPaint,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
 {
-	const MaterialDescription* bulkMaterial = parentPaint->getBulkMaterial();
+	const MaterialDescription* bulkMaterial = parentPaint->bulkMaterial();
     RunlineEncoderPtr setupMaterial;
     
     if (bulkMaterial->modelName() == "StaticDielectric")
@@ -269,7 +269,7 @@ static RunlineEncoderPtr newCurrentPML(Paint* parentPaint,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
 {
-    //const MaterialDescription* bulkMaterial = parentPaint->getBulkMaterial();
+    //const MaterialDescription* bulkMaterial = parentPaint->bulkMaterial();
     RunlineEncoderPtr setupMaterial;
     
 //    LOG << "Here, with paint " << *parentPaint << "\n";
@@ -298,7 +298,7 @@ static RunlineEncoderPtr newPML(Paint* parentPaint,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
 {
-    Vector3i pmlDirs = parentPaint->getPMLDirections();
+    Vector3i pmlDirs = parentPaint->pmlDirections();
     Vector3i rotatedPMLDirs = cyclicPermute(pmlDirs, (3-runlineDirection)%3);
     RunlineEncoder* m;
     
@@ -385,7 +385,7 @@ static RunlineEncoderPtr newCFSRIPML(Paint* parentPaint,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
 {
-    Vector3i pmlDirs = parentPaint->getPMLDirections();
+    Vector3i pmlDirs = parentPaint->pmlDirections();
     Vector3i rotatedPMLDirs = cyclicPermute(pmlDirs, (3-runlineDirection)%3);
     
     LOGF << "This PML absorbs along " << pmlDirs

@@ -40,7 +40,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 {
 	int nSide;
 	const VoxelGrid & voxelGrid(vp.voxelGrid());
-	const PartitionCellCount & cellCountGrid(*vp.getIndices());
+	const PartitionCellCount & cellCountGrid(*vp.indices());
     InterleavedLatticePtr mainLattice(vp.lattice());
 	
 	mStartPoint = startPos;
@@ -66,7 +66,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		else if (mStartPaint->hasCurlBuffer(nSide))
 		{
 			mUsedNeighborIndices[nSide] = 0;
-            bp[nSide] = mStartPaint->getCurlBuffer(nSide)->
+            bp[nSide] = mStartPaint->curlBuffer(nSide)->
                 lattice()->wrappedPointer(mStartPoint+cardinal(nSide));
 		}
 		else
@@ -122,7 +122,7 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	}
 	else
 	{
-		if (newPaint->getCurlBuffer(nSide) != mStartPaint->getCurlBuffer(nSide))
+		if (newPaint->curlBuffer(nSide) != mStartPaint->curlBuffer(nSide))
 			return 0;
 	}
 	return 1;
@@ -196,7 +196,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 {
 	int nSide;
 	const VoxelGrid & voxelGrid(vp.voxelGrid());
-	const PartitionCellCount & cellCountGrid(*vp.getIndices());
+	const PartitionCellCount & cellCountGrid(*vp.indices());
     InterleavedLatticePtr mainLattice(vp.lattice());
 	
 	mStartPoint = startPos;
@@ -222,7 +222,7 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
 		else if (mStartPaint->hasCurlBuffer(nSide))
 		{
 			mUsedNeighborIndices[nSide] = 0;
-			bp[nSide] = mStartPaint->getCurlBuffer(nSide)->lattice()->
+			bp[nSide] = mStartPaint->curlBuffer(nSide)->lattice()->
                 wrappedPointer(mStartPoint+cardinal(nSide));
 		}
 		else
@@ -249,14 +249,14 @@ startRunline(const VoxelizedPartition & vp, const Vector3i & startPos)
     Vector3i wrappedStart = (mStartPoint+gridNumHalfCells) % gridNumHalfCells;
     assert(octant(wrappedStart) == octant(mStartPoint));
     Rect3i pmlYeeCells = halfToYee(
-        vp.getPMLHalfCells(mStartPaint->getPMLDirections()),
+        vp.pmlHalfCells(mStartPaint->pmlDirections()),
         octant(wrappedStart));
     mCurrentRunline.pmlDepthIndex = halfToYee(wrappedStart) - pmlYeeCells.p1;
     
     // TODO: test that this gives the correct PML if we wrapped to the far
     // side of the grid somehow.  (What am I talking about???)
     /*
-	LOGMORE << "dir " << mStartPaint->getPMLDirections() << "\n";
+	LOGMORE << "dir " << mStartPaint->pmlDirections() << "\n";
 	LOGMORE << "start " << mStartPoint << "\n";
 	LOGMORE << "depth " << mCurrentRunline.pmlDepthIndex << "\n";
     */
@@ -281,7 +281,7 @@ canContinueRunline(const VoxelizedPartition & vp, const Vector3i & oldPos,
 	}
 	else
 	{
-		if (newPaint->getCurlBuffer(nSide) != mStartPaint->getCurlBuffer(nSide))
+		if (newPaint->curlBuffer(nSide) != mStartPaint->curlBuffer(nSide))
 			return 0;
 	}
     

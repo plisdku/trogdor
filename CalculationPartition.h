@@ -36,7 +36,7 @@ public:
     InterleavedLattice& lattice();
     
     // used by PartitionStatistics
-    const std::vector<UpdateEquationPtr> getMaterials() const
+    const std::vector<UpdateEquationPtr> materials() const
         { return mMaterials; }
     
     // instruct all materials and outputs to allocate space for extra fields

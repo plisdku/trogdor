@@ -121,7 +121,7 @@ setHuygensSurfaces(const vector<HuygensSurfaceDescPtr> & surfaces)
 	// correction.
 	for (unsigned int nn = 0; nn < mHuygensSurfaces.size(); nn++)
 	{
-		Rect3i destHalfRect = mHuygensSurfaces[nn]->getHalfCells();
+		Rect3i destHalfRect = mHuygensSurfaces[nn]->halfCells();
 		
 		for (int xyz = 0; xyz < 3; xyz++)
 		{
@@ -169,13 +169,13 @@ yeeBounds() const
 }
 
 Rect3i GridDescription::
-getHalfCellBounds() const
+halfCellBounds() const
 {
 	return Rect3i(Vector3i(0,0,0), mNumHalfCells-Vector3i(1,1,1));
 }
 
 int GridDescription::
-getNumDimensions() const
+numDimensions() const
 {
 	int nDim = 0;
 	for (int nn = 0; nn < 3; nn++)
@@ -549,7 +549,7 @@ setPointers(const Map<string, GridDescPtr> & gridMap)
 	assert(mType == kLink);
 	mSourceGrid = gridMap[mSourceGridName];
     
-    if (!mSourceGrid->getHalfCellBounds().encloses(mFromHalfCells))
+    if (!mSourceGrid->halfCellBounds().encloses(mFromHalfCells))
         throw(Exception("Link fromYeeCells or fromHalfCells must be entirely"
             " contained within sourceGrid's bounds."));
 }

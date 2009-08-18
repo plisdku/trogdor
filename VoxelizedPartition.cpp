@@ -31,9 +31,9 @@ VoxelizedPartition::
 VoxelizedPartition(const GridDescription & gridDesc, 
 	const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	Rect3i allocRegion, Rect3i calcRegion, int runlineDirection) :
-	mVoxels(allocRegion, gridDesc.getHalfCellBounds(), 
+	mVoxels(allocRegion, gridDesc.halfCellBounds(), 
 		gridDesc.nonPMLHalfCells()),
-	mGridHalfCells(gridDesc.getHalfCellBounds()),
+	mGridHalfCells(gridDesc.halfCellBounds()),
 	mFieldAllocHalfCells(expandToYeeRect(allocRegion)),
 	mAuxAllocRegion(allocRegion),
 	mCalcHalfCells(calcRegion)
@@ -71,7 +71,7 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	paintFromAssembly(gridDesc, voxelizedGrids);
 	calculateHuygensSurfaceSymmetries(gridDesc); // * NOT MPI FRIENDLY YET
     
-    createSetupCurrentSources(gridDesc.getCurrentSources());
+    createSetupCurrentSources(gridDesc.currentSources());
     paintFromCurrentSources(gridDesc);
     
 	mVoxels.overlayPML(); // * grid-scale wraparound
@@ -83,7 +83,7 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	loadSpaceVaryingData(); // * grid-scale wraparound
 	
     createSetupOutputs(gridDesc.outputs());
-    createSetupSources(gridDesc.getSources());
+    createSetupSources(gridDesc.sources());
 }
 
 Rect3i VoxelizedPartition::
@@ -93,7 +93,7 @@ gridYeeCells() const
 }
 
 Rect3i VoxelizedPartition::
-getAllocYeeCells() const
+allocYeeCells() const
 {
     return halfToYee(mFieldAllocHalfCells);
 }
@@ -119,7 +119,7 @@ partitionHasPML(int faceNum) const
 }
 
 Rect3i VoxelizedPartition::
-getPMLHalfCellsOnFace(int faceNum) const
+pmlHalfCellsOnFace(int faceNum) const
 {
 	//LOG << "Using non-parallel-friendly method.\n";
 	assert(faceNum >= 0);
@@ -135,7 +135,7 @@ getPMLHalfCellsOnFace(int faceNum) const
 }
 
 Rect3i VoxelizedPartition::
-getPartitionPMLHalfCellsOnFace(int faceNum) const
+partitionPMLHalfCellsOnFace(int faceNum) const
 {
 	//LOG << "Using non-parallel-friendly method.\n";
 	assert(faceNum >= 0);
@@ -151,7 +151,7 @@ getPartitionPMLHalfCellsOnFace(int faceNum) const
 }
 
 Rect3i VoxelizedPartition::
-getPMLHalfCells(Vector3i pmlDir) const
+pmlHalfCells(Vector3i pmlDir) const
 {
 	Rect3i pml(mGridHalfCells);
 	
@@ -189,7 +189,7 @@ createHuygensSurfaces(const GridDescPtr & gridDescription,
     const Map<GridDescPtr, VoxelizedPartitionPtr> & grids)
 {   
     const vector<HuygensSurfaceDescPtr> & surfaces = 
-        gridDescription->getHuygensSurfaces();
+        gridDescription->huygensSurfaces();
     
     for (unsigned int nn = 0; nn < surfaces.size(); nn++)
     {
@@ -243,18 +243,18 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
         + 1;
     file << "afp.numT = [" << numT << "];\n";
     
-    file << "afp.halfCells = " << surf->getHalfCells() << ";\n";
+    file << "afp.halfCells = " << surf->halfCells() << ";\n";
     file << "afp.tfRect = afp.halfCells;\n";
     file << "afp.inputFile = '" << surf->file() << "';\n";
     /*
     // Now write the materials and their parameters.
     int ii, jj, kk;
     int numMaterials = 0;
-    Rect3i sampleRect = ss->getTFRect();
+    Rect3i sampleRect = ss->tiFRect();
     const vmlib::SMat<3,bool> & gridSymmetries =
-        ss->getCachedGridSymmetries();
-    Vector3b sourceSymmetries = ss->getSymmetries();
-    Vector3b periodicDimensions = getPeriodicDimensions(sampleRect);
+        ss->cachedGridSymmetries();
+    Vector3b sourceSymmetries = ss->symmetries();
+    Vector3b periodicDimensions = periodicDimensions(sampleRect);
     Vector3b combinedSymmetries(0,0,0);
     
     LOGF << "Grid symmetries are " << gridSymmetries << endl;
@@ -300,9 +300,9 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
         if (tagToParent.count(mat) == 0)
         {
             const MaterialType & matType =
-                mStructureGrid->getMaterialType(mat);
+                mStructureGrid->materialType(mat);
             if (matType.isTFSF())
-                parentTag = mStructureGrid->getMaterialIndex(
+                parentTag = mStructureGrid->materialIndex(
                     matType.name());
             else
                 parentTag = mat;
@@ -321,7 +321,7 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     // Write the material descriptions
     for (int mm = 0; mm < numMaterials; mm++)
     {
-        const MaterialType & matType = mStructureGrid->getMaterialType(
+        const MaterialType & matType = mStructureGrid->materialType(
             materials[mm]);
         const RunlineEncoderPtr setupMat = mMaterials[matType.name()];
         file << "afp.materials{" << mm+1 << "}.class = '" << 
@@ -329,7 +329,7 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
         file << "afp.materials{" << mm+1 << "}.name = '" <<
             setupMat->name() << "';\n";
         
-        const Map<string, string> & params = setupMat->getParameters();
+        const Map<string, string> & params = setupMat->parameters();
         Map<string, string>::const_iterator itr;
         for (itr = params.begin(); itr != params.end(); itr++)
         {
@@ -384,7 +384,7 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
         for (gg = 0; gg < 6; gg++)  // iterate over sides (-x, +x, etc)
         if (!temporaryBuffer.omits(gg))
         {
-            Rect3i yeeBounds = temporaryBuffer.getYeeBufferRect(gg,
+            Rect3i yeeBounds = temporaryBuffer.yeeBufferRect(gg,
                 fieldParities[ff]);
             for (kk = yeeBounds.p1[2]; kk <= yeeBounds.p2[2]; kk++)
             for (jj = yeeBounds.p1[1]; jj <= yeeBounds.p2[1]; jj++)
@@ -401,7 +401,7 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
         for (gg = 0; gg < 6; gg++)  // iterate over sides (-x, +x, etc)
         if (!temporaryBuffer.omits(gg))
         {
-            Rect3i yeeBounds = temporaryBuffer.getYeeBufferRect(gg,
+            Rect3i yeeBounds = temporaryBuffer.yeeBufferRect(gg,
                 fieldParities[ff]);
             for (kk = yeeBounds.p1[2]; kk <= yeeBounds.p2[2]; kk++)
             for (jj = yeeBounds.p1[1]; jj <= yeeBounds.p2[1]; jj++)
@@ -429,8 +429,8 @@ paintFromAssembly(const GridDescription & gridDesc,
 {
 	//LOG << "Painting from assembly.\n";
 	
-	const vector<InstructionPtr> & instructions = gridDesc.getAssembly()->
-		getInstructions();
+	const vector<InstructionPtr> & instructions = gridDesc.assembly()->
+		instructions();
 	
 	for (unsigned int nn = 0; nn < instructions.size(); nn++)
 	{
@@ -456,7 +456,7 @@ paintFromAssembly(const GridDescription & gridDesc,
 				mVoxels.paintCopyFrom(gridDesc,
 					(const CopyFrom&)*instructions[nn],
 					voxelizedGrids[((const CopyFrom&)*instructions[nn])
-						.getGrid()]->mVoxels);
+						.grid()]->mVoxels);
 				break;
 			case kExtrudeType:
 				mVoxels.paintExtrude(gridDesc,
@@ -509,7 +509,7 @@ calculateHuygensSurfaceSymmetries(const GridDescription & gridDesc)
 	//LOG << "Calculating Huygens surface symmetries.\n";
 	
 	const vector<HuygensSurfaceDescPtr> & surfaces =
-		gridDesc.getHuygensSurfaces();
+		gridDesc.huygensSurfaces();
 	
 	mHuygensRegionSymmetries.resize(surfaces.size());
 	
@@ -519,7 +519,7 @@ calculateHuygensSurfaceSymmetries(const GridDescription & gridDesc)
 			huygensSymmetry(*surfaces[nn]);
 		/*
 		LOG << "Surface " << nn << " has bounds " <<
-			surfaces[nn]->getHalfCells() << " and symmetries "
+			surfaces[nn]->halfCells() << " and symmetries "
 			<< mHuygensRegionSymmetries[nn] << "\n";
         */
 	}
@@ -530,10 +530,10 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
 {
 	int ii, jj, kk;
 	
-	Vector3i o = surf.getHalfCells().p1; // origin
-	Vector3i p = surf.getHalfCells().p2; // and opposite corner
-	Vector3i dim = surf.getHalfCells().size();
-	const set<Vector3i> & omittedSides = surf.getOmittedSides();
+	Vector3i o = surf.halfCells().p1; // origin
+	Vector3i p = surf.halfCells().p2; // and opposite corner
+	Vector3i dim = surf.halfCells().size();
+	const set<Vector3i> & omittedSides = surf.omittedSides();
     
 	Vector3i symmetry(1, 1, 1);
     
@@ -626,7 +626,7 @@ createSetupMaterials(const GridDescription & gridDesc)
 	// Cache PML rects (this is really just to simplify notation further down).
 	vector<Rect3i> pmlRects;
 	for (int nn = 0; nn < 6; nn++)
-		pmlRects.push_back(getPMLHalfCellsOnFace(nn));
+		pmlRects.push_back(pmlHalfCellsOnFace(nn));
 	
     //cout << *mCentralIndices << endl;
     
@@ -642,9 +642,9 @@ createSetupMaterials(const GridDescription & gridDesc)
         for (fieldDir = 0; fieldDir < 3; fieldDir++)
         {
             numCellsE[fieldDir] = 
-                mCentralIndices->getNumCells(p, octantE(fieldDir));
+                mCentralIndices->numCells(p, octantE(fieldDir));
             numCellsH[fieldDir] = 
-                mCentralIndices->getNumCells(p, octantH(fieldDir));
+                mCentralIndices->numCells(p, octantH(fieldDir));
         }
         
 //        LOG << "Not calling that PML cells on side function.  What's it for?\n";

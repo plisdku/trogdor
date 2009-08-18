@@ -38,15 +38,15 @@ updateE(HuygensSurface & hs)
             InterleavedLatticePtr bufferLattice = nbs[bufNum]->lattice();
             // other lattices: mDestLattice, mSourceLattice
             
-            Rect3i destYeeCells = halfToYee(nbs[bufNum]->getDestHalfCells(),
+            Rect3i destYeeCells = halfToYee(nbs[bufNum]->destHalfCells(),
                 octantE(fieldDirection));
             Rect3i sourceYeeCells = halfToYee(nbs[bufNum]->
-                getSourceHalfCells(), octantE(fieldDirection));
+                sourceHalfCells(), octantE(fieldDirection));
             
             const float srcFactor =
-                nbs[bufNum]->getSourceFactorE(fieldDirection);
+                nbs[bufNum]->sourceFactorE(fieldDirection);
             const float destFactor =
-                nbs[bufNum]->getDestFactorE(fieldDirection);
+                nbs[bufNum]->destFactorE(fieldDirection);
             
             /*
             LOG << "Source " << sourceYeeCells << " dest " << destYeeCells
@@ -119,16 +119,16 @@ updateH(HuygensSurface & hs)
             InterleavedLatticePtr bufferLattice = nbs[bufNum]->lattice();
             // other lattices: mDestLattice, mSourceLattice
             
-            Rect3i destYeeCells = halfToYee(nbs[bufNum]->getDestHalfCells(),
+            Rect3i destYeeCells = halfToYee(nbs[bufNum]->destHalfCells(),
                 octantH(fieldDirection));
             Rect3i sourceYeeCells = halfToYee(nbs[bufNum]->
-                getSourceHalfCells(), octantH(fieldDirection));
+                sourceHalfCells(), octantH(fieldDirection));
             
             
             const float srcFactor =
-                nbs[bufNum]->getSourceFactorH(fieldDirection);
+                nbs[bufNum]->sourceFactorH(fieldDirection);
             const float destFactor =
-                nbs[bufNum]->getDestFactorH(fieldDirection);
+                nbs[bufNum]->destFactorH(fieldDirection);
             /*
             LOG << "Source " << sourceYeeCells << " dest " << destYeeCells
                 << "\n";

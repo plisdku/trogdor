@@ -47,24 +47,24 @@ public:
 		Rect3i allocRegion, Rect3i calcRegion,
         int runlineDirection );  // !
 	
-	const std::vector<Vector3i> & getHuygensRegionSymmetries() const {
+	const std::vector<Vector3i> & huygensRegionSymmetries() const {
 		return mHuygensRegionSymmetries; }
 	
 	const Rect3i & gridHalfCells() const { return mGridHalfCells; }
     Rect3i gridYeeCells() const;
-    const Rect3i & getAllocHalfCells() const { return mFieldAllocHalfCells; }
-    Rect3i getAllocYeeCells() const;
+    const Rect3i & allocHalfCells() const { return mFieldAllocHalfCells; }
+    Rect3i allocYeeCells() const;
     Vector3i originYee() const { return mOriginYee; }
 	bool partitionHasPML(int faceNum) const;
-	Rect3i getPMLHalfCellsOnFace(int faceNum) const;
-	Rect3i getPartitionPMLHalfCellsOnFace(int faceNum) const;
-	Rect3i getPMLHalfCells(Vector3i pmlDir) const;
+	Rect3i pmlHalfCellsOnFace(int faceNum) const;
+	Rect3i partitionPMLHalfCellsOnFace(int faceNum) const;
+	Rect3i pmlHalfCells(Vector3i pmlDir) const;
     
     // returns      which material goes in which cell in this partition
 	const VoxelGrid & voxelGrid() const { return mVoxels; }
     
     // returns      the index of each cell by material type (air #1, air #2...)
-	const Pointer<PartitionCellCount> & getIndices() const
+	const Pointer<PartitionCellCount> & indices() const
 		{ return mCentralIndices; }
     
     Pointer<InterleavedLattice> lattice() const { return mLattice; }
@@ -78,18 +78,18 @@ public:
         { return mSetupOutputs; }
     
     // returns      the structures that store temp data for setting up sources
-    const std::vector<Pointer<SetupSource> > & getSoftSetupSources() const
+    const std::vector<Pointer<SetupSource> > & softSetupSources() const
         { return mSoftSetupSources; }
     
     // returns      the structures that store temp data for setting up sources
-    const std::vector<Pointer<SetupSource> > & getHardSetupSources() const
+    const std::vector<Pointer<SetupSource> > & hardSetupSources() const
         { return mHardSetupSources; }
     
     const std::vector<Pointer<SetupCurrentSource> > & setupCurrentSources()
         const { return mSetupCurrentSources; }
     
     // returns      the structures that store temp data for setting up NBs
-    const std::vector<Pointer<HuygensSurface> > & getHuygensSurfaces()
+    const std::vector<Pointer<HuygensSurface> > & huygensSurfaces()
         const { return mHuygensSurfaces; }
     
     void clearVoxelGrid();

@@ -92,16 +92,16 @@ public:
         int sideNum,
         float incidentFieldFactor);
     
-    const Rect3i & getDestHalfCells() const;
-    const Rect3i & getSourceHalfCells() const;
-    float getDestFactorE(int fieldDirection) const;
-    float getDestFactorH(int fieldDirection) const;
-    float getSourceFactorE(int fieldDirection) const;
-    float getSourceFactorH(int fieldDirection) const;
+    const Rect3i & destHalfCells() const;
+    const Rect3i & sourceHalfCells() const;
+    float destFactorE(int fieldDirection) const;
+    float destFactorH(int fieldDirection) const;
+    float sourceFactorE(int fieldDirection) const;
+    float sourceFactorH(int fieldDirection) const;
     
     InterleavedLatticePtr lattice() const { return mLattice; }
 private:
-    Rect3i getEdgeHalfCells(const Rect3i & halfCells, int nSide);
+    Rect3i edgeHalfCells(const Rect3i & halfCells, int nSide);
     void initFactors(const Rect3i & huygensHalfCells, int sideNum,
         float incidentFieldFactor);
     

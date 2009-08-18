@@ -93,7 +93,7 @@ calcEPhase(int direction)
     //LOG << "direction " << direction << " number "
     //    << eFieldNumber(direction) << "\n";
     // grab the right set of runlines (for Ex, Ey, or Ez)
-    vector<SimpleAuxRunline> & rls = getRunlinesE(direction);
+    vector<SimpleAuxRunline> & rls = runlinesE(direction);
     const int STRIDE = 1;
     
     const float dj = mDxyz[(direction+1)%3];  // e.g. dy
@@ -140,7 +140,7 @@ calcHPhase(int direction)
     //LOG << "direction " << direction << " number "
     //    << hFieldNumber(direction) << "\n";
     // grab the right set of runlines (for Hx, Hy, or Hz)
-    vector<SimpleAuxRunline> & rls = getRunlinesH(direction);
+    vector<SimpleAuxRunline> & rls = runlinesH(direction);
     const int STRIDE = 1;
     
     const float dj = mDxyz[(direction+1)%3];  // e.g. dy

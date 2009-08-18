@@ -41,11 +41,11 @@ public:
 	
 	virtual void printRunlines(std::ostream & out) const;
 	
-    const std::vector<SBMRunlinePtr> & getRunlinesE(int dir) const
+    const std::vector<SBMRunlinePtr> & runlinesE(int dir) const
         { return mRunlinesE[dir]; }
-    const std::vector<SBMRunlinePtr> & getRunlinesH(int dir) const
+    const std::vector<SBMRunlinePtr> & runlinesH(int dir) const
         { return mRunlinesH[dir]; }
-    Paint* getPaint() const { return mStartPaint; }
+    Paint* paint() const { return mStartPaint; }
 protected:
 	std::vector<SBMRunlinePtr> mRunlinesE[3];
 	std::vector<SBMRunlinePtr> mRunlinesH[3];
@@ -76,9 +76,9 @@ public:
 	
 	virtual void printRunlines(std::ostream & out) const;
 	    
-    const std::vector<SBPMRunlinePtr> & getRunlinesE(int dir) const
+    const std::vector<SBPMRunlinePtr> & runlinesE(int dir) const
         { return mRunlinesE[dir]; }
-    const std::vector<SBPMRunlinePtr> & getRunlinesH(int dir) const
+    const std::vector<SBPMRunlinePtr> & runlinesH(int dir) const
         { return mRunlinesH[dir]; }
     
 protected:

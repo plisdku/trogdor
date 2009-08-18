@@ -66,13 +66,13 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
 	Map<GridDescPtr, VoxelizedPartitionPtr> voxelizedGrids;
     Map<string, CalculationPartitionPtr> calculationGrids;
 	
-    t0 = getTimeInMicroseconds();
+    t0 = tiimeInMicroseconds();
 	SimulationDescPtr sim = loadSimulation(parameterFile);
     mNumT = sim->duration();
-    t1 = getTimeInMicroseconds();
+    t1 = tiimeInMicroseconds();
     mPerformance.setReadDescriptionMicroseconds(t1-t0);
 	
-    t0 = getTimeInMicroseconds();
+    t0 = tiimeInMicroseconds();
     
     int runlineDirection = 0;
     if (prefs.runlineDirection == 'x')
@@ -95,7 +95,7 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
 	
 	// in here: do any setup that requires the voxelized grids
 	// extract all information that will be needed after the setup grid is gone
-	t1 = getTimeInMicroseconds();
+	t1 = tiimeInMicroseconds();
     mPerformance.setVoxelizeMicroseconds(t1-t0);
     
     map<GridDescPtr, VoxelizedPartitionPtr>::const_iterator itr;
@@ -122,12 +122,12 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
         return;
     }
     
-    t0 = getTimeInMicroseconds();
+    t0 = tiimeInMicroseconds();
     trimVoxelizedGrids(voxelizedGrids); // delete VoxelGrid & PartitionCellCount
     makeCalculationGrids(sim, calculationGrids, voxelizedGrids);
 	voxelizedGrids.clear();  // this will delete the setup objects
     allocateAuxBuffers(calculationGrids);
-    t1 = getTimeInMicroseconds();
+    t1 = tiimeInMicroseconds();
     mPerformance.setSetupCalculationMicroseconds(t1-t0);
 	
 	// allocate memory that can be postponed
@@ -135,8 +135,8 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     /*
     set<MemoryBuffer*>::const_iterator itr;
     LOG << "All buffers:\n";
-    for (itr = MemoryBuffer::getAllBuffers().begin();
-        itr != MemoryBuffer::getAllBuffers().end(); itr++)
+    for (itr = MemoryBuffer::allBuffers().begin();
+        itr != MemoryBuffer::allBuffers().end(); itr++)
         LOGMORE << *(*itr) << endl;
     */
     
@@ -151,12 +151,12 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     
     const bool BENCHMARK_ALL = 1;
     
-    t0 = getTimeInMicroseconds();
+    t0 = tiimeInMicroseconds();
     if (BENCHMARK_ALL)
         runTimed(calculationGrids);
     else
         runUntimed(calculationGrids);
-    t1 = getTimeInMicroseconds();
+    t1 = tiimeInMicroseconds();
     mPerformance.setRunCalculationMicroseconds(t1-t0);
     
     if (BENCHMARK_ALL)
@@ -200,23 +200,23 @@ voxelizeGrids(const SimulationDescPtr sim,
 	{
 		LOG << "Voxelizing the main grid for MPI.\n";
 		LOG << "Determining partitions for each node.\n";
-		assert(sim->getGrids().size() == 1);
+		assert(sim->grids().size() == 1);
 		LOG << "Good, only one main grid present per MPI Trog. limitations.\n";
 		LOG << "Voxelizing per current grid's partition size.\n";
 		
 		myPartition = Rect3i(0,0,0,0,0,0); 
 		myCalcRegion = inset(myPartition, 1,1,1,1,1,1);
 		assert(!"Can't go further.");
-		//voxelizeGridRecursor(voxelizedGrids, sim->getGrids()[0], myPartition,
+		//voxelizeGridRecursor(voxelizedGrids, sim->grids()[0], myPartition,
 		//	myCalcRegion);
 	}
 	GridDescPtr g;
     unsigned int ii;
     
 	LOGF << "Stage 1: paint in the structure and recurse for aux grids.\n";
-	for (ii = 0; ii < sim->getGrids().size(); ii++)
+	for (ii = 0; ii < sim->grids().size(); ii++)
 	{
-		g = sim->getGrids()[ii];
+		g = sim->grids()[ii];
 		
 		// the recursor paints the setup grid and creates new grids as needed
 		// to implement all TFSF sources.
@@ -254,12 +254,12 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	Rect3i partitionWallsHalf, int runlineDirection )
 {
 	Rect3i myPartitionHalfCells = clip(partitionWallsHalf,
-        currentGrid->getHalfCellBounds());
+        currentGrid->halfCellBounds());
 	Rect3i myCalcHalfCells(myPartitionHalfCells);
 	Rect3i myAllocatedHalfCells(myPartitionHalfCells);
     
 	for (int mm = 0; mm < 3; mm++)
-	if (numNodes[mm] != 1 && currentGrid->getNumYeeCells()[mm] != 1)
+	if (numNodes[mm] != 1 && currentGrid->numYeeCells()[mm] != 1)
 	{
 		myAllocatedHalfCells.p1[mm] -= 2;
 		myAllocatedHalfCells.p2[mm] += 2;
@@ -282,9 +282,9 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 		
 		InstructionPtr extendThisRegion(new Extrude(
 			currentGrid->nonPMLHalfCells(),
-			currentGrid->getHalfCellBounds() ));
+			currentGrid->halfCellBounds() ));
 		vector<InstructionPtr> assemblyStuff(
-			currentGrid->getAssembly()->getInstructions());
+			currentGrid->assembly()->instructions());
 		assemblyStuff.push_back(extendThisRegion);
 		AssemblyDescPtr assembly(new AssemblyDescription(assemblyStuff));
 		currentGrid->setAssembly(assembly);
@@ -300,9 +300,9 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	// Turn TFSF sources into auxiliary grids and TFSF links
     
 	const std::vector<HuygensSurfaceDescPtr> surfs = currentGrid->
-		getHuygensSurfaces();
+		huygensSurfaces();
 	const std::vector<Vector3i> & gridSymmetries = partition->
-		getHuygensRegionSymmetries();
+		huygensRegionSymmetries();
 	assert(surfs.size() == gridSymmetries.size());
 	
 	for (unsigned int nn = 0; nn < surfs.size(); nn++)
@@ -312,9 +312,9 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
     }
     else
 	{
-		Vector3i sourceSymm = surfs[nn]->getSymmetries();
+		Vector3i sourceSymm = surfs[nn]->symmetries();
 		Vector3i gridSymm = gridSymmetries[nn];
-		Vector3i gridYeeCells = currentGrid->getNumYeeCells();
+		Vector3i gridYeeCells = currentGrid->numYeeCells();
 		Vector3i collapsible(
 			sourceSymm[0]*gridSymm[0] != 0 && gridYeeCells[0] > 1,
 			sourceSymm[1]*gridSymm[1] != 0 && gridYeeCells[1] > 1,
@@ -341,7 +341,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 			voxelizeGridRecursor(voxelizedGrids, gPtr, numNodes, thisNode,
 				auxPartitionWallsHalf, runlineDirection);
 		}
-		else if (currentGrid->getNumDimensions() == 1)
+		else if (currentGrid->numDimensions() == 1)
 		{
             assert(surfs[nn]->type() != kLink); // how could this happen?
             
@@ -382,13 +382,13 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
     Mat3i collapser(Mat3i::diagonal(!collapsible));
     Vector3i originYee(collapser*parentGrid->originYee());
 	
-	const set<Vector3i> & omittedSides = huygensSurface->getOmittedSides();
+	const set<Vector3i> & omittedSides = huygensSurface->omittedSides();
 	
 	// What does the aux grid look like?
 	// It's the size of the original total field region, collapsed, and all
 	// non-1D dimensions get 10 cells of PML.
 	
-	Rect3i tfHalfCells(collapser*huygensSurface->getHalfCells());
+	Rect3i tfHalfCells(collapser*huygensSurface->halfCells());
 	tfHalfCells.p2 = vec_max(tfHalfCells.p2, Vector3i(1,1,1));
     Rect3i linkSourceHalfCells(tfHalfCells);
 	
@@ -430,7 +430,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
     //LOG << "What is omitted?\n";
     //LOGMORE << omittedSides << endl;
 	
-	Rect3i copyFrom(huygensSurface->getHalfCells());
+	Rect3i copyFrom(huygensSurface->halfCells());
 	for (nn = 0; nn < 3; nn++)
 	if (omittedSides.count(cardinal(nn*2)))
 		copyFrom.p1[nn] = copyFrom.p2[nn];
@@ -462,23 +462,23 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 		//	Omitting the "back side" is harmless in aux grids, and desirable
 		//  for 1D aux grids in the terminal recursion.
 		set<Vector3i> newSourceOmittedSides(omittedSides);
-		newSourceOmittedSides.insert(huygensSurface->getDirection());
+		newSourceOmittedSides.insert(huygensSurface->direction());
         if (huygensSurface->formula() != "")
             childSource = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
                 newTFSFFormulaSource(huygensSurface->sourceFields(),
                     huygensSurface->formula(),
-                    huygensSurface->getDirection(),
+                    huygensSurface->direction(),
                     tfHalfCells,
-                    ///huygensSurface->getHalfCells(),
+                    ///huygensSurface->halfCells(),
                     newSourceOmittedSides,
                     huygensSurface->isTotalField()));
         else
             childSource = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
                 newTFSFTimeSource(huygensSurface->sourceFields(),
                     huygensSurface->timeFile(),
-                    huygensSurface->getDirection(),
+                    huygensSurface->direction(),
                     tfHalfCells,
-                    //huygensSurface->getHalfCells(),
+                    //huygensSurface->halfCells(),
                     newSourceOmittedSides,
                     huygensSurface->isTotalField()));
     }
@@ -487,10 +487,10 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 		childSource = HuygensSurfaceDescPtr(HuygensSurfaceDescription::
             newCustomTFSFSource(
 			huygensSurface->file(),
-			huygensSurface->getSymmetries(),
+			huygensSurface->symmetries(),
             tfHalfCells,
             huygensSurface->duration(),
-			huygensSurface->getOmittedSides(),
+			huygensSurface->omittedSides(),
             huygensSurface->isTotalField()));
 	}
 	
@@ -517,8 +517,8 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	assert(huygensSurface->type() == kTFSFSource);
 	int nn;
 	
-	const set<Vector3i> & omittedSides = huygensSurface->getOmittedSides();
-	Vector3i srcDir = huygensSurface->getDirection();
+	const set<Vector3i> & omittedSides = huygensSurface->omittedSides();
+	Vector3i srcDir = huygensSurface->direction();
 	Vector3i origin = parentGrid->originYee();
     
     //LOG << omittedSides << "\n";
@@ -530,7 +530,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	//   2.  Back side of source region is not omitted.  Then we clone the
 	//   whole space and make a source with omitted back side.
 	
-	Rect3i tfRect(huygensSurface->getHalfCells());
+	Rect3i tfRect(huygensSurface->halfCells());
 	tfRect.p2 = vec_max(tfRect.p2, Vector3i(1,1,1));
 	
 	Vector3i bigDimensions(1,1,1);
@@ -579,7 +579,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 			"both omitted.  This results in arbitrary and possibly incorrect "
 			"behavior.\n";
 	
-	Rect3i copyFrom(huygensSurface->getHalfCells());
+	Rect3i copyFrom(huygensSurface->halfCells());
 	for (nn = 0; nn < 3; nn++)
 	if (omittedSides.count(YeeUtilities::cardinal(nn*2)))
 		copyFrom.p1[nn] = copyFrom.p2[nn];
@@ -828,11 +828,11 @@ runTimed(Map<string, CalculationPartitionPtr> & calculationGrids)
     outputHTimed(calculationGrids, 0);
     for (long tt = 1; tt < mNumT; tt++)
     {
-		t0 = getTimeInMicroseconds();
+		t0 = tiimeInMicroseconds();
         cout << "\r                                                          "
             << flush;
         cout << "\rTimestep " << tt << " of " << mNumT << flush;
-		t1 = getTimeInMicroseconds();
+		t1 = tiimeInMicroseconds();
         printTimestepTotalTime += (t1-t0);
         updateETimed(calculationGrids, tt);
         sourceETimed(calculationGrids, tt);
@@ -870,7 +870,7 @@ reportPerformance(Map<string, CalculationPartitionPtr> & calculationGrids)
 #pragma mark *** Singleton stuff ***
 
 FDTDApplication & FDTDApplication::
-getInstance()
+instance()
 {
     return sInstance;
 }

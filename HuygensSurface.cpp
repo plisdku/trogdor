@@ -43,18 +43,18 @@ HuygensSurface::
 HuygensSurface(string namePrefix, const VoxelizedPartition & vp,
     const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
     const HuygensSurfaceDescPtr & surfaceDescription) :
-    mHalfCells(surfaceDescription->getHalfCells()),
+    mHalfCells(surfaceDescription->halfCells()),
     mNeighborBuffers(6),
     mDestLattice(vp.lattice())
 {
     static const Rect3i UNUSED_SOURCE_RECT_ARGUMENT(0,0,0,0,0,0);
     Rect3i sourceHalfCells(UNUSED_SOURCE_RECT_ARGUMENT);
     
-    if (surfaceDescription->getSourceGrid() != 0L)
+    if (surfaceDescription->sourceGrid() != 0L)
     {
-        mSourceLattice =  grids[surfaceDescription->getSourceGrid()]->
+        mSourceLattice =  grids[surfaceDescription->sourceGrid()]->
             lattice();
-        sourceHalfCells = surfaceDescription->getFromHalfCells();
+        sourceHalfCells = surfaceDescription->fromHalfCells();
     }
     
     for (int sideNum = 0; sideNum < 6; sideNum++)
@@ -62,13 +62,13 @@ HuygensSurface(string namePrefix, const VoxelizedPartition & vp,
         ostringstream bufPrefix;
         bufPrefix << namePrefix << " side " << sideNum;
         Vector3i sideVector(cardinal(sideNum));
-        if (!surfaceDescription->getOmittedSides().count(sideVector))
+        if (!surfaceDescription->omittedSides().count(sideVector))
         {
             float incidentFieldFactor =
                 surfaceDescription->isTotalField() ? 1.0 : -1.0;
             NeighborBufferPtr p(new NeighborBuffer(
                 bufPrefix.str(),
-                surfaceDescription->getHalfCells(),
+                surfaceDescription->halfCells(),
                 sourceHalfCells,
                 sideNum,
                 incidentFieldFactor));
@@ -111,7 +111,7 @@ NeighborBuffer(string prefix,
     mDestFactorsH(3),
     mSourceFactorsH(3)
 {
-    Rect3i destHalfRect(getEdgeHalfCells(huygensHalfCells, sideNum));
+    Rect3i destHalfRect(edgeHalfCells(huygensHalfCells, sideNum));
     initFactors(huygensHalfCells, sideNum, incidentFieldFactor);
     
     mLattice = InterleavedLatticePtr(new InterleavedLattice(
@@ -128,8 +128,8 @@ NeighborBuffer(string prefix,
     mDestFactorsH(3),
     mSourceFactorsH(3)
 {
-    Rect3i destHalfRect(getEdgeHalfCells(huygensHalfCells, sideNum));
-    mSourceHalfCells = getEdgeHalfCells(sourceHalfCells, sideNum);
+    Rect3i destHalfRect(edgeHalfCells(huygensHalfCells, sideNum));
+    mSourceHalfCells = edgeHalfCells(sourceHalfCells, sideNum);
     
     initFactors(huygensHalfCells, sideNum, incidentFieldFactor);
     
@@ -146,43 +146,43 @@ NeighborBuffer(string prefix,
 }
 
 const Rect3i & NeighborBuffer::
-getDestHalfCells() const
+destHalfCells() const
 {
     return mLattice->halfCells();
 }
 
 const Rect3i & NeighborBuffer::
-getSourceHalfCells() const
+sourceHalfCells() const
 {
     return mSourceHalfCells;
 }
 
 float NeighborBuffer::
-getDestFactorE(int fieldDirection) const
+destFactorE(int fieldDirection) const
 {
     return mDestFactorsE.at(fieldDirection);
 }
 
 float NeighborBuffer::
-getDestFactorH(int fieldDirection) const
+destFactorH(int fieldDirection) const
 {
     return mDestFactorsH.at(fieldDirection);
 }
 
 float NeighborBuffer::
-getSourceFactorE(int fieldDirection) const
+sourceFactorE(int fieldDirection) const
 {
     return mSourceFactorsE.at(fieldDirection);
 }
 
 float NeighborBuffer::
-getSourceFactorH(int fieldDirection) const
+sourceFactorH(int fieldDirection) const
 {
     return mSourceFactorsH.at(fieldDirection);
 }
 
 Rect3i NeighborBuffer::
-getEdgeHalfCells(const Rect3i & halfCells, int nSide)
+edgeHalfCells(const Rect3i & halfCells, int nSide)
 {
 	Rect3i outerHalfCells = edgeOfRect(halfCells, nSide);
 	

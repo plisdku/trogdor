@@ -21,7 +21,7 @@ setCurrentSource(CurrentSource* sourceOfData)
 {
     mSourceOfData = sourceOfData;
     
-    //LOG << "Value is " << mSourceOfData->getValue() << "!\n";
+    //LOG << "Value is " << mSourceOfData->value() << "!\n";
 }
 
 void BufferedCurrent::

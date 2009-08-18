@@ -29,10 +29,10 @@ public:
 	const Rect3i & gridHalfCells() { return mGridHalfCells; }
     
     // returns           global bounds of partition's allocated fields
-	const Rect3i & getAllocRegion() { return mAllocRegion; }
+	const Rect3i & allocRegion() { return mAllocRegion; }
     
     // returns           global bounds of partition's non-PML region
-	const Rect3i & getNonPMLRegion() { return mNonPMLRegion; }
+	const Rect3i & nonPMLRegion() { return mNonPMLRegion; }
 	
 	friend std::ostream & operator<< (std::ostream & out,
 		const VoxelGrid & grid);

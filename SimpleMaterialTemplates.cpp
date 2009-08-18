@@ -55,8 +55,8 @@ makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & c
     
     for (int nn = 0; nn < 3; nn++)
     {
-        h->setRunlinesE(nn, getRunlinesE(nn));
-        h->setRunlinesH(nn, getRunlinesH(nn));
+        h->setRunlinesE(nn, runlinesE(nn));
+        h->setRunlinesH(nn, runlinesH(nn));
     }
     
     return UpdateEquationPtr(h);
@@ -99,8 +99,8 @@ makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & c
     
     for (int nn = 0; nn < 3; nn++)
     {
-        h->setRunlinesE(nn, getRunlinesE(nn));
-        h->setRunlinesH(nn, getRunlinesH(nn));
+        h->setRunlinesE(nn, runlinesE(nn));
+        h->setRunlinesH(nn, runlinesH(nn));
     }
     
     return UpdateEquationPtr(h);

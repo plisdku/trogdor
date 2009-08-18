@@ -35,7 +35,7 @@ public:
     void setHeadPointer(float* ptr);
     float* headPointer() const { return mHeadPointer; }
 	
-    static const std::set<MemoryBuffer*> & getAllBuffers()
+    static const std::set<MemoryBuffer*> & allBuffers()
         { return sAllBuffers; }
     
     bool includes(float const* ptr) const;

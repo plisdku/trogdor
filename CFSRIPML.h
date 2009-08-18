@@ -29,7 +29,7 @@ public:
     
     virtual void allocateAuxBuffers();
         
-    Vector3i getPMLDirection() const { return mPMLDirection; }
+    Vector3i pmlDirection() const { return mPMLDirection; }
     
 protected:
     // three setup functions

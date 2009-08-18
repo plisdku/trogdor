@@ -63,9 +63,9 @@ private:
 	Paint(const MaterialDescPtr & material); // bulk constructor
 	
 public:
-	std::string getFullName() const;
+	std::string fullName() const;
     
-	static Paint* getPaint(const MaterialDescPtr & material);
+	static Paint* paint(const MaterialDescPtr & material);
     
 	Paint* withoutModifications() const { return mBasePaint; }
 	Paint* withoutCurlBuffers() const { return mBaseUpdatePaint; }
@@ -73,16 +73,16 @@ public:
     Paint* withCurlBuffer(int side, const NeighborBuffer* curlBuffer) const;
 	Paint* withCurrentSource(CurrentSourceDescPtr currentSource) const;
 	
-	static const Map<Paint, PaintPtr> & getPalette() {
+	static const Map<Paint, PaintPtr> & palette() {
 		return mPalette; }
 	
 	static void clearPalette() { mPalette.clear(); }
 	
 	PaintType type() const { return mType; }
-	Vector3i getPMLDirections() const { return mPMLDirections; }
-    const NeighborBuffer* getCurlBuffer(int side) const;
-	const MaterialDescription* getBulkMaterial() const;
-    const CurrentSourceDescPtr getCurrentSource() const
+	Vector3i pmlDirections() const { return mPMLDirections; }
+    const NeighborBuffer* curlBuffer(int side) const;
+	const MaterialDescription* bulkMaterial() const;
+    const CurrentSourceDescPtr currentSource() const
         { return mCurrentSource; }
 	
 	bool equivalentUpdateTo(const Paint & rhs) const;

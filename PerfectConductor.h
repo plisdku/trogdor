@@ -32,10 +32,10 @@ public:
     virtual void calcEPhase(int phasePart = 0);
     virtual void calcHPhase(int phasePart = 0);
     
-    virtual long getNumRunlinesE() const { return mNumRunlinesE; }
-    virtual long getNumRunlinesH() const { return mNumRunlinesH; }
-    virtual long getNumHalfCellsE() const { return mNumHalfCellsE; }
-    virtual long getNumHalfCellsH() const { return mNumHalfCellsH; }
+    virtual long numRunlinesE() const { return mNumRunlinesE; }
+    virtual long numRunlinesH() const { return mNumRunlinesH; }
+    virtual long numHalfCellsE() const { return mNumHalfCellsE; }
+    virtual long numHalfCellsH() const { return mNumHalfCellsH; }
 
 private:
     int mNumRunlinesE;

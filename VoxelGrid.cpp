@@ -62,7 +62,7 @@ void VoxelGrid::
 paintBlock(const GridDescription & gridDesc,
 	const Block & instruction)
 {
-	Paint* paint = Paint::getPaint(instruction.material());
+	Paint* paint = Paint::paint(instruction.material());
 	
 	Rect3i halfCells;
 	if (instruction.fillStyle() == kPECStyle)
@@ -119,7 +119,7 @@ paintKeyImage(const GridDescription & gridDesc,
 		for (unsigned int nKey = 0; nKey < keys.size(); nKey++)
 		{
 			FillStyle style = keys[nKey].fillStyle();
-			Paint* paint = Paint::getPaint(keys[nKey].material());
+			Paint* paint = Paint::paint(keys[nKey].material());
 			
 			// iterate over rows and columns of the image; extrude into grid
 			for (unsigned int row = 0; row < keyImage.rows(); row++)
@@ -177,7 +177,7 @@ paintHeightMap(const GridDescription & gridDesc,
 	try {
 		heightMap.read(instruction.imageFileName());
 		FillStyle style = instruction.fillStyle();
-		Paint* paint = Paint::getPaint(instruction.material());
+		Paint* paint = Paint::paint(instruction.material());
 		
 		// iterate over rows and columns of the image; extrude into grid
 		for (unsigned int row = 0; row < heightMap.rows(); row++)
@@ -211,7 +211,7 @@ paintEllipsoid(const GridDescription & gridDesc,
 {
 	int ii, jj, kk, iYee, jYee, kYee;
 	LOG << "Warning: this probably has bugs in it.\n";
-	Paint* paint = Paint::getPaint(instruction.material());
+	Paint* paint = Paint::paint(instruction.material());
 	
 	if (instruction.fillStyle() == kPECStyle ||
 		instruction.fillStyle() == kPMCStyle)
@@ -657,7 +657,7 @@ clear()
 std::ostream &
 operator<< (std::ostream & out, const VoxelGrid & grid)
 {
-	const Map<Paint, PaintPtr> & paints = Paint::getPalette();
+	const Map<Paint, PaintPtr> & paints = Paint::palette();
 	Map<Paint*, char> code;
 	char curChar = '!';
 	for (Map<Paint,PaintPtr>::const_iterator itr = paints.begin();

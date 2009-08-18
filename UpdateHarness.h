@@ -34,10 +34,10 @@ template<class MaterialT>
 class UpdateHarness_Material;
 
 // This class implements
-// getNumRunlinesE()
-// getNumRunlinesH()
-// getNumHalfCellsE()
-// getNumHalfCellsH()
+// numRunlinesE()
+// numRunlinesH()
+// numHalfCellsE()
+// numHalfCellsH()
 template<class RunlineT>
 class UpdateHarness_Runline;
 

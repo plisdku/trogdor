@@ -98,7 +98,7 @@ addRunlinesInOctant(int octant, Rect3i yeeCells,
 		p1[nn]++;
     
     const VoxelGrid & voxels(vp.voxelGrid());
-    const PartitionCellCount & cellCount(*vp.getIndices());
+    const PartitionCellCount & cellCount(*vp.indices());
     const Map<Paint*, RunlineEncoderPtr> & setupMaterials(
         vp.setupMaterials());
     const InterleavedLattice & lattice(*vp.lattice());
@@ -202,11 +202,11 @@ setRunlinesE(int direction, const CalculationPartition & cp,
     for (int nn = 0; nn < setupRunlines.size(); nn++)
     {
         CPOutputRunline rl;
-        rl.material = cp.getMaterials().at(setupRunlines[nn].materialID);
+        rl.material = cp.materials().at(setupRunlines[nn].materialID);
         rl.startingIndex = setupRunlines[nn].startingIndex;
         rl.startingField = setupRunlines[nn].startingField.pointer();
         rl.length = setupRunlines[nn].length;
-//        LOG << "nn " << nn << " material " << rl.material->getSubstanceName()
+//        LOG << "nn " << nn << " material " << rl.material->substanceName()
 //            << "\n";
         mRunlinesE[direction][nn] = rl;
     }
@@ -221,12 +221,12 @@ setRunlinesH(int direction, const CalculationPartition & cp,
     for (int nn = 0; nn < setupRunlines.size(); nn++)
     {
         CPOutputRunline rl;
-        rl.material = cp.getMaterials().at(setupRunlines[nn].materialID);
+        rl.material = cp.materials().at(setupRunlines[nn].materialID);
         rl.startingIndex = setupRunlines[nn].startingIndex;
         rl.startingField = setupRunlines[nn].startingField.pointer();
         rl.length = setupRunlines[nn].length;
         
-//        LOG << "nn " << nn << " material " << rl.material->getSubstanceName()
+//        LOG << "nn " << nn << " material " << rl.material->substanceName()
 //            << "\n";
         
         mRunlinesH[direction][nn] = rl;

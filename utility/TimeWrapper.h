@@ -16,6 +16,6 @@
 #ifndef _TIMEWRAPPER_
 #define _TIMEWRAPPER_
 
-double getTimeInMicroseconds();
+double tiimeInMicroseconds();
 
 #endif

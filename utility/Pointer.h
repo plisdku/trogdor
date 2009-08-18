@@ -54,7 +54,7 @@ public:
 	operator T*() const { return mPtr; } // for the odd desmartinization need
 	
     int refcount() const;
-	static const Map<T*,int> & getMap() { return mReferenceCounts; }
+	static const Map<T*,int> & map() { return mReferenceCounts; }
     
     template<typename T1, typename T2>
     friend bool operator<(const Pointer<T1> & lhs, const Pointer<T2> & rhs);

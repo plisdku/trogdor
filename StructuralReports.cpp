@@ -89,7 +89,7 @@ saveOutputCrossSections(const GridDescription & grid,
         // the half-cell grid would be best, but then I have to know which
         // half cell plane to take the cross-section in.  Hmm.
         /*
-        string field = output->getParameters()["field"]; // if there...
+        string field = output->parameters()["field"]; // if there...
         if (field == "ex")
             octant = Vector3i(1,0,0);
         else if (field == "ey")
@@ -163,7 +163,7 @@ saveMaterialBoundariesBeta(const GridDescription & grid,
 	{
 		Paint* paint = (*itr).first->withoutModifications();
 		RunlineEncoderPtr mat = (*itr).second;
-        string name = paint->getFullName();
+        string name = paint->fullName();
         Rect3i roi = grid.nonPMLHalfCells();
 		Paint* lastMat;
         Paint* curMat;

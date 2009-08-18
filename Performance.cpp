@@ -213,29 +213,29 @@ printForMatlab(std::ostream & str, const string & prefix,
     
     for (int nn = 0; nn < mMaterialMicrosecondsE.size(); nn++)
     {
-        long runlines = materials[nn]->getNumRunlinesE() +
-            materials[nn]->getNumRunlinesH();
-        long halfCells = materials[nn]->getNumHalfCellsE() +
-            materials[nn]->getNumHalfCellsH();
+        long runlines = materials[nn]->numRunlinesE() +
+            materials[nn]->numRunlinesH();
+        long halfCells = materials[nn]->numHalfCellsE() +
+            materials[nn]->numHalfCellsH();
         double totalMicroseconds = mMaterialMicrosecondsE[nn] +
             mMaterialMicrosecondsH[nn];
         str << prefix << "material{" << nn+1 << "}.name ='"
-            << materials[nn]->getSubstanceName() << "';\n";
+            << materials[nn]->substanceName() << "';\n";
         str << prefix << "material{" << nn+1 << "}.model = '"
             << materials[nn]->modelName() << "';\n";
         str << prefix << "material{" << nn+1 << "}.numRunlinesE = "
-            << materials[nn]->getNumRunlinesE() << ";\n";
+            << materials[nn]->numRunlinesE() << ";\n";
         str << prefix << "material{" << nn+1 << "}.numRunlinesH = "
-            << materials[nn]->getNumRunlinesH() << ";\n";
+            << materials[nn]->numRunlinesH() << ";\n";
         str << prefix << "material{" << nn+1 << "}.numHalfCellsE = "
-            << materials[nn]->getNumHalfCellsE() << ";\n";
+            << materials[nn]->numHalfCellsE() << ";\n";
         str << prefix << "material{" << nn+1 << "}.numHalfCellsH = "
-            << materials[nn]->getNumHalfCellsH() << ";\n";
+            << materials[nn]->numHalfCellsH() << ";\n";
         str << prefix << "material{" << nn+1 << "}.halfCellTimeE = " <<
-            (mMaterialMicrosecondsE[nn]*1e-6/materials[nn]->getNumHalfCellsE()
+            (mMaterialMicrosecondsE[nn]*1e-6/materials[nn]->numHalfCellsE()
             /numT) << ";\n";
         str << prefix << "material{" << nn+1 << "}.halfCellTimeH = " <<
-            (mMaterialMicrosecondsH[nn]*1e-6/materials[nn]->getNumHalfCellsH()
+            (mMaterialMicrosecondsH[nn]*1e-6/materials[nn]->numHalfCellsH()
             /numT) << ";\n";
         str << prefix << "material{" << nn+1 << "}.numRunlines = " << runlines
             << ";\n";
