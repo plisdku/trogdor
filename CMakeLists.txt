@@ -38,8 +38,8 @@ add_executable( trogdor
 BufferedCurrent.h
 BufferedCurrent.cpp
 BufferedCurrent-inl.h
-BulkRunlineEncoders.h
-BulkRunlineEncoders.cpp
+BulkSetupMaterials.h
+BulkSetupMaterials.cpp
 CalculationPartition.h
 CalculationPartition.cpp
 CFSRIPML.h
