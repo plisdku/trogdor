@@ -28,16 +28,45 @@ using namespace YeeUtilities;
 
 #pragma mark *** Setup ***
 
+class CPRunlineEncoder : public RunlineEncoder
+{
+public:
+    CPRunlineEncoder()
+    {
+        setMaterialContinuity(kMaterialContinuityRequired);
+    }
+    
+    virtual void endRunline(const VoxelizedPartition & vp);
+    
+    vector<SetupCPOutputRunline> mRunlinesE[3];
+    vector<SetupCPOutputRunline> mRunlinesH[3];
+};
+
+void CPRunlineEncoder::
+endRunline(const VoxelizedPartition & vp)
+{
+    SetupCPOutputRunline rl;
+    rl.length = length();
+    rl.startingIndex = vp.indices()(firstHalfCell());
+    rl.startingField = vp.lattice().pointer(firstHalfCell());
+    rl.materialID = vp.setupMaterials()[vp.voxels()(firstHalfCell())]->id();
+    
+    int oct = octant(firstHalfCell());
+    if (isE(oct))
+        mRunlinesE[xyz(oct)].push_back(rl);
+    else
+        mRunlinesH[xyz(oct)].push_back(rl);
+}
+
+
 CurrentPolarizationSetupOutput::
 CurrentPolarizationSetupOutput(const OutputDescPtr & desc,
     const VoxelizedPartition & vp) :
     SetupOutput(),
-    mNew(),
     mDescription(desc)
 {
     // Make the runlines!
-    mNew.setMaterialContinuity(kMaterialContinuityRequired);
-    
+        
     assert(desc->regions().size() > 0);
     for (int rr = 0; rr < desc->regions().size(); rr++)
     {
@@ -46,16 +75,18 @@ CurrentPolarizationSetupOutput(const OutputDescPtr & desc,
         
         for (int direction = 0; direction < 3; direction++)
         {
+            CPRunlineEncoder encoder;
             if (desc->whichJ()[direction] != 0 ||
                 desc->whichP()[direction] != 0)
             {
-                addRunlinesInOctant(octantE(direction), yeeCells,
-                    mRunlinesE[direction], vp);
+                vp.runLengthEncode(encoder, yeeCells, octantE(direction));
+                mRunlinesE[direction] = encoder.mRunlinesE[direction];
             }
             if (desc->whichM()[direction] != 0)
-                addRunlinesInOctant(octantH(direction), yeeCells,
-                    mRunlinesH[direction], vp);
-//            
+            {
+                vp.runLengthEncode(encoder, yeeCells, octantH(direction));
+                mRunlinesH[direction] = encoder.mRunlinesH[direction];
+            }
 //            LOG << "RunlinesE " << direction << ": " <<
 //                mRunlinesE[direction].size() << "\n";
 //            LOG << "RunlinesH " << direction << ": " <<
@@ -83,81 +114,6 @@ makeOutput(const VoxelizedPartition & vp, const CalculationPartition & cp)
         o->setRunlinesH(nn, cp, mRunlinesH[nn]);
     }
     return OutputPtr(o);
-}
-
-
-void CurrentPolarizationSetupOutput::
-addRunlinesInOctant(int octant, Rect3i yeeCells,
-    vector<SetupCPOutputRunline> & outRunlines,
-    const VoxelizedPartition & vp)
-{
-    Rect3i halfCellBounds(yeeToHalf(yeeCells, octant));
-	// First task: generate a starting half-cell in the correct octant.
-	Vector3i offset = halfCellOffset(octant);
-	Vector3i p1 = halfCellBounds.p1;
-	for (int nn = 0; nn < 3; nn++)
-	if (p1[nn] % 2 != offset[nn])
-		p1[nn]++;
-    
-    const VoxelGrid & voxels(vp.voxels());
-    const PartitionCellCount & cellCount(vp.indices());
-    const Map<Paint*, SetupMaterialPtr> & setupMaterials(
-        vp.setupMaterials());
-    
-    // d0 is the direction of memory allocation.  In the for-loops, this is
-    // the innermost of the three Cartesian directions.
-    const int d0 = vp.lattice().runlineDirection();
-    const int d1 = (d0+1)%3;
-    const int d2 = (d0+2)%3;
-    
-    SetupCPOutputRunline currentRunline;
-    
-	bool needNewRunline = 1;
-	Vector3i x(p1), lastX(p1);
-	Paint *xParentPaint = 0L, *lastXParentPaint = 0L;
-	for (x[d2] = p1[d2]; x[d2] <= halfCellBounds.p2[d2]; x[d2] += 2)
-	for (x[d1] = p1[d1]; x[d1] <= halfCellBounds.p2[d1]; x[d1] += 2)
-	for (x[d0] = p1[d0]; x[d0] <= halfCellBounds.p2[d0]; x[d0] += 2)
-	{
-		xParentPaint = voxels(x)->withoutCurlBuffers();
-		
-        bool canContinueRunline = (xParentPaint == lastXParentPaint);
-        
-        if (!needNewRunline)
-        {
-            assert(canContinueRunline == mNew.canContinueRunline(vp,
-                x, xParentPaint));
-            
-            if (mNew.canContinueRunline(vp, x, xParentPaint))
-                mNew.continueRunline();
-        }
-        
-		if (!needNewRunline && xParentPaint != lastXParentPaint)
-        {
-            assert(cellCount(lastX) - currentRunline.startingIndex ==
-                currentRunline.length - 1);
-            outRunlines.push_back(currentRunline);
-            needNewRunline = 1;
-            
-            assert(currentRunline.length == mNew.length());
-        }
-		if (needNewRunline)
-		{
-            currentRunline.length = 0;
-            currentRunline.startingIndex = cellCount(x);
-            currentRunline.startingField = vp.lattice().pointer(x);
-            currentRunline.materialID = setupMaterials[xParentPaint]->id();
-			needNewRunline = 0;
-            
-            mNew.startRunline(vp, x);
-		}
-        currentRunline.length++;
-		lastX = x;
-		lastXParentPaint = xParentPaint;
-	}
-    outRunlines.push_back(currentRunline);
-    
-    LOG << "Runline methods agreed!\n";
 }
 
 #pragma mark *** Output ***

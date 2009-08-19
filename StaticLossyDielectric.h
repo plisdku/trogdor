@@ -11,7 +11,7 @@
 #define _STATICLOSSYDIELECTRIC_
 
 #include "Material.h"
-#include "BulkRunlineEncoders.h"
+#include "BulkSetupMaterials.h"
 #include "SimpleMaterialTemplates.h"
 
 class MaterialDescription;

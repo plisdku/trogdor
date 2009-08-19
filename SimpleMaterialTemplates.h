@@ -11,7 +11,7 @@
 #define _SIMPLEMATERIALTEMPLATES_
 
 #include "UpdateEquation.h"
-#include "BulkRunlineEncoders.h"
+#include "BulkSetupMaterials.h"
 #include "geometry.h"
 #include "Runline.h"
 

@@ -1,5 +1,5 @@
 /*
- *  BulkRunlineEncoders.h
+ *  BulkSetupMaterials.h
  *  TROGDOR
  *
  *  Created by Paul Hansen on 4/8/09.
@@ -35,9 +35,9 @@ public:
     const std::vector<SBMRunlinePtr> & runlinesE(int dir) const;
     const std::vector<SBMRunlinePtr> & runlinesH(int dir) const;
     
-    virtual Pointer<RunlineEncoder> encoder();
+    virtual RunlineEncoder& encoder() { return mRunlineEncoder; }
 protected:
-    Pointer<RunlineEncoder> mEncoder;
+    BulkMaterialRLE mRunlineEncoder;
 };
 
 class BulkPMLSetupMaterial : public SetupMaterial
@@ -50,9 +50,9 @@ public:
     const std::vector<SBPMRunlinePtr> & runlinesE(int dir) const;
     const std::vector<SBPMRunlinePtr> & runlinesH(int dir) const;
     
-    virtual Pointer<RunlineEncoder> encoder();
+    virtual RunlineEncoder& encoder() { return mRunlineEncoder; }
 protected:
-    Pointer<RunlineEncoder> mEncoder;
+    BulkPMLRLE mRunlineEncoder;
 };
 
 

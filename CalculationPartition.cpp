@@ -285,7 +285,7 @@ timedOutputE(int timestep)
         mStatistics.addOutputMicroseconds(nn, t2-t1);
     }
     
-    //printFields(cout, octantE(2), 1.0);
+    printFields(cout, octantE(2), 1.0);
     
     //LOG << "Output E (3)\n";
     //printFields(cout, octantE(0), 1.0);

@@ -33,7 +33,7 @@ public:
 		
 	virtual void printRunlines(std::ostream & out) const = 0;
     
-    virtual RunlineEncoder* encoder();
+    virtual RunlineEncoder& encoder() = 0;
     
     // Setting up the runtime materials
     virtual UpdateEquationPtr makeUpdateEquation(const VoxelizedPartition & vp,

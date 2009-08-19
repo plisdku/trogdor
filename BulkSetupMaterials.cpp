@@ -7,7 +7,7 @@
  *
  */
 
-#include "BulkRunlineEncoders.h"
+#include "BulkSetupMaterials.h"
 #include "SimulationDescription.h"
 
 #include "HuygensSurface.h"

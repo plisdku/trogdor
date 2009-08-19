@@ -12,7 +12,8 @@
 #include "SimulationDescription.h"
 #include "Log.h"
 #include "YeeUtilities.h"
-#include "BulkRunlineEncoders.h"
+#include "BulkSetupMaterials.h"
+#include "RunlineEncoder.h"
 #include "MaterialFactory.h"
 #include "CurrentSourceFactory.h"
 #include "STLOutput.h"
@@ -210,15 +211,27 @@ calculateRunlines()
 {
     // Make a table of runline encoders
     
-    Map<Paint*, Pointer<RunlineEncoder> > encoders;
+    Map<Paint*, RunlineEncoder*> encoders;
     
-    map<Paint*, Pointer<SetupMaterial> >::const_iterator itr;
+    map<Paint*, Pointer<SetupMaterial> >::iterator itr;
     for (itr = mSetupMaterials.begin(); itr != mSetupMaterials.end(); itr++)
-        encoders[itr->first] = itr->second->encoder();
+        encoders[itr->first] = &itr->second->encoder();
     
     for (int direction = 0; direction < 3; direction++)
     {
+        runLengthEncode(encoders, halfToYee(mCalcHalfCells, octantE(direction)),
+            octantE(direction));
+        runLengthEncode(encoders, halfToYee(mCalcHalfCells, octantH(direction)),
+            octantH(direction));
     }
+    
+    /*
+    {
+        map<Paint*, Pointer<SetupMaterial> >::const_iterator itr;
+        for (itr = mSetupMaterials.begin(); itr != mSetupMaterials.end(); itr++)
+            itr->second->printRunlines(cout);
+    }
+    */
 }
 
 
@@ -437,10 +450,53 @@ void VoxelizedPartition::
 runLengthEncode(RunlineEncoder & encoder, Rect3i yeeCells, int octant)
     const
 {
+	// First task: generate a starting half-cell in the correct octant.
+	// The loops may still end by not exceeding mCalcHalfCells.p2—this works fine.
+	Vector3i offset = halfCellOffset(octant);
+    Vector3i p1 = yeeToHalf(yeeCells.p1, octant);
+    Vector3i p2 = yeeToHalf(yeeCells.p2, octant);
+    
+    // d0 is the direction of memory allocation.  In the for-loops, this is
+    // the innermost of the three Cartesian directions.
+    const int d0 = mLattice->runlineDirection();
+    const int d1 = (d0+1)%3;
+    const int d2 = (d0+2)%3;
+    
+	bool needNewRunline = 1;
+	Vector3i x(p1);
+	Paint *thisPaint, *thisUpdateType, *firstUpdateType = 0L;
+	for (x[d2] = p1[d2]; x[d2] <= p2[d2]; x[d2] += 2)
+	for (x[d1] = p1[d1]; x[d1] <= p2[d1]; x[d1] += 2)
+	for (x[d0] = p1[d0]; x[d0] <= p2[d0]; x[d0] += 2)
+	{
+		thisPaint = mVoxels(x);
+		thisUpdateType = thisPaint->withoutCurlBuffers();
+		
+		if (!needNewRunline)
+		{
+			if (thisUpdateType == firstUpdateType &&
+				encoder.canContinueRunline(*this, x, thisPaint))
+            {
+				encoder.continueRunline();
+            }
+			else
+			{
+				encoder.endRunline(*this);
+				needNewRunline = 1;
+			}
+		}
+		if (needNewRunline)
+		{
+			encoder.startRunline(*this, x);
+            firstUpdateType = thisUpdateType;
+			needNewRunline = 0;
+		}
+	}
+	encoder.endRunline(*this);
 }
 
 void VoxelizedPartition::
-runLengthEncode(Map<Paint*, Pointer<RunlineEncoder> > & encoders,
+runLengthEncode(Map<Paint*, RunlineEncoder*> & encoders,
     Rect3i yeeCells, int octant) const
 {
 	// First task: generate a starting half-cell in the correct octant.
@@ -748,94 +804,6 @@ loadSpaceVaryingData()
     //    put contants into aux arrays
     // Y'know.  All that.
 }
-
-void VoxelizedPartition::
-generateRunlines()
-{
-	// Provide a SetupMaterial for each uniquely-updating Paint
-	
-	// Walk the grid (ONCE only would be splendid) and step the appropriate
-	// encoders.  (Where do setup runlines go?)
-	
-//	LOG << "Check it out, we're sticking to the calc region.  I'm not sure "
-//		"yet precisely how to use this in the MPI context—work it out later.\n";
-	
-    for (int direction = 0; direction < 3; direction++)
-    {
-//        genRunlinesInOctant(octantE(direction));
-//        genRunlinesInOctant(octantH(direction));
-    }
-    /*
-    map<Paint*, Pointer<SetupMaterial> >::const_iterator itr;
-    for (itr = mSetupMaterials.begin(); itr != mSetupMaterials.end(); itr++)
-        itr->second->printRunlines(cout);
-    */
-}
-
-/*
-void VoxelizedPartition::
-genRunlinesInOctant(int octant)
-{
-	// First task: generate a starting half-cell in the correct octant.
-	// The loops may still end by not exceeding mCalcHalfCells.p2—this works fine.
-	Vector3i offset = halfCellOffset(octant);
-	Vector3i p1 = mCalcHalfCells.p1;
-	for (int nn = 0; nn < 3; nn++)
-	if (p1[nn] % 2 != offset[nn])
-		p1[nn]++;
-//	LOG << "Calc region " << mCalcHalfCells << endl;
-//	LOG << "Runlines in octant " << octant << " at start " << p1 << endl;
-	
-	SetupMaterial* material; // unsafe pointer for speed in this case.
-	
-	// If there is a current runline
-	//	Ask the SetupMaterial whether the current cell belongs to it
-	//	YES: keep on loopin'
-	//	NO: end runline and begin new runline
-	//
-	// Therafter, if there is not a current runline
-	//	Begin new runline
-    
-    // d0 is the direction of memory allocation.  In the for-loops, this is
-    // the innermost of the three Cartesian directions.
-    const int d0 = mLattice->runlineDirection();
-    const int d1 = (d0+1)%3;
-    const int d2 = (d0+2)%3;
-	
-	bool needNewRunline = 1;
-	Vector3i x(p1), lastX(p1);
-	Paint *xPaint, *xParentPaint = 0L, *lastXParentPaint = 0L;
-	for (x[d2] = p1[d2]; x[d2] <= mCalcHalfCells.p2[d2]; x[d2] += 2)
-	for (x[d1] = p1[d1]; x[d1] <= mCalcHalfCells.p2[d1]; x[d1] += 2)
-	for (x[d0] = p1[d0]; x[d0] <= mCalcHalfCells.p2[d0]; x[d0] += 2)
-	{
-		xPaint = mVoxels(x);
-		xParentPaint = xPaint->withoutCurlBuffers();
-		
-		if (!needNewRunline)
-		{
-			if (xParentPaint == lastXParentPaint &&
-				material->canContinueRunline(*this, lastX, x, xPaint, d0))
-				material->continueRunline(x);
-			else
-			{
-				material->endRunline();
-				needNewRunline = 1;
-			}
-		}
-		if (needNewRunline)
-		{
-			material = mSetupMaterials[xParentPaint];
-			material->startRunline(*this, x);
-			needNewRunline = 0;
-		}
-		lastX = x;
-		lastXParentPaint = xParentPaint;
-	}
-	material->endRunline();  // DO NOT FORGET THIS... oh wait, I didn't!
-}
-*/
-
 
 void VoxelizedPartition::
 createSetupOutputs(const std::vector<OutputDescPtr> & outputs)

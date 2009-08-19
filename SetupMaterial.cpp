@@ -10,10 +10,3 @@
 #include "SetupMaterial.h"
 
 // empty.
-
-RunlineEncoder* SetupMaterial::
-encoder()
-{
-    // the default runline encoder does absolutely nothing.
-    return 0L;
-}

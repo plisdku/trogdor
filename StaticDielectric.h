@@ -11,7 +11,7 @@
 #define _STATICDIELECTRIC_
 
 #include "Material.h"
-#include "BulkRunlineEncoders.h"
+#include "BulkSetupMaterials.h"
 #include "SimpleMaterialTemplates.h"
 #include <string>
 #include "Log.h"

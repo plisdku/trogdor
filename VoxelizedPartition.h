@@ -23,7 +23,6 @@
 #include "PartitionCellCount.h"
 #include "InterleavedLattice.h"
 
-#include "RunlineEncoder.h"
 #include "SetupMaterial.h"
 #include "UpdateEquation.h"
 #include "OutputBoss.h"
@@ -39,6 +38,8 @@
 
 #include <vector>
 #include <string>
+
+class RunlineEncoder;
 
 class VoxelizedPartition
 {
@@ -103,6 +104,9 @@ public:
         const GridDescPtr & gridDescription,
         const Map<GridDescPtr, Pointer<VoxelizedPartition> > & grids);
     
+    /**
+     *  
+     */
     void calculateRunlines();
     
     void writeDataRequest(const HuygensSurfaceDescPtr surf,
@@ -122,7 +126,7 @@ public:
      *  (The paints will be compared without curl buffers, i.e. they represent
      *  unique update equations, regardless of where the field data comes from.)
      */
-    void runLengthEncode(Map<Paint*, Pointer<RunlineEncoder> >& encoders,
+    void runLengthEncode(Map<Paint*, RunlineEncoder*>& encoders,
         Rect3i yeeCells, int octant) const;
     
 private:
@@ -139,8 +143,6 @@ private:
 	
 	void createSetupMaterials(const GridDescription & gridDesc);
 	void loadSpaceVaryingData();
-	void generateRunlines();
-	void genRunlinesInOctant(int octant);
     
     void createSetupOutputs(const std::vector<OutputDescPtr> & outputs);
     void createSetupSources(const std::vector<SourceDescPtr> & sources);

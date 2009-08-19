@@ -12,7 +12,6 @@
 
 #include "SimulationDescription.h"
 
-#include "RunlineEncoder.h"
 #include "OutputBoss.h"
 #include "MemoryUtilities.h"
 #include "geometry.h"
@@ -41,12 +40,6 @@ public:
     virtual OutputPtr makeOutput(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
 private:
-    RunlineEncoder mNew;
-    
-    void addRunlinesInOctant(int octant,
-        Rect3i yeeCells,
-        std::vector<SetupCPOutputRunline> & rls,
-        const VoxelizedPartition & vp);
     OutputDescPtr mDescription;
     std::vector<SetupCPOutputRunline> mRunlinesE[3];
     std::vector<SetupCPOutputRunline> mRunlinesH[3];
