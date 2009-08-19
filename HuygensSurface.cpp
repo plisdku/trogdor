@@ -45,7 +45,7 @@ HuygensSurface(string namePrefix, const VoxelizedPartition & vp,
     const HuygensSurfaceDescPtr & surfaceDescription) :
     mHalfCells(surfaceDescription->halfCells()),
     mNeighborBuffers(6),
-    mDestLattice(vp.lattice())
+    mDestLattice(vp.getLattice())
 {
     static const Rect3i UNUSED_SOURCE_RECT_ARGUMENT(0,0,0,0,0,0);
     Rect3i sourceHalfCells(UNUSED_SOURCE_RECT_ARGUMENT);
@@ -53,7 +53,7 @@ HuygensSurface(string namePrefix, const VoxelizedPartition & vp,
     if (surfaceDescription->sourceGrid() != 0L)
     {
         mSourceLattice =  grids[surfaceDescription->sourceGrid()]->
-            lattice();
+            getLattice();
         sourceHalfCells = surfaceDescription->fromHalfCells();
     }
     

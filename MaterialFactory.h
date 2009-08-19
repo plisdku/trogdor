@@ -10,7 +10,7 @@
 #ifndef _MATERIALFACTORY_
 #define _MATERIALFACTORY_
 
-#include "RunlineEncoder.h"
+#include "SetupMaterial.h"
 #include "Pointer.h"
 #include "SimulationDescriptionPredeclarations.h"
 #include "Map.h"
@@ -25,7 +25,7 @@ class Paint;
 class MaterialFactory
 {
 public:
-	static RunlineEncoderPtr newRunlineEncoder(const VoxelGrid & vg,
+	static SetupMaterialPtr newSetupMaterial(const VoxelGrid & vg,
 		const PartitionCellCount & cg,
         const GridDescription & gridDesc,
 		Paint* parentPaint,

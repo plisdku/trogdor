@@ -21,10 +21,10 @@ class Paint;
 
 #pragma mark *** Templates for the setup step ***
 
-// Inheritance from BulkRunlineEncoder provides the runline rules and
+// Inheritance from BulkSetupMaterial provides the runline rules and
 // the storage of setup runlines.
 template<class MaterialClass, class RunlineT, class CurrentT>
-class SimpleSetupMaterial : public BulkRunlineEncoder
+class SimpleSetupMaterial : public BulkSetupMaterial
 {
 public:
     SimpleSetupMaterial(Paint* parentPaint, std::vector<int> numCellsE,
@@ -43,10 +43,10 @@ private:
     float mDt;
 };
 
-// Inheritance from BulkPMLRunlineEncoder provides the runline rules and
+// Inheritance from BulkPMLSetupMaterial provides the runline rules and
 // the storage of setup runlines.
 template<class MaterialClass, class RunlineT, class CurrentT, class PMLT>
-class SimpleSetupPML : public BulkPMLRunlineEncoder
+class SimpleSetupPML : public BulkPMLSetupMaterial
 {
 public:
     SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,

@@ -208,7 +208,17 @@ createHuygensSurfaces(const GridDescPtr & gridDescription,
 void VoxelizedPartition::
 calculateRunlines()
 {
-    generateRunlines(); // * partition wraparound
+    // Make a table of runline encoders
+    
+    Map<Paint*, Pointer<RunlineEncoder> > encoders;
+    
+    map<Paint*, Pointer<SetupMaterial> >::const_iterator itr;
+    for (itr = mSetupMaterials.begin(); itr != mSetupMaterials.end(); itr++)
+        encoders[itr->first] = itr->second->encoder();
+    
+    for (int direction = 0; direction < 3; direction++)
+    {
+    }
 }
 
 
@@ -323,7 +333,7 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     {
         const MaterialType & matType = mStructureGrid->materialType(
             materials[mm]);
-        const RunlineEncoderPtr setupMat = mMaterials[matType.name()];
+        const SetupMaterialPtr setupMat = mMaterials[matType.name()];
         file << "afp.materials{" << mm+1 << "}.class = '" << 
             setupMat->getClass() << "';\n";
         file << "afp.materials{" << mm+1 << "}.name = '" <<
@@ -419,6 +429,71 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     
     file.close();
 }
+
+
+
+
+void VoxelizedPartition::
+runLengthEncode(RunlineEncoder & encoder, Rect3i yeeCells, int octant)
+    const
+{
+}
+
+void VoxelizedPartition::
+runLengthEncode(Map<Paint*, Pointer<RunlineEncoder> > & encoders,
+    Rect3i yeeCells, int octant) const
+{
+	// First task: generate a starting half-cell in the correct octant.
+	// The loops may still end by not exceeding mCalcHalfCells.p2—this works fine.
+	Vector3i offset = halfCellOffset(octant);
+    Vector3i p1 = yeeToHalf(yeeCells.p1, octant);
+    Vector3i p2 = yeeToHalf(yeeCells.p2, octant);
+    
+    // d0 is the direction of memory allocation.  In the for-loops, this is
+    // the innermost of the three Cartesian directions.
+    const int d0 = mLattice->runlineDirection();
+    const int d1 = (d0+1)%3;
+    const int d2 = (d0+2)%3;
+	
+    RunlineEncoder* currentEncoder; // non-smart pointer is faster?
+    
+	bool needNewRunline = 1;
+	Vector3i x(p1);
+	Paint *thisPaint, *thisUpdateType, *firstUpdateType = 0L;
+	for (x[d2] = p1[d2]; x[d2] <= p2[d2]; x[d2] += 2)
+	for (x[d1] = p1[d1]; x[d1] <= p2[d1]; x[d1] += 2)
+	for (x[d0] = p1[d0]; x[d0] <= p2[d0]; x[d0] += 2)
+	{
+		thisPaint = mVoxels(x);
+		thisUpdateType = thisPaint->withoutCurlBuffers();
+		
+		if (!needNewRunline)
+		{
+			if (thisUpdateType == firstUpdateType &&
+				currentEncoder->canContinueRunline(*this, x, thisPaint))
+            {
+				currentEncoder->continueRunline();
+            }
+			else
+			{
+				currentEncoder->endRunline(*this);
+				needNewRunline = 1;
+			}
+		}
+		if (needNewRunline)
+		{
+			currentEncoder = encoders[thisUpdateType]; // save non-smart pointer
+			currentEncoder->startRunline(*this, x);
+            firstUpdateType = thisUpdateType;
+			needNewRunline = 0;
+		}
+	}
+	currentEncoder->endRunline(*this);
+}
+
+
+
+
 	
 #pragma mark *** Private methods ***
 
@@ -651,7 +726,7 @@ createSetupMaterials(const GridDescription & gridDesc)
         
 		if (mSetupMaterials.count(p) == 0)
 		{
-			mSetupMaterials[p] = MaterialFactory::newRunlineEncoder(
+			mSetupMaterials[p] = MaterialFactory::newSetupMaterial(
 				mVoxels, *mCentralIndices, gridDesc, p, numCellsE, numCellsH,
                 pmlRects, mLattice->runlineDirection());
             mSetupMaterials[p]->setID(materialID);
@@ -677,7 +752,7 @@ loadSpaceVaryingData()
 void VoxelizedPartition::
 generateRunlines()
 {
-	// Provide a RunlineEncoder for each uniquely-updating Paint
+	// Provide a SetupMaterial for each uniquely-updating Paint
 	
 	// Walk the grid (ONCE only would be splendid) and step the appropriate
 	// encoders.  (Where do setup runlines go?)
@@ -687,16 +762,17 @@ generateRunlines()
 	
     for (int direction = 0; direction < 3; direction++)
     {
-        genRunlinesInOctant(octantE(direction));
-        genRunlinesInOctant(octantH(direction));
+//        genRunlinesInOctant(octantE(direction));
+//        genRunlinesInOctant(octantH(direction));
     }
     /*
-    map<Paint*, Pointer<RunlineEncoder> >::const_iterator itr;
+    map<Paint*, Pointer<SetupMaterial> >::const_iterator itr;
     for (itr = mSetupMaterials.begin(); itr != mSetupMaterials.end(); itr++)
         itr->second->printRunlines(cout);
     */
 }
 
+/*
 void VoxelizedPartition::
 genRunlinesInOctant(int octant)
 {
@@ -710,7 +786,7 @@ genRunlinesInOctant(int octant)
 //	LOG << "Calc region " << mCalcHalfCells << endl;
 //	LOG << "Runlines in octant " << octant << " at start " << p1 << endl;
 	
-	RunlineEncoder* material; // unsafe pointer for speed in this case.
+	SetupMaterial* material; // unsafe pointer for speed in this case.
 	
 	// If there is a current runline
 	//	Ask the SetupMaterial whether the current cell belongs to it
@@ -758,6 +834,7 @@ genRunlinesInOctant(int octant)
 	}
 	material->endRunline();  // DO NOT FORGET THIS... oh wait, I didn't!
 }
+*/
 
 
 void VoxelizedPartition::

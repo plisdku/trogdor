@@ -64,8 +64,6 @@ FormulaCurrentSource.h
 FormulaCurrentSource.cpp
 FormulaSource.h
 FormulaSource.cpp
-GeneralRunlineEncoder.h
-GeneralRunlineEncoder.cpp
 HuygensSurface.h
 HuygensSurface.cpp
 HuygensLink.h
@@ -77,6 +75,8 @@ Material.h
 Material.cpp
 MaterialFactory.h
 MaterialFactory.cpp
+MaterialRunlineEncoder.h
+MaterialRunlineEncoder.cpp
 MemoryUtilities.h
 MemoryUtilities.cpp
 NullCurrent.h
@@ -98,6 +98,8 @@ Runline.cpp
 RunlineEncoder.h
 RunlineEncoder.cpp
 SetupConstants.h
+SetupMaterial.h
+SetupMaterial.cpp
 SimpleEHOutput.h
 SimpleEHOutput.cpp
 SimpleMaterialTemplates.h

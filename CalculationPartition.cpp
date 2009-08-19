@@ -30,7 +30,7 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     m_dt(dt),
     m_numT(numT),
     mHuygensSurfaces(vp.huygensSurfaces()),
-    mLattice(vp.lattice())
+    mLattice(vp.getLattice())
 {
 //    LOG << "New calc partition.\n";
     unsigned int nn;
@@ -52,9 +52,9 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mCurrentSources.push_back(src);
     }
     
-    const Map<Paint*, RunlineEncoderPtr> & setupMaterials
+    const Map<Paint*, SetupMaterialPtr> & setupMaterials
         = vp.setupMaterials();
-    map<Paint*, RunlineEncoderPtr>::const_iterator itr;
+    map<Paint*, SetupMaterialPtr>::const_iterator itr;
     mMaterials.resize(setupMaterials.size());
     for (itr = setupMaterials.begin(); itr != setupMaterials.end(); itr++)
     {

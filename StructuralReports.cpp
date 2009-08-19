@@ -109,7 +109,7 @@ saveOutputCrossSections(const GridDescription & grid,
         // No, I mean I am not writing them because I don't want to have to
         // define an "edge" cell at the "edge" of the output region.
         Vector3i v1, v2, v3, v4; // this is cheezy.
-        const VoxelGrid & vox(vp.voxelGrid());
+        const VoxelGrid & vox(vp.voxels());
         for (int rr = 1; rr < nRows-2; rr++)
         {
             //  rowStart and here are in half cells
@@ -152,17 +152,17 @@ saveMaterialBoundariesBeta(const GridDescription & grid,
 	foutname << grid.name() << "_faces.obj";
 	ofstream fout(foutname.str().c_str());
 	
-    const Map<Paint*, RunlineEncoderPtr> materials(vp.setupMaterials());
-    map<Paint*, RunlineEncoderPtr>::const_iterator itr;
+    const Map<Paint*, SetupMaterialPtr> materials(vp.setupMaterials());
+    map<Paint*, SetupMaterialPtr>::const_iterator itr;
     
-    const VoxelGrid & vg(vp.voxelGrid());
+    const VoxelGrid & vg(vp.voxels());
 	//const StructureGrid& grid = *mStructureGrid;
 	
 	// We'll write the materials one at a time.
 	for (itr = materials.begin(); itr != materials.end(); itr++)
 	{
 		Paint* paint = (*itr).first->withoutModifications();
-		RunlineEncoderPtr mat = (*itr).second;
+		SetupMaterialPtr mat = (*itr).second;
         string name = paint->fullName();
         Rect3i roi = grid.nonPMLHalfCells();
 		Paint* lastMat;

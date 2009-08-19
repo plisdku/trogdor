@@ -32,9 +32,11 @@ CurrentPolarizationSetupOutput::
 CurrentPolarizationSetupOutput(const OutputDescPtr & desc,
     const VoxelizedPartition & vp) :
     SetupOutput(),
+    mNew(),
     mDescription(desc)
 {
     // Make the runlines!
+    mNew.setMaterialContinuity(kMaterialContinuityRequired);
     
     assert(desc->regions().size() > 0);
     for (int rr = 0; rr < desc->regions().size(); rr++)
@@ -97,15 +99,14 @@ addRunlinesInOctant(int octant, Rect3i yeeCells,
 	if (p1[nn] % 2 != offset[nn])
 		p1[nn]++;
     
-    const VoxelGrid & voxels(vp.voxelGrid());
-    const PartitionCellCount & cellCount(*vp.indices());
-    const Map<Paint*, RunlineEncoderPtr> & setupMaterials(
+    const VoxelGrid & voxels(vp.voxels());
+    const PartitionCellCount & cellCount(vp.indices());
+    const Map<Paint*, SetupMaterialPtr> & setupMaterials(
         vp.setupMaterials());
-    const InterleavedLattice & lattice(*vp.lattice());
     
     // d0 is the direction of memory allocation.  In the for-loops, this is
     // the innermost of the three Cartesian directions.
-    const int d0 = vp.lattice()->runlineDirection();
+    const int d0 = vp.lattice().runlineDirection();
     const int d1 = (d0+1)%3;
     const int d2 = (d0+2)%3;
     
@@ -120,29 +121,43 @@ addRunlinesInOctant(int octant, Rect3i yeeCells,
 	{
 		xParentPaint = voxels(x)->withoutCurlBuffers();
 		
+        bool canContinueRunline = (xParentPaint == lastXParentPaint);
+        
+        if (!needNewRunline)
+        {
+            assert(canContinueRunline == mNew.canContinueRunline(vp,
+                x, xParentPaint));
+            
+            if (mNew.canContinueRunline(vp, x, xParentPaint))
+                mNew.continueRunline();
+        }
+        
 		if (!needNewRunline && xParentPaint != lastXParentPaint)
         {
             assert(cellCount(lastX) - currentRunline.startingIndex ==
                 currentRunline.length - 1);
             outRunlines.push_back(currentRunline);
             needNewRunline = 1;
+            
+            assert(currentRunline.length == mNew.length());
         }
 		if (needNewRunline)
 		{
             currentRunline.length = 0;
             currentRunline.startingIndex = cellCount(x);
-            currentRunline.startingField = lattice.pointer(x);
+            currentRunline.startingField = vp.lattice().pointer(x);
             currentRunline.materialID = setupMaterials[xParentPaint]->id();
 			needNewRunline = 0;
             
-//            LOG << "New runline at " << x << " material "
-//                << currentRunline.materialID << "\n";
+            mNew.startRunline(vp, x);
 		}
         currentRunline.length++;
 		lastX = x;
 		lastXParentPaint = xParentPaint;
 	}
     outRunlines.push_back(currentRunline);
+    
+    LOG << "Runline methods agreed!\n";
 }
 
 #pragma mark *** Output ***
@@ -322,7 +337,7 @@ writeDescriptionFile(const VoxelizedPartition & vp,
 {
     int nn;
     
-    Vector3i unitVector0 = cardinal(2*vp.lattice()->runlineDirection()+1);
+    Vector3i unitVector0 = cardinal(2*vp.lattice().runlineDirection()+1);
     Vector3i unitVector1 = cyclicPermute(unitVector0, 1);
     Vector3i unitVector2 = cyclicPermute(unitVector1, 1);
     

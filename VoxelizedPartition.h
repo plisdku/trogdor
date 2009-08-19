@@ -24,6 +24,7 @@
 #include "InterleavedLattice.h"
 
 #include "RunlineEncoder.h"
+#include "SetupMaterial.h"
 #include "UpdateEquation.h"
 #include "OutputBoss.h"
 #include "SourceBoss.h"
@@ -61,16 +62,19 @@ public:
 	Rect3i pmlHalfCells(Vector3i pmlDir) const;
     
     // returns      which material goes in which cell in this partition
-	const VoxelGrid & voxelGrid() const { return mVoxels; }
+	const VoxelGrid & voxels() const { return mVoxels; }
     
     // returns      the index of each cell by material type (air #1, air #2...)
-	const Pointer<PartitionCellCount> & indices() const
-		{ return mCentralIndices; }
+	const PartitionCellCount & indices() const
+		{ assert(mCentralIndices != 0L); return *mCentralIndices; }
     
-    Pointer<InterleavedLattice> lattice() const { return mLattice; }
+    const InterleavedLattice & lattice() const
+        { assert(mLattice != 0L); return *mLattice; }
+    
+    InterleavedLatticePtr getLattice() const { return mLattice; }
     
     // returns      the structures that store temp data for setting up materials
-    const Map<Paint*, Pointer<RunlineEncoder> > & setupMaterials() const
+    const Map<Paint*, Pointer<SetupMaterial> > & setupMaterials() const
         { return mSetupMaterials; }
     
     // returns      the structures that store temp data for setting up outputs
@@ -104,6 +108,23 @@ public:
     void writeDataRequest(const HuygensSurfaceDescPtr surf,
         const GridDescPtr gridDescription) const;
 	
+    /**
+     *  Scan a run length encoder over the given rect and octant of the grid.
+     *  The entire rect will be processed (so the final runlines will fill
+     *  the rect).  This is suitable for use with RLE outputs.
+     */
+    void runLengthEncode(RunlineEncoder & encoder,
+        Rect3i yeeCells, int octant) const;
+    
+    /**
+     *  Scan a set of run length encoders over the given rect and octant of
+     *  the grid.  Each encoder will be responsible for one Paint.
+     *  (The paints will be compared without curl buffers, i.e. they represent
+     *  unique update equations, regardless of where the field data comes from.)
+     */
+    void runLengthEncode(Map<Paint*, Pointer<RunlineEncoder> >& encoders,
+        Rect3i yeeCells, int octant) const;
+    
 private:
 	void paintFromAssembly(const GridDescription & gridDesc,
 		const Map<GridDescPtr, Pointer<VoxelizedPartition> > & voxelizedGrids);
@@ -132,7 +153,7 @@ private:
     Pointer<InterleavedLattice> mLattice;
 	
     // THIS IS WHERE GRID DENIZENS LIVE
-	Map<Paint*, Pointer<RunlineEncoder> > mSetupMaterials;
+	Map<Paint*, Pointer<SetupMaterial> > mSetupMaterials;
 	std::vector<Pointer<SetupOutput> > mSetupOutputs;
     std::vector<Pointer<SetupSource> > mSoftSetupSources;
     std::vector<Pointer<SetupSource> > mHardSetupSources;

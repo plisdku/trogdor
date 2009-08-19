@@ -54,6 +54,14 @@ InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
         mOctantBuffers[octantH(nn)] = mBuffersH[nn];
     }
     
+    // For run length encoding, sometimes it'll be nice to pretend that there
+    // are also field values in the (unused) octants 0 and 7.  We can set them
+    // up here without need to actually allocate them.
+    mOctantBuffers[0] = MemoryBufferPtr(new MemoryBuffer(
+        bufferNamePrefix + " empty (0,0,0)", bufferSize, STRIDE));
+    mOctantBuffers[7] = MemoryBufferPtr(new MemoryBuffer(
+        bufferNamePrefix + " empyt (1,1,1)", bufferSize, STRIDE));
+    
     // Calculate the memory stride.  It is useful, perhaps kludgy though, to
     // set the memory stride equal to zero along dimensions which are not used
     // (e.g. the z direction for a 2D, XY-plane lattice).
@@ -150,6 +158,8 @@ wrappedPointer(const Vector3i & halfCell) const
 {
     Vector3i wrapped(wrap(halfCell));
     long index = linearYeeIndex(wrapped);
+    
+    assert(mOctantBuffers[octant(halfCell)] != 0L);
     
     return BufferPointer(*mOctantBuffers[octant(halfCell)], index);
 }

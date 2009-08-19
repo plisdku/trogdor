@@ -10,7 +10,8 @@
 #ifndef _SIMPLESETUPMATERIAL_
 #define _SIMPLESETUPMATERIAL_
 
-#include "RunlineEncoder.h"
+#include "SetupMaterial.h"
+#include "MaterialRunlineEncoder.h"
 #include "Pointer.h"
 #include "geometry.h"
 #include "MemoryUtilities.h"
@@ -23,76 +24,35 @@ class VoxelizedPartition;
 class GridDescription;
 
 
-class BulkRunlineEncoder : public RunlineEncoder
+class BulkSetupMaterial : public SetupMaterial
 {
 public:
-	BulkRunlineEncoder();
-	virtual ~BulkRunlineEncoder();
+	BulkSetupMaterial();
+	virtual ~BulkSetupMaterial();
     
-	// Runline handling
-	virtual void startRunline(const VoxelizedPartition & vp,
-		const Vector3i & startPos);
-	virtual bool canContinueRunline(const VoxelizedPartition & vp,
-		const Vector3i & oldPos,
-		const Vector3i & newPos, Paint* newPaint,
-        int runlineDirection) const;
-	virtual void continueRunline(const Vector3i & newPos);
-	virtual void endRunline();
-	
 	virtual void printRunlines(std::ostream & out) const;
 	
-    const std::vector<SBMRunlinePtr> & runlinesE(int dir) const
-        { return mRunlinesE[dir]; }
-    const std::vector<SBMRunlinePtr> & runlinesH(int dir) const
-        { return mRunlinesH[dir]; }
-    Paint* paint() const { return mStartPaint; }
+    const std::vector<SBMRunlinePtr> & runlinesE(int dir) const;
+    const std::vector<SBMRunlinePtr> & runlinesH(int dir) const;
+    
+    virtual Pointer<RunlineEncoder> encoder();
 protected:
-	std::vector<SBMRunlinePtr> mRunlinesE[3];
-	std::vector<SBMRunlinePtr> mRunlinesH[3];
-	
-	// Runline generation storage
-	SBMRunline mCurrentRunline;
-	Paint* mStartPaint;
-	Vector3i mStartPoint;
-	int mStartOctant;
-	long mStartNeighborIndices[6];
-	bool mUsedNeighborIndices[6];
+    Pointer<RunlineEncoder> mEncoder;
 };
 
-class BulkPMLRunlineEncoder : public RunlineEncoder
+class BulkPMLSetupMaterial : public SetupMaterial
 {
 public:
-	BulkPMLRunlineEncoder();
-	
-	// Runline handling
-	virtual void startRunline(const VoxelizedPartition & vp,
-		const Vector3i & startPos);
-	virtual bool canContinueRunline(const VoxelizedPartition & vp,
-		const Vector3i & oldPos,
-		const Vector3i & newPos, Paint* newPaint,
-        int runlineDirection) const;
-	virtual void continueRunline(const Vector3i & newPos);
-	virtual void endRunline();
+	BulkPMLSetupMaterial();
 	
 	virtual void printRunlines(std::ostream & out) const;
 	    
-    const std::vector<SBPMRunlinePtr> & runlinesE(int dir) const
-        { return mRunlinesE[dir]; }
-    const std::vector<SBPMRunlinePtr> & runlinesH(int dir) const
-        { return mRunlinesH[dir]; }
+    const std::vector<SBPMRunlinePtr> & runlinesE(int dir) const;
+    const std::vector<SBPMRunlinePtr> & runlinesH(int dir) const;
     
+    virtual Pointer<RunlineEncoder> encoder();
 protected:
-	std::vector<SBPMRunlinePtr> mRunlinesE[3];
-	std::vector<SBPMRunlinePtr> mRunlinesH[3];
-	
-	// Runline generation storage
-	SBPMRunline mCurrentRunline;
-	Paint* mStartPaint;
-	Vector3i mStartPoint;
-	int mStartOctant;
-	long mStartNeighborIndices[6];
-	bool mUsedNeighborIndices[6];
-	Rect3i mPMLRect;
+    Pointer<RunlineEncoder> mEncoder;
 };
 
 
