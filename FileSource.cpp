@@ -116,6 +116,51 @@ sourceHPhase(CalculationPartition & cp, int timestep)
             uniformSourceH(cp, timestep);
     }
 }
+/*
+void FileSource::
+newSourceE(CalculationPartition & cp, int timestep)
+{
+    float val;
+    Vector3i x;
+    
+    // This is a chance for the input to perform a new calculation, init new
+    // splines, or whatever.
+    fieldInput.startTimestep(timestep);
+    
+    const int dir0 = fieldInput.runlineDirection();
+    const int dir1 = (dir0+1)%3;
+    const int dir2 = (dir1+1)%3;
+    
+    for (unsigned int rr = 0; rr < mRegions.size(); rr++)
+    {
+        Rect3i yeeCells = mRegions[rr].yeeCells();
+        
+        if (fieldInput.order() == kPositionThenPolarization)
+        {
+            for (x[dir2] = rect.p1[dir2]; x[dir2] <= rect.p2[dir2]; x[dir2]++)
+            for (x[dir1] = rect.p1[dir1]; x[dir1] <= rect.p2[dir1]; x[dir1]++)
+            for (x[dir0] = rect.p1[dir0]; x[dir0] <= rect.p2[dir0]; x[dir0]++)
+            {
+                lattice.setE(0, xx, fieldInput.getField(0));
+                lattice.setE(1, xx, fieldInput.getField(1));
+                lattice.setE(2, xx, fieldInput.getField(2));
+                fieldInput.stepToNext();
+            }
+        }
+        else if (fieldInput.order() == kPolarizationThenPosition)
+        {
+            for (int fieldDir = 0; fieldDir < 3; fieldDir++)
+            for (x[dir2] = rect.p1[dir2]; x[dir2] <= rect.p2[dir2]; x[dir2]++)
+            for (x[dir1] = rect.p1[dir1]; x[dir1] <= rect.p2[dir1]; x[dir1]++)
+            for (x[dir0] = rect.p1[dir0]; x[dir0] <= rect.p2[dir0]; x[dir0]++)
+            {
+                lattice.setE(fieldDir, xx, fieldInput.getField(fieldDir));
+                fieldInput.stepToNext();
+            }
+        }
+    }
+}
+*/
 
 void FileSource::
 uniformSourceE(CalculationPartition & cp, int timestep)

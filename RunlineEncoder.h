@@ -44,6 +44,15 @@ enum LineContinuity
     kLineContinuityRequired
 };
 
+/**
+ *  A general interface for encoding calculations and I/O on the Yee grid for
+ *  fast execution.
+ *
+ *  Usage: subclass RunlineEncoder and implement endRunline() yourself.  Take
+ *  advantage of the set* functions to tune the encoder appropriately.  By
+ *  default the encoder will never end a runline; material update equations
+ *  will want to use the kNeighborFieldTransverse4 option, for instance.
+ */
 class RunlineEncoder
 {
 public:
@@ -87,9 +96,18 @@ public:
     bool canContinueRunline(const VoxelizedPartition & vp,
         const Vector3i & newHalfCell,
         const Paint* newPaint) const;
+    
+    /**
+     *  Take whatever action is required to add a cell to the current runline.
+     *  Currently (August 2009) all this does is "length++".
+     */
     void continueRunline();
     
-    // Hey user, you can implement this to make it do your bidding!
+    /**
+     *  Implement this function in a subclass to save runline information.  It
+     *  is the subclass's responsibility to actually save the length and other
+     *  parameters of the runline.
+     */
     virtual void endRunline(const VoxelizedPartition & vp);
 private:
     /**

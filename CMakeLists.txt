@@ -131,6 +131,14 @@ YeeUtilities.h
 YeeUtilities.cpp
 )
 
+#set_target_properties(trogdor PROPERTIES COMPILE_FLAGS -Winline)
+
+# MaterialFactory.cpp is the file that includes, ultimately, all the templated
+# update equations.  For this reason I like to dump the optimized gimple and
+# set some warnings pertaining to inlining and such, just to make sure that gcc
+# is doing what I want it to do!
+set_source_files_properties(MaterialFactory.cpp PROPERTIES COMPILE_FLAGS
+    "-fdump-tree-optimized -Winline")
 
 set(CMAKE_INCLUDE_PATH /sw/include)
 set(CMAKE_LIBRARY_PATH /sw/lib)

@@ -335,7 +335,7 @@ calcE(int fieldDirection)
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
-        float* fi(rl.fi);               // e.g. Ex
+        float* __restrict__ fi(rl.fi);               // e.g. Ex
         const float* gjLow(rl.gj[0]);   // e.g. Hy(z-1/2)
         const float* gjHigh(rl.gj[1]);  // e.g. Hy(z+1/2)
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)
@@ -407,7 +407,7 @@ calcH(int fieldDirection)
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
-        float* fi(rl.fi);               // e.g. Ex
+        float* __restrict__ fi(rl.fi);               // e.g. Ex
         const float* gjLow(rl.gj[0]);   // e.g. Hy(z-1/2)
         const float* gjHigh(rl.gj[1]);  // e.g. Hy(z+1/2)
         const float* gkLow(rl.gk[0]);   // e.g. Hz(y-1/2)

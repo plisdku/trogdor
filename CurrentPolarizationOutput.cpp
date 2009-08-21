@@ -26,7 +26,7 @@ using namespace std;
 using namespace boost::posix_time;
 using namespace YeeUtilities;
 
-#pragma mark *** Setup ***
+#pragma mark *** Local class for run length encoding ***
 
 class CPRunlineEncoder : public RunlineEncoder
 {
@@ -58,6 +58,7 @@ endRunline(const VoxelizedPartition & vp)
         mRunlinesH[xyz(oct)].push_back(rl);
 }
 
+#pragma mark *** Setup class ***
 
 CurrentPolarizationSetupOutput::
 CurrentPolarizationSetupOutput(const OutputDescPtr & desc,
