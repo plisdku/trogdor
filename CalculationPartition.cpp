@@ -25,7 +25,6 @@ using namespace YeeUtilities;
 CalculationPartition::
 CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     long numT) :
-    //mGridName(vp.gridName()),
     m_dxyz(dxyz),
     m_dt(dt),
     m_numT(numT),

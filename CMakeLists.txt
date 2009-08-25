@@ -34,6 +34,8 @@ ${magLibDirs}
 /usr/local/lib
 /sw/lib)
 
+source_group("Main Group" FILES main.cpp)
+
 add_executable( trogdor
 BufferedCurrent.h
 BufferedCurrent.cpp
@@ -102,10 +104,8 @@ SimpleMaterialTemplates.cpp
 SimulationDescription.h
 SimulationDescription.cpp
 SimulationDescriptionPredeclarations.h
-SourceBoss.h
-SourceBoss.cpp
-SourceEH.h
-SourceEH.cpp
+Source.h
+Source.cpp
 StaticDielectric.h
 StaticDielectric.cpp
 StaticLossyDielectric.h

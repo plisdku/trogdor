@@ -21,7 +21,6 @@
 
 class Paint;
 
-
 // This class handles everything that's in common between the various templated
 // PML update classes; the templates just add direction-specific update
 // equations.

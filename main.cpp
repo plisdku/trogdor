@@ -72,15 +72,7 @@ void drawTrogdor();
 int main (int argc, char * const argv[])
 {
 	string paramFileName;
-	//string directory;
-    /*
-	int numThreads;
-	int numTimestepsOverride;
-	bool output3D = 0;
-	bool output2D = 0;
-	bool dumpGrid = 0;
-	bool runSim = 1;
-    */
+    
     SimulationPreferences prefs;
 	
 	// Get the command line arguments, print the help or version messages
@@ -102,7 +94,7 @@ int main (int argc, char * const argv[])
 	// here is an override for debuggery.
 	paramFileName = variablesMap["input-file"].as<string>();
 	//directory = variablesMap["outputDirectory"].as<string>();
-	prefs.numThreads = variablesMap["numthreads"].as<int>();
+	//prefs.numThreads = variablesMap["numthreads"].as<int>();
 	if (variablesMap.count("timesteps"))
 	{
 		prefs.numTimestepsOverride = variablesMap["timesteps"].as<int>();
@@ -124,11 +116,8 @@ int main (int argc, char * const argv[])
 	prefs.runSim = (variablesMap.count("nosim") == 0);
     prefs.runlineDirection = variablesMap["fastaxis"].as<char>();
     
-	
     FDTDApplication& app = FDTDApplication::instance();
 	app.runNew(paramFileName, prefs);
-    //app.runAll(paramFileName, numThreads, runSim, output3D, dumpGrid,
-	//	output2D, numTimestepsOverride);
     
     return 0;
 }
@@ -149,8 +138,8 @@ handleArguments(int argc, char* const argv[])
 	// Options allowed on the command line or in a config file
 	po::options_description config("Configuration");
 	config.add_options()
-		("numthreads,n", po::value<int>()->default_value(1),
-			"set number of concurrent threads")
+		//("numthreads,n", po::value<int>()->default_value(1),
+		//	"set number of concurrent threads")
 		("timesteps,t", po::value<int>(), "override number of timesteps")
 		("xsections,x", "write Output cross-section images")
 		("geometry,g", "write 3D geometry file")
