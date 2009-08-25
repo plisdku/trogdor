@@ -26,8 +26,6 @@ public:
 	PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds,
         int runlineDirection );
 	
-    //void countCells(const VoxelGrid & grid);
-    
 	long operator() (int ii, int jj, int kk) const;
 	long operator() (const Vector3i & pp) const;
 	
@@ -35,9 +33,6 @@ public:
 	Map<Paint*, long> allNumCells(int octant) const;
 	std::set<Paint*> curlBufferParentPaints() const;
     
-    // deletes the grid of material half cells; retains dimensions
-    //void clear();
-	
 private:
 	void calcMaterialIndices(const VoxelGrid & grid, int runlineDirection );
 	void allocateAuxiliaryDataSpace(const VoxelGrid & grid);

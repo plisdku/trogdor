@@ -53,8 +53,6 @@ CurrentPolarizationOutput.h
 CurrentPolarizationOutput.cpp
 CurrentSource.h
 CurrentSource.cpp
-CurrentSourceFactory.h
-CurrentSourceFactory.cpp
 DrudeModel1.h
 DrudeModel1.cpp
 FDTDApplication.h

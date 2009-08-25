@@ -19,7 +19,6 @@ class VoxelizedPartition;
 class CalculationPartition;
 class Paint;
 
-
 // This is that rare thing—a class in Trogdor which doesn't observe RAII.
 // Initializing it just has too darned many parameters.
 class SetupMaterial

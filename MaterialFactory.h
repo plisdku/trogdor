@@ -25,8 +25,7 @@ class Paint;
 class MaterialFactory
 {
 public:
-	static SetupMaterialPtr newSetupMaterial(const VoxelGrid & vg,
-		const PartitionCellCount & cg,
+	static SetupMaterialPtr newSetupMaterial(
         const GridDescription & gridDesc,
 		Paint* parentPaint,
         std::vector<int> numCellsE,

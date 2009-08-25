@@ -9,9 +9,6 @@
 
 #include "MaterialFactory.h"
 
-#include "VoxelGrid.h"
-#include "VoxelizedPartition.h"
-#include "PartitionCellCount.h"
 #include "SimulationDescription.h"
 
 #include "STLOutput.h"
@@ -59,8 +56,7 @@ static SetupMaterialPtr newPML(Paint* parentPaint,
 #pragma mark *** Material Factory ***
 
 SetupMaterialPtr MaterialFactory::
-newSetupMaterial(const VoxelGrid & vg,
-    const PartitionCellCount & cg, 
+newSetupMaterial(
     const GridDescription & gridDesc,
 	Paint* parentPaint,
     std::vector<int> numCellsE,

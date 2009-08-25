@@ -15,7 +15,6 @@
 #include "BulkSetupMaterials.h"
 #include "RunlineEncoder.h"
 #include "MaterialFactory.h"
-#include "CurrentSourceFactory.h"
 #include "STLOutput.h"
 #include "InterleavedLattice.h"
 #include "HuygensSurface.h"
@@ -785,9 +784,9 @@ createSetupMaterials(const GridDescription & gridDesc)
         
 		if (mSetupMaterials.count(p) == 0)
 		{
-			mSetupMaterials[p] = MaterialFactory::newSetupMaterial(
-				mVoxels, *mCentralIndices, gridDesc, p, numCellsE, numCellsH,
-                pmlRects, mLattice->runlineDirection());
+			mSetupMaterials[p] = MaterialFactory::newSetupMaterial(gridDesc,
+                p, numCellsE, numCellsH, pmlRects,
+                mLattice->runlineDirection());
             mSetupMaterials[p]->setID(materialID);
             materialID++;
 		}
