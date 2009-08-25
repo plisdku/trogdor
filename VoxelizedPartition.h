@@ -26,7 +26,7 @@
 #include "SetupMaterial.h"
 #include "UpdateEquation.h"
 #include "Source.h"
-#include "OutputBoss.h"
+#include "Output.h"
 #include "CurrentSource.h"
 #include "HuygensSurface.h"
 

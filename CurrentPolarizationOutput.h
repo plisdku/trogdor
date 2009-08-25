@@ -12,7 +12,7 @@
 
 #include "SimulationDescription.h"
 
-#include "OutputBoss.h"
+#include "Output.h"
 #include "MemoryUtilities.h"
 #include "geometry.h"
 #include <vector>

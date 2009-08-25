@@ -11,7 +11,7 @@
 #define _SIMPLEEHOUTPUT_
 
 #include "SimulationDescription.h"
-#include "OutputBoss.h"
+#include "Output.h"
 #include "geometry.h"
 #include "MemoryUtilities.h"
 #include <vector>

@@ -1,5 +1,5 @@
 /*
- *  OutputBoss.cpp
+ *  Output.cpp
  *  TROGDOR
  *
  *  Created by Paul Hansen on 5/6/09.
@@ -7,7 +7,7 @@
  *
  */
 
-#include "OutputBoss.h"
+#include "Output.h"
 
 #include "VoxelizedPartition.h"
 #include "CalculationPartition.h"

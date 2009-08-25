@@ -1,5 +1,5 @@
 /*
- *  OutputBoss.h
+ *  Output.h
  *  TROGDOR
  *
  *  Created by Paul Hansen on 5/6/09.

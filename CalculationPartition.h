@@ -11,7 +11,7 @@
 #define _CALCULATIONPARTITION_
 
 #include "UpdateEquation.h"
-#include "OutputBoss.h"
+#include "Output.h"
 #include "Source.h"
 #include "CurrentSource.h"
 #include "HuygensSurface.h"

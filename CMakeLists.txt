@@ -78,8 +78,8 @@ MemoryUtilities.h
 MemoryUtilities.cpp
 NullCurrent.h
 NullPML.h
-OutputBoss.h
-OutputBoss.cpp
+Output.h
+Output.cpp
 Paint.h
 Paint.cpp
 PartitionCellCount.h
