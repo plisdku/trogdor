@@ -1,5 +1,5 @@
 /*
- *  SourceEH.h
+ *  Source.h
  *  TROGDOR
  *
  *  Created by Paul Hansen on 8/21/09.
@@ -7,10 +7,9 @@
  *
  */
 
-#ifndef _SOURCEEH_
-#define _SOURCEEH_
+#ifndef _SOURCE_
+#define _SOURCE_
 
-#include "SourceBoss.h"
 #include "FieldInput.h"
 #include "SimulationDescription.h"
 
@@ -19,28 +18,31 @@
 class CalculationPartition;
 class VoxelizedPartition;
 
-class SetupSourceEH : public SetupSource
+class Source;
+
+class SetupSource
 {
 public:
-    SetupSourceEH(const SourceDescPtr sourceDescription);
-    virtual ~SetupSourceEH();
+    SetupSource(const SourceDescPtr sourceDescription);
+    virtual ~SetupSource();
     
-    virtual SourcePtr makeSource(const VoxelizedPartition & vp,
+    Pointer<Source> makeSource(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
 private:
     SourceDescPtr mDescription;
 };
+typedef Pointer<SetupSource> SetupSourcePtr;
 
-class SourceEH : public Source
+class Source
 {
 public:
-    SourceEH(const SourceDescPtr sourceDescription,
+    Source(const SourceDescPtr sourceDescription,
         const VoxelizedPartition & vp,
         const CalculationPartition & cp);
-    virtual ~SourceEH();
+    virtual ~Source();
     
-    virtual void sourceEPhase(CalculationPartition & cp, int timestep);
-    virtual void sourceHPhase(CalculationPartition & cp, int timestep);
+    void sourceEPhase(CalculationPartition & cp, int timestep);
+    void sourceHPhase(CalculationPartition & cp, int timestep);
 private:
     void doSourceE(CalculationPartition & cp, int timestep);
     void doSourceH(CalculationPartition & cp, int timestep);
@@ -53,6 +55,7 @@ private:
     std::vector<Region> mRegions;
     std::vector<Duration> mDurations;
 };
+typedef Pointer<Source> SourcePtr;
 
 
 

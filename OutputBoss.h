@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _OUTPUTBOSS_
-#define _OUTPUTBOSS_
+#ifndef _OUTPUT_
+#define _OUTPUT_
 
 #include "Pointer.h"
 #include "SimulationDescriptionPredeclarations.h"

@@ -1,5 +1,5 @@
 /*
- *  SourceEH.cpp
+ *  Source.cpp
  *  TROGDOR
  *
  *  Created by Paul Hansen on 8/21/09.
@@ -7,36 +7,36 @@
  *
  */
 
-#include "SourceEH.h"
+#include "Source.h"
 
 #include "VoxelizedPartition.h"
 #include "CalculationPartition.h"
 
-SetupSourceEH::
-SetupSourceEH(const SourceDescPtr sourceDescription) :
-    SetupSource(),
+SetupSource::
+SetupSource(const SourceDescPtr sourceDescription) :
     mDescription(sourceDescription)
 {
+    LOG << "HEY LOOK This does nothing, nothing at all, and can wait until"
+        " the CalculationPartition is constructed.\n";
 }
 
-SetupSourceEH::
-~SetupSourceEH()
+SetupSource::
+~SetupSource()
 {
 }
 
-SourcePtr SetupSourceEH::
+SourcePtr SetupSource::
 makeSource(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
-    return SourcePtr(new SourceEH(mDescription, vp, cp));
+    return SourcePtr(new Source(mDescription, vp, cp));
 }
 
 
-SourceEH::
-SourceEH(const SourceDescPtr sourceDescription,
+Source::
+Source(const SourceDescPtr sourceDescription,
     const VoxelizedPartition & vp,
     const CalculationPartition & cp) :
-    Source(),
     mFieldInput(sourceDescription, cp.dt()),
     mCurrentDuration(0),
     mFields(sourceDescription->sourceFields()),
@@ -55,13 +55,13 @@ SourceEH(const SourceDescPtr sourceDescription,
         mDurations[dd].setLast(cp.duration()-1);
 }
 
-SourceEH::
-~SourceEH()
+Source::
+~Source()
 {
 }
 
 
-void SourceEH::
+void Source::
 sourceEPhase(CalculationPartition & cp, int timestep)
 {
     if (norm2(mFields.whichE()) == 0)
@@ -82,7 +82,7 @@ sourceEPhase(CalculationPartition & cp, int timestep)
     }
 }
 
-void SourceEH::
+void Source::
 sourceHPhase(CalculationPartition & cp, int timestep)
 {
     if (norm2(mFields.whichH()) == 0)
@@ -104,7 +104,7 @@ sourceHPhase(CalculationPartition & cp, int timestep)
 }
 
 
-void SourceEH::
+void Source::
 doSourceE(CalculationPartition & cp, int timestep)
 {
     float val;
@@ -150,7 +150,7 @@ doSourceE(CalculationPartition & cp, int timestep)
     }
 }
 
-void SourceEH::
+void Source::
 doSourceH(CalculationPartition & cp, int timestep)
 {
     float val;

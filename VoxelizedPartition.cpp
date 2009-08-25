@@ -20,7 +20,7 @@
 #include "InterleavedLattice.h"
 #include "HuygensSurface.h"
 #include "PartitionCellCount.h"
-#include "SourceEH.h"
+#include "Source.h"
 
 #include <sstream>
 
@@ -823,11 +823,11 @@ createSetupSources(const std::vector<SourceDescPtr> & sources)
     {
         if (sources[nn]->isSoftSource())
             mSoftSetupSources.push_back(SetupSourcePtr(
-                new SetupSourceEH(sources[nn])));
+                new SetupSource(sources[nn])));
 //                SourceFactory::newSetupSource(*this, sources[nn]));
         else
             mHardSetupSources.push_back(SetupSourcePtr(
-                new SetupSourceEH(sources[nn])));
+                new SetupSource(sources[nn])));
 //                SourceFactory::newSetupSource(*this, sources[nn]));
     }
 }

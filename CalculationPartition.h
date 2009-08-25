@@ -12,7 +12,7 @@
 
 #include "UpdateEquation.h"
 #include "OutputBoss.h"
-#include "SourceBoss.h"
+#include "Source.h"
 #include "CurrentSource.h"
 #include "HuygensSurface.h"
 #include "InterleavedLattice.h"
