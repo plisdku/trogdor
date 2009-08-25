@@ -18,18 +18,22 @@
 class BufferedCurrent
 {
 public:
-    BufferedCurrent();
+    BufferedCurrent(std::vector<int> numCellsE, std::vector<int> numCellsH);
     
     struct LocalDataE {
-        //float* J;
-        //long stride;
-        float J;
+        float* J;
+        float* mask;
+        float polarizationFactor;
+        long stride;
+        long maskStride;
     };
     
     struct LocalDataH {
-        //float* K;
-        //long stride;
-        float K;
+        float* K;
+        float* mask;
+        float polarizationFactor;
+        long stride;
+        long maskStride;
     };
     
     void setCurrentSource(CurrentSource* source);
@@ -51,6 +55,13 @@ public:
     
 private:
     CurrentSource* mSourceOfData;
+    
+    std::vector<float> mMaskE[3];
+    std::vector<float> mMaskH[3];
+    std::vector<float> mSingleTimestepDataE[3];
+    std::vector<float> mSingleTimestepDataH[3];
+    Vector3f mPolarizationVector; // defaults to (1.0, 1.0, 1.0); always used
+    
     //std::vector<float> mSingleTimestepData;
     //MemoryBuffer mBuffer; // identifying information for mSingleTimestepData.
     //long mStride;  // 0 or 1 typically

@@ -14,8 +14,9 @@
 #include "SimulationDescription.h"
 
 //#include "SimpleEHSource.h"
-#include "FormulaSource.h"
-#include "FileSource.h"
+//#include "FormulaSource.h"
+//#include "FileSource.h"
+#include "SourceEH.h"
 
 #include <cstdlib>
 
@@ -24,13 +25,16 @@ using namespace std;
 SetupSourcePtr SourceFactory::
 newSetupSource(const VoxelizedPartition & vp, const SourceDescPtr & desc)
 {
-    
+    /*
     if (desc->formula() != "")
         return SetupSourcePtr(new FormulaSetupSource(desc));
     else if (desc->timeFile() != "" || desc->spaceTimeFile() != "")
     {
         return SetupSourcePtr(new FileSetupSource(desc));
     }
+    */
+    
+    return SetupSourcePtr(new SetupSourceEH(desc));
     
     LOG << "Using default (null) source... and crashing.\n";
     exit(1);

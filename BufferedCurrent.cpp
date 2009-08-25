@@ -9,26 +9,29 @@
 
 #include "BufferedCurrent.h"
 
+using namespace std;
+
 BufferedCurrent::
-BufferedCurrent() :
+BufferedCurrent(std::vector<int> numCellsE, std::vector<int> numCellsH) :
     mSourceOfData(0L)
 {
-//    LOG << "Actually creating the buffered current.\n";
+    
 }
 
 void BufferedCurrent::
 setCurrentSource(CurrentSource* sourceOfData)
 {
     mSourceOfData = sourceOfData;
-    
-    //LOG << "Value is " << mSourceOfData->value() << "!\n";
 }
 
 void BufferedCurrent::
 allocateAuxBuffers()
 {
-    //LOG << "Allocating the single timestep buffer.\n";
-    //mSingleTimestepData.resize(mBuffer.length(), 0.0f);
 }
+
+
+
+
+
 
 

@@ -11,6 +11,7 @@
 #define _CURRENTSOURCE_
 
 #include <vector>
+#include "RunlineEncoder.h"
 #include "MemoryUtilities.h"
 #include "SimulationDescription.h"
 
@@ -49,21 +50,46 @@
 class VoxelizedPartition;
 class CalculationPartition;
 class CurrentSource;
+class SetupMaterial;
 
 class SetupCurrentSource
 {
 public:
-    SetupCurrentSource(const CurrentSourceDescPtr & description);
+    SetupCurrentSource(const CurrentSourceDescPtr & description,
+        const VoxelizedPartition & vp);
     virtual ~SetupCurrentSource();
     
     virtual Pointer<CurrentSource> makeCurrentSource(
         const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
-        
     
     CurrentSourceDescPtr description() const { return mDescription; }
+    
+    struct InputRunlineList
+    {
+        SetupMaterial* material;
+        std::vector<Region> regionsE[3];
+        std::vector<Region> regionsH[3];
+        long numCellsE(int fieldDirection) const;
+        long numCellsH(int fieldDirection) const;
+    };
+    
+    InputRunlineList & inputRunlineList(SetupMaterial* material);
+    
+    class RLE : public RunlineEncoder
+    {
+    public:
+        RLE(InputRunlineList & runlines);
+        virtual void endRunline(const VoxelizedPartition & vp,
+            const Vector3i & lastHalfCell);
+    private:
+        InputRunlineList & mRunlines;
+    };
+        
 private:
     CurrentSourceDescPtr mDescription;
+    
+    std::vector<InputRunlineList> mScheduledInputRegions;
 };
 typedef Pointer<SetupCurrentSource> SetupCurrentSourcePtr;
 
@@ -73,6 +99,8 @@ class CurrentSource
 public:
     CurrentSource();
     virtual ~CurrentSource();
+    
+    
     
     virtual void prepareJ(long timestep);
     virtual void prepareK(long timestep);

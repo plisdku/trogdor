@@ -463,7 +463,7 @@ runLengthEncode(RunlineEncoder & encoder, Rect3i yeeCells, int octant)
     const int d2 = (d0+2)%3;
     
 	bool needNewRunline = 1;
-	Vector3i x(p1);
+	Vector3i x(p1), previous_x;
 	Paint *thisPaint, *thisUpdateType, *firstUpdateType = 0L;
 	for (x[d2] = p1[d2]; x[d2] <= p2[d2]; x[d2] += 2)
 	for (x[d1] = p1[d1]; x[d1] <= p2[d1]; x[d1] += 2)
@@ -481,7 +481,7 @@ runLengthEncode(RunlineEncoder & encoder, Rect3i yeeCells, int octant)
             }
 			else
 			{
-				encoder.endRunline(*this);
+				encoder.endRunline(*this, previous_x);
 				needNewRunline = 1;
 			}
 		}
@@ -491,12 +491,13 @@ runLengthEncode(RunlineEncoder & encoder, Rect3i yeeCells, int octant)
             firstUpdateType = thisUpdateType;
 			needNewRunline = 0;
 		}
+        previous_x = x;
 	}
-	encoder.endRunline(*this);
+	encoder.endRunline(*this, previous_x);
 }
 
 void VoxelizedPartition::
-runLengthEncode(Map<Paint*, RunlineEncoder*> & encoders,
+runLengthEncode(map<Paint*, RunlineEncoder*> & encoders,
     Rect3i yeeCells, int octant) const
 {
 	// First task: generate a starting half-cell in the correct octant.
@@ -514,7 +515,7 @@ runLengthEncode(Map<Paint*, RunlineEncoder*> & encoders,
     RunlineEncoder* currentEncoder; // non-smart pointer is faster?
     
 	bool needNewRunline = 1;
-	Vector3i x(p1);
+	Vector3i x(p1), previous_x;
 	Paint *thisPaint, *thisUpdateType, *firstUpdateType = 0L;
 	for (x[d2] = p1[d2]; x[d2] <= p2[d2]; x[d2] += 2)
 	for (x[d1] = p1[d1]; x[d1] <= p2[d1]; x[d1] += 2)
@@ -532,7 +533,7 @@ runLengthEncode(Map<Paint*, RunlineEncoder*> & encoders,
             }
 			else
 			{
-				currentEncoder->endRunline(*this);
+				currentEncoder->endRunline(*this, previous_x);
 				needNewRunline = 1;
 			}
 		}
@@ -543,8 +544,9 @@ runLengthEncode(Map<Paint*, RunlineEncoder*> & encoders,
             firstUpdateType = thisUpdateType;
 			needNewRunline = 0;
 		}
+        previous_x = x;
 	}
-	currentEncoder->endRunline(*this);
+	currentEncoder->endRunline(*this, previous_x);
 }
 
 
@@ -832,8 +834,8 @@ createSetupCurrentSources(const std::vector<CurrentSourceDescPtr> & currents)
 {
     for (unsigned int nn = 0; nn < currents.size(); nn++)
     {
-        mSetupCurrentSources.push_back(CurrentSourceFactory::newCurrentSource(
-            /**this,*/ currents[nn]));
+        mSetupCurrentSources.push_back(SetupCurrentSourcePtr(
+            new SetupCurrentSource(currents[nn], *this)));
     }
 }
 

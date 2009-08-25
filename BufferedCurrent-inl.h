@@ -13,12 +13,28 @@
 inline void BufferedCurrent::
 initLocalE(LocalDataE & data, int dir0)
 {
-    data.J = mSourceOfData->getJ(dir0);
+    /*
+    mSourceOfData->loadSingleTimestepE(mSingleTimestepDataE[dir0]);
+    data.J = &(mSourceOfDataE[dir0][0]);
+    
+    data.mask = &(mMaskE[dir0][0]);
+    
+    if (mSingleTimestepDataE[dir0].size() > 1)
+        data.stride = 1;
+    else
+        data.stride = 0;
+    
+    if (mMaskE[dir0].size() > 1)
+        data.maskStride = 1;
+    else
+        data.maskStride = 0;
+    */
 }
 
 inline void BufferedCurrent::
 onStartRunlineE(LocalDataE & data, const SimpleRunline & rl)
 {
+    // Nothing... easiest that way.
 }
 
 inline void BufferedCurrent::
@@ -30,20 +46,35 @@ inline float BufferedCurrent::
 updateJ(LocalDataE & data, float Ei, float dHj, float dHk,
     int dir0, int dir1, int dir2)
 {
-    return data.J;
-    //return *data.J;
+    return data.polarizationFactor * (*data.J) * (*data.mask);
 }
 
 inline void BufferedCurrent::
 afterUpdateE(LocalDataE & data, float Ei, float dHj, float dHk)
 {
-    //data.J += data.stride;
+    data.J += data.stride;
+    data.mask += data.maskStride;
 }
 
 inline void BufferedCurrent::
 initLocalH(LocalDataH & data, int dir0)
 {
-    data.K = mSourceOfData->getK(dir0);
+    /*
+    mSourceOfData->loadSingleTimestepH(mSingleTimestepDataH[dir0]);
+    data.K = &(mSourceOfDataH[dir0][0]);
+    
+    data.mask = &(mMaskH[dir0][0]);
+    
+    if (mSingleTimestepDataH[dir0].size() > 1)
+        data.stride = 1;
+    else
+        data.stride = 0;
+    
+    if (mMaskH[dir0].size() > 1)
+        data.maskStride = 1;
+    else
+        data.maskStride = 0;
+    */
 }
 
 inline void BufferedCurrent::
@@ -60,13 +91,13 @@ inline float BufferedCurrent::
 updateK(LocalDataH & data, float Hi, float dEj, float dEk,
     int dir0, int dir1, int dir2)
 {
-    return data.K;
-    //return *data.K;
+    return data.polarizationFactor * (*data.K) * (*data.mask);
 }
 
 inline void BufferedCurrent::
 afterUpdateH(LocalDataH & data, float Hi, float dEj, float dEk)
 {
-    //data.K += data.stride;
+    data.K += data.stride;
+    data.mask += data.maskStride;
 }
 

@@ -77,10 +77,10 @@ public:
     // Accessors for the current runline's info
     const Vector3i & firstHalfCell() const
         { return mFirstHalfCell; }
-    const Vector3i & lastHalfCell() const
-        { return mLastHalfCell; }
     long length() const
         { return mLength; }
+    int runlineDirection() const
+        { return mRunlineDirection; }
     
     // Things called by the... iterator on the grid, I guess it's called.
     void startRunline(const VoxelizedPartition & vp,
@@ -108,7 +108,8 @@ public:
      *  is the subclass's responsibility to actually save the length and other
      *  parameters of the runline.
      */
-    virtual void endRunline(const VoxelizedPartition & vp);
+    virtual void endRunline(const VoxelizedPartition & vp,
+        const Vector3i & lastHalfCell);
 private:
     /**
      *  Initialize mFirstNeighborFields and mUsedNeighborFields for new
@@ -149,7 +150,6 @@ private:
         const Vector3i & newHalfCell, const Paint* newPaint) const;
     
     Vector3i mFirstHalfCell;
-    Vector3i mLastHalfCell;
     long mLength;
     int mRunlineDirection;
     

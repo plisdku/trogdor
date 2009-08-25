@@ -169,38 +169,51 @@ uniformSourceE(CalculationPartition & cp, int timestep)
     float val;
     InterleavedLattice& lattice(cp.lattice());
     
+    /*
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
     else
         throw(Exception("Cannot read further from file."));
+    */
+    fieldInput.startTimestep(timestep);
     
-//    LOG << "Source E val " << val << "\n";
-    
-    for (unsigned int rr = 0; rr < mRegions.size(); rr++)
+    for (int dir = 0; dir < 3; dir++)
     {
-        Rect3i rect = mRegions[rr].yeeCells();
-        for (int dir = 0; dir < 3; dir++)
+        fieldSource.startFieldDirection(dir);
         if (mFields.whichE()[dir] != 0)
+        for (unsigned int rr = 0; rr < mRegions.size(); rr++)
         {
-            Vector3i xx;
-            if (!mIsSoft)
+            Rect3i rect = mRegions[rr].yeeCells();
             {
-                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
-                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
-                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
+                Vector3i xx;
+                if (!mIsSoft)
                 {
-                    lattice.setE(dir, xx, val);
-                    //LOG << "Writing at " << ii << " " << jj << " " << kk
-                    //    << "\n";
-                    //LOG << "E is now " << cp.getE(dir, ii, jj, kk) << "\n";
+                    for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
+                    for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
+                    for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
+                    {
+                        //lattice.setE(dir, xx, val);
+                        val = fieldInput.getField(dir);
+                        lattice.setE(dir, xx, val);
+                        fieldInput.stepToNext();
+                        
+                        //LOG << "Writing at " << ii << " " << jj << " " << kk
+                        //    << "\n";
+                        //LOG << "E is now " << cp.getE(dir, ii, jj, kk) << "\n";
+                    }
                 }
-            }
-            else
-            {
-                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
-                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
-                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice.setE(dir, xx, lattice.getE(dir, xx)+val);
+                else
+                {
+                    for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
+                    for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
+                    for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
+                    {
+                        //lattice.setE(dir, xx, lattice.getE(dir, xx)+val);
+                        val = fieldInput.getField(dir);
+                        lattice.setE(dir, xx, lattice.getE(dir, xx) + val);
+                        fieldInput.stepToNext();
+                    }
+                }
             }
         }
     }
@@ -212,34 +225,47 @@ uniformSourceH(CalculationPartition & cp, int timestep)
     //LOG << "Source H\n";
     float val;
     InterleavedLattice& lattice(cp.lattice());
-    
+    /*
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
     else
         throw(Exception("Cannot read further from file."));
+    */
+    fieldSource.startTimestep(timestep);
     
 //    LOG << "Source H val " << val << "\n";
     
-    for (unsigned int rr = 0; rr < mRegions.size(); rr++)
+    for (int dir = 0; dir < 3; dir++)
     {
-        Rect3i rect = mRegions[rr].yeeCells();
-        for (int dir = 0; dir < 3; dir++)
+        fieldInput.startFieldDirection(dir);
         if (mFields.whichH()[dir] != 0)
+        for (unsigned int rr = 0; rr < mRegions.size(); rr++)
         {
-            Vector3i xx;
-            if (!mIsSoft)
+            Rect3i rect = mRegions[rr].yeeCells();
             {
-                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
-                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
-                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice.setH(dir, xx, val);
-            }
-            else
-            {
-                for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
-                for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
-                for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice.setH(dir, xx, lattice.getH(dir, xx)+val);
+                Vector3i xx;
+                if (!mIsSoft)
+                {
+                    for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
+                    for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
+                    for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
+                    {
+                        val = fieldSource.getField(dir);
+                        lattice.setH(dir, xx, val);
+                        fieldSource.stepToNext();
+                    }
+                }
+                else
+                {
+                    for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
+                    for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
+                    for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
+                    {
+                        val = fieldSource.getField(dir);
+                        lattice.setH(dir, xx, lattice.getH(dir, xx)+val);
+                        fieldSource.stepToNext();
+                    }
+                }
             }
         }
     }
@@ -255,18 +281,23 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
     float val;
     InterleavedLattice & lattice(cp.lattice());
     
+    /*
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
     else
         throw(Exception("Cannot read further from file."));
+    */
+    fieldInput.startTimestep(timestep);
     
 //    LOG << "Source E val " << val << "\n";
-    
-    for (unsigned int rr = 0; rr < mRegions.size(); rr++)
+
+    for (int dir = 0; dir < 3; dir++)
     {
-        Rect3i rect = mRegions[rr].yeeCells();
-        for (int dir = 0; dir < 3; dir++)
+        fieldInput.startFieldDirection(dir);    
+            
+        for (unsigned int rr = 0; rr < mRegions.size(); rr++)
         {
+            Rect3i rect = mRegions[rr].yeeCells();
             Vector3i xx;
             if (!mIsSoft)
             {
@@ -274,7 +305,10 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
                 {
-                    lattice.setE(dir, xx, val*polarization[dir]);
+                    val = fieldInput.getField(dir);
+                    lattice.setE(dir, xx, val);
+                    fieldInput.stepToNext();
+                    //lattice.setE(dir, xx, val*polarization[dir]);
                 }
             }
             else
@@ -282,8 +316,11 @@ polarizedSourceE(CalculationPartition & cp, int timestep)
                 for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                lattice.setE(dir, xx,
-                    lattice.getE(dir, xx)+val*polarization[dir]);
+                {
+                    val = fieldInput.getField(dir);
+                    lattice.setE(dir, xx, lattice.getE(dir, xx)+val);
+                    fieldInput.stepToNext();
+                }
             }
         }
     }
@@ -298,34 +335,43 @@ polarizedSourceH(CalculationPartition & cp, int timestep)
     Vector3f polarization = mFields.polarization();
     float val;
     InterleavedLattice & lattice(cp.lattice());
-    
+    /*
 	if (mFileStream.good())
 		mFileStream.read((char*)&val, (std::streamsize)sizeof(float));
     else
         throw(Exception("Cannot read further from file."));
-    
+    */
+    fieldSource.startTimestep(timestep);
 //    LOG << "Source H val " << val << "\n";
     
-    for (unsigned int rr = 0; rr < mRegions.size(); rr++)
+    for (int dir = 0; dir < 3; dir++)
     {
-        Rect3i rect = mRegions[rr].yeeCells();
-        for (int dir = 0; dir < 3; dir++)
+        fieldSource.startFieldDirection(dir);
+        for (unsigned int rr = 0; rr < mRegions.size(); rr++)
         {
+            Rect3i rect = mRegions[rr].yeeCells();
             Vector3i xx;
             if (!mIsSoft)
             {
                 for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice.setH(dir, xx, val*polarization[dir]);
+                {
+                    val = fieldSource.getField(dir);
+                    lattice.setH(dir, xx, val);
+                    fieldSource.stepToNext();
+                }
             }
             else
             {
                 for (xx[2] = rect.p1[2]; xx[2] <= rect.p2[2]; xx[2]++)
                 for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                 for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
-                    lattice.setH(dir, xx,
-                        lattice.getH(dir, xx)+val*polarization[dir]);
+                {
+                    val = fieldSource.getField(dir);
+                    lattice.setH(dir, xx, lattice.getH(dir, xx)+val);
+                    fieldSource.stepToNext();
+                }
             }
         }
     }

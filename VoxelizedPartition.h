@@ -126,7 +126,7 @@ public:
      *  (The paints will be compared without curl buffers, i.e. they represent
      *  unique update equations, regardless of where the field data comes from.)
      */
-    void runLengthEncode(Map<Paint*, RunlineEncoder*>& encoders,
+    void runLengthEncode(std::map<Paint*, RunlineEncoder*>& encoders,
         Rect3i yeeCells, int octant) const;
     
 private:

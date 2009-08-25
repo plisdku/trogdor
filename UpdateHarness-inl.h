@@ -217,7 +217,7 @@ UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
     mDt(dt),
     mRunlineDirection(runlineDirection),
     mPML(),
-    mCurrent()
+    mCurrent(numCellsE, numCellsH)
 {
     mDxyz_inverse = 1.0 / mDxyz;
 }
@@ -236,7 +236,7 @@ UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
     mRunlineDirection(runlineDirection),
     mPML(parentPaint, numCellsE, numCellsH, pmlHalfCells, pmlParams, dxyz, dt,
         runlineDirection),
-    mCurrent()
+    mCurrent(numCellsE, numCellsH)
 {
     mDxyz_inverse = 1.0 / mDxyz;
 }

@@ -15,6 +15,7 @@ class CurrentSource;
 class NullCurrent
 {
 public:
+    NullCurrent(std::vector<int> numCellsE, std::vector<int> numCellsH) {}
     struct LocalDataE {};
     struct LocalDataH {};   
     

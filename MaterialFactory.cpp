@@ -15,6 +15,7 @@
 #include "SimulationDescription.h"
 
 #include "STLOutput.h"
+#include "YeeUtilities.h"
 #include "geometry.h"
 
 // Headers for the materials we'll make
@@ -30,6 +31,9 @@
 // Headers for the available PML types
 //#include "NullPML.h"    // not needed in this file.
 #include "CFSRIPML.h"
+
+using namespace std;
+using namespace YeeUtilities;
 
 // These three functions successively determine the material, current and
 // PML for a SetupMaterial.

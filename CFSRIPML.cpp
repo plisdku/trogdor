@@ -7,11 +7,12 @@
  *
  */
 
-#ifdef _CFSRIPML_
+#include "CFSRIPML.h"
 
 #include "calc.hh"
 #include "Log.h"
 #include "SimulationDescription.h"
+#include "Paint.h"
 #include "PhysicalConstants.h"
 #include "YeeUtilities.h"
 #include "Map.h"
@@ -398,19 +399,3 @@ allocateAuxBuffers()
         }
     }
 }
-
-#pragma mark *** CFSRIPML ***
-
-template <bool I_ATTEN, bool J_ATTEN, bool K_ATTEN>
-CFSRIPML<I_ATTEN, J_ATTEN, K_ATTEN>::
-CFSRIPML(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
-        Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
-        float dt, int runlineDirection ) :
-    CFSRIPMLBase(parentPaint, numCellsE, numCellsH, pmlHalfCells,
-        pmlParams, dxyz, dt, runlineDirection)
-{
-}
-
-
-#endif

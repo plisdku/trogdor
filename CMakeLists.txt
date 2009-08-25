@@ -44,6 +44,7 @@ CalculationPartition.h
 CalculationPartition.cpp
 CFSRIPML.h
 CFSRIPML.cpp
+CFSRIPML-inl.h
 ConvertOldXML.h
 ConvertOldXML.cpp
 CurrentPolarizationOutput.h
@@ -56,14 +57,8 @@ DrudeModel1.h
 DrudeModel1.cpp
 FDTDApplication.h
 FDTDApplication.cpp
-FileCurrentSource.h
-FileCurrentSource.cpp
-FileSource.h
-FileSource.cpp
-FormulaCurrentSource.h
-FormulaCurrentSource.cpp
-FormulaSource.h
-FormulaSource.cpp
+FieldInput.h
+FieldInput.cpp
 HuygensSurface.h
 HuygensSurface.cpp
 HuygensLink.h
@@ -109,6 +104,8 @@ SimulationDescription.cpp
 SimulationDescriptionPredeclarations.h
 SourceBoss.h
 SourceBoss.cpp
+SourceEH.h
+SourceEH.cpp
 StaticDielectric.h
 StaticDielectric.cpp
 StaticLossyDielectric.h

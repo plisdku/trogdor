@@ -51,7 +51,7 @@ endRunline(const VoxelizedPartition & vp)
     rl.startingField = vp.lattice().pointer(firstHalfCell());
     rl.materialID = vp.setupMaterials()[vp.voxels()(firstHalfCell())]->id();
     
-    int oct = octant(firstHalfCell());
+    int oct = YeeUtilities::octant(firstHalfCell());
     if (isE(oct))
         mRunlinesE[xyz(oct)].push_back(rl);
     else

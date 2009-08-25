@@ -70,7 +70,7 @@ continueRunline()
 
 // Hey user, you can implement this to make it do your bidding!
 void RunlineEncoder::
-endRunline(const VoxelizedPartition & vp)
+endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
 {
     LOG << "Ending runline, doing nothing.\n";
 }
