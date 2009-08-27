@@ -12,7 +12,7 @@
 
 #include "Material.h"
 #include "BulkSetupMaterials.h"
-#include "SimpleMaterialTemplates.h"
+#include "SetupModularUpdateEquation.h"
 #include <string>
 #include "Log.h"
 

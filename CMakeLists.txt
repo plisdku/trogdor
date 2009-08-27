@@ -77,7 +77,6 @@ materials/StaticLossyDielectric.h
 MemoryUtilities.cpp
 MemoryUtilities.h
 ModularUpdateEquation-inl.h
-ModularUpdateEquation.cpp
 ModularUpdateEquation.h
 Output.cpp
 Output.h
@@ -117,8 +116,8 @@ updateModules/Material.cpp
 updateModules/Material.h
 updateModules/NullCurrent.h
 updateModules/NullPML.h
-updateModules/SimpleMaterialTemplates.cpp
-updateModules/SimpleMaterialTemplates.h
+updateModules/SetupModularUpdateEquation.h
+updateModules/SetupModularUpdateEquation-inl.h
 
 Version.h
 VoxelGrid.cpp

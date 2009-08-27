@@ -14,7 +14,7 @@
 #include "Log.h"
 #include "PhysicalConstants.h"
 #include "YeeUtilities.h"
-#include "SimpleMaterialTemplates.h"
+#include "SetupModularUpdateEquation.h"
 
 #include <sstream>
 
