@@ -73,6 +73,6 @@ private:
 
 
 
-#include "SimpleMaterialTemplates.cpp"
+#include "SetupModularUpdateEquation-inl.h"
 
 #endif
