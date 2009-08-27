@@ -100,12 +100,11 @@ Runline.cpp
 RunlineEncoder.h
 RunlineEncoder.cpp
 SetupConstants.h
-SetupMaterial.h
-SetupMaterial.cpp
 SimpleEHOutput.h
 SimpleEHOutput.cpp
 SimpleMaterialTemplates.h
 SimpleMaterialTemplates.cpp
+SetupUpdateEquation.h
 SimulationDescription.h
 SimulationDescription.cpp
 SimulationDescriptionPredeclarations.h

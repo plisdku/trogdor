@@ -33,21 +33,21 @@ using namespace std;
 using namespace YeeUtilities;
 
 // These three functions successively determine the material, current and
-// PML for a SetupMaterial.
-static SetupMaterialPtr newMaterialCurrentPML(Paint* parentPaint,
+// PML for a SetupUpdateEquation.
+static SetupUpdateEquationPtr newMaterialCurrentPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
 
 template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT>
-static SetupMaterialPtr newCurrentPML(Paint* parentPaint,
+static SetupUpdateEquationPtr newCurrentPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
         
 template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT,
     class CurrentT>
-static SetupMaterialPtr newPML(Paint* parentPaint,
+static SetupUpdateEquationPtr newPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
@@ -55,8 +55,8 @@ static SetupMaterialPtr newPML(Paint* parentPaint,
 
 #pragma mark *** Material Factory ***
 
-SetupMaterialPtr MaterialFactory::
-newSetupMaterial(
+SetupUpdateEquationPtr MaterialFactory::
+newSetupUpdateEquation(
     const GridDescription & gridDesc,
 	Paint* parentPaint,
     std::vector<int> numCellsE,
@@ -66,7 +66,7 @@ newSetupMaterial(
 {
 	assert(parentPaint != 0L);
     
-    SetupMaterialPtr setupMat;
+    SetupUpdateEquationPtr setupMat;
 	MaterialDescPtr bulkMaterial = parentPaint->bulkMaterial();
     const Map<Vector3i, Map<string, string> > & gridPMLParams(
         gridDesc.pmlParams());
@@ -144,13 +144,13 @@ defaultPMLParams()
 #pragma mark *** Local templated functions ***
 
 
-static SetupMaterialPtr newMaterialCurrentPML(Paint* parentPaint,
+static SetupUpdateEquationPtr newMaterialCurrentPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlRects,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
 {
 	MaterialDescPtr bulkMaterial = parentPaint->bulkMaterial();
-    SetupMaterialPtr setupMaterial;
+    SetupUpdateEquationPtr setupMaterial;
     
     if (bulkMaterial->modelName() == "StaticDielectric")
     {
@@ -175,7 +175,7 @@ static SetupMaterialPtr newMaterialCurrentPML(Paint* parentPaint,
     }
     else if (bulkMaterial->modelName() == "PerfectConductor")
     {
-        setupMaterial = SetupMaterialPtr(new SetupPerfectConductor(
+        setupMaterial = SetupUpdateEquationPtr(new SetupPerfectConductor(
             MaterialDescPtr(parentPaint->bulkMaterial())));
     }
     else
@@ -188,13 +188,13 @@ static SetupMaterialPtr newMaterialCurrentPML(Paint* parentPaint,
 }
 
 template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT>
-static SetupMaterialPtr newCurrentPML(Paint* parentPaint,
+static SetupUpdateEquationPtr newCurrentPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
 {
     //const MaterialDescription* bulkMaterial = parentPaint->bulkMaterial();
-    SetupMaterialPtr setupMaterial;
+    SetupUpdateEquationPtr setupMaterial;
     
 //    LOG << "Here, with paint " << *parentPaint << "\n";
     
@@ -217,18 +217,18 @@ static SetupMaterialPtr newCurrentPML(Paint* parentPaint,
         
 template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT,
     class CurrentT>
-static SetupMaterialPtr newPML(Paint* parentPaint,
+static SetupUpdateEquationPtr newPML(Paint* parentPaint,
     vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
 {
     Vector3i pmlDirs = parentPaint->pmlDirections();
     Vector3i rotatedPMLDirs = cyclicPermute(pmlDirs, (3-runlineDirection)%3);
-    SetupMaterial* m;
+    SetupUpdateEquation* m;
     
     if (0 == parentPaint->isPML())
     {
-        m = new SimpleSetupMaterial<MaterialT, NonPMLRunlineT, CurrentT>(
+        m = new SetupModularUpdateEquation<MaterialT, NonPMLRunlineT, CurrentT>(
             parentPaint, numCellsE, numCellsH, dxyz, dt);
     }
     else
@@ -299,6 +299,6 @@ static SetupMaterialPtr newPML(Paint* parentPaint,
             exit(1);
         }
     }
-    return SetupMaterialPtr(m);
+    return SetupUpdateEquationPtr(m);
 }
 

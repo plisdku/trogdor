@@ -10,7 +10,7 @@
 #ifndef _MATERIALFACTORY_
 #define _MATERIALFACTORY_
 
-#include "SetupMaterial.h"
+#include "SetupUpdateEquation.h"
 #include "Pointer.h"
 #include "SimulationDescriptionPredeclarations.h"
 #include "Map.h"
@@ -25,7 +25,7 @@ class Paint;
 class MaterialFactory
 {
 public:
-	static SetupMaterialPtr newSetupMaterial(
+	static SetupUpdateEquationPtr newSetupUpdateEquation(
         const GridDescription & gridDesc,
 		Paint* parentPaint,
         std::vector<int> numCellsE,

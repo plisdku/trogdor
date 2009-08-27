@@ -1,5 +1,5 @@
 /*
- *  SetupMaterial.h
+ *  SetupUpdateEquation.h
  *  TROGDOR
  *
  *  Created by Paul Hansen on 8/13/09.
@@ -22,12 +22,12 @@ class Paint;
 
 // This is that rare thing—a class in Trogdor which doesn't observe RAII.
 // Initializing it just has too darned many parameters.
-class SetupMaterial
+class SetupUpdateEquation
 {
 public:
-	SetupMaterial(MaterialDescPtr description) :
+	SetupUpdateEquation(MaterialDescPtr description) :
         mDescription(description) {}
-	virtual ~SetupMaterial() {}
+	virtual ~SetupUpdateEquation() {}
     
     Pointer<MaterialDescription> description() const { return mDescription; }
     
@@ -45,7 +45,7 @@ private:
     Pointer<MaterialDescription> mDescription;
     int mID;
 };
-typedef Pointer<SetupMaterial> SetupMaterialPtr;
+typedef Pointer<SetupUpdateEquation> SetupUpdateEquationPtr;
 
 
 

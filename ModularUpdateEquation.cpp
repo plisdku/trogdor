@@ -1,5 +1,5 @@
 /*
- *  UpdateHarness.cpp
+ *  ModularUpdateEquation.cpp
  *  TROGDOR
  *
  *  Created by Paul Hansen on 8/13/09.
@@ -7,5 +7,5 @@
  *
  */
 
-#include "UpdateHarness.h"
+#include "ModularUpdateEquation.h"
 

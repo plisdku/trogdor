@@ -23,7 +23,7 @@
 #include "PartitionCellCount.h"
 #include "InterleavedLattice.h"
 
-#include "SetupMaterial.h"
+#include "SetupUpdateEquation.h"
 #include "UpdateEquation.h"
 #include "Source.h"
 #include "Output.h"
@@ -78,8 +78,8 @@ public:
     InterleavedLatticePtr getLattice() const { return mLattice; }
     
     // returns      the structures that store temp data for setting up materials
-    const Map<Paint*, Pointer<SetupMaterial> > & setupMaterials() const
-        { return mSetupMaterials; }
+    const Map<Paint*, Pointer<SetupUpdateEquation> > & setupMaterials() const
+        { return mSetupUpdateEquations; }
     
     // returns      the structures that store temp data for setting up outputs
     const std::vector<Pointer<SetupOutput> > & setupOutputs() const
@@ -150,7 +150,7 @@ private:
 	void calculateHuygensSurfaceSymmetries(const GridDescription & gridDesc);
 	Vector3i huygensSymmetry(const HuygensSurfaceDescription & surf);
 	
-	void createSetupMaterials(const GridDescription & gridDesc);
+	void createSetupUpdateEquations(const GridDescription & gridDesc);
 	void loadSpaceVaryingData();
     
     void createSetupOutputs(const std::vector<OutputDescPtr> & outputs);
@@ -166,7 +166,7 @@ private:
     Pointer<InterleavedLattice> mLattice;
 	
     // THIS IS WHERE GRID DENIZENS LIVE
-	Map<Paint*, Pointer<SetupMaterial> > mSetupMaterials;
+	Map<Paint*, Pointer<SetupUpdateEquation> > mSetupUpdateEquations;
 	std::vector<Pointer<SetupOutput> > mSetupOutputs;
     std::vector<Pointer<SetupSource> > mSoftSetupSources;
     std::vector<Pointer<SetupSource> > mHardSetupSources;

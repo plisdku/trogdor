@@ -16,7 +16,7 @@
 #include "Pointer.h"
 #include "PhysicalConstants.h"
 
-#include "UpdateHarness.h"
+#include "ModularUpdateEquation.h"
 
 #include "NullPML.h"
 #include "NullCurrent.h"
@@ -24,13 +24,13 @@
 #include <cmath>
 
 
-#pragma mark *** SimpleSetupMaterial ***
+#pragma mark *** SetupModularUpdateEquation ***
 
 template<class MaterialClass, class RunlineT, class CurrentT>
-SimpleSetupMaterial<MaterialClass, RunlineT, CurrentT>::
-SimpleSetupMaterial(Paint* parentPaint, std::vector<int> numCellsE,
+SetupModularUpdateEquation<MaterialClass, RunlineT, CurrentT>::
+SetupModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
     std::vector<int> numCellsH, Vector3f dxyz, float dt) :
-    BulkSetupMaterial(MaterialDescPtr(parentPaint->bulkMaterial())),
+    BulkSetupUpdateEquation(MaterialDescPtr(parentPaint->bulkMaterial())),
     mParentPaint(parentPaint),
     mNumCellsE(numCellsE),
     mNumCellsH(numCellsH),
@@ -41,12 +41,12 @@ SimpleSetupMaterial(Paint* parentPaint, std::vector<int> numCellsE,
 }
 
 template<class MaterialClass, class RunlineT, class CurrentT>
-UpdateEquationPtr SimpleSetupMaterial<MaterialClass, RunlineT, CurrentT>::
+UpdateEquationPtr SetupModularUpdateEquation<MaterialClass, RunlineT, CurrentT>::
 makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {    
-    UpdateHarness<MaterialClass, RunlineT, NullPML, CurrentT>* h =
-        new UpdateHarness<MaterialClass, RunlineT, NullPML, CurrentT>(
+    ModularUpdateEquation<MaterialClass, RunlineT, NullPML, CurrentT>* h =
+        new ModularUpdateEquation<MaterialClass, RunlineT, NullPML, CurrentT>(
         mParentPaint,
         mNumCellsE,
         mNumCellsH,
@@ -71,7 +71,7 @@ SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt) :
-    BulkPMLSetupMaterial(MaterialDescPtr(parentPaint->bulkMaterial())),
+    BulkPMLSetupUpdateEquation(MaterialDescPtr(parentPaint->bulkMaterial())),
     mParentPaint(parentPaint),
     mNumCellsE(numCellsE),
     mNumCellsH(numCellsH),
@@ -88,8 +88,8 @@ UpdateEquationPtr SimpleSetupPML<MaterialClass, RunlineT, CurrentT, PMLT>::
 makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
-    UpdateHarness<MaterialClass, RunlineT, PMLT, CurrentT>* h =
-        new UpdateHarness<MaterialClass, RunlineT, PMLT, CurrentT>(
+    ModularUpdateEquation<MaterialClass, RunlineT, PMLT, CurrentT>* h =
+        new ModularUpdateEquation<MaterialClass, RunlineT, PMLT, CurrentT>(
         mParentPaint,
         mNumCellsE,
         mNumCellsH,

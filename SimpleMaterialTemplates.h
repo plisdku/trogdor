@@ -21,13 +21,13 @@ class Paint;
 
 #pragma mark *** Templates for the setup step ***
 
-// Inheritance from BulkSetupMaterial provides the runline rules and
+// Inheritance from BulkSetupUpdateEquation provides the runline rules and
 // the storage of setup runlines.
 template<class MaterialClass, class RunlineT, class CurrentT>
-class SimpleSetupMaterial : public BulkSetupMaterial
+class SetupModularUpdateEquation : public BulkSetupUpdateEquation
 {
 public:
-    SimpleSetupMaterial(Paint* parentPaint, std::vector<int> numCellsE,
+    SetupModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, Vector3f dxyz, float dt);
     
     // This returns a material harness with a null PML, a null current and
@@ -43,10 +43,10 @@ private:
     float mDt;
 };
 
-// Inheritance from BulkPMLSetupMaterial provides the runline rules and
+// Inheritance from BulkPMLSetupUpdateEquation provides the runline rules and
 // the storage of setup runlines.
 template<class MaterialClass, class RunlineT, class CurrentT, class PMLT>
-class SimpleSetupPML : public BulkPMLSetupMaterial
+class SimpleSetupPML : public BulkPMLSetupUpdateEquation
 {
 public:
     SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,

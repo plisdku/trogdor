@@ -1,5 +1,5 @@
 /*
- *  UpdateHarness.h
+ *  ModularUpdateEquation.h
  *  TROGDOR
  *
  *  Created by Paul Hansen on 8/13/09.
@@ -20,7 +20,7 @@
 //  Material must have constructor with appropriate arguments (TBD?)
 //  RunlineClass needs to have constructor for given runline type
 
-// UpdateHarness is templatized by material, runline, PML and current source.
+// ModularUpdateEquation is templatized by material, runline, PML and current source.
 // Really only the update equation requires new code for each combination.
 // So, divide some of the functionality among (shared) base classes.
 
@@ -31,7 +31,7 @@
 // writeM()
 // modelName()
 template<class MaterialT>
-class UpdateHarness_Material;
+class ModularUpdateEquation_Material;
 
 // This class implements
 // numRunlinesE()
@@ -39,23 +39,22 @@ class UpdateHarness_Material;
 // numHalfCellsE()
 // numHalfCellsH()
 template<class RunlineT>
-class UpdateHarness_Runline;
-
+class ModularUpdateEquation_Runline;
 
 // this may be templatized by runline type as well.
 // TEMPLATE REQUIREMENTS:
 //  NonPMLMaterial must inherit or look like SimpleMaterial
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-class UpdateHarness :
-    public UpdateHarness_Material<MaterialT>,
-    public UpdateHarness_Runline<RunlineT>
+class ModularUpdateEquation :
+    public ModularUpdateEquation_Material<MaterialT>,
+    public ModularUpdateEquation_Runline<RunlineT>
 {
 public:
-    UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
+    ModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, Vector3f dxyz, float dt,
         int runlineDirection );
     
-    UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
+    ModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
@@ -82,7 +81,7 @@ private:
     CurrentT mCurrent;
 };
 
-#include "UpdateHarness-inl.h"
+#include "ModularUpdateEquation-inl.h"
 
 
 

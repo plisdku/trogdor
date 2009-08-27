@@ -1,5 +1,5 @@
 /*
- *  MaterialSetupMaterial.cpp
+ *  MaterialSetupUpdateEquation.cpp
  *  TROGDOR
  *
  *  Created by Paul Hansen on 8/19/09.

@@ -13,11 +13,11 @@
 #include "SimulationDescription.h"
 #include "BulkSetupMaterials.h"
 
-class SetupPerfectConductor : public BulkSetupMaterial
+class SetupPerfectConductor : public BulkSetupUpdateEquation
 {
 public:
     SetupPerfectConductor(MaterialDescPtr description) :
-        BulkSetupMaterial(description) {}
+        BulkSetupUpdateEquation(description) {}
     
     virtual UpdateEquationPtr makeUpdateEquation(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;

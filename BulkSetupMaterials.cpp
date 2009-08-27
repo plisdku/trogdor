@@ -1,5 +1,5 @@
 /*
- *  SimpleSetupMaterial.cpp
+ *  SetupModularUpdateEquation.cpp
  *  TROGDOR
  *
  *  Created by Paul Hansen on 4/8/09.
@@ -24,19 +24,19 @@ using namespace YeeUtilities;
 
 #pragma mark *** Simple Bulk Material ***
 
-BulkSetupMaterial::
-BulkSetupMaterial(MaterialDescPtr description) :
-	SetupMaterial(description),
+BulkSetupUpdateEquation::
+BulkSetupUpdateEquation(MaterialDescPtr description) :
+	SetupUpdateEquation(description),
     mRunlineEncoder()
 {
 }
 
-BulkSetupMaterial::
-~BulkSetupMaterial()
+BulkSetupUpdateEquation::
+~BulkSetupUpdateEquation()
 {
 }
 
-void BulkSetupMaterial::
+void BulkSetupUpdateEquation::
 printRunlines(std::ostream & out) const
 {
     int dir;
@@ -71,13 +71,13 @@ printRunlines(std::ostream & out) const
 	}
 }
 
-const vector<SBMRunlinePtr> & BulkSetupMaterial::
+const vector<SBMRunlinePtr> & BulkSetupUpdateEquation::
 runlinesE(int dir) const
 {
     return mRunlineEncoder.runlinesE(dir);
 }
 
-const vector<SBMRunlinePtr> & BulkSetupMaterial::
+const vector<SBMRunlinePtr> & BulkSetupUpdateEquation::
 runlinesH(int dir) const
 {
     return mRunlineEncoder.runlinesH(dir);
@@ -85,14 +85,14 @@ runlinesH(int dir) const
 
 #pragma mark *** Simple Bulk PML Material ***
 
-BulkPMLSetupMaterial::
-BulkPMLSetupMaterial(MaterialDescPtr description) :
-	SetupMaterial(description),
+BulkPMLSetupUpdateEquation::
+BulkPMLSetupUpdateEquation(MaterialDescPtr description) :
+	SetupUpdateEquation(description),
     mRunlineEncoder()
 {
 }
 
-void BulkPMLSetupMaterial::
+void BulkPMLSetupUpdateEquation::
 printRunlines(std::ostream & out) const
 {
     int dir;
@@ -136,13 +136,13 @@ printRunlines(std::ostream & out) const
 }
 
 
-const vector<SBPMRunlinePtr> & BulkPMLSetupMaterial::
+const vector<SBPMRunlinePtr> & BulkPMLSetupUpdateEquation::
 runlinesE(int dir) const
 {
     return mRunlineEncoder.runlinesE(dir);
 }
 
-const vector<SBPMRunlinePtr> & BulkPMLSetupMaterial::
+const vector<SBPMRunlinePtr> & BulkPMLSetupUpdateEquation::
 runlinesH(int dir) const
 {
     return mRunlineEncoder.runlinesH(dir);

@@ -52,9 +52,9 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mCurrentSources.push_back(src);
     }
     
-    const Map<Paint*, SetupMaterialPtr> & setupMaterials
+    const Map<Paint*, SetupUpdateEquationPtr> & setupMaterials
         = vp.setupMaterials();
-    map<Paint*, SetupMaterialPtr>::const_iterator itr;
+    map<Paint*, SetupUpdateEquationPtr>::const_iterator itr;
     mMaterials.resize(setupMaterials.size());
     for (itr = setupMaterials.begin(); itr != setupMaterials.end(); itr++)
     {

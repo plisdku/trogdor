@@ -11,7 +11,7 @@
 #define _SIMPLESETUPMATERIAL_
 
 #include "SimulationDescription.h"
-#include "SetupMaterial.h"
+#include "SetupUpdateEquation.h"
 #include "MaterialRunlineEncoder.h"
 #include "Pointer.h"
 #include "geometry.h"
@@ -25,11 +25,11 @@ class VoxelizedPartition;
 class GridDescription;
 
 
-class BulkSetupMaterial : public SetupMaterial
+class BulkSetupUpdateEquation : public SetupUpdateEquation
 {
 public:
-	BulkSetupMaterial(MaterialDescPtr description);
-	virtual ~BulkSetupMaterial();
+	BulkSetupUpdateEquation(MaterialDescPtr description);
+	virtual ~BulkSetupUpdateEquation();
     
 	virtual void printRunlines(std::ostream & out) const;
 	
@@ -41,10 +41,10 @@ protected:
     BulkMaterialRLE mRunlineEncoder;
 };
 
-class BulkPMLSetupMaterial : public SetupMaterial
+class BulkPMLSetupUpdateEquation : public SetupUpdateEquation
 {
 public:
-	BulkPMLSetupMaterial(MaterialDescPtr description);
+	BulkPMLSetupUpdateEquation(MaterialDescPtr description);
 	
 	virtual void printRunlines(std::ostream & out) const;
 	    

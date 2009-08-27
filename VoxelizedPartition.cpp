@@ -77,7 +77,7 @@ VoxelizedPartition(GridDescPtr gridDesc,
 	//cout << mVoxels << endl;
 	
 	calculateMaterialIndices();
-	createSetupMaterials(*gridDesc);
+	createSetupUpdateEquations(*gridDesc);
 	loadSpaceVaryingData(); // * grid-scale wraparound
 	
     createSetupOutputs(gridDesc->outputs());
@@ -211,8 +211,8 @@ calculateRunlines()
     
     Map<Paint*, RunlineEncoder*> encoders;
     
-    map<Paint*, Pointer<SetupMaterial> >::iterator itr;
-    for (itr = mSetupMaterials.begin(); itr != mSetupMaterials.end(); itr++)
+    map<Paint*, Pointer<SetupUpdateEquation> >::iterator itr;
+    for (itr = mSetupUpdateEquations.begin(); itr != mSetupUpdateEquations.end(); itr++)
         encoders[itr->first] = &itr->second->encoder();
     
     for (int direction = 0; direction < 3; direction++)
@@ -225,8 +225,8 @@ calculateRunlines()
     
     /*
     {
-        map<Paint*, Pointer<SetupMaterial> >::const_iterator itr;
-        for (itr = mSetupMaterials.begin(); itr != mSetupMaterials.end(); itr++)
+        map<Paint*, Pointer<SetupUpdateEquation> >::const_iterator itr;
+        for (itr = mSetupUpdateEquations.begin(); itr != mSetupUpdateEquations.end(); itr++)
             itr->second->printRunlines(cout);
     }
     */
@@ -344,7 +344,7 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     {
         const MaterialType & matType = mStructureGrid->materialType(
             materials[mm]);
-        const SetupMaterialPtr setupMat = mMaterials[matType.name()];
+        const SetupUpdateEquationPtr setupMat = mMaterials[matType.name()];
         file << "afp.materials{" << mm+1 << "}.class = '" << 
             setupMat->getClass() << "';\n";
         file << "afp.materials{" << mm+1 << "}.name = '" <<
@@ -761,7 +761,7 @@ static bool compareByMaterialID(const Paint* lhs, const Paint* rhs)
 { return lhs->bulkMaterial()->id() < rhs->bulkMaterial()->id(); }
 
 void VoxelizedPartition::
-createSetupMaterials(const GridDescription & gridDesc)
+createSetupUpdateEquations(const GridDescription & gridDesc)
 {
 	set<Paint*> allPaints = mCentralIndices->curlBufferParentPaints();
 	
@@ -794,12 +794,12 @@ createSetupMaterials(const GridDescription & gridDesc)
         
 //        LOG << "Not calling that PML cells on side function.  What's it for?\n";
         
-		if (mSetupMaterials.count(p) == 0)
+		if (mSetupUpdateEquations.count(p) == 0)
 		{
-			mSetupMaterials[p] = MaterialFactory::newSetupMaterial(gridDesc,
+			mSetupUpdateEquations[p] = MaterialFactory::newSetupUpdateEquation(gridDesc,
                 p, numCellsE, numCellsH, pmlRects,
                 mLattice->runlineDirection());
-            mSetupMaterials[p]->setID(updateID);
+            mSetupUpdateEquations[p]->setID(updateID);
             updateID++;
 		}
 	}

@@ -15,10 +15,10 @@ using namespace std;
 using namespace YeeUtilities;
 
 
-typedef pair<Paint*, SetupMaterialPtr> PaintMatPair;
+typedef pair<Paint*, SetupUpdateEquationPtr> PaintMatPair;
 
 Paint* first(PaintMatPair thePair) { return thePair.first; }
-SetupMaterialPtr second(PaintMatPair thePair) { return thePair.second; }
+SetupUpdateEquationPtr second(PaintMatPair thePair) { return thePair.second; }
 
 bool notThisSource(Paint* p, CurrentSourceDescPtr c)
 { return !p->hasCurrentSource() || p->currentSource() != c; }
@@ -144,7 +144,7 @@ makeCurrentSource(const VoxelizedPartition & vp,
 }
 
 SetupCurrentSource::InputRunlineList & SetupCurrentSource::
-inputRunlineList(SetupMaterial* material)
+inputRunlineList(SetupUpdateEquation* material)
 {
     for (int nn = 0; nn < mScheduledInputRegions.size(); nn++)
     if (mScheduledInputRegions[nn].material == material)

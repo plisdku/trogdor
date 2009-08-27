@@ -1,5 +1,5 @@
 /*
- *  UpdateHarness.cpp
+ *  ModularUpdateEquation.cpp
  *  TROGDOR
  *
  *  Created by Paul Hansen on 8/13/09.
@@ -7,13 +7,13 @@
  *
  */
 
-#include "UpdateHarness.h"
+#include "ModularUpdateEquation.h"
 
 template<class RunlineClass>
-class UpdateHarness_Runline : virtual public UpdateEquation
+class ModularUpdateEquation_Runline : virtual public UpdateEquation
 {
 public:
-    UpdateHarness_Runline();
+    ModularUpdateEquation_Runline();
     //  Because templated virtual functions are not allowed in C++, I have to
     // overload the setRunlines functions manually.  What a pain!
     
@@ -42,10 +42,10 @@ protected:
 };
 
 template<class MaterialClass>
-class UpdateHarness_Material : virtual public UpdateEquation
+class ModularUpdateEquation_Material : virtual public UpdateEquation
 {
 public:
-    UpdateHarness_Material(Paint* parentPaint, std::vector<int> numCellsE,
+    ModularUpdateEquation_Material(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, Vector3f dxyz, float dt);
         
     virtual void writeJ(int direction, std::ostream & binaryStream,
@@ -62,16 +62,16 @@ protected:
     MaterialClass mMaterial;
 };
 
-#pragma mark *** UpdateHarness_Runline ***
+#pragma mark *** ModularUpdateEquation_Runline ***
 
 template<class RunlineClass>
-UpdateHarness_Runline<RunlineClass>::
-UpdateHarness_Runline()
+ModularUpdateEquation_Runline<RunlineClass>::
+ModularUpdateEquation_Runline()
 {
 }
 
 template<class RunlineClass>
-void UpdateHarness_Runline<RunlineClass>::
+void ModularUpdateEquation_Runline<RunlineClass>::
 setRunlinesE(int direction, const std::vector<SBMRunlinePtr> & rls)
 {
     mRunlinesE[direction].resize(rls.size());
@@ -80,7 +80,7 @@ setRunlinesE(int direction, const std::vector<SBMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void UpdateHarness_Runline<RunlineClass>::
+void ModularUpdateEquation_Runline<RunlineClass>::
 setRunlinesH(int direction, const std::vector<SBMRunlinePtr> & rls)
 {
     mRunlinesH[direction].resize(rls.size());
@@ -89,7 +89,7 @@ setRunlinesH(int direction, const std::vector<SBMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void UpdateHarness_Runline<RunlineClass>::
+void ModularUpdateEquation_Runline<RunlineClass>::
 setRunlinesE(int direction, const std::vector<SBPMRunlinePtr> & rls)
 {
     mRunlinesE[direction].resize(rls.size());
@@ -98,7 +98,7 @@ setRunlinesE(int direction, const std::vector<SBPMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-void UpdateHarness_Runline<RunlineClass>::
+void ModularUpdateEquation_Runline<RunlineClass>::
 setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
 {
     mRunlinesH[direction].resize(rls.size());
@@ -107,7 +107,7 @@ setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
 }
 
 template<class RunlineClass>
-long UpdateHarness_Runline<RunlineClass>::
+long ModularUpdateEquation_Runline<RunlineClass>::
 numRunlinesE() const
 {
     long total = 0;
@@ -117,7 +117,7 @@ numRunlinesE() const
 }
 
 template<class RunlineClass>
-long UpdateHarness_Runline<RunlineClass>::
+long ModularUpdateEquation_Runline<RunlineClass>::
 numRunlinesH() const
 {
     long total = 0;
@@ -127,7 +127,7 @@ numRunlinesH() const
 }
 
 template<class RunlineClass>
-long UpdateHarness_Runline<RunlineClass>::
+long ModularUpdateEquation_Runline<RunlineClass>::
 numHalfCellsE() const
 {
     long total = 0;
@@ -138,7 +138,7 @@ numHalfCellsE() const
 }
 
 template<class RunlineClass>
-long UpdateHarness_Runline<RunlineClass>::
+long ModularUpdateEquation_Runline<RunlineClass>::
 numHalfCellsH() const
 {
     long total = 0;
@@ -148,11 +148,11 @@ numHalfCellsH() const
     return total;
 }
 
-#pragma mark *** UpdateHarness_Material ***
+#pragma mark *** ModularUpdateEquation_Material ***
 
 template<class MaterialT>
-UpdateHarness_Material<MaterialT>::
-UpdateHarness_Material(Paint* parentPaint, std::vector<int> numCellsE,
+ModularUpdateEquation_Material<MaterialT>::
+ModularUpdateEquation_Material(Paint* parentPaint, std::vector<int> numCellsE,
     std::vector<int> numCellsH, Vector3f dxyz, float dt) :
     UpdateEquation(),
     mMaterial(*parentPaint->bulkMaterial(), numCellsE, numCellsH, dxyz, dt)
@@ -160,7 +160,7 @@ UpdateHarness_Material(Paint* parentPaint, std::vector<int> numCellsE,
 }
         
 template<class MaterialT>
-void UpdateHarness_Material<MaterialT>::
+void ModularUpdateEquation_Material<MaterialT>::
 writeJ(int direction, std::ostream & binaryStream,
     long startingIndex, const float* startingField, long length) const
 {
@@ -169,7 +169,7 @@ writeJ(int direction, std::ostream & binaryStream,
 }
 
 template<class MaterialT>
-void UpdateHarness_Material<MaterialT>::
+void ModularUpdateEquation_Material<MaterialT>::
 writeP(int direction, std::ostream & binaryStream,
     long startingIndex, const float* startingField, long length) const
 {
@@ -178,7 +178,7 @@ writeP(int direction, std::ostream & binaryStream,
 }
 
 template<class MaterialT>
-void UpdateHarness_Material<MaterialT>::
+void ModularUpdateEquation_Material<MaterialT>::
 writeK(int direction, std::ostream & binaryStream,
     long startingIndex, const float* startingField, long length) const
 {
@@ -187,7 +187,7 @@ writeK(int direction, std::ostream & binaryStream,
 }
 
 template<class MaterialT>
-void UpdateHarness_Material<MaterialT>::
+void ModularUpdateEquation_Material<MaterialT>::
 writeM(int direction, std::ostream & binaryStream,
     long startingIndex, const float* startingField, long length) const
 {
@@ -196,23 +196,23 @@ writeM(int direction, std::ostream & binaryStream,
 }
 
 template<class MaterialT>
-std::string UpdateHarness_Material<MaterialT>::
+std::string ModularUpdateEquation_Material<MaterialT>::
 modelName() const
 {
     return mMaterial.modelName();
 }
 
 
-#pragma mark *** UpdateHarness ***
+#pragma mark *** ModularUpdateEquation ***
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
-UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
+ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
+ModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, Vector3f dxyz, float dt,
         int runlineDirection ) :
-    UpdateHarness_Material<MaterialT>(parentPaint, numCellsE, numCellsH,
+    ModularUpdateEquation_Material<MaterialT>(parentPaint, numCellsE, numCellsH,
         dxyz, dt),
-    UpdateHarness_Runline<RunlineT>(),
+    ModularUpdateEquation_Runline<RunlineT>(),
     mDxyz(dxyz),
     mDt(dt),
     mRunlineDirection(runlineDirection),
@@ -223,14 +223,14 @@ UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
-UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
+ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
+ModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection) :
-    UpdateHarness_Material<MaterialT>(parentPaint, numCellsE, numCellsH,
+    ModularUpdateEquation_Material<MaterialT>(parentPaint, numCellsE, numCellsH,
         dxyz, dt),
-    UpdateHarness_Runline<RunlineT>(),
+    ModularUpdateEquation_Runline<RunlineT>(),
     mDxyz(dxyz),
     mDt(dt),
     mRunlineDirection(runlineDirection),
@@ -242,7 +242,7 @@ UpdateHarness(Paint* parentPaint, std::vector<int> numCellsE,
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
+void ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
 calcEPhase(int direction)
 {
     // If the memory direction is 0 (x), then Ex updates use calcE<0>
@@ -261,7 +261,7 @@ calcEPhase(int direction)
 }
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
+void ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
 calcHPhase(int direction)
 {
     // If the memory direction is 0 (x), then Hx updates use calcH<0>
@@ -281,16 +281,16 @@ calcHPhase(int direction)
 
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
+void ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
 allocateAuxBuffers()
 {
-    UpdateHarness_Material<MaterialT>::mMaterial.allocateAuxBuffers();
+    ModularUpdateEquation_Material<MaterialT>::mMaterial.allocateAuxBuffers();
     mPML.allocateAuxBuffers();
 }
 
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
-void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
+void ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
 setCurrentSource(CurrentSource* source)
 {
     mCurrent.setCurrentSource(source, UpdateEquation::id());
@@ -304,7 +304,7 @@ setCurrentSource(CurrentSource* source)
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 template<int FIELD_DIRECTION_PML>
-void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
+void ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
 calcE(int fieldDirection)
 {
     // grab the right set of runlines (for Ex, Ey, or Ez)
@@ -326,12 +326,12 @@ calcE(int fieldDirection)
     typename PMLT::template LocalDataE<FIELD_DIRECTION_PML> pmlData;
     typename CurrentT::LocalDataE currentData;
     
-    UpdateHarness_Material<MaterialT>::mMaterial.initLocalE(materialData);
+    ModularUpdateEquation_Material<MaterialT>::mMaterial.initLocalE(materialData);
     //mPML.initLocalE(pmlData);
     mCurrent.initLocalE(currentData, dir0);
     
     std::vector<RunlineT> & runlines =
-        UpdateHarness_Runline<RunlineT>::runlinesE(fieldDirection);
+        ModularUpdateEquation_Runline<RunlineT>::runlinesE(fieldDirection);
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
@@ -342,7 +342,7 @@ calcE(int fieldDirection)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
 //        LOG << rl << "\n";
-        UpdateHarness_Material<MaterialT>::mMaterial.onStartRunlineE(
+        ModularUpdateEquation_Material<MaterialT>::mMaterial.onStartRunlineE(
             materialData, rl, dir0);
         mPML.onStartRunlineE(pmlData, rl, dir0, dir1, dir2);
         mCurrent.onStartRunlineE(currentData, rl);
@@ -353,17 +353,17 @@ calcE(int fieldDirection)
             float dHj = (*gjHigh - *gjLow)*dk_inv;
             float dHk = (*gkHigh - *gkLow)*dj_inv;
             
-            UpdateHarness_Material<MaterialT>::mMaterial.beforeUpdateE(
+            ModularUpdateEquation_Material<MaterialT>::mMaterial.beforeUpdateE(
                 materialData, *fi, dHj, dHk);
             //mPML.beforeUpdateE(pmlData, *fi, dHj, dHk, dir0, dir1, dir2);
             mCurrent.beforeUpdateE(currentData, *fi, dHj, dHk);
             
-            *fi = UpdateHarness_Material<MaterialT>::mMaterial.updateE(
+            *fi = ModularUpdateEquation_Material<MaterialT>::mMaterial.updateE(
                 materialData, fieldDirection, *fi, dHj, dHk,
                 mPML.updateJ(pmlData, *fi, dHj, dHk) +
                 mCurrent.updateJ(currentData, *fi, dHj, dHk, dir0, dir1, dir2));
             
-            UpdateHarness_Material<MaterialT>::mMaterial.afterUpdateE(
+            ModularUpdateEquation_Material<MaterialT>::mMaterial.afterUpdateE(
                 materialData, *fi, dHj, dHk);
             //mPML.afterUpdateE(pmlData, *fi, dHj, dHk, dir0, dir1, dir2);
             mCurrent.afterUpdateE(currentData, *fi, dHj, dHk);
@@ -381,7 +381,7 @@ calcE(int fieldDirection)
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 template<int FIELD_DIRECTION_PML>
-void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
+void ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
 calcH(int fieldDirection)
 {
     // grab the right set of runlines (for Ex, Ey, or Ez)
@@ -398,12 +398,12 @@ calcH(int fieldDirection)
     typename PMLT::template LocalDataH<FIELD_DIRECTION_PML> pmlData;
     typename CurrentT::LocalDataH currentData;
     
-    UpdateHarness_Material<MaterialT>::mMaterial.initLocalH(materialData);
+    ModularUpdateEquation_Material<MaterialT>::mMaterial.initLocalH(materialData);
     //mPML.initLocalH(pmlData);
     mCurrent.initLocalH(currentData, dir0);
     
     std::vector<RunlineT> & runlines =
-        UpdateHarness_Runline<RunlineT>::runlinesH(fieldDirection);
+        ModularUpdateEquation_Runline<RunlineT>::runlinesH(fieldDirection);
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
@@ -414,7 +414,7 @@ calcH(int fieldDirection)
         const float* gkHigh(rl.gk[1]);  // e.g. Hz(y+1/2)
         
 //        LOG << rl << "\n";
-        UpdateHarness_Material<MaterialT>::mMaterial.onStartRunlineH(
+        ModularUpdateEquation_Material<MaterialT>::mMaterial.onStartRunlineH(
             materialData, rl, dir0);
         mPML.onStartRunlineH(pmlData, rl, dir0, dir1, dir2);
         mCurrent.onStartRunlineH(currentData, rl);
@@ -425,17 +425,17 @@ calcH(int fieldDirection)
             float dEj = (*gjHigh - *gjLow)*dk_inv;
             float dEk = (*gkHigh - *gkLow)*dj_inv;
             
-            UpdateHarness_Material<MaterialT>::mMaterial.beforeUpdateH(
+            ModularUpdateEquation_Material<MaterialT>::mMaterial.beforeUpdateH(
                 materialData, *fi, dEj, dEk);
             //mPML.beforeUpdateH(pmlData, *fi, dEj, dEk, dir0, dir1, dir2);
             mCurrent.beforeUpdateH(currentData, *fi, dEj, dEk);
             
-            *fi = UpdateHarness_Material<MaterialT>::mMaterial.updateH(
+            *fi = ModularUpdateEquation_Material<MaterialT>::mMaterial.updateH(
                 materialData, fieldDirection, *fi, dEj, dEk,
                 mPML.updateK(pmlData, *fi, dEj, dEk) +
                 mCurrent.updateK(currentData, *fi, dEj, dEk, dir0, dir1, dir2));
             
-            UpdateHarness_Material<MaterialT>::mMaterial.afterUpdateH(
+            ModularUpdateEquation_Material<MaterialT>::mMaterial.afterUpdateH(
                 materialData, *fi, dEj, dEk);
             //mPML.afterUpdateH(pmlData, *fi, dEj, dEk, dir0, dir1, dir2);
             mCurrent.afterUpdateH(currentData, *fi, dEj, dEk);

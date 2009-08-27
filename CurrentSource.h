@@ -18,12 +18,12 @@
 class VoxelizedPartition;
 class CalculationPartition;
 class CurrentSource;
-class SetupMaterial;
+class SetupUpdateEquation;
 
     
 struct CurrentBuffers
 {
-    SetupMaterial* material;
+    SetupUpdateEquation* material;
     MemoryBuffer buffersJ[3];
     MemoryBuffer buffersK[3];
     MemoryBuffer maskJ[3];
@@ -46,14 +46,14 @@ public:
     
     struct InputRunlineList
     {
-        SetupMaterial* material;
+        SetupUpdateEquation* material;
         std::vector<Region> regionsE[3];
         std::vector<Region> regionsH[3];
         long numCellsE(int fieldDirection) const;
         long numCellsH(int fieldDirection) const;
     };
     
-    InputRunlineList & inputRunlineList(SetupMaterial* material);
+    InputRunlineList & inputRunlineList(SetupUpdateEquation* material);
     
     class RLE : public RunlineEncoder
     {
