@@ -38,16 +38,16 @@ ${magLibDirs}
 source_group("Main Group" FILES main.cpp)
 
 add_executable( trogdor
-BufferedCurrent.h
-BufferedCurrent.cpp
-BufferedCurrent-inl.h
+modularUpdateEquation/BufferedCurrent.h
+modularUpdateEquation/BufferedCurrent.cpp
+modularUpdateEquation/BufferedCurrent-inl.h
 BulkSetupMaterials.h
 BulkSetupMaterials.cpp
 CalculationPartition.h
 CalculationPartition.cpp
-CFSRIPML.h
-CFSRIPML.cpp
-CFSRIPML-inl.h
+modularUpdateEquation/CFSRIPML.h
+modularUpdateEquation/CFSRIPML.cpp
+modularUpdateEquation/CFSRIPML-inl.h
 ConvertOldXML.h
 ConvertOldXML.cpp
 CurrentPolarizationOutput.h
@@ -65,16 +65,15 @@ HuygensLink.cpp
 InterleavedLattice.h
 InterleavedLattice.cpp
 main.cpp
-Material.h
-Material.cpp
+modularUpdateEquation/Material.h
 MaterialFactory.h
 MaterialFactory.cpp
 MaterialRunlineEncoder.h
 MaterialRunlineEncoder.cpp
 MemoryUtilities.h
 MemoryUtilities.cpp
-NullCurrent.h
-NullPML.h
+modularUpdateEquation/NullCurrent.h
+modularUpdateEquation/NullPML.h
 Output.h
 Output.cpp
 Paint.h
@@ -91,6 +90,9 @@ materials/StaticDielectric.cpp
 materials/StaticLossyDielectric.h
 materials/StaticLossyDielectric.cpp
 
+ModularUpdateEquation.cpp
+ModularUpdateEquation.h
+ModularUpdateEquation-inl.h
 Performance.h
 Performance.cpp
 PhysicalConstants.h
@@ -102,8 +104,8 @@ RunlineEncoder.cpp
 SetupConstants.h
 SimpleEHOutput.h
 SimpleEHOutput.cpp
-SimpleMaterialTemplates.h
-SimpleMaterialTemplates.cpp
+modularUpdateEquation/SimpleMaterialTemplates.h
+modularUpdateEquation/SimpleMaterialTemplates.cpp
 SetupUpdateEquation.h
 SimulationDescription.h
 SimulationDescription.cpp
@@ -114,9 +116,6 @@ StructuralReports.h
 StructuralReports.cpp
 UpdateEquation.h
 UpdateEquation.cpp
-UpdateHarness.h
-UpdateHarness.cpp
-UpdateHarness-inl.h
 Version.h
 VoxelGrid.h
 VoxelGrid.cpp
