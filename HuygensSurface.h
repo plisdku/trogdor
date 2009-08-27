@@ -48,6 +48,7 @@ public:
         const Map<GridDescPtr, VoxelizedPartitionPtr> & grids,
         const HuygensSurfaceDescPtr & desc);
     
+    HuygensSurfaceDescPtr description() const { return mDescription; }
     const Rect3i & halfCells() const { return mHalfCells; }
     bool hasBuffer(int side) const { return mNeighborBuffers.at(side) != 0L; }
     NeighborBufferPtr buffer(int side) const
@@ -63,6 +64,7 @@ public:
     void updateE();
     void updateH();
 private:
+    HuygensSurfaceDescPtr mDescription;
     Rect3i mHalfCells;
     HuygensUpdatePtr mUpdate;
     std::vector<NeighborBufferPtr> mNeighborBuffers;

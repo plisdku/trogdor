@@ -67,7 +67,7 @@ newSetupMaterial(
 	assert(parentPaint != 0L);
     
     SetupMaterialPtr setupMat;
-	const MaterialDescription* bulkMaterial = parentPaint->bulkMaterial();
+	MaterialDescPtr bulkMaterial = parentPaint->bulkMaterial();
     const Map<Vector3i, Map<string, string> > & gridPMLParams(
         gridDesc.pmlParams());
     Map<Vector3i, Map<string, string> > pmlParams;
@@ -149,7 +149,7 @@ static SetupMaterialPtr newMaterialCurrentPML(Paint* parentPaint,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
 {
-	const MaterialDescription* bulkMaterial = parentPaint->bulkMaterial();
+	MaterialDescPtr bulkMaterial = parentPaint->bulkMaterial();
     SetupMaterialPtr setupMaterial;
     
     if (bulkMaterial->modelName() == "StaticDielectric")
@@ -175,7 +175,8 @@ static SetupMaterialPtr newMaterialCurrentPML(Paint* parentPaint,
     }
     else if (bulkMaterial->modelName() == "PerfectConductor")
     {
-        setupMaterial = SetupMaterialPtr(new SetupPerfectConductor);
+        setupMaterial = SetupMaterialPtr(new SetupPerfectConductor(
+            MaterialDescPtr(parentPaint->bulkMaterial())));
     }
     else
     {

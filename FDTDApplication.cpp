@@ -66,13 +66,13 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
 	Map<GridDescPtr, VoxelizedPartitionPtr> voxelizedGrids;
     Map<string, CalculationPartitionPtr> calculationGrids;
 	
-    t0 = tiimeInMicroseconds();
+    t0 = timeInMicroseconds();
 	SimulationDescPtr sim = loadSimulation(parameterFile);
     mNumT = sim->duration();
-    t1 = tiimeInMicroseconds();
+    t1 = timeInMicroseconds();
     mPerformance.setReadDescriptionMicroseconds(t1-t0);
 	
-    t0 = tiimeInMicroseconds();
+    t0 = timeInMicroseconds();
     
     int runlineDirection = 0;
     if (prefs.runlineDirection == 'x')
@@ -95,7 +95,7 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
 	
 	// in here: do any setup that requires the voxelized grids
 	// extract all information that will be needed after the setup grid is gone
-	t1 = tiimeInMicroseconds();
+	t1 = timeInMicroseconds();
     mPerformance.setVoxelizeMicroseconds(t1-t0);
     
     map<GridDescPtr, VoxelizedPartitionPtr>::const_iterator itr;
@@ -122,12 +122,12 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
         return;
     }
     
-    t0 = tiimeInMicroseconds();
+    t0 = timeInMicroseconds();
     trimVoxelizedGrids(voxelizedGrids); // delete VoxelGrid & PartitionCellCount
     makeCalculationGrids(sim, calculationGrids, voxelizedGrids);
 	voxelizedGrids.clear();  // this will delete the setup objects
     allocateAuxBuffers(calculationGrids);
-    t1 = tiimeInMicroseconds();
+    t1 = timeInMicroseconds();
     mPerformance.setSetupCalculationMicroseconds(t1-t0);
 	
 	// allocate memory that can be postponed
@@ -151,12 +151,12 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     
     const bool BENCHMARK_ALL = 1;
     
-    t0 = tiimeInMicroseconds();
+    t0 = timeInMicroseconds();
     if (BENCHMARK_ALL)
         runTimed(calculationGrids);
     else
         runUntimed(calculationGrids);
-    t1 = tiimeInMicroseconds();
+    t1 = timeInMicroseconds();
     mPerformance.setRunCalculationMicroseconds(t1-t0);
     
     if (BENCHMARK_ALL)
@@ -291,7 +291,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	}
 	
 	VoxelizedPartitionPtr partition(new VoxelizedPartition(
-		*currentGrid, voxelizedGrids, myAllocatedHalfCells, myCalcHalfCells,
+		currentGrid, voxelizedGrids, myAllocatedHalfCells, myCalcHalfCells,
         runlineDirection));
 	voxelizedGrids[currentGrid] = partition;
     
@@ -828,11 +828,11 @@ runTimed(Map<string, CalculationPartitionPtr> & calculationGrids)
     outputHTimed(calculationGrids, 0);
     for (long tt = 1; tt < mNumT; tt++)
     {
-		t0 = tiimeInMicroseconds();
+		t0 = timeInMicroseconds();
         cout << "\r                                                          "
             << flush;
         cout << "\rTimestep " << tt << " of " << mNumT << flush;
-		t1 = tiimeInMicroseconds();
+		t1 = timeInMicroseconds();
         printTimestepTotalTime += (t1-t0);
         updateETimed(calculationGrids, tt);
         sourceETimed(calculationGrids, tt);

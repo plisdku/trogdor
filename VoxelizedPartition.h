@@ -44,11 +44,13 @@ class RunlineEncoder;
 class VoxelizedPartition
 {
 public:
-	VoxelizedPartition(const GridDescription & gridDesc, 
+	VoxelizedPartition(GridDescPtr gridDesc, 
 		const Map<GridDescPtr, Pointer<VoxelizedPartition> > & voxelizedGrids,
 		Rect3i allocRegion, Rect3i calcRegion,
         int runlineDirection );  // !
 	
+    GridDescPtr gridDescription() const { return mGridDescription; }
+    
 	const std::vector<Vector3i> & huygensRegionSymmetries() const {
 		return mHuygensRegionSymmetries; }
 	
@@ -56,6 +58,7 @@ public:
     Rect3i gridYeeCells() const;
     const Rect3i & allocHalfCells() const { return mFieldAllocHalfCells; }
     Rect3i allocYeeCells() const;
+    const Rect3i & calcHalfCells() const { return mCalcHalfCells; }
     Vector3i originYee() const { return mOriginYee; }
 	bool partitionHasPML(int faceNum) const;
 	Rect3i pmlHalfCellsOnFace(int faceNum) const;
@@ -105,7 +108,11 @@ public:
         const Map<GridDescPtr, Pointer<VoxelizedPartition> > & grids);
     
     /**
-     *  
+     *  Run length encode the update equations on the grid for speedy
+     *  calculation of electromagnetic fields (FDTD!).
+     *
+     *  This step also makes current sources, because they depend on the
+     *  voxel grid and partition cell count (they need Paints).
      */
     void calculateRunlines();
     
@@ -125,6 +132,8 @@ public:
      *  the grid.  Each encoder will be responsible for one Paint.
      *  (The paints will be compared without curl buffers, i.e. they represent
      *  unique update equations, regardless of where the field data comes from.)
+     *  Paints that do not have encoders will be passed over, so not every cell
+     *  will be included in a runline.
      */
     void runLengthEncode(std::map<Paint*, RunlineEncoder*>& encoders,
         Rect3i yeeCells, int octant) const;
@@ -148,6 +157,8 @@ private:
     void createSetupSources(const std::vector<SourceDescPtr> & sources);
     void createSetupCurrentSources(
         const std::vector<CurrentSourceDescPtr> & currentSources);
+    
+    GridDescPtr mGridDescription;
     
 	VoxelGrid mVoxels;
 	Pointer<PartitionCellCount> mCentralIndices;

@@ -36,14 +36,15 @@ public:
         setMaterialContinuity(kMaterialContinuityRequired);
     }
     
-    virtual void endRunline(const VoxelizedPartition & vp);
+    virtual void endRunline(const VoxelizedPartition & vp,
+        const Vector3i & lastHalfCell);
     
     vector<SetupCPOutputRunline> mRunlinesE[3];
     vector<SetupCPOutputRunline> mRunlinesH[3];
 };
 
 void CPRunlineEncoder::
-endRunline(const VoxelizedPartition & vp)
+endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
 {
     SetupCPOutputRunline rl;
     rl.length = length();
@@ -63,8 +64,7 @@ endRunline(const VoxelizedPartition & vp)
 CurrentPolarizationSetupOutput::
 CurrentPolarizationSetupOutput(const OutputDescPtr & desc,
     const VoxelizedPartition & vp) :
-    SetupOutput(),
-    mDescription(desc)
+    SetupOutput(desc)
 {
     // Make the runlines!
         
@@ -106,8 +106,9 @@ OutputPtr CurrentPolarizationSetupOutput::
 makeOutput(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
+    assert(description() != 0L);
     CurrentPolarizationOutput* o = new CurrentPolarizationOutput(
-        *mDescription, vp, cp);
+        description(), vp, cp);
     
     for (int nn = 0; nn < 3; nn++)
     {
@@ -120,27 +121,28 @@ makeOutput(const VoxelizedPartition & vp, const CalculationPartition & cp)
 #pragma mark *** Output ***
 
 CurrentPolarizationOutput::
-CurrentPolarizationOutput(const OutputDescription & desc,
+CurrentPolarizationOutput(OutputDescPtr description,
     const VoxelizedPartition & vp,
     const CalculationPartition & cp) :
+    Output(description),
     mDatafile(),
     mCurrentSampleInterval(0),
-    mWhichJ(desc.whichJ()),
-    mWhichP(desc.whichP()),
-    mWhichK(desc.whichK()),
-    mWhichM(desc.whichM()),
-    mDurations(desc.durations())
+    mWhichJ(description->whichJ()),
+    mWhichP(description->whichP()),
+    mWhichK(description->whichK()),
+    mWhichM(description->whichM()),
+    mDurations(description->durations())
 {
     // Clip the regions to the current partition bounds (calc bounds, not
     //     allocation bounds!)
     LOGF << "Clipping output regions to partition bounds.  This is not in the"
         " right place; it should be performed earlier somehow.\n";
-    assert(desc.regions().size() > 0);
-    for (int rr = 0; rr < desc.regions().size(); rr++)
+    assert(description->regions().size() > 0);
+    for (int rr = 0; rr < description->regions().size(); rr++)
     {
-        Rect3i outRect(clip(desc.regions()[rr].yeeCells(),
+        Rect3i outRect(clip(description->regions()[rr].yeeCells(),
             vp.gridYeeCells()));        
-        mRegions.push_back(Region(outRect, desc.regions()[rr].stride()));
+        mRegions.push_back(Region(outRect,description->regions()[rr].stride()));
     }
     LOGF << "Truncating durations to simulation duration.  This is in the "
         "wrong place; can't it be done earlier?\n";
@@ -149,9 +151,9 @@ CurrentPolarizationOutput(const OutputDescription & desc,
     if (mDurations[dd].last() > (numTimesteps-1))
         mDurations[dd].setLast(numTimesteps-1);
     
-    string specfile(desc.file() + string(".txt"));
-    string datafile(desc.file());
-    string materialfile(desc.file() + string(".mat"));
+    string specfile(description->file() + string(".txt"));
+    string datafile(description->file());
+    string materialfile(description->file() + string(".mat"));
     
     writeDescriptionFile(vp, cp, specfile, datafile, materialfile);
     

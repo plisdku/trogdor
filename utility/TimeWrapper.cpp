@@ -21,7 +21,7 @@
 
 #include <sys/time.h>
 
-double tiimeInMicroseconds()
+double timeInMicroseconds()
 {
     timeval tv;
     struct timezone tz;
@@ -33,7 +33,7 @@ double tiimeInMicroseconds()
 
 #else
 
-double tiimeInMicroseconds()
+double timeInMicroseconds()
 {
     return 1.0;
 }

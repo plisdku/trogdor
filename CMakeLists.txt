@@ -23,6 +23,7 @@ include_directories(
 	${TROGDOR_SOURCE_DIR}
 	${TROGDOR_SOURCE_DIR}/utility
 	${TROGDOR_SOURCE_DIR}/tinyxml
+	${TROGDOR_SOURCE_DIR}/materials
 	${magIncDirs}
 	/usr/local/include/
 	/sw/include)

@@ -9,26 +9,31 @@
 
 #include "BufferedCurrent.h"
 
+const float ONE = 1.0;
 
 inline void BufferedCurrent::
 initLocalE(LocalDataE & data, int dir0)
 {
-    /*
-    mSourceOfData->loadSingleTimestepE(mSingleTimestepDataE[dir0]);
-    data.J = &(mSourceOfDataE[dir0][0]);
+    assert(mPointerJ[dir0].buffer() != 0L);
+    assert(mPointerJ[dir0].buffer()->headPointer() != 0L);
     
-    data.mask = &(mMaskE[dir0][0]);
+    data.J = mPointerJ[dir0].pointer();
     
-    if (mSingleTimestepDataE[dir0].size() > 1)
-        data.stride = 1;
+    if (mHasMask)
+    {
+        assert(mPointerMaskJ[dir0].buffer() != 0L);
+        assert(mPointerMaskJ[dir0].buffer()->headPointer() != 0L);
+        
+        data.mask = mPointerMaskJ[dir0].pointer();
+    }
     else
-        data.stride = 0;
+    {
+        data.mask = &ONE; // use constant at top of file
+    }
     
-    if (mMaskE[dir0].size() > 1)
-        data.maskStride = 1;
-    else
-        data.maskStride = 0;
-    */
+    data.stride = mStride;
+    data.maskStride = mStrideMask;
+    data.polarizationFactor = mPolarizationVector[dir0];
 }
 
 inline void BufferedCurrent::
@@ -59,22 +64,26 @@ afterUpdateE(LocalDataE & data, float Ei, float dHj, float dHk)
 inline void BufferedCurrent::
 initLocalH(LocalDataH & data, int dir0)
 {
-    /*
-    mSourceOfData->loadSingleTimestepH(mSingleTimestepDataH[dir0]);
-    data.K = &(mSourceOfDataH[dir0][0]);
+    assert(mPointerK[dir0].buffer() != 0L);
+    assert(mPointerK[dir0].buffer()->headPointer() != 0L);
     
-    data.mask = &(mMaskH[dir0][0]);
+    data.K = mPointerK[dir0].pointer();
     
-    if (mSingleTimestepDataH[dir0].size() > 1)
-        data.stride = 1;
+    if (mHasMask)
+    {
+        assert(mPointerMaskK[dir0].buffer() != 0L);
+        assert(mPointerMaskK[dir0].buffer()->headPointer() != 0L);
+        
+        data.mask = mPointerMaskK[dir0].pointer();
+    }
     else
-        data.stride = 0;
+    {
+        data.mask = &ONE; // use constant at top of file
+    }
     
-    if (mMaskH[dir0].size() > 1)
-        data.maskStride = 1;
-    else
-        data.maskStride = 0;
-    */
+    data.stride = mStride;
+    data.maskStride = mStrideMask;
+    data.polarizationFactor = mPolarizationVector[dir0];
 }
 
 inline void BufferedCurrent::

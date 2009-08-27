@@ -23,10 +23,11 @@ using namespace YeeUtilities;
 
 
 VoxelGrid::
-VoxelGrid(Rect3i voxelizedBounds, Rect3i gridHalfCells, Rect3i nonPML) :
+VoxelGrid(GridDescPtr gridDescription, Rect3i voxelizedBounds) :
+    mGridDescription(gridDescription),
 	mAllocRegion(voxelizedBounds),
-	mGridHalfCells(gridHalfCells),
-	mNonPMLRegion(nonPML)
+	mGridHalfCells(gridDescription->halfCellBounds()),
+	mNonPMLRegion(gridDescription->nonPMLHalfCells())
 {	
 	m_nnx = mAllocRegion.size(0)+1;
 	m_nny = mAllocRegion.size(1)+1;
@@ -397,7 +398,7 @@ overlayHuygensSurface(const HuygensSurface & surf)
 }
 
 void VoxelGrid::
-overlayCurrentSource(const SetupCurrentSource & current)
+overlayCurrentSource(const CurrentSourceDescPtr & current)
 {
 //	LOG << "Overlaying current source.\n";
     Vector3i p;
@@ -405,21 +406,21 @@ overlayCurrentSource(const SetupCurrentSource & current)
     Rect3i yeeCells;
     int rr;
     
-    const CurrentSourceDescription & description = *current.description();
+    //const CurrentSourceDescription & description = *current.description();
     
     // Paint the source for electric currents
     for (fieldDirection = 0; fieldDirection < 3; fieldDirection++)
-    if (description.sourceCurrents().whichJ()[fieldDirection] != 0)
+    if (current->sourceCurrents().whichJ()[fieldDirection] != 0)
     {
-        for (rr = 0; rr < description.regions().size(); rr++)
+        for (rr = 0; rr < current->regions().size(); rr++)
         {
-            yeeCells = description.regions()[rr].yeeCells();
+            yeeCells = current->regions()[rr].yeeCells();
             for (p[2] = yeeCells.p1[2]; p[2] <= yeeCells.p2[2]; p[2]++)
             for (p[1] = yeeCells.p1[1]; p[1] <= yeeCells.p2[1]; p[1]++)
             for (p[0] = yeeCells.p1[0]; p[0] <= yeeCells.p2[0]; p[0]++)
             {
                 Paint* paint = (*this)(yeeToHalf(p, octantE(fieldDirection)))
-                    ->withCurrentSource(current.description());
+                    ->withCurrentSource(current);
                 paintHalfCell(paint, yeeToHalf(p, octantE(fieldDirection)));
             }
         }
@@ -427,17 +428,17 @@ overlayCurrentSource(const SetupCurrentSource & current)
     
     // Paint the source for magnetic currents
     for (fieldDirection = 0; fieldDirection < 3; fieldDirection++)
-    if (description.sourceCurrents().whichK()[fieldDirection] != 0)
+    if (current->sourceCurrents().whichK()[fieldDirection] != 0)
     {
-        for (rr = 0; rr < description.regions().size(); rr++)
+        for (rr = 0; rr < current->regions().size(); rr++)
         {
-            yeeCells = description.regions()[rr].yeeCells();
+            yeeCells = current->regions()[rr].yeeCells();
             for (p[2] = yeeCells.p1[2]; p[2] <= yeeCells.p2[2]; p[2]++)
             for (p[1] = yeeCells.p1[1]; p[1] <= yeeCells.p2[1]; p[1]++)
             for (p[0] = yeeCells.p1[0]; p[0] <= yeeCells.p2[0]; p[0]++)
             {
                 Paint* paint = (*this)(yeeToHalf(p, octantH(fieldDirection)))
-                    ->withCurrentSource(current.description());
+                    ->withCurrentSource(current);
                 paintHalfCell(paint, yeeToHalf(p, octantH(fieldDirection)));
             }
         }

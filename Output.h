@@ -36,20 +36,27 @@ private:
 class SetupOutput
 {
 public:
-    SetupOutput() {}
+    SetupOutput(OutputDescPtr description) :
+        mDescription(description) {}
     virtual ~SetupOutput() {}
+    OutputDescPtr description() const { return mDescription; }
     
     // Setting up runtime outputs
     virtual OutputPtr makeOutput(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const = 0;
+    
+private:
+    OutputDescPtr mDescription;
 };
 
 
 class Output
 {
 public:
-    Output();
+    Output(OutputDescPtr description);
     virtual ~Output();
+    
+    OutputDescPtr description() const { return mDescription; }
     
     // A chance to do runlines...
     //virtual void setupFromGrid(const VoxelizedPartition & vp);
@@ -58,8 +65,9 @@ public:
     virtual void outputHPhase(const CalculationPartition & cp, int timestep);
     
     virtual void allocateAuxBuffers();
-private:
     
+private:
+    OutputDescPtr mDescription;
 };
 typedef Pointer<Output> OutputPtr;
 

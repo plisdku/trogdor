@@ -100,6 +100,19 @@ identify(float const * ptr)
     return "Pointer not covered!";
 }
 
+MemoryBuffer& MemoryBuffer::
+operator=(const MemoryBuffer & rhs)
+{
+    if (this == &rhs)
+        return *this;
+    
+    sAllBuffers.erase(this);
+    mLength = rhs.mLength;
+    mStride = rhs.mStride;
+    mDescription = rhs.mDescription;
+    mHeadPointer = rhs.mHeadPointer;
+    return *this;
+}
 
 ostream &
 operator<<(std::ostream & str, const MemoryBuffer & buffer)
@@ -139,7 +152,11 @@ BufferPointer(const BufferPointer & copyMe) :
 	mOffset(copyMe.mOffset)
 {
     if (mBuffer != 0)
-        assert(mOffset >= 0 && mOffset < mBuffer->length());
+    {
+        assert(mOffset >= 0);
+        if (mBuffer->length() != 0)
+            assert(mOffset < mBuffer->length());
+    }
 }
 
 float* BufferPointer::

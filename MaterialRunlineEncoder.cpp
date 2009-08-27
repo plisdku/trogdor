@@ -22,7 +22,7 @@ BulkMaterialRLE()
 }
 
 void BulkMaterialRLE::
-endRunline(const VoxelizedPartition & vp)
+endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
 {
 //    LOG << "Ending runline from " << firstHalfCell() << " length " << length()
 //        << endl;
@@ -65,7 +65,7 @@ BulkPMLRLE()
 }
 
 void BulkPMLRLE::
-endRunline(const VoxelizedPartition & vp)
+endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
 {
     int oct = octant(firstHalfCell());
     int dir0 = xyz(oct);    // this is the field direction, "i"

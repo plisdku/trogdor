@@ -19,7 +19,7 @@ public:
     struct LocalDataE {};
     struct LocalDataH {};   
     
-    void setCurrentSource(CurrentSource* source) {}
+    void setCurrentSource(CurrentSource* source, int materialID) {}
     void allocateAuxBuffers() {}
     
     void initLocalE(LocalDataE & data, int dir0) {}

@@ -10,6 +10,7 @@
 #ifndef _PARTITIONCELLCOUNT_
 #define _PARTITIONCELLCOUNT_
 
+#include "SimulationDescription.h"
 #include "Pointer.h"
 #include <iostream>
 #include <vector>
@@ -26,6 +27,8 @@ public:
 	PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds,
         int runlineDirection );
 	
+    GridDescPtr gridDescription() const { return mGridDescription; }
+    
 	long operator() (int ii, int jj, int kk) const;
 	long operator() (const Vector3i & pp) const;
 	
@@ -37,6 +40,7 @@ private:
 	void calcMaterialIndices(const VoxelGrid & grid, int runlineDirection );
 	void allocateAuxiliaryDataSpace(const VoxelGrid & grid);
 	
+    GridDescPtr mGridDescription;
 	std::vector<Map<Paint*, long> > mNumCells;
 	std::vector<long> mMaterialIndexHalfCells;
 	Rect3i mHalfCellBounds;

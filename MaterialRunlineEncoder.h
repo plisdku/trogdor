@@ -20,7 +20,8 @@ class BulkMaterialRLE : public RunlineEncoder
 public:
     BulkMaterialRLE();
     
-    virtual void endRunline(const VoxelizedPartition & vp);
+    virtual void endRunline(const VoxelizedPartition & vp,
+        const Vector3i & lastHalfCell);
     
     const std::vector<SBMRunlinePtr> & runlinesE(int dir) const
         { return mRunlinesE[dir]; }
@@ -36,7 +37,8 @@ class BulkPMLRLE : public RunlineEncoder
 public:
     BulkPMLRLE();
     
-    virtual void endRunline(const VoxelizedPartition & vp);
+    virtual void endRunline(const VoxelizedPartition & vp,
+        const Vector3i & lastHalfCell);
     
     const std::vector<SBPMRunlinePtr> & runlinesE(int dir) const
         { return mRunlinesE[dir]; }

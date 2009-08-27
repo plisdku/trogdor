@@ -25,6 +25,7 @@ class SetupSource
 public:
     SetupSource(const SourceDescPtr sourceDescription);
     virtual ~SetupSource();
+    SourceDescPtr description() const { return mDescription; }
     
     Pointer<Source> makeSource(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
@@ -47,6 +48,7 @@ private:
     void doSourceE(CalculationPartition & cp, int timestep);
     void doSourceH(CalculationPartition & cp, int timestep);
     
+    SourceDescPtr mDescription;
     FieldInput mFieldInput;
     
     bool mIsSoft;

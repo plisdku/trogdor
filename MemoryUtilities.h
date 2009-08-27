@@ -42,6 +42,7 @@ public:
     
     static std::string identify(float const* ptr);
     
+    MemoryBuffer & operator=(const MemoryBuffer & rhs);
 private:
 	unsigned long mLength;
 	unsigned long mStride;
@@ -54,16 +55,8 @@ private:
 	friend class BufferPointer;
 };
 typedef Pointer<MemoryBuffer> MemoryBufferPtr;
-
 std::ostream & operator<<(std::ostream & str, const MemoryBuffer & buffer);
 
-/*
-struct EHBufferSet
-{
-    MemoryBuffer buffers[6]; // in field order: Ex, Ey, Hz, Ez, Hy, Hx
-};
-typedef Pointer<EHBufferSet> EHBufferSetPtr;
-*/
 
 class BufferPointer
 {

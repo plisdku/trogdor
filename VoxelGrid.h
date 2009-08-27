@@ -23,8 +23,10 @@ public:
     // allocRegion       global coordinates within which we store fields
     // gridHalfCells     partition is responsible for calculations in here
     // nonPML            the "middle" of the simulation, not including absorbers
-	VoxelGrid(Rect3i allocRegion, Rect3i gridHalfCells, Rect3i nonPML);
+	VoxelGrid(GridDescPtr gridDescription, Rect3i allocRegion);
 	
+    GridDescPtr gridDescription() const { return mGridDescription; }
+    
     // returns           global bounds of partition's calculation region
 	const Rect3i & gridHalfCells() { return mGridHalfCells; }
     
@@ -53,7 +55,7 @@ public:
 	
 	//void overlayHuygensSurface(const HuygensSurfaceDescription & surf);
 	void overlayHuygensSurface(const HuygensSurface & surf);
-	void overlayCurrentSource(const SetupCurrentSource & current);
+	void overlayCurrentSource(const CurrentSourceDescPtr & current);
 	void overlayPML();
 	
     // ii,jj,kk          global coordinates; will wrap around globally
@@ -85,6 +87,7 @@ public:
     void clear();
 	
 private:
+    GridDescPtr mGridDescription;
 	std::vector<Paint*> mMaterialHalfCells;
 	
 	Rect3i mAllocRegion;

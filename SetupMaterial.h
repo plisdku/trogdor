@@ -14,6 +14,7 @@
 #include "geometry.h"
 #include "UpdateEquation.h"
 #include "RunlineEncoder.h"
+#include "SimulationDescription.h"
 
 class VoxelizedPartition;
 class CalculationPartition;
@@ -24,8 +25,11 @@ class Paint;
 class SetupMaterial
 {
 public:
-	SetupMaterial() {}
+	SetupMaterial(MaterialDescPtr description) :
+        mDescription(description) {}
 	virtual ~SetupMaterial() {}
+    
+    Pointer<MaterialDescription> description() const { return mDescription; }
     
     void setID(int id) { mID = id; }
     int id() const { return mID; }
@@ -38,6 +42,7 @@ public:
     virtual UpdateEquationPtr makeUpdateEquation(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const = 0;
 private:
+    Pointer<MaterialDescription> mDescription;
     int mID;
 };
 typedef Pointer<SetupMaterial> SetupMaterialPtr;

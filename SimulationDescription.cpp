@@ -241,6 +241,12 @@ OutputDescription(std::string fields, std::string file,
     determineWhichFields(fields);
 }
 
+OutputDescription::
+~OutputDescription()
+{
+    LOG << "Dying.\n";
+}
+
 void OutputDescription::
 determineWhichFields(std::string fields) throw(Exception)
 {
@@ -483,7 +489,15 @@ CurrentSourceDescription* CurrentSourceDescription::
 newTimeSource(string timeFile, SourceCurrents currents,
     const vector<Region> & regions, const vector<Duration> & durations)
 {
-    return new CurrentSourceDescription(currents, "", timeFile, "",
+    return new CurrentSourceDescription(currents, "", timeFile, "", "",
+        regions, durations);
+}
+
+CurrentSourceDescription* CurrentSourceDescription::
+newMaskedTimeSource(string timeFile, string spaceFile, SourceCurrents currents,
+    const vector<Region> & regions, const vector<Duration> & durations)
+{
+    return new CurrentSourceDescription(currents, "", timeFile, spaceFile, "",
         regions, durations);
 }
 
@@ -491,7 +505,7 @@ CurrentSourceDescription* CurrentSourceDescription::
 newSpaceTimeSource(string spaceTimeFile, SourceCurrents currents,
     const vector<Region> & regions, const vector<Duration> & durations)
 {
-    return new CurrentSourceDescription(currents, "", "", spaceTimeFile,
+    return new CurrentSourceDescription(currents, "", "", "", spaceTimeFile,
         regions, durations);
 }
 
@@ -499,17 +513,18 @@ CurrentSourceDescription* CurrentSourceDescription::
 newFormulaSource(string formula, SourceCurrents currents,
     const vector<Region> & regions, const vector<Duration> & durations)
 {
-    return new CurrentSourceDescription(currents, formula, "", "",
+    return new CurrentSourceDescription(currents, formula, "", "", "",
         regions, durations);
 }
 
 CurrentSourceDescription::
 CurrentSourceDescription(SourceCurrents currents, string formula,
-    string timeFile, string spaceTimeFile, const vector<Region> & regions,
-    const vector<Duration> & durations) throw(Exception) :
+    string timeFile, string spaceFile, string spaceTimeFile,
+    const vector<Region> & regions, const vector<Duration> & durations)
+    throw(Exception) :
     mFormula(formula),
     mTimeFile(timeFile),
-    mSpaceFileDoThisLaterOkay("whatever you say, man"),
+    mSpaceFile(spaceFile),
     mSpaceTimeFile(spaceTimeFile),
     mCurrents(currents),
     mRegions(regions),
@@ -679,9 +694,10 @@ newLink(string sourceGrid, Rect3i fromHalfCells, Rect3i toHalfCells,
 #pragma mark *** Material ***
 
 MaterialDescription::
-MaterialDescription(string name, string inModelName,
+MaterialDescription(int ID, string name, string inModelName,
 	const Map<string,string> & inParams,
     const Map<Vector3i, Map<string, string> > & inPMLParams) throw(Exception) :
+    mID(ID),
 	mName(name),
 	mModelName(inModelName),
 	mParams(inParams),

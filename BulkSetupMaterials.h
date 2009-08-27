@@ -10,6 +10,7 @@
 #ifndef _SIMPLESETUPMATERIAL_
 #define _SIMPLESETUPMATERIAL_
 
+#include "SimulationDescription.h"
 #include "SetupMaterial.h"
 #include "MaterialRunlineEncoder.h"
 #include "Pointer.h"
@@ -27,7 +28,7 @@ class GridDescription;
 class BulkSetupMaterial : public SetupMaterial
 {
 public:
-	BulkSetupMaterial();
+	BulkSetupMaterial(MaterialDescPtr description);
 	virtual ~BulkSetupMaterial();
     
 	virtual void printRunlines(std::ostream & out) const;
@@ -43,7 +44,7 @@ protected:
 class BulkPMLSetupMaterial : public SetupMaterial
 {
 public:
-	BulkPMLSetupMaterial();
+	BulkPMLSetupMaterial(MaterialDescPtr description);
 	
 	virtual void printRunlines(std::ostream & out) const;
 	    

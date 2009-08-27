@@ -19,6 +19,7 @@ using namespace YeeUtilities;
 PartitionCellCount::
 PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds,
     int runlineDirection ) :
+    mGridDescription(grid.gridDescription()),
 	mNumCells(8),
 	mHalfCellBounds(halfCellBounds),
 	m_nnx(halfCellBounds.size(0)+1),

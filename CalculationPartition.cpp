@@ -25,6 +25,7 @@ using namespace YeeUtilities;
 CalculationPartition::
 CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
     long numT) :
+    mGridDescription(vp.gridDescription()),
     m_dxyz(dxyz),
     m_dt(dt),
     m_numT(numT),
@@ -93,9 +94,6 @@ CalculationPartition(const VoxelizedPartition & vp, Vector3f dxyz, float dt,
         mHardSources.push_back(hardSrcs[nn]->makeSource(vp, *this));
     }
     
-    
-    
-    
     mStatistics.setNumMaterials(mMaterials.size());
     mStatistics.setNumOutputs(mOutputs.size());
     mStatistics.setNumHardSources(mHardSources.size());
@@ -126,15 +124,11 @@ allocateAuxBuffers()
 {
     unsigned int nn;
     for (nn = 0; nn < mMaterials.size(); nn++)
-    {
-        //LOG << "Aux alloc for material " << nn << "\n";
         mMaterials[nn]->allocateAuxBuffers();
-    }
-    
     for (nn = 0; nn < mOutputs.size(); nn++)
-    {
         mOutputs[nn]->allocateAuxBuffers();
-    }
+    for (nn = 0; nn < mCurrentSources.size(); nn++)
+        mCurrentSources[nn]->allocateAuxBuffers();
 }
 
 void CalculationPartition::
@@ -221,27 +215,27 @@ timedUpdateE(int timestep)
     
     for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mHuygensSurfaces[nn]->updateH(); // need to update H here before E.
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addHuygensSurfaceMicroseconds(nn, t2-t1);
     }
     
     
     for (nn = 0; nn < mCurrentSources.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mCurrentSources[nn]->prepareJ(timestep);
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addCurrentSourceMicroseconds(nn, t2-t1);
     }
     
     for (int eNum = 0; eNum < 3; eNum++)
     for (nn = 0; nn < mMaterials.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mMaterials[nn]->calcEPhase(eNum);
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addMaterialMicrosecondsE(nn, t2-t1);
     }
     
@@ -256,16 +250,16 @@ timedSourceE(int timestep)
     double t1, t2;
     for (nn = 0; nn < mSoftSources.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mSoftSources[nn]->sourceEPhase(*this, timestep);
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addSoftSourceMicroseconds(nn, t2-t1);
     }
     for (nn = 0; nn < mHardSources.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mHardSources[nn]->sourceEPhase(*this, timestep);
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addHardSourceMicroseconds(nn, t2-t1);
     }
 }
@@ -278,9 +272,9 @@ timedOutputE(int timestep)
     double t1, t2;
     for (nn = 0; nn < mOutputs.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mOutputs[nn]->outputEPhase(*this, timestep);
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addOutputMicroseconds(nn, t2-t1);
     }
     
@@ -302,26 +296,26 @@ timedUpdateH(int timestep)
     // Update E fields in Huygens surfaces
     for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mHuygensSurfaces[nn]->updateE(); // need to update E here before H.
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addHuygensSurfaceMicroseconds(nn, t2-t1);
     }
     
     for (nn = 0; nn < mCurrentSources.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mCurrentSources[nn]->prepareK(timestep);
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addCurrentSourceMicroseconds(nn, t2-t1);
     }
         
     for (int hNum = 0; hNum < 3; hNum++)
     for (nn = 0; nn < mMaterials.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mMaterials[nn]->calcHPhase(hNum);
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addMaterialMicrosecondsH(nn, t2-t1);
     }
     //LOG << "Finished with " << mMaterials.size() << " materials.\n";
@@ -335,16 +329,16 @@ timedSourceH(int timestep)
     double t1, t2;
     for (nn = 0; nn < mSoftSources.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mSoftSources[nn]->sourceHPhase(*this, timestep);
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addSoftSourceMicroseconds(nn, t2-t1);
     }
     for (nn = 0; nn < mHardSources.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mHardSources[nn]->sourceHPhase(*this, timestep);
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addHardSourceMicroseconds(nn, t2-t1);
     }
 }
@@ -357,9 +351,9 @@ timedOutputH(int timestep)
     double t1, t2;
     for (nn = 0; nn < mOutputs.size(); nn++)
     {
-        t1 = tiimeInMicroseconds();
+        t1 = timeInMicroseconds();
         mOutputs[nn]->outputHPhase(*this, timestep);
-        t2 = tiimeInMicroseconds();
+        t2 = timeInMicroseconds();
         mStatistics.addOutputMicroseconds(nn, t2-t1);
     }
     /*

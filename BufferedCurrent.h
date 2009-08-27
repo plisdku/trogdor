@@ -22,7 +22,7 @@ public:
     
     struct LocalDataE {
         float* J;
-        float* mask;
+        const float* mask;
         float polarizationFactor;
         long stride;
         long maskStride;
@@ -30,13 +30,13 @@ public:
     
     struct LocalDataH {
         float* K;
-        float* mask;
+        const float* mask;
         float polarizationFactor;
         long stride;
         long maskStride;
     };
     
-    void setCurrentSource(CurrentSource* source);
+    void setCurrentSource(CurrentSource* source, int materialID);
     void allocateAuxBuffers();
     
     void initLocalE(LocalDataE & data, int dir0);
@@ -56,10 +56,14 @@ public:
 private:
     CurrentSource* mSourceOfData;
     
-    std::vector<float> mMaskE[3];
-    std::vector<float> mMaskH[3];
-    std::vector<float> mSingleTimestepDataE[3];
-    std::vector<float> mSingleTimestepDataH[3];
+    bool mHasMask;
+    BufferPointer mPointerJ[3];
+    BufferPointer mPointerK[3];
+    BufferPointer mPointerMaskJ[3];
+    BufferPointer mPointerMaskK[3];
+    int mStride;
+    int mStrideMask;
+    
     Vector3f mPolarizationVector; // defaults to (1.0, 1.0, 1.0); always used
     
     //std::vector<float> mSingleTimestepData;

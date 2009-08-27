@@ -40,7 +40,6 @@ public:
     virtual OutputPtr makeOutput(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
 private:
-    OutputDescPtr mDescription;
     std::vector<SetupCPOutputRunline> mRunlinesE[3];
     std::vector<SetupCPOutputRunline> mRunlinesH[3];
 };
@@ -56,7 +55,7 @@ struct CPOutputRunline
 class CurrentPolarizationOutput : public Output
 {
 public:
-    CurrentPolarizationOutput(const OutputDescription & desc,
+    CurrentPolarizationOutput(OutputDescPtr description,
         const VoxelizedPartition & vp,
         const CalculationPartition & cp);
     virtual ~CurrentPolarizationOutput();

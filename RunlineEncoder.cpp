@@ -72,7 +72,7 @@ continueRunline()
 void RunlineEncoder::
 endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
 {
-    LOG << "Ending runline, doing nothing.\n";
+    LOG << "DEFAULT: Ending runline, doing nothing.\n";
 }
 
 

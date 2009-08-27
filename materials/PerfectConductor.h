@@ -16,7 +16,8 @@
 class SetupPerfectConductor : public BulkSetupMaterial
 {
 public:
-    SetupPerfectConductor() {}
+    SetupPerfectConductor(MaterialDescPtr description) :
+        BulkSetupMaterial(description) {}
     
     virtual UpdateEquationPtr makeUpdateEquation(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;

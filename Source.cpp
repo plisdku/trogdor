@@ -37,6 +37,7 @@ Source::
 Source(const SourceDescPtr sourceDescription,
     const VoxelizedPartition & vp,
     const CalculationPartition & cp) :
+    mDescription(sourceDescription),
     mFieldInput(sourceDescription, cp.dt()),
     mCurrentDuration(0),
     mFields(sourceDescription->sourceFields()),

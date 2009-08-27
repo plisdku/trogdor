@@ -30,14 +30,12 @@ public:
     
     virtual OutputPtr makeOutput(const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
-private:
-    OutputDescPtr mDesc;
 };
 
 class SimpleEHOutput : public Output
 {
 public:
-    SimpleEHOutput(const OutputDescription & desc,
+    SimpleEHOutput(OutputDescPtr description,
         const VoxelizedPartition & vp,
         const CalculationPartition & cp);
     virtual ~SimpleEHOutput();

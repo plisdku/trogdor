@@ -201,6 +201,7 @@ public:
     OutputDescription(std::string fields, std::string file,
         Vector3f interpolationPoint, const std::vector<Region> & regions,
         const std::vector<Duration> & durations) throw(Exception);
+    ~OutputDescription();
     
     const std::string & file() const { return mFile; }
     Vector3i whichE() const { return mWhichE; }
@@ -322,6 +323,10 @@ public:
     static CurrentSourceDescription* newTimeSource(std::string timeFile,
         SourceCurrents currents, const std::vector<Region> & regions,
             const std::vector<Duration> & durations);
+    static CurrentSourceDescription* newMaskedTimeSource(std::string timeFile,
+        std::string spaceFile, SourceCurrents currents,
+        const std::vector<Region> & regions,
+        const std::vector<Duration> & durations);
     static CurrentSourceDescription* newSpaceTimeSource(
         std::string spaceTimeFile, SourceCurrents currents, 
         const std::vector<Region> & regions,
@@ -330,10 +335,13 @@ public:
         SourceCurrents fields, const std::vector<Region> & regions,
         const std::vector<Duration> & durations);
     
+    bool hasMask() const
+        { return (mSpaceFile != ""); }
     bool isSpaceVarying() const
         { return (mSpaceTimeFile != ""); }
     const std::string & formula() const { return mFormula; }
     const std::string & timeFile() const { return mTimeFile; }
+    const std::string & spaceFile() const { return mSpaceFile; }
     const std::string & spaceTimeFile() const { return mSpaceTimeFile; }
     const SourceCurrents & sourceCurrents() const { return mCurrents; }
     
@@ -341,13 +349,13 @@ public:
     const std::vector<Duration> & durations() const { return mDurations; }
 private:
     CurrentSourceDescription(SourceCurrents currents, std::string formula,
-        std::string timeFile, std::string spaceTimeFile,
+        std::string timeFile, std::string spaceFile, std::string spaceTimeFile,
         const std::vector<Region> & regions,
         const std::vector<Duration> & durations) throw(Exception);
     
     std::string mFormula;
     std::string mTimeFile;
-    std::string mSpaceFileDoThisLaterOkay;
+    std::string mSpaceFile;
     std::string mSpaceTimeFile;
     SourceCurrents mCurrents;
     std::vector<Region> mRegions;
@@ -461,11 +469,12 @@ private:
 class MaterialDescription
 {
 public:
-	MaterialDescription(std::string name, std::string inModelName,
+	MaterialDescription(int ID, std::string name, std::string inModelName,
 		const Map<std::string, std::string> & inParams,
         const Map<Vector3i, Map<std::string, std::string> > & inPMLParams)
         throw(Exception);
 	
+    int id() const { return mID; }
 	std::string name() const { return mName; }
 	std::string modelName() const { return mModelName; }
 	const Map<std::string, std::string> & params() const { return mParams; }
@@ -475,6 +484,7 @@ public:
 	friend std::ostream & operator<<(std::ostream & out,
 		const MaterialDescription & mat);
 private:
+    int mID;
 	std::string mName;
 	std::string mModelName;
 	Map<std::string, std::string> mParams;

@@ -29,12 +29,12 @@ using namespace YeeUtilities;
 #pragma mark *** VoxelizedPartition ***
 
 VoxelizedPartition::
-VoxelizedPartition(const GridDescription & gridDesc, 
+VoxelizedPartition(GridDescPtr gridDesc, 
 	const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	Rect3i allocRegion, Rect3i calcRegion, int runlineDirection) :
-	mVoxels(allocRegion, gridDesc.halfCellBounds(), 
-		gridDesc.nonPMLHalfCells()),
-	mGridHalfCells(gridDesc.halfCellBounds()),
+    mGridDescription(gridDesc),
+	mVoxels(gridDesc, allocRegion),
+	mGridHalfCells(gridDesc->halfCellBounds()),
 	mFieldAllocHalfCells(expandToYeeRect(allocRegion)),
 	mAuxAllocRegion(allocRegion),
 	mCalcHalfCells(calcRegion)
@@ -53,11 +53,11 @@ VoxelizedPartition(const GridDescription & gridDesc,
     
     mNumAllocHalfCells = mFieldAllocHalfCells.size()+1;
 	
-    mLattice = InterleavedLatticePtr(new InterleavedLattice(gridDesc.name(),
+    mLattice = InterleavedLatticePtr(new InterleavedLattice(gridDesc->name(),
         mFieldAllocHalfCells, runlineDirection));
     
-	mNonPMLHalfCells = gridDesc.nonPMLHalfCells();
-	mOriginYee = gridDesc.originYee();
+	mNonPMLHalfCells = gridDesc->nonPMLHalfCells();
+	mOriginYee = gridDesc->originYee();
 	
     /*
     LOG << "Partition geometry:\n";
@@ -69,22 +69,20 @@ VoxelizedPartition(const GridDescription & gridDesc,
 	LOGMORE << "origin " << mOriginYee << "\n";
 	*/
     
-	paintFromAssembly(gridDesc, voxelizedGrids);
-	calculateHuygensSurfaceSymmetries(gridDesc); // * NOT MPI FRIENDLY YET
-    
-    createSetupCurrentSources(gridDesc.currentSources());
-    paintFromCurrentSources(gridDesc);
-    
+	paintFromAssembly(*gridDesc, voxelizedGrids);
+	calculateHuygensSurfaceSymmetries(*gridDesc); // * NOT MPI FRIENDLY YET
+    paintFromCurrentSources(*gridDesc);
 	mVoxels.overlayPML(); // * grid-scale wraparound
 	
 	//cout << mVoxels << endl;
 	
 	calculateMaterialIndices();
-	createSetupMaterials(gridDesc);
+	createSetupMaterials(*gridDesc);
 	loadSpaceVaryingData(); // * grid-scale wraparound
 	
-    createSetupOutputs(gridDesc.outputs());
-    createSetupSources(gridDesc.sources());
+    createSetupOutputs(gridDesc->outputs());
+    createSetupSources(gridDesc->sources());
+    createSetupCurrentSources(gridDesc->currentSources());
 }
 
 Rect3i VoxelizedPartition::
@@ -537,16 +535,17 @@ runLengthEncode(map<Paint*, RunlineEncoder*> & encoders,
 				needNewRunline = 1;
 			}
 		}
-		if (needNewRunline)
+		if (needNewRunline && encoders.count(thisUpdateType) != 0)
 		{
-			currentEncoder = encoders[thisUpdateType]; // save non-smart pointer
-			currentEncoder->startRunline(*this, x);
+            currentEncoder = encoders[thisUpdateType];
+            currentEncoder->startRunline(*this, x);
             firstUpdateType = thisUpdateType;
-			needNewRunline = 0;
+            needNewRunline = 0;
 		}
         previous_x = x;
 	}
-	currentEncoder->endRunline(*this, previous_x);
+    if (!needNewRunline)
+        currentEncoder->endRunline(*this, previous_x);
 }
 
 
@@ -620,10 +619,17 @@ paintFromCurrentSources(const GridDescription & gridDesc)
 {
 //	LOG << "Painting from current sources.  (Doing something?)\n";
 //    LOG << "We have " << mSetupCurrentSources.size() << " sources.\n";
+    
+    for (int nn = 0; nn < gridDesc.currentSources().size(); nn++)
+    {
+        mVoxels.overlayCurrentSource(gridDesc.currentSources().at(nn));
+    }
+    
+    /*
     for (int nn = 0; nn < mSetupCurrentSources.size(); nn++)
     {
         mVoxels.overlayCurrentSource(*mSetupCurrentSources[nn]);
-    }
+    }*/
 }
 
 
@@ -751,11 +757,18 @@ huygensSymmetry(const HuygensSurfaceDescription & surf)
     return Vector3i(symmetry);
 }
 
+static bool compareByMaterialID(const Paint* lhs, const Paint* rhs)
+{ return lhs->bulkMaterial()->id() < rhs->bulkMaterial()->id(); }
+
 void VoxelizedPartition::
 createSetupMaterials(const GridDescription & gridDesc)
 {
 	set<Paint*> allPaints = mCentralIndices->curlBufferParentPaints();
 	
+    vector<Paint*> sortedPaints;
+    copy(allPaints.begin(), allPaints.end(), back_inserter(sortedPaints));
+    sort(sortedPaints.begin(), sortedPaints.end(), &compareByMaterialID);
+    
 	// Cache PML rects (this is really just to simplify notation further down).
 	vector<Rect3i> pmlRects;
 	for (int nn = 0; nn < 6; nn++)
@@ -764,11 +777,10 @@ createSetupMaterials(const GridDescription & gridDesc)
     //cout << *mCentralIndices << endl;
     
 	//LOG << "Iterating over paints...\n";
-    int materialID = 0;
-	for (set<Paint*>::iterator itr = allPaints.begin(); itr != allPaints.end();
-		itr++)
+    int updateID = 0;
+	for (int nn = 0; nn < sortedPaints.size(); nn++)
 	{
-		Paint* p = *itr;
+		Paint* p = sortedPaints[nn];
         vector<int> numCellsE(3), numCellsH(3);
         
         int fieldDir;
@@ -787,8 +799,8 @@ createSetupMaterials(const GridDescription & gridDesc)
 			mSetupMaterials[p] = MaterialFactory::newSetupMaterial(gridDesc,
                 p, numCellsE, numCellsH, pmlRects,
                 mLattice->runlineDirection());
-            mSetupMaterials[p]->setID(materialID);
-            materialID++;
+            mSetupMaterials[p]->setID(updateID);
+            updateID++;
 		}
 	}
 }

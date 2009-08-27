@@ -30,6 +30,7 @@ template<class MaterialClass, class RunlineT, class CurrentT>
 SimpleSetupMaterial<MaterialClass, RunlineT, CurrentT>::
 SimpleSetupMaterial(Paint* parentPaint, std::vector<int> numCellsE,
     std::vector<int> numCellsH, Vector3f dxyz, float dt) :
+    BulkSetupMaterial(MaterialDescPtr(parentPaint->bulkMaterial())),
     mParentPaint(parentPaint),
     mNumCellsE(numCellsE),
     mNumCellsH(numCellsH),
@@ -70,6 +71,7 @@ SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
         std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt) :
+    BulkPMLSetupMaterial(MaterialDescPtr(parentPaint->bulkMaterial())),
     mParentPaint(parentPaint),
     mNumCellsE(numCellsE),
     mNumCellsH(numCellsH),

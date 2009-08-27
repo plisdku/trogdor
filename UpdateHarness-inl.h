@@ -293,7 +293,7 @@ template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 void UpdateHarness<MaterialT, RunlineT, PMLT, CurrentT>::
 setCurrentSource(CurrentSource* source)
 {
-    mCurrent.setCurrentSource(source);
+    mCurrent.setCurrentSource(source, UpdateEquation::id());
 }
 
 

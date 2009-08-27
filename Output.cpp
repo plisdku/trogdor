@@ -43,7 +43,8 @@ newSetupOutput(const VoxelizedPartition & vp, const OutputDescPtr & desc)
 
 
 Output::
-Output()
+Output(OutputDescPtr description) :
+    mDescription(description)
 {
 }
 

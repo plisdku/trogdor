@@ -25,8 +25,8 @@ using namespace YeeUtilities;
 #pragma mark *** Simple Bulk Material ***
 
 BulkSetupMaterial::
-BulkSetupMaterial() :
-	SetupMaterial(),
+BulkSetupMaterial(MaterialDescPtr description) :
+	SetupMaterial(description),
     mRunlineEncoder()
 {
 }
@@ -86,8 +86,8 @@ runlinesH(int dir) const
 #pragma mark *** Simple Bulk PML Material ***
 
 BulkPMLSetupMaterial::
-BulkPMLSetupMaterial() :
-	SetupMaterial(),
+BulkPMLSetupMaterial(MaterialDescPtr description) :
+	SetupMaterial(description),
     mRunlineEncoder()
 {
 }

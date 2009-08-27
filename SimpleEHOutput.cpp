@@ -27,8 +27,7 @@ using namespace YeeUtilities;
 
 SimpleEHSetupOutput::
 SimpleEHSetupOutput(const OutputDescPtr & desc) :
-    SetupOutput(),
-    mDesc(desc)
+    SetupOutput(desc)
 {
 }
 
@@ -36,33 +35,34 @@ OutputPtr SimpleEHSetupOutput::
 makeOutput(const VoxelizedPartition & vp, const CalculationPartition & cp)
     const
 {
-    return OutputPtr(new SimpleEHOutput(*mDesc, vp, cp));
+    return OutputPtr(new SimpleEHOutput(description(), vp, cp));
 }
 
 #pragma mark *** Output ***
 
 SimpleEHOutput::
-SimpleEHOutput(const OutputDescription & desc,
+SimpleEHOutput(OutputDescPtr description,
     const VoxelizedPartition & vp,
     const CalculationPartition & cp) :
+    Output(description),
     mDatafile(),
     mCurrentSampleInterval(0),
-    mIsInterpolated(desc.isInterpolated()),
-    mInterpolationPoint(desc.interpolationPoint()),
-    mWhichE(desc.whichE()),
-    mWhichH(desc.whichH()),
-    mDurations(desc.durations())
+    mIsInterpolated(description->isInterpolated()),
+    mInterpolationPoint(description->interpolationPoint()),
+    mWhichE(description->whichE()),
+    mWhichH(description->whichH()),
+    mDurations(description->durations())
 {
     // Clip the regions to the current partition bounds (calc bounds, not
     //     allocation bounds!)
 //    LOG << "Clipping output regions to partition bounds.  This is not in the"
 //        " right place; it should be performed earlier somehow.\n";
-    assert(desc.regions().size() > 0);
-    for (int rr = 0; rr < desc.regions().size(); rr++)
+    assert(description->regions().size() > 0);
+    for (int rr = 0; rr < description->regions().size(); rr++)
     {
-        Rect3i outRect(clip(desc.regions()[rr].yeeCells(),
+        Rect3i outRect(clip(description->regions()[rr].yeeCells(),
             vp.gridYeeCells()));        
-        mRegions.push_back(Region(outRect, desc.regions()[rr].stride()));
+        mRegions.push_back(Region(outRect, description->regions()[rr].stride()));
     }
 //    LOG << "Truncating durations to simulation duration.  This is in the "
 //        "wrong place; can't it be done earlier?\n";
@@ -71,9 +71,9 @@ SimpleEHOutput(const OutputDescription & desc,
     if (mDurations[dd].last() > (numTimesteps-1))
         mDurations[dd].setLast(numTimesteps-1);
     
-    string specfile(desc.file() + string(".txt"));
-    string datafile(desc.file());
-    string materialfile(desc.file() + string(".mat"));
+    string specfile(description->file() + string(".txt"));
+    string datafile(description->file());
+    string materialfile(description->file() + string(".mat"));
     
     writeDescriptionFile(vp, cp, specfile, datafile, materialfile);
     

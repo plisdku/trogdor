@@ -309,8 +309,10 @@ loadMaterials(const TiXmlElement* parent) const
             pmlParamXML = pmlParamXML->NextSiblingElement("PML");
         }
         
+        // The material ID will be the same as its index.
         try {
-            MaterialDescPtr material(new MaterialDescription(name, inModel,
+            MaterialDescPtr material(new MaterialDescription(
+                materials.size(), name, inModel,
                 params, pmlParams));
             materials.push_back(material);
         } catch (Exception & e) {
@@ -319,6 +321,9 @@ loadMaterials(const TiXmlElement* parent) const
         
         elem = elem->NextSiblingElement("Material");
     }
+    
+    for (int nn = 0; nn < materials.size(); nn++)
+        assert(materials[nn]->id() == nn);
 	
 	return materials;	
 }

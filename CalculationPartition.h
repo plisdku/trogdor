@@ -32,6 +32,7 @@ public:
         Vector3f dxyz, float dt, long numT);
     ~CalculationPartition();
     
+    GridDescPtr gridDescription() const { return mGridDescription; }
     const InterleavedLattice& lattice() const;
     InterleavedLattice& lattice();
     
@@ -71,6 +72,8 @@ public:
     void printPerformanceForMatlab(std::ostream & str, std::string prefix);
     
 private:
+    const GridDescPtr mGridDescription;
+    
     Vector3f m_dxyz;
     float m_dt;
     long m_numT;

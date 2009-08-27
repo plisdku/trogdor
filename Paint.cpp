@@ -180,7 +180,7 @@ curlBuffer(int side) const
 	return mCurlBuffers[side];
 }
 
-const MaterialDescription* Paint::
+MaterialDescPtr Paint::
 bulkMaterial() const
 {
     return mBulkMaterial;

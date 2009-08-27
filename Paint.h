@@ -81,7 +81,7 @@ public:
 	PaintType type() const { return mType; }
 	Vector3i pmlDirections() const { return mPMLDirections; }
     const NeighborBuffer* curlBuffer(int side) const;
-	const MaterialDescription* bulkMaterial() const;
+	MaterialDescPtr bulkMaterial() const;
     const CurrentSourceDescPtr currentSource() const
         { return mCurrentSource; }
 	
