@@ -71,12 +71,12 @@ public:
 private:
     void writeJ(const CalculationPartition & cp);
     void writeK(const CalculationPartition & cp);
-    
+    /*
     void writeDescriptionFile(const VoxelizedPartition & vp,
         const CalculationPartition & cp,
         std::string specfile, std::string datafile, std::string materialfile)
         const;
-    
+    */
     std::ofstream mDatafile;
     long mCurrentSampleInterval;
     

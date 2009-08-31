@@ -11,6 +11,7 @@
 #define _CURRENTSOURCE_
 
 #include <vector>
+#include "FieldInput.h"
 #include "RunlineEncoder.h"
 #include "MemoryUtilities.h"
 #include "SimulationDescription.h"
@@ -79,6 +80,7 @@ class CurrentSource
 {
 public:
     CurrentSource(const CurrentSourceDescPtr & mDescription,
+        const CalculationPartition & cp,
         const std::vector<Pointer<CurrentBuffers> > & currentBuffers);
     virtual ~CurrentSource();
     
@@ -97,6 +99,8 @@ public:
     float getK(int direction) const;
 private:
     CurrentSourceDescPtr mDescription;
+    FieldInput mFieldInput;
+    
     std::vector<Pointer<CurrentBuffers> > mCurrentBuffers;
     
     std::vector<int> mMaterialIDs;

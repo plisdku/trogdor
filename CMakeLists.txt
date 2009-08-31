@@ -59,6 +59,8 @@ HuygensSurface.cpp
 HuygensSurface.h
 InterleavedLattice.cpp
 InterleavedLattice.h
+IODescriptionFile.h
+IODescriptionFile.cpp
 main.cpp
 MaterialFactory.cpp
 MaterialFactory.h

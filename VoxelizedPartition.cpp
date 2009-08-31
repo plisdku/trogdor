@@ -19,6 +19,7 @@
 #include "InterleavedLattice.h"
 #include "HuygensSurface.h"
 #include "PartitionCellCount.h"
+#include "IODescriptionFile.h"
 #include "Source.h"
 
 #include <sstream>
@@ -246,6 +247,9 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     ostringstream fileNameStream;
     fileNameStream << surf->file() << ".m";
     
+    IODescriptionFile::write(fileNameStream.str(), surf, *this);
+    
+    /*
     ofstream file;
     file.open(fileNameStream.str().c_str());
     
@@ -267,7 +271,7 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     file << "afp.halfCells = " << surf->halfCells() << ";\n";
     file << "afp.tfRect = afp.halfCells;\n";
     file << "afp.inputFile = '" << surf->file() << "';\n";
-    /*
+    
     // Now write the materials and their parameters.
     int ii, jj, kk;
     int numMaterials = 0;
@@ -435,10 +439,10 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
         }
         file << "];\n";
     }
-    */
     file << "% end auto-generated file \n";
     
     file.close();
+    */
 }
 
 

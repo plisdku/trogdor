@@ -12,7 +12,7 @@
 #include "CalculationPartition.h"
 #include "VoxelizedPartition.h"
 #include "InterleavedLattice.h"
-
+#include "IODescriptionFile.h"
 #include "UpdateEquation.h"
 
 #include "YeeUtilities.h"
@@ -155,7 +155,8 @@ CurrentPolarizationOutput(OutputDescPtr description,
     string datafile(description->file());
     string materialfile(description->file() + string(".mat"));
     
-    writeDescriptionFile(vp, cp, specfile, datafile, materialfile);
+    IODescriptionFile::write(specfile, description, vp, mRegions, mDurations);
+    //writeDescriptionFile(vp, cp, specfile, datafile, materialfile);
     
     mDatafile.open(datafile.c_str());
 }
@@ -289,6 +290,7 @@ writeK(const CalculationPartition & cp)
     mDatafile << flush;
 }
 
+/*
 void CurrentPolarizationOutput::
 writeDescriptionFile(const VoxelizedPartition & vp,
     const CalculationPartition & cp, string specfile,
@@ -356,4 +358,4 @@ writeDescriptionFile(const VoxelizedPartition & vp,
     
     descFile.close();
 }
-
+*/

@@ -154,6 +154,6 @@ std::istream & operator>>(std::istream & str, Rect<T> & rect);
 template<typename T>
 std::ostream & operator<<(std::ostream & str, const OrientedRect<T> & orect);
 
-#include "geometry.hh"
+#include "geometry-inl.h"
 
 #endif

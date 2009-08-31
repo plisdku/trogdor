@@ -13,6 +13,7 @@
 #include "VoxelizedPartition.h"
 #include "YeeUtilities.h"
 #include "InterleavedLattice.h"
+#include "IODescriptionFile.h"
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -47,10 +48,6 @@ SimpleEHOutput(OutputDescPtr description,
     Output(description),
     mDatafile(),
     mCurrentSampleInterval(0),
-    mIsInterpolated(description->isInterpolated()),
-    mInterpolationPoint(description->interpolationPoint()),
-    mWhichE(description->whichE()),
-    mWhichH(description->whichH()),
     mDurations(description->durations())
 {
     // Clip the regions to the current partition bounds (calc bounds, not
@@ -75,7 +72,8 @@ SimpleEHOutput(OutputDescPtr description,
     string datafile(description->file());
     string materialfile(description->file() + string(".mat"));
     
-    writeDescriptionFile(vp, cp, specfile, datafile, materialfile);
+    IODescriptionFile::write(specfile, description, vp, mRegions, mDurations);
+    //writeDescriptionFile(vp, cp, specfile, datafile, materialfile);
     
     mDatafile.open(datafile.c_str());
 }
@@ -90,7 +88,7 @@ SimpleEHOutput::
 void SimpleEHOutput::
 outputEPhase(const CalculationPartition & cp, int timestep)
 {
-    if (norm2(mWhichE) == 0)
+    if (norm2(description()->whichE()) == 0)
         return;
     if (mCurrentSampleInterval >= mDurations.size())
         return;
@@ -111,7 +109,7 @@ outputEPhase(const CalculationPartition & cp, int timestep)
 void SimpleEHOutput::
 outputHPhase(const CalculationPartition & cp, int timestep)
 {
-    if (norm2(mWhichH) == 0)
+    if (norm2(description()->whichH()) == 0)
         return;
     if (mCurrentSampleInterval >= mDurations.size())
         return;
@@ -134,6 +132,8 @@ writeE(const CalculationPartition & cp)
 {   
     const InterleavedLattice & lattice(cp.lattice());
     
+    Vector3f interpPoint = description()->interpolationPoint();
+    
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
         for (int outDir = 0; outDir < 3; outDir++)
@@ -143,9 +143,9 @@ writeE(const CalculationPartition & cp)
             Vector3i outStride = mRegions[rr].stride();
             Vector3i p;
             
-            if (mWhichE[outDir] != 0)
+            if (description()->whichE()[outDir] != 0)
             {
-                if (!mIsInterpolated)
+                if (!description()->isInterpolated())
                 {
                     for (p[2] = outRect.p1[2]; p[2] <= outRect.p2[2];
                         p[2] += outStride[2])
@@ -169,7 +169,7 @@ writeE(const CalculationPartition & cp)
                         p[0] += outStride[0])
                     {
                         float val = lattice.getInterpolatedE(
-                            outDir, Vector3f(p)+mInterpolationPoint);
+                            outDir, Vector3f(p)+interpPoint);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));
                     }
@@ -185,6 +185,8 @@ writeH(const CalculationPartition & cp)
 {
     const InterleavedLattice& lattice(cp.lattice());
     
+    Vector3f interpPoint = description()->interpolationPoint();
+    
     for (unsigned int rr = 0; rr < mRegions.size(); rr++)
     {
         for (int outDir = 0; outDir < 3; outDir++)
@@ -193,9 +195,9 @@ writeH(const CalculationPartition & cp)
             Vector3i outStride = mRegions[rr].stride();
             Vector3i p;
             
-            if (mWhichH[outDir] != 0)
+            if (description()->whichH()[outDir] != 0)
             {
-                if (!mIsInterpolated)
+                if (!description()->isInterpolated())
                 {
                     for (p[2] = outRect.p1[2]; p[2] <= outRect.p2[2];
                         p[2] += outStride[2])
@@ -219,7 +221,7 @@ writeH(const CalculationPartition & cp)
                         p[0] += outStride[0])
                     {
                         float val = lattice.getInterpolatedH(
-                            outDir, Vector3f(p)+mInterpolationPoint);
+                            outDir, Vector3f(p)+interpPoint);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));
                     }
@@ -230,6 +232,7 @@ writeH(const CalculationPartition & cp)
     mDatafile << flush;
 }
 
+/*
 void SimpleEHOutput::
 writeDescriptionFile(const VoxelizedPartition & vp,
     const CalculationPartition & cp, string specfile,
@@ -254,11 +257,11 @@ writeDescriptionFile(const VoxelizedPartition & vp,
     descFile << "dxyz " << cp.dxyz() << "\n";
     descFile << "dt " << cp.dt() << "\n";
     
-    if (!mIsInterpolated)
+    if (!description()->isInterpolated())
     {
         // E fields
         for (nn = 0; nn < 3; nn++)
-        if (mWhichE[nn])
+        if (description()->whichE()[nn])
         {
             descFile << "field e" << char('x' + nn) << " "
                 << eFieldPosition(nn) << " 0.0 \n";
@@ -266,7 +269,7 @@ writeDescriptionFile(const VoxelizedPartition & vp,
         
         // H fields
         for (nn = 0; nn < 3; nn++)
-        if (mWhichH[nn])
+        if (description()->whichH()[nn])
         {
             descFile << "field h" << char('x' + nn) << " "
                 << hFieldPosition(nn) << " 0.5\n";
@@ -276,18 +279,18 @@ writeDescriptionFile(const VoxelizedPartition & vp,
     {
         // E fields
         for (nn = 0; nn < 3; nn++)
-        if (mWhichE[nn])
+        if (description()->whichE()[nn])
         {
             descFile << "field e" << char('x' + nn) << " "
-                << mInterpolationPoint << " 0.0 \n";
+                << description()->interpolationPoint() << " 0.0 \n";
         }
         
         // H fields
         for (nn = 0; nn < 3; nn++)
-        if (mWhichH[nn])
+        if (description()->whichH()[nn])
         {
             descFile << "field h" << char('x' + nn) << " "
-                << mInterpolationPoint << " 0.5 \n";
+                << description()->interpolationPoint() << " 0.5 \n";
         }
     }
     
@@ -314,4 +317,5 @@ writeDescriptionFile(const VoxelizedPartition & vp,
     
     descFile.close();
 }
+*/
 

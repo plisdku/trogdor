@@ -307,7 +307,11 @@ template<int FIELD_DIRECTION_PML>
 void ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
 calcE(int fieldDirection)
 {
-    // grab the right set of runlines (for Ex, Ey, or Ez)
+    std::vector<RunlineT> & runlines =
+        ModularUpdateEquation_Runline<RunlineT>::runlinesE(fieldDirection);
+    if (runlines.size() == 0)
+        return;
+    
     const int STRIDE = 1;
     
     const int dir0 = fieldDirection;
@@ -330,8 +334,6 @@ calcE(int fieldDirection)
     //mPML.initLocalE(pmlData);
     mCurrent.initLocalE(currentData, dir0);
     
-    std::vector<RunlineT> & runlines =
-        ModularUpdateEquation_Runline<RunlineT>::runlinesE(fieldDirection);
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
@@ -384,7 +386,11 @@ template<int FIELD_DIRECTION_PML>
 void ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
 calcH(int fieldDirection)
 {
-    // grab the right set of runlines (for Ex, Ey, or Ez)
+    std::vector<RunlineT> & runlines =
+        ModularUpdateEquation_Runline<RunlineT>::runlinesH(fieldDirection);
+    if (runlines.size() == 0)
+        return;
+    
     const int STRIDE = 1;
     
     const int dir0 = fieldDirection;
@@ -402,8 +408,6 @@ calcH(int fieldDirection)
     //mPML.initLocalH(pmlData);
     mCurrent.initLocalH(currentData, dir0);
     
-    std::vector<RunlineT> & runlines =
-        ModularUpdateEquation_Runline<RunlineT>::runlinesH(fieldDirection);
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);

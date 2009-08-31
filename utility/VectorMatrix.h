@@ -288,5 +288,5 @@ std::istream & operator>>(std::istream & str, Matrix3<T> & rhs);
 
 
 
-#include "VectorMatrix.hpp"
+#include "VectorMatrix-inl.h"
 #endif

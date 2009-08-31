@@ -14,8 +14,10 @@ StreamTee.h
 TimeWrapper.cpp
 TimeWrapper.h
 VectorMatrix.h
+VectorMatrix-inl.h
 XMLExtras.h
 geometry.h
+geometry-inl.h
 )
 
 include_directories(

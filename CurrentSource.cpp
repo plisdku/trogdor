@@ -9,6 +9,7 @@
 
 #include "CurrentSource.h"
 #include "VoxelizedPartition.h"
+#include "CalculationPartition.h"
 
 #include "YeeUtilities.h"
 using namespace std;
@@ -139,7 +140,7 @@ makeCurrentSource(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
 {
 //    LOG << "Making one!\n";
-    return Pointer<CurrentSource>(new CurrentSource(mDescription,
+    return Pointer<CurrentSource>(new CurrentSource(mDescription, cp,
         mCurrentBuffers));
 }
 
@@ -200,8 +201,10 @@ numCellsH(int fieldDirection) const
 
 CurrentSource::
 CurrentSource(const CurrentSourceDescPtr & description,
+    const CalculationPartition & cp,
     const vector<Pointer<CurrentBuffers> > & currentBuffers) :
     mDescription(description),
+    mFieldInput(description, cp.dt()),
     mCurrentBuffers(currentBuffers)
 {
 //    LOG << "Constructor!\n";
@@ -343,6 +346,7 @@ void CurrentSource::
 prepareJ(long timestep)
 {
 //    LOG << "Somehow loading J into all the right BufferedCurrents.\n";
+    
 }
 
 void CurrentSource::

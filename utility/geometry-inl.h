@@ -9,8 +9,6 @@
 
 #ifdef _GEOMETRY_
 
-#include "geometry.h"
-
 #pragma mark *** Rect ***
 
 
