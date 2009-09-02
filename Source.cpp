@@ -113,7 +113,7 @@ doSourceE(CalculationPartition & cp, int timestep)
     
     mFieldInput.startHalfTimestep(timestep);
     
-    LOG << "Sourcing " << mFieldInput.getField(0) << "\n";
+    //LOG << "Sourcing " << mFieldInput.getField(0) << "\n";
     
     for (int dir = 0; dir < 3; dir++)
     {
@@ -175,10 +175,9 @@ doSourceH(CalculationPartition & cp, int timestep)
                     for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
                     {
                         val = mFieldInput.getField(dir);
-                        LOG << "val " << val << " at " << xx << " dir "
-                            << dir << "\n";
+//                        LOG << "val " << val << " at " << xx << " dir "
+//                            << dir << "\n";
                         lattice.setH(dir, xx, val);
-                        mFieldInput.stepToNextValue();
                     }
                 }
                 else
@@ -188,10 +187,9 @@ doSourceH(CalculationPartition & cp, int timestep)
                     for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
                     {
                         val = mFieldInput.getField(dir);
-                        LOG << "val " << val << " at " << xx << " dir "
-                            << dir << "\n";
+//                        LOG << "val " << val << " at " << xx << " dir "
+//                            << dir << "\n";
                         lattice.setH(dir, xx, lattice.getH(dir, xx) + val);
-                        mFieldInput.stepToNextValue();
                     }
                 }
             }

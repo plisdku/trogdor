@@ -44,11 +44,14 @@ class RunlineEncoder;
 class VoxelizedPartition
 {
 public:
-	VoxelizedPartition(GridDescPtr gridDesc, 
+	VoxelizedPartition(SimulationDescPtr simDesc,
+        GridDescPtr gridDesc, 
 		const Map<GridDescPtr, Pointer<VoxelizedPartition> > & voxelizedGrids,
 		Rect3i allocRegion, Rect3i calcRegion,
         int runlineDirection );  // !
 	
+    SimulationDescPtr simulationDescription() const
+        { return mSimulationDescription; }
     GridDescPtr gridDescription() const { return mGridDescription; }
     
 	const std::vector<Vector3i> & huygensRegionSymmetries() const {
@@ -118,6 +121,8 @@ public:
     
     void writeDataRequest(const HuygensSurfaceDescPtr surf,
         const GridDescPtr gridDescription) const;
+    
+    void writeDataRequests() const;
 	
     /**
      *  Scan a run length encoder over the given rect and octant of the grid.
@@ -158,6 +163,7 @@ private:
     void createSetupCurrentSources(
         const std::vector<CurrentSourceDescPtr> & currentSources);
     
+    SimulationDescPtr mSimulationDescription;
     GridDescPtr mGridDescription;
     
 	VoxelGrid mVoxels;

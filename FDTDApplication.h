@@ -50,6 +50,7 @@ public:
     bool dumpGrid;
     bool runSim;
     char runlineDirection;
+    bool savePerformanceInfo;
 };
 
 
@@ -84,6 +85,7 @@ private:
 	
 	void voxelizeGridRecursor(
 		Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
+        SimulationDescPtr simulationDescription,
 		GridDescPtr currentGrid, Vector3i numNodes, Vector3i thisNode,
 		Rect3i partitionWallsHalf, int runlineDirection);
 	
@@ -96,6 +98,26 @@ private:
 	
 	GridDescPtr makeSourceGridDescription(GridDescPtr parentGrid,
 		HuygensSurfaceDescPtr huygensSurface, std::string srcGridName);
+    
+    /**
+     *  Write all output that depends on the grid contents but not on actual
+     *  fields and other calculation results; this includes cross-sections of
+     *  the structure (--xsections), OBJ dumps of surfaces of materials
+     *  (--geometry), ASCII dumps of all grids (--dumpgrids), and maybe more.
+     *  All of this information can be obtained without beginning to allocate
+     *  space for E & H fields etc; writing these reports happens right before
+     *  checking for the --nosim flag.
+     */
+    void writeReports(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs,
+        const SimulationPreferences & prefs);
+    
+    /**
+     *  Write Matlab m-files with descriptions of the ordering of data for
+     *  current sources and custom TFSF sources.  This happens before checking
+     *  for the --nosim flag.
+     */
+    void writeDataRequests(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs,
+        const SimulationPreferences & prefs);
     
     void trimVoxelizedGrids(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs);
     

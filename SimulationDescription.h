@@ -38,7 +38,7 @@ public:
 	void setAllPointers();
 	
 	void setDiscretization(Vector3f dxyz, float dt);
-	void setDuration(int numT);
+	void setNumTimesteps(int numT);
 	
 	const std::vector<GridDescPtr> & grids() const { return mGrids; }
 	const std::vector<MaterialDescPtr> & materials() const {
@@ -47,7 +47,7 @@ public:
     const std::string & version() const { return mVersionString; }
 	float dt() const { return m_dt; }
 	Vector3f dxyz() const { return m_dxyz; }
-	int duration() const { return mNumTimesteps; }
+	int numTimesteps() const { return mNumTimesteps; }
 	
 private:
     std::string mVersionString;

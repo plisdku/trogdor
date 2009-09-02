@@ -104,7 +104,7 @@ load(SimulationDescription & sim) const throw(Exception)
 	// Only the calls that may throw exceptions are in the try-catch block.
 	try {
 		sim.setDiscretization(Vector3f(dx,dy,dz), dt);
-		sim.setDuration(numTimesteps);
+		sim.setNumTimesteps(numTimesteps);
 	} catch (Exception & e) {
 		throw(Exception(sErr(e.what(), elem)));
 	}

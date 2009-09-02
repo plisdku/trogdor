@@ -39,8 +39,7 @@ public:
     static void write(std::string fileName, CurrentSourceDescPtr description,
         const VoxelizedPartition & vp,
         const std::vector< std::vector<Region> > & regionsJ,
-        const std::vector< std::vector<Region> > & regionsK,
-        const std::vector<Duration> & durations);
+        const std::vector< std::vector<Region> > & regionsK);
     
     /**
      *  Write the data request for a custom TFSF source.  The data request file
@@ -48,7 +47,6 @@ public:
      */
     static void write(std::string fileName, HuygensSurfaceDescPtr description,
         const VoxelizedPartition & vp);
-    
     
     /*
     IODescriptionFile(const VoxelizedPartition & vp);

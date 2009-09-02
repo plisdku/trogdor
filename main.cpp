@@ -115,6 +115,7 @@ int main (int argc, char * const argv[])
 		prefs.runSim = 0;
 	prefs.runSim = (variablesMap.count("nosim") == 0);
     prefs.runlineDirection = variablesMap["fastaxis"].as<char>();
+    prefs.savePerformanceInfo = variablesMap.count("performance");
     
     FDTDApplication& app = FDTDApplication::instance();
 	app.runNew(paramFileName, prefs);
@@ -148,6 +149,7 @@ handleArguments(int argc, char* const argv[])
 		("nodragon", "don't draw the dragon")
         ("fastaxis,f", po::value<char>()->default_value('x'),
             "axis along which memory is allocated")
+        ("performance", "save detailed performance logfile")
 		//("outputDirectory,D",
 		//	po::value<string>()->default_value(""),
 		//	"directory for simulation outputs")

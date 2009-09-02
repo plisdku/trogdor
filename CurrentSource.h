@@ -44,6 +44,12 @@ public:
         const VoxelizedPartition & vp,
         const CalculationPartition & cp) const;
     
+    /**
+     *  For writing data requests to file we need a list of the runlines as
+     *  Regions.
+     */
+    std::vector<std::vector<Region> > getRegionsJ() const;
+    std::vector<std::vector<Region> > getRegionsK() const;
     
     struct InputRunlineList
     {

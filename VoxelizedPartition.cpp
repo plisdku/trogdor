@@ -30,9 +30,10 @@ using namespace YeeUtilities;
 #pragma mark *** VoxelizedPartition ***
 
 VoxelizedPartition::
-VoxelizedPartition(GridDescPtr gridDesc, 
+VoxelizedPartition(SimulationDescPtr simDesc, GridDescPtr gridDesc, 
 	const Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	Rect3i allocRegion, Rect3i calcRegion, int runlineDirection) :
+    mSimulationDescription(simDesc),
     mGridDescription(gridDesc),
 	mVoxels(gridDesc, allocRegion),
 	mGridHalfCells(gridDesc->halfCellBounds()),
@@ -233,6 +234,39 @@ calculateRunlines()
     */
 }
 
+void VoxelizedPartition::
+writeDataRequests() const
+{
+    // 1.  Current sources
+    // 2.  Custom TFSF sources (HuygensSurfaces)
+    
+    for (int nn = 0; nn < mSetupCurrentSources.size(); nn++)
+    if (mSetupCurrentSources[nn]->description()->hasMask() ||
+        mSetupCurrentSources[nn]->description()->isSpaceVarying())
+    {
+        // if this current source will require scheduled data from a file
+        
+        ostringstream str;
+        str << "currentreq_" << nn;
+        IODescriptionFile::write(
+            str.str(),
+            mSetupCurrentSources[nn]->description(),
+            *this,
+            mSetupCurrentSources[nn]->getRegionsJ(),
+            mSetupCurrentSources[nn]->getRegionsK());
+    }
+    
+    for (int nn = 0; nn < mHuygensSurfaces.size(); nn++)
+    if (mHuygensSurfaces[nn]->description()->type() == kCustomTFSFSource)
+    {
+        ostringstream str;
+        str << "tfsfreq_" << nn;
+        IODescriptionFile::write(
+            str.str(),
+            mHuygensSurfaces[nn]->description(),
+            *this);
+    }
+}
 
 void VoxelizedPartition::
 writeDataRequest(const HuygensSurfaceDescPtr surf,

@@ -112,10 +112,142 @@ void IODescriptionFile::
 write(std::string fileName, CurrentSourceDescPtr description,
     const VoxelizedPartition & vp,
     const vector<vector<Region> > & regionsJ,
-    const vector<vector<Region> > & regionsK,
-    const vector<Duration> & outputDurations)
+    const vector<vector<Region> > & regionsK)
 {
     ofstream file(fileName.c_str());
+    
+    file << "clear A;\n";
+    file << "A.trogdorMajorVersion = '" << TROGDOR_MAJOR_VERSION << "';\n";
+    file << "A.trogdorBuildDate = '" << __DATE__ << "';\n";
+    file << "A.dxdydzdt = ["
+        << vp.gridDescription()->dxyz()[0] << " "
+        << vp.gridDescription()->dxyz()[1] << " "
+        << vp.gridDescription()->dxyz()[2] << " "
+        << vp.gridDescription()->dt()
+        << "];\n";
+    file << "A.date = '"
+        << to_iso_extended_string(second_clock::local_time()) << "';\n";
+    file << "A.runlineDirection = " << vp.lattice().runlineDirection()
+        << ";\n";
+    if (description->hasMask())
+        file << "A.maskFile = '" << description->spaceFile() << "';\n";
+    if (description->isSpaceVarying())
+        file << "A.dataFile = '" << description->spaceTimeFile() << "';\n";
+    else
+        file << "A.dataFile = '" << description->timeFile() << "';\n";
+    
+    // Tell it:
+    //  needed Jx
+    //  needed Jy
+    //  needed Jz
+    //  needed Kx
+    //  needed Ky
+    //  needed Kz
+    
+    // Then tell it the timesteps.
+    
+    const int d0 = vp.lattice().runlineDirection();
+    const int d1 = (d0+1)%3;
+    const int d2 = (d0+2)%3;
+    Rect3i r;
+    Vector3i x;
+    Vector3f dxyz = vp.gridDescription()->dxyz();
+    
+    // Print yee indices of J
+    for (int direction = 0; direction < 3; direction++)
+    if (regionsJ.at(direction).size() != 0)
+    {
+        file << "A.yeeJ" << char('x'+direction) << " = [...\n";
+        for (int nn = 0; nn < regionsJ[direction].size(); nn++)
+        {
+            r = regionsJ[direction][nn].yeeCells() -
+                vp.gridDescription()->originYee();
+            for (x[d2] = r.p1[d2]; x[d2] <= r.p2[d2]; x[d2] ++)
+            for (x[d1] = r.p1[d1]; x[d1] <= r.p2[d1]; x[d1] ++)
+            for (x[d0] = r.p1[d0]; x[d0] <= r.p2[d0]; x[d0] ++)
+                file << "\t[" << x[0] << ", " << x[1] << ", " << x[2]
+                    << "]; ...\n";
+        }
+        file << "];\n";
+    }
+    
+    // Print yee indices of K
+    for (int direction = 0; direction < 3; direction++)
+    if (regionsK.at(direction).size() != 0)
+    {
+        file << "A.yeeK" << char('x'+direction) << " = [...\n";
+        for (int nn = 0; nn < regionsK[direction].size(); nn++)
+        {
+            r = regionsK[direction][nn].yeeCells() -
+                vp.gridDescription()->originYee();
+            for (x[d2] = r.p1[d2]; x[d2] <= r.p2[d2]; x[d2] ++)
+            for (x[d1] = r.p1[d1]; x[d1] <= r.p2[d1]; x[d1] ++)
+            for (x[d0] = r.p1[d0]; x[d0] <= r.p2[d0]; x[d0] ++)
+                file << "\t[" << x[0] << ", " << x[1] << ", " << x[2]
+                    << "]; ...\n";
+        }
+        file << "];\n";
+    }
+    
+    // Print positions of J
+    for (int direction = 0; direction < 3; direction++)
+    if (regionsJ.at(direction).size() != 0)
+    {
+        file << "A.posJ" << char('x'+direction) << " = [...\n";
+        for (int nn = 0; nn < regionsJ[direction].size(); nn++)
+        {
+            r = regionsJ[direction][nn].yeeCells() -
+                vp.gridDescription()->originYee();
+            for (x[d2] = r.p1[d2]; x[d2] <= r.p2[d2]; x[d2] ++)
+            for (x[d1] = r.p1[d1]; x[d1] <= r.p2[d1]; x[d1] ++)
+            for (x[d0] = r.p1[d0]; x[d0] <= r.p2[d0]; x[d0] ++)
+            {
+                Vector3f p = Vector3f(x) + eFieldPosition(direction);
+                file << "\t[" << p[0]*dxyz[0] << ", " << p[1]*dxyz[1] << ", "
+                    << p[2]*dxyz[2] << "]; ...\n";
+            }
+        }
+        file << "];\n";
+    }
+    
+    // Print positions of K
+    for (int direction = 0; direction < 3; direction++)
+    if (regionsK.at(direction).size() != 0)
+    {
+        file << "A.posK" << char('x'+direction) << " = [...\n";
+        for (int nn = 0; nn < regionsK[direction].size(); nn++)
+        {
+            r = regionsK[direction][nn].yeeCells() -
+                vp.gridDescription()->originYee();
+            for (x[d2] = r.p1[d2]; x[d2] <= r.p2[d2]; x[d2] ++)
+            for (x[d1] = r.p1[d1]; x[d1] <= r.p2[d1]; x[d1] ++)
+            for (x[d0] = r.p1[d0]; x[d0] <= r.p2[d0]; x[d0] ++)
+            {
+                Vector3f p = Vector3f(x) + hFieldPosition(direction);
+                file << "\t[" << p[0]*dxyz[0] << ", " << p[1]*dxyz[1] << ", "
+                    << p[2]*dxyz[2] << "]; ...\n";
+            }
+        }
+        file << "];\n";
+    }
+    
+    // Print the durations
+    file << "A.timesteps = [...\n";
+    
+    for (int nn = 0; nn < description->durations().size(); nn++)
+    {
+        int first = description->durations()[nn].first();
+        int last = description->durations()[nn].last();
+        
+        if (last >= vp.simulationDescription()->numTimesteps())
+            last = vp.simulationDescription()->numTimesteps()-1;
+        
+        file << first << ":" << last << ", ...\n";
+    }
+    file << "];\n";
+    
+    file << "% end auto-generated file\n";
+    
     file.close();
 }
 

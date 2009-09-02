@@ -80,7 +80,7 @@ setDiscretization(Vector3f dxyz, float dt)
 }
 
 void SimulationDescription::
-setDuration(int numT)
+setNumTimesteps(int numT)
 {
 	if (numT < 0)
 		throw(Exception("Number of timesteps must be nonnegative"));
@@ -244,7 +244,6 @@ OutputDescription(std::string fields, std::string file,
 OutputDescription::
 ~OutputDescription()
 {
-    LOG << "Dying.\n";
 }
 
 void OutputDescription::

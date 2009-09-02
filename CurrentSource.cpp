@@ -15,7 +15,6 @@
 using namespace std;
 using namespace YeeUtilities;
 
-
 typedef pair<Paint*, SetupUpdateEquationPtr> PaintMatPair;
 
 Paint* first(PaintMatPair thePair) { return thePair.first; }
@@ -142,6 +141,32 @@ makeCurrentSource(const VoxelizedPartition & vp,
 //    LOG << "Making one!\n";
     return Pointer<CurrentSource>(new CurrentSource(mDescription, cp,
         mCurrentBuffers));
+}
+
+vector<vector<Region> > SetupCurrentSource::
+getRegionsJ() const
+{
+    vector<vector<Region> >v(3);
+    
+    for (int nn = 0; nn < mScheduledInputRegions.size(); nn++)
+    {
+        for (int mm = 0; mm < 3; mm++)
+            v[mm] = mScheduledInputRegions[nn].regionsE[mm];
+    }
+    return v;
+}
+
+vector<vector<Region> > SetupCurrentSource::
+getRegionsK() const
+{
+    vector<vector<Region> >v(3);
+    
+    for (int nn = 0; nn < mScheduledInputRegions.size(); nn++)
+    {
+        for (int mm = 0; mm < 3; mm++)
+            v[mm] = mScheduledInputRegions[nn].regionsH[mm];
+    }
+    return v;
 }
 
 SetupCurrentSource::InputRunlineList & SetupCurrentSource::
@@ -340,7 +365,6 @@ pointerMaskK(int direction, int materialID)
         return BufferPointer(mCurrentBuffers[nn]->maskK[direction]);
     throw(Exception("Cannot find buffer."));
 }
-
 
 void CurrentSource::
 prepareJ(long timestep)

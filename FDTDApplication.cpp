@@ -68,7 +68,7 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
 	
     t0 = timeInMicroseconds();
 	SimulationDescPtr sim = loadSimulation(parameterFile);
-    mNumT = sim->duration();
+    mNumT = sim->numTimesteps();
     t1 = timeInMicroseconds();
     mPerformance.setReadDescriptionMicroseconds(t1-t0);
 	
@@ -98,23 +98,8 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
 	t1 = timeInMicroseconds();
     mPerformance.setVoxelizeMicroseconds(t1-t0);
     
-    map<GridDescPtr, VoxelizedPartitionPtr>::const_iterator itr;
-    if (prefs.output2D)
-    {
-        for (itr = voxelizedGrids.begin(); itr != voxelizedGrids.end(); itr++)
-        {
-            StructuralReports::saveOutputCrossSections(*itr->first,
-                *itr->second);
-        }
-    }
-    if (prefs.output3D)
-    {
-        for (itr = voxelizedGrids.begin(); itr != voxelizedGrids.end(); itr++)
-        {
-            StructuralReports::saveMaterialBoundariesBeta(*itr->first,
-                *itr->second);
-        }
-    }
+    writeReports(voxelizedGrids, prefs);
+    writeDataRequests(voxelizedGrids, prefs);
     
     if (prefs.runSim == 0)
     {
@@ -149,17 +134,15 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     // written to the output files.  So there are N-1 updates in an N step
     // simulation.
     
-    const bool BENCHMARK_ALL = 1;
-    
     t0 = timeInMicroseconds();
-    if (BENCHMARK_ALL)
+    if (prefs.savePerformanceInfo)
         runTimed(calculationGrids);
     else
         runUntimed(calculationGrids);
     t1 = timeInMicroseconds();
     mPerformance.setRunCalculationMicroseconds(t1-t0);
     
-    if (BENCHMARK_ALL)
+    if (prefs.savePerformanceInfo)
     {
         reportPerformance(calculationGrids);
     }
@@ -229,7 +212,7 @@ voxelizeGrids(const SimulationDescPtr sim,
 		Rect3i partitionWallsHalf = Rect3i(-100000000, -100000000, -100000000, 
 			100000000, 100000000, 100000000);
 		
-		voxelizeGridRecursor(voxelizedGrids, g, numNodes, thisNode,
+		voxelizeGridRecursor(voxelizedGrids, sim, g, numNodes, thisNode,
 			partitionWallsHalf, runlineDirection);
 	}
     
@@ -250,6 +233,7 @@ voxelizeGrids(const SimulationDescPtr sim,
 
 void FDTDApplication::
 voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
+    SimulationDescPtr simulationDescription,
 	GridDescPtr currentGrid, Vector3i numNodes, Vector3i thisNode, 
 	Rect3i partitionWallsHalf, int runlineDirection )
 {
@@ -291,6 +275,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 	}
 	
 	VoxelizedPartitionPtr partition(new VoxelizedPartition(
+        simulationDescription,
 		currentGrid, voxelizedGrids, myAllocatedHalfCells, myCalcHalfCells,
         runlineDirection));
 	voxelizedGrids[currentGrid] = partition;
@@ -327,7 +312,7 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 			//LOG << "Collapsing the grid.\n";		
 			ostringstream auxGridName;
 			auxGridName << currentGrid->name() << "_autoaux_" << nn;
-			GridDescPtr gPtr = makeAuxGridDescription(collapsible,
+			GridDescPtr auxGridDescription = makeAuxGridDescription(collapsible,
 				currentGrid, surfs[nn], auxGridName.str());
 			
 			Rect3i auxPartitionWallsHalf(partitionWallsHalf);
@@ -338,8 +323,9 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 				auxPartitionWallsHalf.p1[ll] = 0;
 				auxPartitionWallsHalf.p2[ll] = 1;
 			}
-			voxelizeGridRecursor(voxelizedGrids, gPtr, numNodes, thisNode,
-				auxPartitionWallsHalf, runlineDirection);
+			voxelizeGridRecursor(voxelizedGrids, simulationDescription,
+                auxGridDescription, numNodes, thisNode, auxPartitionWallsHalf,
+                runlineDirection);
 		}
 		else if (currentGrid->numDimensions() == 1)
 		{
@@ -352,10 +338,11 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
 			// makeSourceGridDescription will decide based on the
 			// number of omitted sides whether to again make a TFSF
 			// source or to use a hard source.
-			GridDescPtr gPtr = makeSourceGridDescription(
+			GridDescPtr auxGridDescription = makeSourceGridDescription(
 				currentGrid, surfs[nn], srcGridName.str());
-			voxelizeGridRecursor(voxelizedGrids, gPtr, numNodes, thisNode,
-				partitionWallsHalf, runlineDirection);
+			voxelizeGridRecursor(voxelizedGrids, simulationDescription,
+                auxGridDescription, numNodes, thisNode, partitionWallsHalf,
+                runlineDirection);
 		}
 		else if (surfs[nn]->type() != kCustomTFSFSource)
 		{
@@ -657,6 +644,39 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	return childGrid;
 }
 
+void FDTDApplication::
+writeReports(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs,
+    const SimulationPreferences & prefs)
+{
+    map<GridDescPtr, VoxelizedPartitionPtr>::const_iterator itr;
+    if (prefs.output2D)
+    {
+        for (itr = vgs.begin(); itr != vgs.end(); itr++)
+        {
+            StructuralReports::saveOutputCrossSections(*itr->first,
+                *itr->second);
+        }
+    }
+    if (prefs.output3D)
+    {
+        for (itr = vgs.begin(); itr != vgs.end(); itr++)
+        {
+            StructuralReports::saveMaterialBoundariesBeta(*itr->first,
+                *itr->second);
+        }
+    }
+}
+
+void FDTDApplication::
+writeDataRequests(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs,
+    const SimulationPreferences & prefs)
+{
+    map<GridDescPtr, VoxelizedPartitionPtr>::const_iterator itr;
+    for (itr = vgs.begin(); itr != vgs.end(); itr++)
+    {
+        itr->second->writeDataRequests();
+    }
+}
 
 void FDTDApplication::
 trimVoxelizedGrids(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs)
@@ -681,7 +701,7 @@ makeCalculationGrids(const SimulationDescPtr sim,
     {
         CalculationPartitionPtr calcPart(
             new CalculationPartition(*itr->second,
-                sim->dxyz(), sim->dt(), sim->duration()));
+                sim->dxyz(), sim->dt(), sim->numTimesteps()));
         calcs[itr->first->name()] = calcPart;
     }
 }
