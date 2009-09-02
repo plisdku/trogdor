@@ -10,7 +10,7 @@
 #ifndef _SOURCE_
 #define _SOURCE_
 
-#include "FieldInput.h"
+#include "StreamedFieldInput.h"
 #include "SimulationDescription.h"
 
 #include <vector>
@@ -49,7 +49,7 @@ private:
     void doSourceH(CalculationPartition & cp, int timestep);
     
     SourceDescPtr mDescription;
-    FieldInput mFieldInput;
+    StreamedFieldInput mFieldInput;
     
     bool mIsSoft;
     int mCurrentDuration;

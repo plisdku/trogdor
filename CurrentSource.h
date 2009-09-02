@@ -11,7 +11,7 @@
 #define _CURRENTSOURCE_
 
 #include <vector>
-#include "FieldInput.h"
+#include "StreamedFieldInput.h"
 #include "RunlineEncoder.h"
 #include "MemoryUtilities.h"
 #include "SimulationDescription.h"
@@ -105,7 +105,7 @@ public:
     float getK(int direction) const;
 private:
     CurrentSourceDescPtr mDescription;
-    FieldInput mFieldInput;
+    BufferedFieldInput mFieldInput;
     
     std::vector<Pointer<CurrentBuffers> > mCurrentBuffers;
     

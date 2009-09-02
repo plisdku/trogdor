@@ -39,6 +39,8 @@ ${magLibDirs}
 source_group("Main Group" FILES main.cpp)
 
 add_executable( trogdor
+BufferedFieldInput.cpp
+BufferedFieldInput.h
 BulkSetupMaterials.cpp
 BulkSetupMaterials.h
 CalculationPartition.cpp
@@ -51,8 +53,6 @@ CurrentSource.cpp
 CurrentSource.h
 FDTDApplication.cpp
 FDTDApplication.h
-FieldInput.cpp
-FieldInput.h
 HuygensLink.cpp
 HuygensLink.h
 HuygensSurface.cpp
@@ -103,6 +103,8 @@ SimulationDescription.h
 SimulationDescriptionPredeclarations.h
 Source.cpp
 Source.h
+StreamedFieldInput.cpp
+StreamedFieldInput.h
 StructuralReports.cpp
 StructuralReports.h
 UpdateEquation.cpp
