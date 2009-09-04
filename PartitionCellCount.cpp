@@ -99,16 +99,11 @@ curlBufferParentPaints() const
 void PartitionCellCount::
 calcMaterialIndices(const VoxelGrid & grid, int runlineDirection )
 {
-	for (int nn = 0; nn < 8; nn++)
+	for (int octant = 0; octant < 8; octant++)
 	{
-		Vector3i offset = halfCellOffset(nn);
-		Vector3i rSize = mHalfCellBounds.size() + Vector3i(1,1,1);
-		Vector3i o = mHalfCellBounds.p1;
-		
-		Vector3i start = mHalfCellBounds.p1;
-		for (int ss = 0; ss < 3; ss++)
-		if (start[ss]%2 != offset[ss]%2)
-			start[ss] += 1;
+		Vector3i rSize = mHalfCellBounds.num();
+		Vector3i origin = mHalfCellBounds.p1;
+		Vector3i start = yeeToHalf(halfToYee(mHalfCellBounds.p1), octant);
 		
 		//LOG << "Calculating from " << start << "\n";
         
@@ -121,17 +116,17 @@ calcMaterialIndices(const VoxelGrid & grid, int runlineDirection )
         for (x[d1] = start[d1]; x[d1] <= mHalfCellBounds.p2[d1]; x[d1] += 2)
         for (x[d0] = start[d0]; x[d0] <= mHalfCellBounds.p2[d0]; x[d0] += 2)
         {
-			int linearIndex = (x[0]-o[0]) + (x[1]-o[1])*rSize[0] +
-				(x[2]-o[2])*rSize[0]*rSize[1];
+			int linearIndex = (x[0]-origin[0]) + (x[1]-origin[1])*rSize[0] +
+				(x[2]-origin[2])*rSize[0]*rSize[1];
 			
 			assert(linearIndex >= 0 &&
 				linearIndex < mMaterialIndexHalfCells.size());
 			
 			Paint* p =  grid(x[0],x[1],x[2])->withoutCurlBuffers();
 			
-			if (mNumCells[nn].count(p) == 0)
+			if (mNumCells[octant].count(p) == 0)
 			{
-				mNumCells[nn][p] = 1;
+				mNumCells[octant][p] = 1;
 				mMaterialIndexHalfCells[linearIndex] = 0;
 				//LOG << "Starting material " << hex << p << dec << "\n";
 				//LOGMORE << "at " << ii << " " << jj << " " << kk << ", "
@@ -139,8 +134,8 @@ calcMaterialIndices(const VoxelGrid & grid, int runlineDirection )
 			}
 			else
 			{
-				mMaterialIndexHalfCells[linearIndex] = mNumCells[nn][p];
-				mNumCells[nn][p]++;
+				mMaterialIndexHalfCells[linearIndex] = mNumCells[octant][p];
+				mNumCells[octant][p]++;
 			}
         }
 	}

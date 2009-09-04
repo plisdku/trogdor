@@ -77,6 +77,9 @@ fullName() const
 	if (norm2(mPMLDirections) != 0)
 		str << " PML " << mPMLDirections;
     
+    if (mCurrentSource != 0L)
+        str << " current";
+    
     return str.str();
 }
 

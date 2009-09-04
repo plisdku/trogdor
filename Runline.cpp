@@ -32,8 +32,8 @@ SimpleAuxRunline(const SBMRunline & setupRunline) :
 PMLRunline::
 PMLRunline(const SBPMRunline & setupRunline)
 {
-    for (int nn = 0; nn < 3; nn++)
-        pmlIndex[nn] = setupRunline.pmlDepthIndex[nn];
+    for (int xyz = 0; xyz < 3; xyz++)
+        pmlIndex[xyz] = setupRunline.pmlDepthIndex[xyz];
 }
 
 SimpleAuxPMLRunline::

@@ -110,10 +110,10 @@ makeOutput(const VoxelizedPartition & vp, const CalculationPartition & cp)
     CurrentPolarizationOutput* o = new CurrentPolarizationOutput(
         description(), vp, cp);
     
-    for (int nn = 0; nn < 3; nn++)
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        o->setRunlinesE(nn, cp, mRunlinesE[nn]);
-        o->setRunlinesH(nn, cp, mRunlinesH[nn]);
+        o->setRunlinesE(xyz, cp, mRunlinesE[xyz]);
+        o->setRunlinesH(xyz, cp, mRunlinesH[xyz]);
     }
     return OutputPtr(o);
 }

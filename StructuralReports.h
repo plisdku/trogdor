@@ -23,7 +23,9 @@ public:
     
     static void saveMaterialBoundariesBeta(const GridDescription & grid,
         const VoxelizedPartition & vp);
-
+    
+    static void saveGridReports(const GridDescription & grid,
+        const VoxelizedPartition & vp);
 private:
 };
 

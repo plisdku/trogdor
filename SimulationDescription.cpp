@@ -112,6 +112,19 @@ GridDescription(string name, Vector3i numYeeCells,
 }
 
 void GridDescription::
+setGridReports(const std::vector<GridReportDescPtr> & gridReports)
+{
+    mGridReports = gridReports;
+    
+    //LOG << "Adding " << gridReports.size() << " grid reports.\n";
+    for (int nn = 0; nn < gridReports.size(); nn++)
+    {
+        if (mGridReports[nn]->regions().size() == 0)
+            mGridReports[nn]->regions().push_back(Region(yeeBounds()));
+    }
+}
+
+void GridDescription::
 setHuygensSurfaces(const vector<HuygensSurfaceDescPtr> & surfaces)
 {
 	mHuygensSurfaces = surfaces;
@@ -134,6 +147,7 @@ setHuygensSurfaces(const vector<HuygensSurfaceDescPtr> & surfaces)
 		}
 	}
 }
+
 
 void GridDescription::
 setPMLParams(const Map<Vector3i, Map<string, string> > & p)
@@ -178,8 +192,8 @@ int GridDescription::
 numDimensions() const
 {
 	int nDim = 0;
-	for (int nn = 0; nn < 3; nn++)
-	if (mNumYeeCells[nn] > 1)
+	for (int xyz = 0; xyz < 3; xyz++)
+	if (mNumYeeCells[xyz] > 1)
 		nDim += 1;
 	return nDim;
 }
@@ -314,6 +328,49 @@ MaterialOutputDescription()
 {
 }
 
+#pragma mark *** GridReport ***
+
+GridReportDescription::
+GridReportDescription() :
+    mFileName("defaultGridReport"),
+    mRegions()
+{
+    for (int nn = 0; nn < 8; nn++)
+        mOctants[nn] = 1;
+}
+
+GridReportDescription::
+GridReportDescription(string fields, string file, vector<Region> regions) :
+    mFileName(file),
+    mRegions(regions)
+{
+    SourceFields tempSrcFields(fields);
+    
+    for (int xyz = 0; xyz < 3; xyz++)
+    {
+        mOctants[octantE(xyz)] = tempSrcFields.whichE()[xyz];
+        mOctants[octantH(xyz)] = tempSrcFields.whichH()[xyz];
+    }
+}
+
+GridReportDescription::
+GridReportDescription(string file, vector<Region> regions) :
+    mFileName(file),
+    mRegions(regions)
+{
+    for (int nn = 0; nn < 8; nn++)
+        mOctants[nn] = 1;
+}
+
+bool GridReportDescription::
+usesOctant(int octant) const
+{
+    assert(octant >= 0 && octant < 8);
+    return mOctants[octant];
+}
+
+
+
 #pragma mark *** SourceFields ***
 
 SourceFields::
@@ -383,7 +440,7 @@ SourceDescription* SourceDescription::
 newTimeSource(string timeFile, SourceFields fields, bool isSoft,
     const vector<Region> & regions, const vector<Duration> & durations)
 {
-    return new SourceDescription(fields, "", timeFile, "",
+    return new SourceDescription(fields, "", timeFile, "", "",
         isSoft, regions, durations);
 }
 
@@ -391,7 +448,7 @@ SourceDescription* SourceDescription::
 newSpaceTimeSource(string spaceTimeFile, SourceFields fields, bool isSoft,
     const vector<Region> & regions, const vector<Duration> & durations)
 {
-    return new SourceDescription(fields, "", "", spaceTimeFile,
+    return new SourceDescription(fields, "", "", "", spaceTimeFile,
         isSoft, regions, durations);
 }
 
@@ -399,17 +456,18 @@ SourceDescription* SourceDescription::
 newFormulaSource(string formula, SourceFields fields, bool isSoft,
     const vector<Region> & regions, const vector<Duration> & durations)
 {
-    return new SourceDescription(fields, formula, "", "",
+    return new SourceDescription(fields, formula, "", "", "",
         isSoft, regions, durations);
 }
 
 SourceDescription::
 SourceDescription(SourceFields fields, string formula, string timeFile,
-    string spaceTimeFile, bool isSoft, const vector<Region> & regions,
+    string spaceFile, string spaceTimeFile, bool isSoft,
+    const vector<Region> & regions,
     const vector<Duration> & durations) throw(Exception) :
     mFormula(formula),
     mTimeFile(timeFile),
-    mSpaceFileDoThisLaterOkay("whatever you say, man"),
+    mSpaceFile(spaceFile),
     mSpaceTimeFile(spaceTimeFile),
     mFields(fields),
     mRegions(regions),
@@ -606,9 +664,9 @@ newTFSFTimeSource(SourceFields fields, string timeFile, Vector3i direction,
     hs2->mFields = fields;
     hs2->mTimeFile = timeFile;
     hs2->mDirection = direction;
-    for (int nn = 0; nn < 3; nn++)
-    if (direction[nn] == 0)
-        hs2->mSymmetries[nn] = 1;
+    for (int xyz = 0; xyz < 3; xyz++)
+    if (direction[xyz] == 0)
+        hs2->mSymmetries[xyz] = 1;
     hs2->mHalfCells = halfCells;
     hs2->mOmittedSides = omittedSides;
     hs2->mIsTotalField = isTF;
@@ -632,9 +690,9 @@ newTFSFFormulaSource(SourceFields fields, string formula, Vector3i direction,
     hs2->mFields = fields;
     hs2->mFormula = formula;
     hs2->mDirection = direction;
-    for (int nn = 0; nn < 3; nn++)
-    if (direction[nn] == 0)
-        hs2->mSymmetries[nn] = 1;
+    for (int xyz = 0; xyz < 3; xyz++)
+    if (direction[xyz] == 0)
+        hs2->mSymmetries[xyz] = 1;
     hs2->mDuration = Duration();
     hs2->mHalfCells = halfCells;
     hs2->mOmittedSides = omittedSides;
@@ -672,9 +730,9 @@ newLink(string sourceGrid, Rect3i fromHalfCells, Rect3i toHalfCells,
 		throw(Exception("Link from rect has some negative dimensions"));
 	if (!vec_ge(toHalfCells.size(), 0))
 		throw(Exception("Link to rect has some negative dimensions"));
-    for (int nn = 0; nn < 3; nn++)
-    if (fromHalfCells.size(nn) != toHalfCells.size(nn) &&
-            fromHalfCells.size(nn) != 1)
+    for (int xyz = 0; xyz < 3; xyz++)
+    if (fromHalfCells.size(xyz) != toHalfCells.size(xyz) &&
+            fromHalfCells.size(xyz) != 1)
         throw(Exception("All dimensions of fromYeeCells or fromHalfCells must"
             " either be the same as toYeeCells/toHalfCells or span the entire"
             " dimension of the source grid, which must be one Yee cell across"
@@ -980,13 +1038,13 @@ CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
 	
 	// All copyFrom dimensions must equal copyTo or be 0.
 	
-	for (int nn = 0; nn < 3; nn++)
-	if (mSourceRect.size(nn) != 0)
+	for (int xyz = 0; xyz < 3; xyz++)
+	if (mSourceRect.size(xyz) != 0)
 	{
-		if (mSourceRect.size(nn) != mDestRect.size(nn))
+		if (mSourceRect.size(xyz) != mDestRect.size(xyz))
 		throw(Exception("Error: copy from region must be same size as "
 			"copy to region or have size 0"));
-		if (mSourceRect.p1[nn]%2 != mDestRect.p1[nn]%2)
+		if (mSourceRect.p1[xyz]%2 != mDestRect.p1[xyz]%2)
 		throw(Exception("Error: copy from region must start on same half-cell"
 			" octant as copy to region or have size 0 (both should start on"
 			" even indices or on odd indices)"));
@@ -1012,13 +1070,13 @@ CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
 	
 	// All copyFrom dimensions must equal copyTo or be 0.
 	
-	for (int nn = 0; nn < 3; nn++)
-	if (mSourceRect.size(nn) != 0)
+	for (int xyz = 0; xyz < 3; xyz++)
+	if (mSourceRect.size(xyz) != 0)
 	{
-		if (mSourceRect.size(nn) != mDestRect.size(nn))
+		if (mSourceRect.size(xyz) != mDestRect.size(xyz))
 		throw(Exception("Error: copy from region must be same size as "
 			"copy to region or have size 0"));
-		if (mSourceRect.p1[nn]%2 != mDestRect.p1[nn]%2)
+		if (mSourceRect.p1[xyz]%2 != mDestRect.p1[xyz]%2)
 		throw(Exception("Error: copy from region must start on same half-cell"
 			" octant as copy to region or have size 0 (both should start on"
 			" even indices or on odd indices)"));

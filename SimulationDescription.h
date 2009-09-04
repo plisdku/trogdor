@@ -70,6 +70,7 @@ public:
 	// Mutators
 	void setOutputs(const std::vector<OutputDescPtr> & outputs)
         { mOutputs = outputs; }
+	void setGridReports(const std::vector<GridReportDescPtr> & gridReports);
 	void setSources(const std::vector<SourceDescPtr> & sources)
         { mSources = sources; }
     void setCurrentSources(const std::vector<CurrentSourceDescPtr> & currents)
@@ -100,6 +101,8 @@ public:
     float dt() const { return mDt; }
 	
 	const std::vector<OutputDescPtr> & outputs() const { return mOutputs; }
+    const std::vector<GridReportDescPtr> & gridReports() const
+        { return mGridReports; }
 	const std::vector<SourceDescPtr> & sources() const { return mSources; }
     const std::vector<CurrentSourceDescPtr> & currentSources() const
         { return mCurrentSources; }
@@ -124,6 +127,7 @@ private:
     Map<Vector3i, Map<std::string, std::string> > mPMLParams;
 	
 	std::vector<OutputDescPtr> mOutputs;
+    std::vector<GridReportDescPtr> mGridReports;
 	std::vector<SourceDescPtr> mSources;
     std::vector<CurrentSourceDescPtr> mCurrentSources;
     std::vector<HuygensSurfaceDescPtr> mHuygensSurfaces;
@@ -237,6 +241,24 @@ public:
 private:
 };
 
+class GridReportDescription
+{
+public:
+    GridReportDescription();
+    GridReportDescription(std::string fields, std::string file,
+        std::vector<Region> regions);
+    GridReportDescription(std::string file, std::vector<Region> regions);
+    
+    std::string fileName() const { return mFileName; }
+    std::vector<Region> regions() const { return mRegions; }
+    std::vector<Region> & regions() { return mRegions; }
+    bool usesOctant(int octant) const;
+private:
+    std::string mFileName;
+    std::vector<Region> mRegions;
+    bool mOctants[8];
+};
+
 class SourceFields
 {
 public:
@@ -268,17 +290,21 @@ public:
     static SourceDescription* newFormulaSource(std::string formula,
         SourceFields fields, bool isSoft, const std::vector<Region> & regions,
         const std::vector<Duration> & durations);
+    
     SourceDescription(SourceFields fields, std::string formula,
-        std::string timeFile, std::string spaceTimeFile,
+        std::string timeFile, std::string spaceFile, std::string spaceTimeFile,
         bool isSoft, const std::vector<Region> & regions,
         const std::vector<Duration> & durations) throw(Exception);
     
     const std::string & formula() const { return mFormula; }
     const std::string & timeFile() const { return mTimeFile; }
+    const std::string & spaceFile() const { return mSpaceFile; }
     const std::string & spaceTimeFile() const { return mSpaceTimeFile; }
     const SourceFields & sourceFields() const { return mFields; }
+    
     bool isHardSource() const { return !mIsSoft; }
     bool isSoftSource() const { return mIsSoft; }
+    bool hasMask() const { return (mSpaceFile != ""); }
     bool isSpaceVarying() const { return (mSpaceTimeFile != ""); }
     
     const std::vector<Region> & regions() const { return mRegions; }
@@ -287,7 +313,7 @@ public:
 private:
     std::string mFormula;
     std::string mTimeFile;
-    std::string mSpaceFileDoThisLaterOkay;
+    std::string mSpaceFile;
     std::string mSpaceTimeFile;
     SourceFields mFields;
     std::vector<Region> mRegions;
@@ -509,7 +535,6 @@ public:
 	
 	const std::vector<InstructionPtr> & instructions() const
 		{ return mInstructions; }
-	
 	
 private:
 	std::vector<InstructionPtr> mInstructions;

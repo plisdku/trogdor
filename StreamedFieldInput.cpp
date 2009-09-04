@@ -12,42 +12,14 @@
 
 using namespace std;
 
-/*
-    Streamed input!
-    
-    accessors:
-        field*mask at timestep (used by source & huygens surface)
-        field at timestep (used by current source)
-        mask (used by current source; provide pointer)
-    
-    time            load once per (half) timestep
-    time, mask      load once, step through mask
-    timespace       step through file
-    
-    formula         load once per (half) timestep
-    formula, mask   load once
-    
-    SO:
-    on half timestep:   load time source/evaluate formula
-    per cell:           step through mask, step 
-    
-    
-    
-    My seeming problem is that I have not one but two access models here.  So
-    maybe I should handle E/H and TFSF sources like the buffered current: give
-    a mask pointer and a mask stride, and force the user to always do the
-    plutification.  Sure! 
-*/
-
 StreamedFieldInput::
-StreamedFieldInput(SourceDescPtr sourceDescription, float dt) :
-    mIsSpaceVarying(0),
-    mPolarizationFactor(1,1,1),
-    m_dt(dt)
+StreamedFieldInput(SourceDescPtr sourceDescription) :
+    mPolarizationFactor(1,1,1)
 {
     if (sourceDescription->formula() != "")
     {
         mType = FORMULATYPE;
+        mFieldValueType = kTimeVaryingField;
         mFormula = sourceDescription->formula();
         LOGF << "Formula is " << mFormula << endl;
         
@@ -70,23 +42,27 @@ StreamedFieldInput(SourceDescPtr sourceDescription, float dt) :
     else if (sourceDescription->timeFile() != "")
     {
         mType = FILETYPE;
+        mFieldValueType = kTimeVaryingField;
         string fname = sourceDescription->timeFile();
         mFile.open(fname.c_str(), ios::binary);
         if (mFile.good())
             LOGF << "Opened binary file " << fname << ".\n";
         else
-            throw(Exception(string("Could not open binary file") + fname));
+            throw(Exception(string("Could not open binary file ") + fname));
+        
+        if (sourceDescription->hasMask())
+            loadMask(sourceDescription);
     }
     else if (sourceDescription->spaceTimeFile() != "")
     {
         mType = FILETYPE;
-        mIsSpaceVarying = 1;
+        mFieldValueType = kSpaceTimeVaryingField;
         string fname = sourceDescription->spaceTimeFile();
         mFile.open(fname.c_str(), ios::binary);
         if (mFile.good())
             LOGF << "Opened binary file " << fname << ".\n";
         else
-            throw(Exception(string("Could not open binary file") + fname));
+            throw(Exception(string("Could not open binary file ") + fname));
     }
     
     if (sourceDescription->sourceFields().usesPolarization())
@@ -103,21 +79,21 @@ StreamedFieldInput::
 }
 
 void StreamedFieldInput::
-startHalfTimestep(int timestep)
-{ 
+startHalfTimestep(int timestep, float time)
+{
     if (mType == FORMULATYPE)
     {
         mCalculator.set("n", timestep);
-        mCalculator.set("t", m_dt*timestep);
+        mCalculator.set("t", time);
         mCalculator.parse(mFormula);
         
         mCurrentValue = mCalculator.get_value();
     }
-    else if (mType == FILETYPE)
+    else //if (mType == FILETYPE)
     {
         //  Space-varying sources read from the file on calls to getField().
         //  Otherwise we can read the value here and cache it.
-        if (!mIsSpaceVarying)
+        if (mFieldValueType == kTimeVaryingField)
         {
             if (mFile.good())
                 mFile.read((char*)&mCurrentValue,
@@ -126,37 +102,107 @@ startHalfTimestep(int timestep)
                 throw(Exception("Cannot read further from file."));
         }
     }
-    else //if (mType == BUFFERFILETYPE)
-    {
-        // If space-varying
-        //  read
-    }
 }
 
 void StreamedFieldInput::
-stepToNextField()
+restartMaskPointer(int direction)
 {
-    // Save file position of start of field
-}
-
-void StreamedFieldInput::
-stepToNextFieldDirection(int direction)
-{
-    // Either scoot back to start of field or do nothing
+    mMaskIndex = 0;
 }
 
 float StreamedFieldInput::
-getField(int direction)
+getFieldE(int direction)
 {
-    return mPolarizationFactor[direction]*mCurrentValue;
+    float fieldValue;
+    if (mFieldValueType == kSpaceTimeVaryingField)
+    {
+        assert(mFile.good());
+        mFile.read((char*)&fieldValue, (std::streamsize)sizeof(float));
+    }
+    else if (mFieldValueType == kTimeVaryingField)
+    {
+        if (mHasMask)
+        {
+            assert(mMaskIndex >= 0 &&
+                mMaskIndex < mDataMaskE[direction].size());
+            fieldValue = mCurrentValue * mDataMaskE[direction][mMaskIndex];
+            mMaskIndex++;
+        }
+        else
+        {
+            fieldValue = mCurrentValue * mPolarizationFactor[direction];
+        }
+    }
+    return fieldValue;
 }
+
+float StreamedFieldInput::
+getFieldH(int direction)
+{
+    float fieldValue;
+    if (mFieldValueType == kSpaceTimeVaryingField)
+    {
+        assert(mFile.good());
+        mFile.read((char*)&fieldValue, (std::streamsize)sizeof(float));
+    }
+    else if (mFieldValueType == kTimeVaryingField)
+    {
+        if (mHasMask)
+        {
+            assert(mMaskIndex >= 0 &&
+                mMaskIndex < mDataMaskH[direction].size());
+            fieldValue = mCurrentValue * mDataMaskH[direction][mMaskIndex];
+            mMaskIndex++;
+        }
+        else
+        {
+            fieldValue = mCurrentValue * mPolarizationFactor[direction];
+        }
+    }
+    return fieldValue;
+}
+
 
 void StreamedFieldInput::
-stepToNextValue()
+loadMask(SourceDescPtr source)
 {
-    //  Generally, does nothing... hmm?
+    ifstream maskFile(source->spaceFile().c_str(), ios::binary);
+    
+    if (maskFile.good())
+        LOGF << "Opened mask file.\n";
+    else
+        throw(Exception("Could not open mask file."));
+    
+    // Determine size of mask: sum of region volumes
+    long volume = 0;
+    for (int nn = 0; nn < source->regions().size(); nn++)
+    {
+        Rect3i regionYeeCells = source->regions()[nn].yeeCells();
+        long vol = regionYeeCells.num(0)*regionYeeCells.num(1)*
+            regionYeeCells.num(2);
+        volume += vol;
+    }
+    
+    // load E masks
+    for (int xyz = 0; xyz < 3; xyz++)
+    if (source->sourceFields().whichE()[xyz] != 0)
+    {
+        mDataMaskE[xyz].resize(volume);
+        assert(maskFile.good());
+        maskFile.read((char*)&(mDataMaskE[xyz][0]),
+            (std::streamsize)volume*sizeof(float));
+    }
+    
+    // load H masks
+    for (int xyz = 0; xyz < 3; xyz++)
+    if (source->sourceFields().whichH()[xyz] != 0)
+    {
+        mDataMaskE[xyz].resize(volume);
+        assert(maskFile.good());
+        maskFile.read((char*)&(mDataMaskH[xyz][0]),
+            (std::streamsize)volume*sizeof(float));
+    }
 }
-
 
 
 /*

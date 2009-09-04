@@ -81,14 +81,14 @@ CFSRIPMLBase(Paint* parentPaint, std::vector<int> numCellsE,
 {
     assert(runlineDirection >= 0 && runlineDirection < 3);
     
-    for (int nn = 0; nn < 3; nn++)
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        setNumCellsE(nn, numCellsE[nn], parentPaint);
-        setNumCellsH(nn, numCellsH[nn], parentPaint);
+        setNumCellsE(xyz, numCellsE[xyz], parentPaint);
+        setNumCellsH(xyz, numCellsH[xyz], parentPaint);
     }
-    for (int nn = 0; nn < 6; nn++)
+    for (int xyz = 0; xyz < 6; xyz++)
     {
-        setPMLHalfCells(nn, pmlHalfCells[nn], parentPaint);
+        setPMLHalfCells(xyz, pmlHalfCells[xyz], parentPaint);
     }
     
 //    LOG << "------- " << mPMLDirection << "\n";

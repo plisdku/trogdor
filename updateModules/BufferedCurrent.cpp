@@ -18,32 +18,42 @@ BufferedCurrent(std::vector<int> numCellsE, std::vector<int> numCellsH) :
     
 }
 
+/*
+    Interestingly this thing gets its BufferPointers on a two-step bounce from
+    the BufferedFieldInput.  It's worth asking if maybe the CurrentSource should
+    provide access directly to the BufferedFieldInput... hmm.
+*/
 void BufferedCurrent::
-setCurrentSource(CurrentSource* sourceOfData, int materialID)
+setCurrentSource(CurrentSource* sourceOfData, int myMaterialID)
 {
     LOG << "Right here!\n";
     mSourceOfData = sourceOfData;
     
-    for (int direction = 0; direction < 3; direction++)
+    mHasMask = sourceOfData->description()->hasMask();
+    
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        mPointerJ[direction] = sourceOfData->pointerJ(direction, materialID);
-        mPointerK[direction] = sourceOfData->pointerK(direction, materialID);
-        if (sourceOfData->description()->hasMask())
+        if (sourceOfData->description()->sourceCurrents().whichJ()[xyz])
         {
-            mHasMask = 1;
-            mPointerMaskJ[direction] =
-                sourceOfData->pointerMaskJ(direction, materialID);
-            mPointerMaskK[direction] =
-                sourceOfData->pointerMaskK(direction, materialID);
+            mPointerJ[xyz] = sourceOfData->pointerJ(xyz, myMaterialID);
+            if (mHasMask)
+                mPointerMaskJ[xyz] = sourceOfData->pointerMaskJ(
+                    xyz, myMaterialID);
         }
-        else
-            mHasMask = 0;
+        
+        if (sourceOfData->description()->sourceCurrents().whichK()[xyz])
+        {
+            mPointerK[xyz] = sourceOfData->pointerK(xyz, myMaterialID);
+            if (mHasMask)
+                mPointerMaskK[xyz] = sourceOfData->pointerMaskK(
+                    xyz, myMaterialID);
+        }
         
         LOG << "Pointers are:\n";
-        LOGMORE << mPointerJ[direction] << "\n"
-            << mPointerK[direction] << "\n"
-            << mPointerMaskJ[direction] << "\n"
-            << mPointerMaskK[direction] << "\n";
+        LOGMORE << mPointerJ[xyz] << "\n"
+            << mPointerK[xyz] << "\n"
+            << mPointerMaskJ[xyz] << "\n"
+            << mPointerMaskK[xyz] << "\n";
     }
     
     if (sourceOfData->description()->hasMask())

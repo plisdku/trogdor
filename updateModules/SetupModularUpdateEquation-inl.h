@@ -54,10 +54,10 @@ makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & c
         mDt,
         cp.lattice().runlineDirection());
     
-    for (int nn = 0; nn < 3; nn++)
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        h->setRunlinesE(nn, runlinesE(nn));
-        h->setRunlinesH(nn, runlinesH(nn));
+        h->setRunlinesE(xyz, runlinesE(xyz));
+        h->setRunlinesH(xyz, runlinesH(xyz));
     }
     
     return UpdateEquationPtr(h);
@@ -99,10 +99,10 @@ makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & c
         mDt,
         cp.lattice().runlineDirection());
     
-    for (int nn = 0; nn < 3; nn++)
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        h->setRunlinesE(nn, runlinesE(nn));
-        h->setRunlinesH(nn, runlinesH(nn));
+        h->setRunlinesE(xyz, runlinesE(xyz));
+        h->setRunlinesH(xyz, runlinesH(xyz));
     }
     
     return UpdateEquationPtr(h);

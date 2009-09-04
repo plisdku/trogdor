@@ -53,6 +53,12 @@ Vector3<T> Rect<T>::size() const
 }
 
 template<typename T>
+T Rect<T>::volume() const
+{
+    return size(0)*size(1)*size(2);
+}
+
+template<typename T>
 T Rect<T>::num(unsigned int dim) const
 {
 	return p2[dim] - p1[dim] + 1;
@@ -63,6 +69,13 @@ Vector3<T> Rect<T>::num() const
 {
 	return p2 - p1 + 1;
 }
+
+template<typename T>
+T Rect<T>::count() const
+{
+    return num(0)*num(1)*num(2);
+}
+
 
 template<typename T>
 bool Rect<T>::encloses(const Rect<T> & inRect) const

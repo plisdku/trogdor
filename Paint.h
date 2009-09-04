@@ -95,7 +95,7 @@ private:
 	// Cached parent paints (can be self-referential)
 	Paint* mBasePaint;				// as painted, without *any* overlays
 	Paint* mBaseUpdatePaint;		// as painted but includes current sources
-	
+    
 	PaintType mType;
 	Vector3i mPMLDirections;
     std::vector<const NeighborBuffer*> mCurlBuffers;

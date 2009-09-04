@@ -36,9 +36,26 @@ public:
 	T size(unsigned int dim) const;
 	Vector3<T> size() const;
     
+    /**
+     *  Return the signed volume of this rectangle.  The volume is the product
+     *  of size() in each dimension.  If p1 and p2 represent the corners of
+     *  the rectangle then this is the volume (for instance if this rectangle
+     *  is floating-point-valued).  If p1 and p2 are inclusive indices of cells
+     *  at corners, consider using count() instead.
+     */
+    T volume() const;
+    
     // num is calculated as p2-p1+1 (so, "inclusive" size suitable for ints)
     T num(unsigned int dim) const;
     Vector3<T> num() const;
+    
+    /**
+     *  Return the signed volume of this rectangle.  The volume is the product
+     *  of num() in each dimension.  If p1 and p2 are inclusive indices of cells
+     *  at corners, this will return the total number of cells in the rectangle.
+     *  If p1 and p2 represent corners, consider using volume() instead.
+     */
+    T count() const;
 	
 	bool
 	encloses(const Rect<T> & inRect) const;

@@ -287,15 +287,15 @@ paintCopyFrom(const GridDescription & gridDesc,
 {
 	Rect3i copyFrom = instruction.sourceHalfRect();
 	Rect3i copyTo = instruction.destHalfRect();
-	int nn;
+	int xyz;
 	
-	for (nn = 0; nn < 3; nn++)
-	if (copyFrom.size(nn) != 0)
+	for (xyz = 0; xyz < 3; xyz++)
+	if (copyFrom.size(xyz) != 0)
 	{
-		if (copyFrom.size(nn) != copyTo.size(nn))
+		if (copyFrom.size(xyz) != copyTo.size(xyz))
 		throw(Exception("Error: copy from region must be same size as "
 			"copy to region or have size 0"));
-		if (copyFrom.p1[nn]%2 != copyTo.p1[nn]%2)
+		if (copyFrom.p1[xyz]%2 != copyTo.p1[xyz]%2)
 		throw(Exception("Error: copy from region must start on same half-cell"
 			" octant as copy to region or have size 0 (both should start on"
 			" even indices or on odd indices)"));

@@ -12,24 +12,17 @@
 #include "CalculationPartition.h"
 
 #include "YeeUtilities.h"
+
+#include <numeric>
 using namespace std;
 using namespace YeeUtilities;
-
-typedef pair<Paint*, SetupUpdateEquationPtr> PaintMatPair;
-
-Paint* first(PaintMatPair thePair) { return thePair.first; }
-SetupUpdateEquationPtr second(PaintMatPair thePair) { return thePair.second; }
-
-bool notThisSource(Paint* p, CurrentSourceDescPtr c)
-{ return !p->hasCurrentSource() || p->currentSource() != c; }
-
-bool comparePaintByMaterial(const Paint* lhs, const Paint* rhs)
-{ return lhs->bulkMaterial()->id() < rhs->bulkMaterial()->id(); }
 
 SetupCurrentSource::
 SetupCurrentSource(const CurrentSourceDescPtr & description,
     const VoxelizedPartition & vp) :
-    mDescription(description)
+    mDescription(description),
+    mRectsJ(3),
+    mRectsK(3)
 {
     LOG << "Constructor!\n";
     
@@ -40,41 +33,124 @@ SetupCurrentSource(const CurrentSourceDescPtr & description,
 SetupCurrentSource::
 ~SetupCurrentSource()
 {
-//    LOG << "Destructor!\n";
 }
 
+/**
+ *  This helper class is used to help set up the ordered list locations of
+ *  evaluation of Jx, Jy, Jz, Kx, Ky and Kz.  It breaks on new rows and new
+ *  materials, and saves runlines for each update equation that uses the given
+ *  current source.
+ */
+class CurrentSourceEncoder : public RunlineEncoder
+{
+public:
+    CurrentSourceEncoder(CurrentSourceDescPtr thisSrc) :
+        mSrc(thisSrc)
+    {
+        setLineContinuity(kLineContinuityRequired);
+        setMaterialContinuity(kMaterialContinuityRequired);
+    }
+    
+    virtual void endRunline(const VoxelizedPartition & vp,
+        const Vector3i & lastHalfCell)
+    {
+        if (vp.voxels()(lastHalfCell)->currentSource() == mSrc)
+        {
+            Rect3i newRect(halfToYee(Rect3i(firstHalfCell(), lastHalfCell)));
+            Paint* p = vp.voxels()(lastHalfCell)->withoutCurlBuffers();
+            mRects[p].push_back(newRect);
+            mPaints.insert(p);
+        }
+    }
+    
+    const Map<Paint*, vector<Rect3i> > & rects() const { return mRects; }
+    const set<Paint*> & paints() const { return mPaints; }
+private:
+    CurrentSourceDescPtr mSrc;
+    Map<Paint*, vector<Rect3i> > mRects;
+    set<Paint*> mPaints;
+};
+
+
+// Called by the constructor.
 void SetupCurrentSource::
 initInputRunlines(const VoxelizedPartition & vp)
 {
-    // Make a list ("paints") of all known Paint* which have "description" as a
-    // current source.
-    vector<Paint*> paints;
-    set<Paint*> allPaints = vp.indices().curlBufferParentPaints();
-    copy(allPaints.begin(), allPaints.end(), back_inserter(paints));
-    paints.erase(remove_if(paints.begin(), paints.end(),
-        bind2nd(ptr_fun(notThisSource), mDescription)), paints.end());
-    sort(paints.begin(), paints.end(), &comparePaintByMaterial);
-    // with better data structures this would be "sort(parentPaints.values())".
+    set<Paint*> allPaints;
+    Map<Paint*, vector<Rect3i> > rectsJ[3]; // bulk material ID -> runlines
+    Map<Paint*, vector<Rect3i> > rectsK[3];
     
-    // Create run length encoders for all of these paints.  These encoders will
-    // let us schedule the input for rapid I/O.
-    mScheduledInputRegions.resize(paints.size());
-    vector<Pointer<RLE> > encoders(paints.size());
-    map<Paint*, RunlineEncoder*> encoderMap;
-    
-    for (int nn = 0; nn < paints.size(); nn++)
+    // Run length encode the current source.
+    for (int oct = 1; oct < 7; oct++)
     {
-        mScheduledInputRegions[nn].material = vp.setupMaterials()[paints[nn]];
-        encoders[nn] = Pointer<RLE>(new RLE(mScheduledInputRegions[nn]));
-        encoderMap[paints[nn]] = encoders[nn];
+        CurrentSourceEncoder encoder(mDescription);
+        vp.runLengthEncode(encoder, halfToYee(vp.calcHalfCells(), oct), oct);
+        
+        if (isE(oct))
+            rectsJ[xyz(oct)] = encoder.rects();
+        else
+            rectsK[xyz(oct)] = encoder.rects();
+        
+        const set<Paint*> & s = encoder.paints();
+        allPaints.insert(s.begin(), s.end());
     }
-    for (int oct = 1; oct < 7; oct++) // iterates over E and H octants (all six)
-        vp.runLengthEncode(encoderMap, halfToYee(vp.calcHalfCells(), oct), oct);
+    
+    // Iterate over allPaints, which establishes the order in the file
+    // and the order in the big buffer.
+    //
+    // Three bits o' member data to write:
+    //  1.  mMaterialIDs, the list (in order!) of which material reads from
+    //      the buffer in which order.
+    //  2.  mRectsJ and mRectsK, which follow the same ordering but don't 
+    //      need to reveal which material is in which rect.  This data is only
+    //      needed if Trogdor writes a data request, which is an ordered list
+    //      of positions to provide field values at.
+    //  3.  mNumCellsJ and mNumCellsK, which are ordered the same way as the
+    //      material IDs, and just say how much of the current buffer belongs
+    //      to each material.
+    // I write all of these data in one loop since they all need to be in the
+    // same order (thus a float in an external file is guaranteed to be read
+    // into the correct update equation). The order is established by iteration
+    // over the set of Paints, so it could be anything.
+    mMaterialIDs.clear();
+    int nn = 0;
+    
+    mNumCellsJ.resize(allPaints.size());
+    mNumCellsK.resize(allPaints.size());
+    for (set<Paint*>::const_iterator paint = allPaints.begin();
+        paint != allPaints.end();
+        paint++)
+    {
+        // (1) above: set the ordering of materials in the current buffer.
+        mMaterialIDs.push_back(vp.setupMaterials()[*paint]->id());
+        
+        for (int xyz = 0; xyz < 3; xyz++)
+        {
+            // (2) above: specify order of current storage in memory
+            copy(rectsJ[xyz][*paint].begin(), rectsJ[xyz][*paint].end(),
+                back_inserter(mRectsJ[xyz]));
+            copy(rectsK[xyz][*paint].begin(), rectsK[xyz][*paint].end(),
+                back_inserter(mRectsK[xyz]));
+            
+            // (3) above: calculate size of buffer for each update equation
+            vector<long> numJ, numK;
+            transform(rectsJ[xyz][*paint].begin(), rectsJ[xyz][*paint].end(),
+                back_inserter(numJ), mem_fun_ref(&Rect3i::count));
+            transform(rectsK[xyz][*paint].begin(), rectsK[xyz][*paint].end(),
+                back_inserter(numK), mem_fun_ref(&Rect3i::count));
+            
+            mNumCellsJ.at(nn)[xyz] = accumulate(numJ.begin(), numJ.end(), 0);
+            mNumCellsK.at(nn)[xyz] = accumulate(numK.begin(), numK.end(), 0);
+        }
+        nn++;
+    }
 }
 
+// Called by the constructor.
 void SetupCurrentSource::
 initBuffers()
 {
+    /*
     mCurrentBuffers.resize(mScheduledInputRegions.size());
     for (int nn = 0; nn < mScheduledInputRegions.size(); nn++)
     {
@@ -83,7 +159,7 @@ initBuffers()
         CurrentBuffers & cb = *mCurrentBuffers[nn];
         
         cb.material = irl.material;
-        LOG << "Material is " << hex << cb.material << dec << endl;
+        //LOG << "Material is " << hex << cb.material << dec << endl;
         for (int direction = 0; direction < 3; direction++)
         {
             // J and K buffers
@@ -132,110 +208,44 @@ initBuffers()
             }
         } // for x, y, z
     } // foreach material (essentially)
+    */
 }
 
 Pointer<CurrentSource> SetupCurrentSource::
 makeCurrentSource(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
 {
-//    LOG << "Making one!\n";
-    return Pointer<CurrentSource>(new CurrentSource(mDescription, cp,
-        mCurrentBuffers));
+    return Pointer<CurrentSource>(new CurrentSource(mDescription,
+        mMaterialIDs, mNumCellsJ, mNumCellsK));
 }
-
-vector<vector<Region> > SetupCurrentSource::
-getRegionsJ() const
-{
-    vector<vector<Region> >v(3);
-    
-    for (int nn = 0; nn < mScheduledInputRegions.size(); nn++)
-    {
-        for (int mm = 0; mm < 3; mm++)
-            v[mm] = mScheduledInputRegions[nn].regionsE[mm];
-    }
-    return v;
-}
-
-vector<vector<Region> > SetupCurrentSource::
-getRegionsK() const
-{
-    vector<vector<Region> >v(3);
-    
-    for (int nn = 0; nn < mScheduledInputRegions.size(); nn++)
-    {
-        for (int mm = 0; mm < 3; mm++)
-            v[mm] = mScheduledInputRegions[nn].regionsH[mm];
-    }
-    return v;
-}
-
-SetupCurrentSource::InputRunlineList & SetupCurrentSource::
-inputRunlineList(SetupUpdateEquation* material)
-{
-    for (int nn = 0; nn < mScheduledInputRegions.size(); nn++)
-    if (mScheduledInputRegions[nn].material == material)
-        return mScheduledInputRegions[nn];
-    throw(Exception("Can't find input runline list."));
-}
-
-SetupCurrentSource::RLE::
-RLE(InputRunlineList & runlines) :
-    mRunlines(runlines)
-{
-    setLineContinuity(kLineContinuityRequired);
-    setMaterialContinuity(kMaterialContinuityRequired);
-}
-
-void SetupCurrentSource::RLE::
-endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
-{
-    Region newRunline(halfToYee(Rect3i(firstHalfCell(), lastHalfCell)));
-    
-    if (isE(octant(lastHalfCell)))
-        mRunlines.regionsE[xyz(octant(lastHalfCell))].push_back(newRunline);
-    else
-        mRunlines.regionsH[xyz(octant(lastHalfCell))].push_back(newRunline);
-    
-    LOG << "Ending runline: " << newRunline.yeeCells() << endl;
-}
-
-long SetupCurrentSource::InputRunlineList::
-numCellsE(int fieldDirection) const
-{
-    long numCells = 0;
-    for (int nn = 0; nn < regionsE[fieldDirection].size(); nn++)
-    {
-        Vector3i sizeOfRegion = regionsE[fieldDirection][nn].yeeCells().num();
-        numCells += sizeOfRegion[0]*sizeOfRegion[1]*sizeOfRegion[2];
-    }
-    return numCells;
-}
-
-long SetupCurrentSource::InputRunlineList::
-numCellsH(int fieldDirection) const
-{
-    long numCells = 0;
-    for (int nn = 0; nn < regionsH[fieldDirection].size(); nn++)
-    {
-        Vector3i sizeOfRegion = regionsH[fieldDirection][nn].yeeCells().num();
-        numCells += sizeOfRegion[0]*sizeOfRegion[1]*sizeOfRegion[2];
-    }
-    return numCells;
-}
-
 
 CurrentSource::
 CurrentSource(const CurrentSourceDescPtr & description,
-    const CalculationPartition & cp,
-    const vector<Pointer<CurrentBuffers> > & currentBuffers) :
+    const vector<int> & materialIDs, const vector<Vector3i> & numCellsJ,
+    const vector<Vector3i> & numCellsK) :
     mDescription(description),
-    mFieldInput(description, cp.dt()),
-    mCurrentBuffers(currentBuffers)
+    mFieldInput(description),
+    mMaterialIDs(materialIDs)
 {
-//    LOG << "Constructor!\n";
-    mMaterialIDs.resize(currentBuffers.size());
-    for (int nn = 0; nn < currentBuffers.size(); nn++)
-        mMaterialIDs[nn] = currentBuffers[nn]->material->id();
+    // We'll allocate things later.  For now, let's make maps of offsets
+    // for each material.
+    
+    for (int xyz = 0; xyz < 3; xyz++)
+    {
+        long offset = 0;
+        
+        for (int nn = 0; nn < numCellsJ.size(); nn++)
+        {
+            mOffsetsJ[xyz][nn] = offset;
+            offset += numCellsJ[nn][xyz];
+        }
+        offset = 0;
+        for (int nn = 0; nn < numCellsK.size(); nn++)
+        {
+            mOffsetsK[xyz][nn] = offset;
+            offset += numCellsK[nn][xyz];
+        }
+    }
 }
 
 CurrentSource::
@@ -247,150 +257,41 @@ CurrentSource::
 void CurrentSource::
 allocateAuxBuffers()
 {
-    /*
-        Who gets a big ol' buffer?  No buffers for unused fields.  No masks
-        either.  For fields with no mask, there is no mask buffer.
-        
-        For separable sources, T(t)X(x), the mask X(x) is allocated to its
-        required size and the time buffer T(t) is just one float per direction.
-        
-        For nonseparable sources, T(x,t), there is no mask and the time
-        buffer is as big as it needs to be.
-        
-        This function does not do any of the work in figuring out what's what.
-        It just allocates buffers.  Furthermore it doesn't divide the buffers
-        or provide pointers into them.
-    */
-    
-    // Allocate some room
-    for (int direction = 0; direction < 3; direction++)
-    {
-        long totalCellsJ = 0;
-        long totalCellsK = 0;
-        long totalMaskCellsJ = 0;
-        long totalMaskCellsK = 0;
-        for (int nn = 0; nn < mCurrentBuffers.size(); nn++)
-        {
-            totalCellsJ += mCurrentBuffers[nn]->buffersJ[direction].length();
-            totalCellsK += mCurrentBuffers[nn]->buffersK[direction].length();
-            totalMaskCellsJ += mCurrentBuffers[nn]->maskJ[direction].length();
-            totalMaskCellsK += mCurrentBuffers[nn]->maskK[direction].length();
-        }
-        
-        if (totalCellsJ != 0)
-            mDataJ[direction].resize(totalCellsJ);
-        if (totalCellsK != 0)
-            mDataK[direction].resize(totalCellsK);
-        if (totalMaskCellsJ != 0)
-            mDataMaskJ[direction].resize(totalMaskCellsJ);
-        if (totalMaskCellsK != 0)
-            mDataMaskK[direction].resize(totalMaskCellsK);
-    }
-    
-    // Fill in the MemoryBuffers' head pointers
-    for (int direction = 0; direction < 3; direction++)
-    {
-        long offsetJ = 0;
-        long offsetK = 0;
-        long offsetMaskJ = 0;
-        long offsetMaskK = 0;
-        
-        for (int nn = 0; nn < mCurrentBuffers.size(); nn++)
-        {
-            assert(mCurrentBuffers[nn] != 0L);
-            CurrentBuffers & cb = *mCurrentBuffers[nn];
-            
-            if (cb.buffersJ[direction].length() != 0)
-            {
-                cb.buffersJ[direction].setHeadPointer(
-                    &(mDataJ[direction][0]) + offsetJ);
-                offsetJ += cb.buffersJ[direction].length();
-            }
-            if (cb.buffersK[direction].length() != 0)
-            {
-                cb.buffersK[direction].setHeadPointer(
-                    &(mDataK[direction][0]) + offsetK);
-                offsetK += cb.buffersK[direction].length();
-            }
-            if (cb.maskJ[direction].length() != 0)
-            {
-                cb.maskJ[direction].setHeadPointer(
-                    &(mDataMaskJ[direction][0]) + offsetMaskJ);
-                offsetMaskJ += cb.maskJ[direction].length();
-            }
-            if (cb.maskK[direction].length() != 0)
-            {
-                cb.maskK[direction].setHeadPointer(
-                    &(mDataMaskK[direction][0]) + offsetMaskK);
-                offsetMaskK += cb.maskK[direction].length();
-            }   
-        }
-    }
-}
-
-
-
-BufferPointer CurrentSource::
-pointerJ(int direction, int materialID)
-{
-    for (int nn = 0; nn < mMaterialIDs.size(); nn++)
-    if (mMaterialIDs[nn] == materialID)
-        return BufferPointer(mCurrentBuffers[nn]->buffersJ[direction]);
-    throw(Exception("Cannot find buffer."));
+    mFieldInput.allocate();
 }
 
 BufferPointer CurrentSource::
-pointerK(int direction, int materialID)
+pointerJ(int xyz, int materialID)
 {
-    for (int nn = 0; nn < mMaterialIDs.size(); nn++)
-    if (mMaterialIDs[nn] == materialID)
-        return BufferPointer(mCurrentBuffers[nn]->buffersK[direction]);
-    throw(Exception("Cannot find buffer."));
+    return mFieldInput.pointerE(xyz, mOffsetsJ[xyz][materialID]);
 }
 
 BufferPointer CurrentSource::
-pointerMaskJ(int direction, int materialID)
+pointerK(int xyz, int materialID)
 {
-    for (int nn = 0; nn < mMaterialIDs.size(); nn++)
-    if (mMaterialIDs[nn] == materialID)
-        return BufferPointer(mCurrentBuffers[nn]->maskJ[direction]);
-    throw(Exception("Cannot find buffer."));
+    return mFieldInput.pointerH(xyz, mOffsetsK[xyz][materialID]);
 }
 
 BufferPointer CurrentSource::
-pointerMaskK(int direction, int materialID)
+pointerMaskJ(int xyz, int materialID)
 {
-    for (int nn = 0; nn < mMaterialIDs.size(); nn++)
-    if (mMaterialIDs[nn] == materialID)
-        return BufferPointer(mCurrentBuffers[nn]->maskK[direction]);
-    throw(Exception("Cannot find buffer."));
+    return mFieldInput.pointerMaskE(xyz, mOffsetsJ[xyz][materialID]);
+}
+
+BufferPointer CurrentSource::
+pointerMaskK(int xyz, int materialID)
+{
+    return mFieldInput.pointerMaskH(xyz, mOffsetsK[xyz][materialID]);
 }
 
 void CurrentSource::
-prepareJ(long timestep)
+prepareJ(long timestep, float time)
 {
-//    LOG << "Somehow loading J into all the right BufferedCurrents.\n";
-    
+    mFieldInput.startHalfTimestep(timestep, time);
 }
 
 void CurrentSource::
-prepareK(long timestep)
+prepareK(long timestep, float time)
 {
-//    LOG << "Somehow loading K into all the right BufferedCurrents.\n";
-}
-
-
-
-float CurrentSource::
-getJ(int direction) const
-{
-    assert(direction >= 0 && direction < 3);
-    return 0.0f;
-}
-
-float CurrentSource::
-getK(int direction) const
-{
-    assert(direction >= 0 && direction < 3);
-    return 0.0f;
+    mFieldInput.startHalfTimestep(timestep, time);
 }

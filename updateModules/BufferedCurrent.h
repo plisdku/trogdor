@@ -36,7 +36,7 @@ public:
         long maskStride;
     };
     
-    void setCurrentSource(CurrentSource* source, int materialID);
+    void setCurrentSource(CurrentSource* source, int myMaterialID);
     void allocateAuxBuffers();
     
     void initLocalE(LocalDataE & data, int dir0);

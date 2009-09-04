@@ -14,6 +14,7 @@
 #include "YeeUtilities.h"
 #include "UpdateEquation.h"
 #include "ObjFile.h"
+#include "IODescriptionFile.h"
 
 #include <sstream>
 #include <vector>
@@ -349,6 +350,64 @@ saveMaterialBoundariesBeta(const GridDescription & grid,
 	
 	objFile.write(fout, 0.5);  // The scale factor 0.5 undoes half-cells.
 	fout.close();
+}
+
+
+void StructuralReports::
+saveGridReports(const GridDescription & grid, const VoxelizedPartition & vp)
+{
+    const vector<GridReportDescPtr> & reports = grid.gridReports();
+    
+    // Following VoxelGrid::operator<<, we'll establish a mapping from Paint*
+    // to unsigned ints.
+    Map<Paint*, unsigned int> code;
+    vector<string> fullNames;
+    fullNames.push_back("Empty");
+    unsigned int curInt = 1;
+    Map<Paint,PaintPtr>::const_iterator itr;
+    for (itr = Paint::palette().begin(); itr != Paint::palette().end(); itr++)
+    {
+        code[itr->second] = curInt;
+        fullNames.push_back(itr->first.fullName());
+        curInt++;
+    }
+    code[0L] = 0;
+    
+    LOGF << "Question: why doesn't this function use IODescriptionFile "
+        "to write the output spec file?\n";
+    
+    for (int nn = 0; nn < reports.size(); nn++)
+    {
+        ostringstream txtFileName;
+        txtFileName << reports[nn]->fileName() << ".txt";
+        ofstream binaryFile(reports[nn]->fileName().c_str(), ofstream::binary);
+        
+        vector<Rect3i> reportHalfCells;
+        
+        const vector<Region> & regions = reports[nn]->regions();
+        for (int mm = 0; mm < regions.size(); mm++)
+        {
+            Rect3i halfCells = yeeToHalf(regions[mm].yeeCells());
+            halfCells = clip(halfCells, vp.calcHalfCells());
+            reportHalfCells.push_back(halfCells);
+            assert(regions[mm].stride() == Vector3i(1,1,1));
+            
+            // 2.  Write block to binary file
+            Vector3i x;
+            for (x[2] = halfCells.p1[2]; x[2] <= halfCells.p2[2]; x[2]++)
+            for (x[1] = halfCells.p1[1]; x[1] <= halfCells.p2[1]; x[1]++)
+            for (x[0] = halfCells.p1[0]; x[0] <= halfCells.p2[0]; x[0]++)
+            {
+                unsigned int codeVal = code[vp.voxels()(x)];
+                binaryFile.write((char*)(&codeVal),
+                    (std::streamsize)(sizeof(codeVal)));
+            }
+        }
+        binaryFile.close();
+        
+        IODescriptionFile::write(txtFileName.str(), reports[nn], vp,
+            reportHalfCells, fullNames);
+    }
 }
 
 

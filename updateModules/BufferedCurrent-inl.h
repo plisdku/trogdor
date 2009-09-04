@@ -9,7 +9,7 @@
 
 #include "BufferedCurrent.h"
 
-const float ONE = 1.0;
+const float ONE = 1.0; // we'll access this through a pointer often.
 
 inline void BufferedCurrent::
 initLocalE(LocalDataE & data, int dir0)

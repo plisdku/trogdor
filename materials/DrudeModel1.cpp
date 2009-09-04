@@ -41,10 +41,10 @@ DrudeModel1(
     if (descrip.params().count("tauc"))
         istringstream(descrip.params()["tauc"]) >> m_tauc;
     
-    for (int nn = 0; nn < 3; nn++)
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        mCurrentBuffers[nn] = MemoryBufferPtr(new MemoryBuffer(
-            string("DrudeModel1 J")+char('x'+nn), numCellsE[nn]));
+        mCurrentBuffers[xyz] = MemoryBufferPtr(new MemoryBuffer(
+            string("DrudeModel1 J")+char('x'+xyz), numCellsE[xyz]));
     }
     
     // update constants
@@ -80,10 +80,10 @@ void DrudeModel1::
 allocateAuxBuffers()
 {
     //LOG << "Allocating currents.\n";
-    for (int nn = 0; nn < 3; nn++)
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        mCurrents[nn].resize(mCurrentBuffers[nn]->length());
-        mCurrentBuffers[nn]->setHeadPointer(&(mCurrents[nn][0]));
+        mCurrents[xyz].resize(mCurrentBuffers[xyz]->length());
+        mCurrentBuffers[xyz]->setHeadPointer(&(mCurrents[xyz][0]));
     }
 }
 /*

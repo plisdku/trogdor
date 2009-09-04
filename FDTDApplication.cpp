@@ -610,6 +610,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
             huygensSurface->sourceFields(),
 			huygensSurface->formula(),
 			huygensSurface->timeFile(),
+            "", // HuygensSurface has no spaceFile (mask)
 			"", // HuygensSurface has no spaceTimeFile (TFSFSource anyway)
             SIGNIFIESHARDSOURCE,
             regions,
@@ -651,6 +652,7 @@ writeReports(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs,
     map<GridDescPtr, VoxelizedPartitionPtr>::const_iterator itr;
     if (prefs.output2D)
     {
+        LOGF << "Reporting cross-sections\n";
         for (itr = vgs.begin(); itr != vgs.end(); itr++)
         {
             StructuralReports::saveOutputCrossSections(*itr->first,
@@ -659,11 +661,17 @@ writeReports(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs,
     }
     if (prefs.output3D)
     {
+        LOGF << "Reporting geometry\n";
         for (itr = vgs.begin(); itr != vgs.end(); itr++)
         {
             StructuralReports::saveMaterialBoundariesBeta(*itr->first,
                 *itr->second);
         }
+    }
+    
+    for (itr = vgs.begin(); itr != vgs.end(); itr++)
+    {
+        StructuralReports::saveGridReports(*itr->first, *itr->second);
     }
 }
 

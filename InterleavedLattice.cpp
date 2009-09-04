@@ -36,22 +36,22 @@ InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
     //LOG << "Rect " << halfCellBounds << " yee " << mNumYeeCells << "\n";
     
     // Cache the origins.  This saves cycles in all the accessor functions.
-    for (int nn = 0; nn < 3; nn++)
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        mOriginYeeE[nn] = halfToYee(mHalfCells, octantE(nn)).p1;
-        mOriginYeeH[nn] = halfToYee(mHalfCells, octantH(nn)).p1;
+        mOriginYeeE[xyz] = halfToYee(mHalfCells, octantE(xyz)).p1;
+        mOriginYeeH[xyz] = halfToYee(mHalfCells, octantH(xyz)).p1;
     }
     
     // Create the buffers
     int bufferSize = mNumYeeCells[0]*mNumYeeCells[1]*mNumYeeCells[2];
-    for (int nn = 0; nn < 3; nn++)
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        mBuffersE[nn] = MemoryBufferPtr(new MemoryBuffer(
-            bufferNamePrefix + " E" +char('x'+nn), bufferSize, STRIDE));
-        mBuffersH[nn] = MemoryBufferPtr(new MemoryBuffer(
-            bufferNamePrefix + " H" +char('x'+nn), bufferSize, STRIDE));
-        mOctantBuffers[octantE(nn)] = mBuffersE[nn];
-        mOctantBuffers[octantH(nn)] = mBuffersH[nn];
+        mBuffersE[xyz] = MemoryBufferPtr(new MemoryBuffer(
+            bufferNamePrefix + " E" +char('x'+xyz), bufferSize, STRIDE));
+        mBuffersH[xyz] = MemoryBufferPtr(new MemoryBuffer(
+            bufferNamePrefix + " H" +char('x'+xyz), bufferSize, STRIDE));
+        mOctantBuffers[octantE(xyz)] = mBuffersE[xyz];
+        mOctantBuffers[octantH(xyz)] = mBuffersH[xyz];
     }
     
     // For run length encoding, sometimes it'll be nice to pretend that there
@@ -73,14 +73,14 @@ InterleavedLattice(const string & bufferNamePrefix, Rect3i halfCellBounds,
     mMemStride[alloc1] = mNumYeeCells[alloc0]*mMemStride[alloc0];
     mMemStride[alloc2] = mNumYeeCells[alloc1]*mMemStride[alloc1];
     
-    for (int nn = 0; nn < 3; nn++)
-    if (mNonZeroDimensions[nn] == 0 || mNumYeeCells[nn] == 1)
-        mMemStride[nn] = 0;
+    for (int xyz = 0; xyz < 3; xyz++)
+    if (mNonZeroDimensions[xyz] == 0 || mNumYeeCells[xyz] == 1)
+        mMemStride[xyz] = 0;
     
-    for (int nn = 0; nn < 3; nn++)
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        mHeadE[nn] = 0L;
-        mHeadH[nn] = 0L;
+        mHeadE[xyz] = 0L;
+        mHeadH[xyz] = 0L;
     }
 }
 
@@ -93,26 +93,26 @@ wrap(const Vector3i & halfCell) const
     
     Vector3i wrappedHalfCell;
     
-    for (int nn = 0; nn < 3; nn++)
-    if (mNonZeroDimensions[nn] != 0)
+    for (int xyz = 0; xyz < 3; xyz++)
+    if (mNonZeroDimensions[xyz] != 0)
     {   
-        if (halfCell[nn] >= mHalfCells.p1[nn])
+        if (halfCell[xyz] >= mHalfCells.p1[xyz])
         {
-            wrappedHalfCell[nn] = mHalfCells.p1[nn] +
-                (halfCell[nn] - mHalfCells.p1[nn])%mNumHalfCells[nn];
+            wrappedHalfCell[xyz] = mHalfCells.p1[xyz] +
+                (halfCell[xyz] - mHalfCells.p1[xyz])%mNumHalfCells[xyz];
         }
         else
         {
-            wrappedHalfCell[nn] = mHalfCells.p1[nn] +
-                (mNumHalfCells[nn]-1) -
-                (mHalfCells.p1[nn]-halfCell[nn]-1)%mNumHalfCells[nn];
+            wrappedHalfCell[xyz] = mHalfCells.p1[xyz] +
+                (mNumHalfCells[xyz]-1) -
+                (mHalfCells.p1[xyz]-halfCell[xyz]-1)%mNumHalfCells[xyz];
         }
         
-        assert(wrappedHalfCell[nn] >= mHalfCells.p1[nn]);
-        assert(wrappedHalfCell[nn] <= mHalfCells.p2[nn]);
+        assert(wrappedHalfCell[xyz] >= mHalfCells.p1[xyz]);
+        assert(wrappedHalfCell[xyz] <= mHalfCells.p2[xyz]);
     }
     else
-        wrappedHalfCell[nn] = halfCell[nn]; // for null dimensions, nothing done
+        wrappedHalfCell[xyz] = halfCell[xyz]; // for null dimensions, nothing done
     
     return wrappedHalfCell;
 }
@@ -364,13 +364,13 @@ printE(std::ostream & str, int fieldDirection, float scale) const
     int dir0, dir1, dir2;
     
     dir0 = 0;
-    for (int nn = 0; nn < 3; nn++)
-    if (mNumYeeCells[nn] == 1)
-        dir0 = (nn+1)%3;
+    for (int xyz = 0; xyz < 3; xyz++)
+    if (mNumYeeCells[xyz] == 1)
+        dir0 = (xyz+1)%3;
     dir1 = (dir0+1)%3;
-    for (int nn = 1; nn < 3; nn++)
-    if (mNumYeeCells[ (dir0+nn)%3 ] != 1)
-        dir1 = (dir0+nn)%3;
+    for (int xyz = 1; xyz < 3; xyz++)
+    if (mNumYeeCells[ (dir0+xyz)%3 ] != 1)
+        dir1 = (dir0+xyz)%3;
     dir2 = 3 - (dir0 + dir1);
     
     LOG << "Axes " << dir0 << " " << dir1 << " " << dir2 << "\n";
@@ -421,13 +421,13 @@ printH(std::ostream & str, int fieldDirection, float scale) const
     int dir0, dir1, dir2;
     
     dir0 = 0;
-    for (int nn = 0; nn < 3; nn++)
-    if (mNumYeeCells[nn] == 1)
-        dir0 = (nn+1)%3;
+    for (int xyz = 0; xyz < 3; xyz++)
+    if (mNumYeeCells[xyz] == 1)
+        dir0 = (xyz+1)%3;
     dir1 = (dir0+1)%3;
-    for (int nn = 1; nn < 3; nn++)
-    if (mNumYeeCells[ (dir0+nn)%3 ] != 1)
-        dir1 = (dir0+nn)%3;
+    for (int xyz = 1; xyz < 3; xyz++)
+    if (mNumYeeCells[ (dir0+xyz)%3 ] != 1)
+        dir1 = (dir0+xyz)%3;
     dir2 = 3 - (dir0 + dir1);
     
     LOG << "Axes " << dir0 << " " << dir1 << " " << dir2 << "\n";

@@ -156,16 +156,16 @@ pmlHalfCells(Vector3i pmlDir) const
 {
 	Rect3i pml(mGridHalfCells);
 	
-	for (int nn = 0; nn < 3; nn++)
+	for (int xyz = 0; xyz < 3; xyz++)
 	{
-		if (pmlDir[nn] < 0)
-			pml.p2[nn] = mNonPMLHalfCells.p1[nn]-1;
-		else if (pmlDir[nn] > 0)
-			pml.p1[nn] = mNonPMLHalfCells.p2[nn]+1;
+		if (pmlDir[xyz] < 0)
+			pml.p2[xyz] = mNonPMLHalfCells.p1[xyz]-1;
+		else if (pmlDir[xyz] > 0)
+			pml.p1[xyz] = mNonPMLHalfCells.p2[xyz]+1;
 		else
 		{
-			pml.p1[nn] = mNonPMLHalfCells.p1[nn];
-			pml.p2[nn] = mNonPMLHalfCells.p2[nn];
+			pml.p1[xyz] = mNonPMLHalfCells.p1[xyz];
+			pml.p2[xyz] = mNonPMLHalfCells.p2[xyz];
 		}
 	}
 	return pml;
@@ -252,8 +252,8 @@ writeDataRequests() const
             str.str(),
             mSetupCurrentSources[nn]->description(),
             *this,
-            mSetupCurrentSources[nn]->getRegionsJ(),
-            mSetupCurrentSources[nn]->getRegionsK());
+            mSetupCurrentSources[nn]->getRectsJ(),
+            mSetupCurrentSources[nn]->getRectsK());
     }
     
     for (int nn = 0; nn < mHuygensSurfaces.size(); nn++)
@@ -341,7 +341,7 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     
     LOGF << "Combined symmetries are " << combinedSymmetries << endl;
     
-    for (int nn = 0; nn < 3; nn++)
+    for (int xyz = 0; xyz < 3; xyz++)
     if (combinedSymmetries[nn])
         sampleRect.p2[nn] = sampleRect.p1[nn];
     

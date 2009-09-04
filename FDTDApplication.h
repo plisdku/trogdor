@@ -120,7 +120,7 @@ private:
         const SimulationPreferences & prefs);
     
     void trimVoxelizedGrids(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs);
-    
+            
     void makeCalculationGrids(const SimulationDescPtr sim, 
         Map<std::string, CalculationPartitionPtr> & calcs,
         const Map<GridDescPtr, VoxelizedPartitionPtr> & voxParts);

@@ -111,8 +111,8 @@ long ModularUpdateEquation_Runline<RunlineClass>::
 numRunlinesE() const
 {
     long total = 0;
-    for (int direction = 0; direction < 3; direction++)
-        total += mRunlinesE[direction].size();
+    for (int xyz = 0; xyz < 3; xyz++)
+        total += mRunlinesE[xyz].size();
     return total;
 }
 
@@ -121,8 +121,8 @@ long ModularUpdateEquation_Runline<RunlineClass>::
 numRunlinesH() const
 {
     long total = 0;
-    for (int direction = 0; direction < 3; direction++)
-        total += mRunlinesH[direction].size();
+    for (int xyz = 0; xyz < 3; xyz++)
+        total += mRunlinesH[xyz].size();
     return total;
 }
 
@@ -131,9 +131,9 @@ long ModularUpdateEquation_Runline<RunlineClass>::
 numHalfCellsE() const
 {
     long total = 0;
-    for (int direction = 0; direction < 3; direction++)
-    for (int nn = 0; nn < mRunlinesE[direction].size(); nn++)
-        total += mRunlinesE[direction][nn].length;
+    for (int xyz = 0; xyz < 3; xyz++)
+    for (int nn = 0; nn < mRunlinesE[xyz].size(); nn++)
+        total += mRunlinesE[xyz][nn].length;
     return total;
 }
 
@@ -142,9 +142,9 @@ long ModularUpdateEquation_Runline<RunlineClass>::
 numHalfCellsH() const
 {
     long total = 0;
-    for (int direction = 0; direction < 3; direction++)
-    for (int nn = 0; nn < mRunlinesH[direction].size(); nn++)
-        total += mRunlinesH[direction][nn].length;
+    for (int xyz = 0; xyz < 3; xyz++)
+    for (int nn = 0; nn < mRunlinesH[xyz].size(); nn++)
+        total += mRunlinesH[xyz][nn].length;
     return total;
 }
 

@@ -35,6 +35,10 @@ private:
 	std::vector<OutputDescPtr> loadOutputs(const TiXmlElement* parent) const;
     OutputDescPtr loadAFieldOutput(const TiXmlElement* elem) const;
     
+    std::vector<GridReportDescPtr> loadGridReports(const TiXmlElement* parent)
+        const;
+    GridReportDescPtr loadAGridReport(const TiXmlElement* elem) const;
+    
     std::vector<SourceDescPtr> loadSources(const TiXmlElement* parent) const;
     SourceDescPtr loadAFieldSource(const TiXmlElement* elem) const;
     

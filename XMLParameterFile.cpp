@@ -154,12 +154,12 @@ loadGrids(const TiXmlElement* parent, const SimulationDescription & sim) const
 		{
             calcRegionHalfCells.p1 = Vector3i(1,1,1);
             calcRegionHalfCells.p2 = Vector3i(numHalfCells - Vector3i(2,2,2));
-            for (int mm = 0; mm < 3; mm++)
+            for (int xyz = 0; xyz < 3; xyz++)
             {
-                if (nonPMLHalfCells.p1[mm] == 0)
-                    calcRegionHalfCells.p1[mm] = 0;
-                if (nonPMLHalfCells.p2[mm] == numHalfCells[mm]-1)
-                    calcRegionHalfCells.p2[mm] = numHalfCells[mm]-1;
+                if (nonPMLHalfCells.p1[xyz] == 0)
+                    calcRegionHalfCells.p1[xyz] = 0;
+                if (nonPMLHalfCells.p2[xyz] == numHalfCells[xyz]-1)
+                    calcRegionHalfCells.p2[xyz] = numHalfCells[xyz]-1;
             }
 		}
         
@@ -195,6 +195,7 @@ loadGrids(const TiXmlElement* parent, const SimulationDescription & sim) const
 		// row/column information so we don't need to re-throw their
 		// exceptions.
 		gridDesc->setOutputs(loadOutputs(elem));
+        gridDesc->setGridReports(loadGridReports(elem));
 		gridDesc->setSources(loadSources(elem));
         gridDesc->setCurrentSources(loadCurrentSources(elem));
 		gridDesc->setAssembly(loadAssembly(elem, allGridNames,
@@ -403,6 +404,64 @@ loadAFieldOutput(const TiXmlElement* elem) const
     return OutputDescPtr(0L);
 }
 
+
+vector<GridReportDescPtr> XMLParameterFile::
+loadGridReports(const TiXmlElement* parent) const
+{
+	assert(parent);
+	vector<GridReportDescPtr> reports;
+	
+	const TiXmlElement* elem = parent->FirstChildElement("GridReport");
+    while (elem)
+	{
+        reports.push_back(loadAGridReport(elem));
+        elem = elem->NextSiblingElement("GridReport");
+    }
+	return reports;
+}
+
+GridReportDescPtr XMLParameterFile::
+loadAGridReport(const TiXmlElement* elem) const
+{
+    assert(elem);
+    const TiXmlElement* child;
+    string fields;
+    string fileName;
+    vector<Region> regions;
+    
+    sGetMandatoryAttribute(elem, "file", fileName);
+    
+    child = elem->FirstChildElement("Region");
+    while (child != 0L)
+    {
+        regions.push_back(loadARegion(child));
+        child = child->NextSiblingElement("Region");
+    }
+    
+    GridReportDescPtr reportPtr;
+    if (sTryGetAttribute(elem, "fields", fields))
+    {
+        cerr << "Warning: loading GridReport with specified fields, but for "
+            "now the fields will be ignored and every octant will be present in"
+            " the output file.\n";
+        try {
+            reportPtr = GridReportDescPtr(new GridReportDescription(
+                fields, fileName, regions));
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    else
+    {
+        try {
+            reportPtr = GridReportDescPtr(new GridReportDescription(
+                fileName, regions));
+        } catch (Exception & e) {
+            throw(Exception(sErr(e.what(), elem)));
+        }
+    }
+    return reportPtr;
+}
 
 vector<SourceDescPtr> XMLParameterFile::
 loadSources(const TiXmlElement* parent) const

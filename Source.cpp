@@ -16,8 +16,8 @@ SetupSource::
 SetupSource(const SourceDescPtr sourceDescription) :
     mDescription(sourceDescription)
 {
-    LOG << "HEY LOOK This does nothing, nothing at all, and can wait until"
-        " the CalculationPartition is constructed.\n";
+//    LOG << "HEY LOOK This does nothing, nothing at all, and can wait until"
+//        " the CalculationPartition is constructed.\n";
 }
 
 SetupSource::
@@ -38,7 +38,7 @@ Source(const SourceDescPtr sourceDescription,
     const VoxelizedPartition & vp,
     const CalculationPartition & cp) :
     mDescription(sourceDescription),
-    mFieldInput(sourceDescription, cp.dt()),
+    mFieldInput(sourceDescription),
     mCurrentDuration(0),
     mFields(sourceDescription->sourceFields()),
     mIsSoft(sourceDescription->isSoftSource()),
@@ -111,14 +111,13 @@ doSourceE(CalculationPartition & cp, int timestep)
     float val;
     InterleavedLattice& lattice(cp.lattice());
     
-    mFieldInput.startHalfTimestep(timestep);
+    mFieldInput.startHalfTimestep(timestep, cp.dt()*timestep);
     
-    //LOG << "Sourcing " << mFieldInput.getField(0) << "\n";
-    
-    for (int dir = 0; dir < 3; dir++)
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        mFieldInput.stepToNextFieldDirection(dir);
-        if (mFields.whichE()[dir] != 0)
+        mFieldInput.restartMaskPointer(xyz);
+        
+        if (mFields.whichE()[xyz] != 0)
         for (unsigned int rr = 0; rr < mRegions.size(); rr++)
         {
             Rect3i rect = mRegions[rr].yeeCells();
@@ -130,9 +129,8 @@ doSourceE(CalculationPartition & cp, int timestep)
                     for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                     for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
                     {
-                        val = mFieldInput.getField(dir);
-                        lattice.setE(dir, xx, val);
-                        mFieldInput.stepToNextValue();
+                        val = mFieldInput.getFieldE(xyz);
+                        lattice.setE(xyz, xx, val);
                     }
                 }
                 else
@@ -141,9 +139,8 @@ doSourceE(CalculationPartition & cp, int timestep)
                     for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                     for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
                     {
-                        val = mFieldInput.getField(dir);
-                        lattice.setE(dir, xx, lattice.getE(dir, xx) + val);
-                        mFieldInput.stepToNextValue();
+                        val = mFieldInput.getFieldE(xyz);
+                        lattice.setE(xyz, xx, lattice.getE(xyz, xx) + val);
                     }
                 }
             }
@@ -157,12 +154,13 @@ doSourceH(CalculationPartition & cp, int timestep)
     float val;
     InterleavedLattice& lattice(cp.lattice());
     
-    mFieldInput.startHalfTimestep(timestep);
+    mFieldInput.startHalfTimestep(timestep, cp.dt()*timestep);
     
-    for (int dir = 0; dir < 3; dir++)
+    for (int xyz = 0; xyz < 3; xyz++)
     {
-        mFieldInput.stepToNextFieldDirection(dir);
-        if (mFields.whichH()[dir] != 0)
+        mFieldInput.restartMaskPointer(xyz);
+        
+        if (mFields.whichE()[xyz] != 0)
         for (unsigned int rr = 0; rr < mRegions.size(); rr++)
         {
             Rect3i rect = mRegions[rr].yeeCells();
@@ -174,10 +172,8 @@ doSourceH(CalculationPartition & cp, int timestep)
                     for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                     for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
                     {
-                        val = mFieldInput.getField(dir);
-//                        LOG << "val " << val << " at " << xx << " dir "
-//                            << dir << "\n";
-                        lattice.setH(dir, xx, val);
+                        val = mFieldInput.getFieldH(xyz);
+                        lattice.setH(xyz, xx, val);
                     }
                 }
                 else
@@ -186,10 +182,8 @@ doSourceH(CalculationPartition & cp, int timestep)
                     for (xx[1] = rect.p1[1]; xx[1] <= rect.p2[1]; xx[1]++)
                     for (xx[0] = rect.p1[0]; xx[0] <= rect.p2[0]; xx[0]++)
                     {
-                        val = mFieldInput.getField(dir);
-//                        LOG << "val " << val << " at " << xx << " dir "
-//                            << dir << "\n";
-                        lattice.setH(dir, xx, lattice.getH(dir, xx) + val);
+                        val = mFieldInput.getFieldH(xyz);
+                        lattice.setH(xyz, xx, lattice.getH(xyz, xx) + val);
                     }
                 }
             }

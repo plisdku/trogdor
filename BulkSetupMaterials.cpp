@@ -105,8 +105,8 @@ printRunlines(std::ostream & out) const
 			out << rr << ": length " << runlinesE(dir)[rr]->length <<
 				" aux " << runlinesE(dir)[rr]->auxIndex <<
 				" pml depth";
-			for (int nn = 0; nn < 3; nn++)
-				out << " " << runlinesE(dir)[rr]->pmlDepthIndex[nn];
+			for (int xyz = 0; xyz < 3; xyz++)
+				out << " " << runlinesE(dir)[rr]->pmlDepthIndex[xyz];
 			//out << rr << ": length " << runlinesE(dir)[rr]->length <<
 			//	" aux " << runlinesE(dir)[rr]->auxIndex << "\n";
 			out << "\n\t" << runlinesE(dir)[rr]->f_i << "\n";
@@ -124,8 +124,8 @@ printRunlines(std::ostream & out) const
 			out << rr << ": length " << runlinesH(dir)[rr]->length <<
 				" aux " << runlinesH(dir)[rr]->auxIndex <<
 				" pml depth";
-			for (int nn = 0; nn < 3; nn++)
-				out << " " << runlinesH(dir)[rr]->pmlDepthIndex[nn];
+			for (int xyz = 0; xyz < 3; xyz++)
+				out << " " << runlinesH(dir)[rr]->pmlDepthIndex[xyz];
 			out << "\n\t" << runlinesH(dir)[rr]->f_i << "\n";
 			out << "\t" << runlinesH(dir)[rr]->f_j[0] << "\n";
 			out << "\t" << runlinesH(dir)[rr]->f_j[1] << "\n";

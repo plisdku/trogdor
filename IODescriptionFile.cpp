@@ -111,8 +111,8 @@ write(std::string fileName, OutputDescPtr description,
 void IODescriptionFile::
 write(std::string fileName, CurrentSourceDescPtr description,
     const VoxelizedPartition & vp,
-    const vector<vector<Region> > & regionsJ,
-    const vector<vector<Region> > & regionsK)
+    const vector<vector<Rect3i> > & rectsJ,
+    const vector<vector<Rect3i> > & rectsK)
 {
     ofstream file(fileName.c_str());
     
@@ -155,13 +155,12 @@ write(std::string fileName, CurrentSourceDescPtr description,
     
     // Print yee indices of J
     for (int direction = 0; direction < 3; direction++)
-    if (regionsJ.at(direction).size() != 0)
+    if (rectsJ.at(direction).size() != 0)
     {
         file << "A.yeeJ" << char('x'+direction) << " = [...\n";
-        for (int nn = 0; nn < regionsJ[direction].size(); nn++)
+        for (int nn = 0; nn < rectsJ[direction].size(); nn++)
         {
-            r = regionsJ[direction][nn].yeeCells() -
-                vp.gridDescription()->originYee();
+            r = rectsJ[direction][nn] - vp.gridDescription()->originYee();
             for (x[d2] = r.p1[d2]; x[d2] <= r.p2[d2]; x[d2] ++)
             for (x[d1] = r.p1[d1]; x[d1] <= r.p2[d1]; x[d1] ++)
             for (x[d0] = r.p1[d0]; x[d0] <= r.p2[d0]; x[d0] ++)
@@ -173,13 +172,12 @@ write(std::string fileName, CurrentSourceDescPtr description,
     
     // Print yee indices of K
     for (int direction = 0; direction < 3; direction++)
-    if (regionsK.at(direction).size() != 0)
+    if (rectsK.at(direction).size() != 0)
     {
         file << "A.yeeK" << char('x'+direction) << " = [...\n";
-        for (int nn = 0; nn < regionsK[direction].size(); nn++)
+        for (int nn = 0; nn < rectsK[direction].size(); nn++)
         {
-            r = regionsK[direction][nn].yeeCells() -
-                vp.gridDescription()->originYee();
+            r = rectsK[direction][nn] - vp.gridDescription()->originYee();
             for (x[d2] = r.p1[d2]; x[d2] <= r.p2[d2]; x[d2] ++)
             for (x[d1] = r.p1[d1]; x[d1] <= r.p2[d1]; x[d1] ++)
             for (x[d0] = r.p1[d0]; x[d0] <= r.p2[d0]; x[d0] ++)
@@ -191,13 +189,12 @@ write(std::string fileName, CurrentSourceDescPtr description,
     
     // Print positions of J
     for (int direction = 0; direction < 3; direction++)
-    if (regionsJ.at(direction).size() != 0)
+    if (rectsJ.at(direction).size() != 0)
     {
         file << "A.posJ" << char('x'+direction) << " = [...\n";
-        for (int nn = 0; nn < regionsJ[direction].size(); nn++)
+        for (int nn = 0; nn < rectsJ[direction].size(); nn++)
         {
-            r = regionsJ[direction][nn].yeeCells() -
-                vp.gridDescription()->originYee();
+            r = rectsJ[direction][nn] - vp.gridDescription()->originYee();
             for (x[d2] = r.p1[d2]; x[d2] <= r.p2[d2]; x[d2] ++)
             for (x[d1] = r.p1[d1]; x[d1] <= r.p2[d1]; x[d1] ++)
             for (x[d0] = r.p1[d0]; x[d0] <= r.p2[d0]; x[d0] ++)
@@ -212,13 +209,12 @@ write(std::string fileName, CurrentSourceDescPtr description,
     
     // Print positions of K
     for (int direction = 0; direction < 3; direction++)
-    if (regionsK.at(direction).size() != 0)
+    if (rectsK.at(direction).size() != 0)
     {
         file << "A.posK" << char('x'+direction) << " = [...\n";
-        for (int nn = 0; nn < regionsK[direction].size(); nn++)
+        for (int nn = 0; nn < rectsK[direction].size(); nn++)
         {
-            r = regionsK[direction][nn].yeeCells() -
-                vp.gridDescription()->originYee();
+            r = rectsK[direction][nn] - vp.gridDescription()->originYee();
             for (x[d2] = r.p1[d2]; x[d2] <= r.p2[d2]; x[d2] ++)
             for (x[d1] = r.p1[d1]; x[d1] <= r.p2[d1]; x[d1] ++)
             for (x[d0] = r.p1[d0]; x[d0] <= r.p2[d0]; x[d0] ++)
@@ -255,9 +251,32 @@ void IODescriptionFile::
 write(std::string fileName, HuygensSurfaceDescPtr description,
     const VoxelizedPartition & vp)
 {
+    cerr << "Warning: NOT writing request file for HuygensSurface.\n";
     ofstream file(fileName.c_str());
     file.close();
 }
+
+void IODescriptionFile::
+write(string fileName, const GridReportDescPtr description,
+    const VoxelizedPartition & vp, vector<Rect3i> halfCells,
+    vector<string> materialNames)
+{
+    ofstream file(fileName.c_str());
+    writeOutputHeader(file, vp, fileName);
+    
+    file << "\n";
+    
+    for (int nn = 0; nn < materialNames.size(); nn++)
+        file << nn << " " << materialNames[nn] << "\n";
+    
+    file << "\n";
+    
+    for (int nn = 0; nn < halfCells.size(); nn++)
+        file << "halfCells " << halfCells[nn] << "\n";
+    
+    file.close();
+}
+
 
 /*
 IODescriptionFile::

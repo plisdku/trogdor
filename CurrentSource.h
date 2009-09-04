@@ -11,7 +11,7 @@
 #define _CURRENTSOURCE_
 
 #include <vector>
-#include "StreamedFieldInput.h"
+#include "BufferedFieldInput.h"
 #include "RunlineEncoder.h"
 #include "MemoryUtilities.h"
 #include "SimulationDescription.h"
@@ -21,16 +21,12 @@ class CalculationPartition;
 class CurrentSource;
 class SetupUpdateEquation;
 
-    
-struct CurrentBuffers
-{
-    SetupUpdateEquation* material;
-    MemoryBuffer buffersJ[3];
-    MemoryBuffer buffersK[3];
-    MemoryBuffer maskJ[3];
-    MemoryBuffer maskK[3];
-};
-
+// What this stores:
+//  a list of material IDs and their sizes in Ex, Ey, Ez, Hx, Hy and Hz
+// What this delivers on request:
+//  an ordered list of regions (Ex, ..., Hz) for data requests
+// What this uses on calls to makeCurentSource():
+//  an ordered list of material IDs and the sizes of each buffer (Ex, ..., Hz)
 class SetupCurrentSource
 {
 public:
@@ -45,51 +41,101 @@ public:
         const CalculationPartition & cp) const;
     
     /**
-     *  For writing data requests to file we need a list of the runlines as
-     *  Regions.
+     *  Return an ordered list of regions to evaluate Jx, Jy and Jz in.  The
+     *  rects are all 1D strips oriented along the runline direction, so there
+     *  is no ambiguity about ordering of cells.
+     *
+     *  @returns    a vector indexed by direction: v[xyz][nn] for xyz = [0-3]
+     *              and nn from 0 to some total number N of rectangles.
      */
-    std::vector<std::vector<Region> > getRegionsJ() const;
-    std::vector<std::vector<Region> > getRegionsK() const;
+    std::vector<std::vector<Rect3i> > getRectsJ() const
+        { return mRectsJ; }
+        
+    /**
+     *  Return an ordered list of regions to evaluate Kx, Ky and Kz in.  The
+     *  rects are all 1D strips oriented along the runline direction, so there
+     *  is no ambiguity about ordering of cells.
+     *
+     *  @returns    a vector indexed by direction: v[xyz][nn] for xyz = [0-3]
+     *              and nn from 0 to some total number N of rectangles.
+     */
+    std::vector<std::vector<Rect3i> > getRectsK() const
+        { return mRectsK; }
     
-    struct InputRunlineList
-    {
-        SetupUpdateEquation* material;
-        std::vector<Region> regionsE[3];
-        std::vector<Region> regionsH[3];
-        long numCellsE(int fieldDirection) const;
-        long numCellsH(int fieldDirection) const;
-    };
+    /**
+     *  Return a list of all material IDs that update using this source.  The
+     *  ordering of the list is the internal ordering of the current buffer.
+     */
+    const std::vector<int> & materialIDs() const { return mMaterialIDs; }
     
-    InputRunlineList & inputRunlineList(SetupUpdateEquation* material);
+    /**
+     *  Return the number of buffered current components for each material.
+     *  The material IDs can be obtained from materialIDs() in the same order as
+     *  used here.
+     *
+     *  @returns    a vector sorted by the internal ordering of the current
+     *              buffer; each element of the vector contains the number of
+     *              buffered Jx, Jy and Jz components respectively.
+     */
+    const std::vector<Vector3i> & numCellsJ() const { return mNumCellsJ; }
     
-    class RLE : public RunlineEncoder
-    {
-    public:
-        RLE(InputRunlineList & runlines);
-        virtual void endRunline(const VoxelizedPartition & vp,
-            const Vector3i & lastHalfCell);
-    private:
-        InputRunlineList & mRunlines;
-    };
+    /**
+     *  Return the number of buffered current components for each material.
+     *  The material IDs can be obtained from materialIDs() in the same order as
+     *  used here.
+     *
+     *  @returns    a vector sorted by the internal ordering of the current
+     *              buffer; each element of the vector contains the number of
+     *              buffered Kx, Ky and Kz components respectively.
+     */
+    const std::vector<Vector3i> & numCellsK() const { return mNumCellsK; }
     
 private:
     void initInputRunlines(const VoxelizedPartition & vp);
     void initBuffers();
     CurrentSourceDescPtr mDescription;
     
-    std::vector<Pointer<CurrentBuffers> > mCurrentBuffers;
-    std::vector<InputRunlineList> mScheduledInputRegions;
+    std::vector<std::vector<Rect3i> > mRectsJ;
+    std::vector<std::vector<Rect3i> > mRectsK;
+    
+    std::vector<int> mMaterialIDs;
+    std::vector<Vector3i> mNumCellsJ;
+    std::vector<Vector3i> mNumCellsK;
 };
 typedef Pointer<SetupCurrentSource> SetupCurrentSourcePtr;
 
+// All we need going in is an ordered list of materials and buffer sizes.
+// The data request aspects are completely handled already.
 class CurrentSource
 {
 public:
-    CurrentSource(const CurrentSourceDescPtr & mDescription,
-        const CalculationPartition & cp,
-        const std::vector<Pointer<CurrentBuffers> > & currentBuffers);
+    /**
+     *  Create a current source object to manage loading/generation of J and K
+     *  for a particular CurrentSourceDescription.  This object is essentially a
+     *  big floating-point buffer with some information about which material
+     *  should read what parts, so the constructor input contains an ordered
+     *  list of id numbers, then corresponding lists of how many cells go into
+     *  the buffers for J and K for each material.
+     *
+     *  @param description  information from the parameter file
+     *  @param materialIDs  the list of which material reads in which order
+     *  @param numCellsJ    the amount of the buffer for each material for Jx,
+     *                      Jy and Jz; must be the same length as materialIDs
+     *  @param numCellsK    the amount of the buffer for each material for Kx,
+     *                      Ky and Kz; must be the same length as materialIDs
+     */
+    CurrentSource(const CurrentSourceDescPtr & description,
+        const std::vector<int> & materialIDs,
+        const std::vector<Vector3i> & numCellsJ,
+        const std::vector<Vector3i> & numCellsK);
     virtual ~CurrentSource();
     
+    /**
+     *  Calls mFieldInput.allocate(), which makes room for the current buffers.
+     *  Do note that a BufferedFieldInput will actually allocate and load any
+     *  mask data on construction, and the mask data takes up as much room as
+     *  the current buffers.
+     */
     void allocateAuxBuffers();
     
     CurrentSourceDescPtr description() const { return mDescription; }
@@ -98,22 +144,16 @@ public:
     BufferPointer pointerMaskJ(int direction, int materialID);
     BufferPointer pointerMaskK(int direction, int materialID);
     
-    void prepareJ(long timestep);
-    void prepareK(long timestep);
-    
-    float getJ(int direction) const;
-    float getK(int direction) const;
+    void prepareJ(long timestep, float time);
+    void prepareK(long timestep, float time);
 private:
     CurrentSourceDescPtr mDescription;
     BufferedFieldInput mFieldInput;
     
-    std::vector<Pointer<CurrentBuffers> > mCurrentBuffers;
-    
     std::vector<int> mMaterialIDs;
-    std::vector<float> mDataJ[3];
-    std::vector<float> mDataK[3];
-    std::vector<float> mDataMaskJ[3];
-    std::vector<float> mDataMaskK[3];
+    
+    Map<int, long> mOffsetsJ[3];
+    Map<int, long> mOffsetsK[3];
 };
 typedef Pointer<CurrentSource> CurrentSourcePtr;
 
