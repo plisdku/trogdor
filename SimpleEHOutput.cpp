@@ -134,10 +134,10 @@ writeE(const CalculationPartition & cp)
     
     Vector3f interpPoint = description()->interpolationPoint();
     
-    for (unsigned int rr = 0; rr < mRegions.size(); rr++)
-    {
-        for (int outDir = 0; outDir < 3; outDir++)
-        {   
+    for (int outDir = 0; outDir < 3; outDir++)
+    {   
+        for (unsigned int rr = 0; rr < mRegions.size(); rr++)
+        {
             // The regions have been counter-rotated
             Rect3i outRect = mRegions[rr].yeeCells();
             Vector3i outStride = mRegions[rr].stride();
@@ -187,9 +187,9 @@ writeH(const CalculationPartition & cp)
     
     Vector3f interpPoint = description()->interpolationPoint();
     
-    for (unsigned int rr = 0; rr < mRegions.size(); rr++)
+    for (int outDir = 0; outDir < 3; outDir++)
     {
-        for (int outDir = 0; outDir < 3; outDir++)
+        for (unsigned int rr = 0; rr < mRegions.size(); rr++)
         {
             Rect3i outRect = mRegions[rr].yeeCells();
             Vector3i outStride = mRegions[rr].stride();

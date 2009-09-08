@@ -50,6 +50,23 @@ write(std::string fileName, OutputDescPtr description,
             file << "field h" << char('x' + nn) << " "
                 << hFieldPosition(nn) << " 0.5\n";
         }
+        
+        // J fields
+        for (nn = 0; nn < 3; nn++)
+        if (description->whichJ()[nn])
+        {
+            file << "field j" << char('x' + nn) << " "
+                << eFieldPosition(nn) << " 0.0 \n";
+        }
+        
+        // K fields
+        for (nn = 0; nn < 3; nn++)
+        if (description->whichK()[nn])
+        {
+            file << "field k" << char('x' + nn) << " "
+                << hFieldPosition(nn) << " 0.5\n";
+        }
+
     }
     else
     {
@@ -67,22 +84,6 @@ write(std::string fileName, OutputDescPtr description,
         {
             file << "field h" << char('x' + nn) << " "
                 << description->interpolationPoint() << " 0.5 \n";
-        }
-        
-        // J fields
-        for (nn = 0; nn < 3; nn++)
-        if (description->whichJ()[nn])
-        {
-            file << "field j" << char('x' + nn) << " "
-                << eFieldPosition(nn) << " 0.0 \n";
-        }
-        
-        // K fields
-        for (nn = 0; nn < 3; nn++)
-        if (description->whichK()[nn])
-        {
-            file << "field k" << char('x' + nn) << " "
-                << hFieldPosition(nn) << " 0.5\n";
         }
     }
     
@@ -267,7 +268,7 @@ write(string fileName, const GridReportDescPtr description,
     file << "\n";
     
     for (int nn = 0; nn < materialNames.size(); nn++)
-        file << nn << " " << materialNames[nn] << "\n";
+        file << "material " << nn << " " << materialNames[nn] << "\n";
     
     file << "\n";
     
