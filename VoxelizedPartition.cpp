@@ -22,6 +22,7 @@
 #include "IODescriptionFile.h"
 #include "Source.h"
 
+#include <algorithm>
 #include <sstream>
 
 using namespace std;
