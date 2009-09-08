@@ -13,6 +13,7 @@
 
 #include "YeeUtilities.h"
 
+#include <algorithm>
 #include <numeric>
 using namespace std;
 using namespace YeeUtilities;
