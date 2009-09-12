@@ -81,6 +81,7 @@ StreamedFieldInput::
 void StreamedFieldInput::
 startHalfTimestep(int timestep, float time)
 {
+    LOG << "TODO: split this for E and H so it can read to the right buffer.\n";
     if (mType == FORMULATYPE)
     {
         mCalculator.set("n", timestep);
@@ -95,6 +96,9 @@ startHalfTimestep(int timestep, float time)
         //  Otherwise we can read the value here and cache it.
         if (mFieldValueType == kTimeVaryingField)
         {
+            LOG << "TODO: Read 1 value if using polarization; read N values "
+                "if not using polarization and using N fields.\n";
+            
             if (mFile.good())
                 mFile.read((char*)&mCurrentValue,
                     (std::streamsize)sizeof(float));
@@ -130,6 +134,8 @@ getFieldE(int direction)
         }
         else
         {
+            LOG << "TODO: If using polarization, use polarization.  If not,"
+                " read from the right E field buffer component.\n";
             fieldValue = mCurrentValue * mPolarizationFactor[direction];
         }
     }
@@ -156,6 +162,8 @@ getFieldH(int direction)
         }
         else
         {
+            LOG << "TODO: If using polarization, use polarization.  If not,"
+                " read from the right H field buffer component.\n";
             fieldValue = mCurrentValue * mPolarizationFactor[direction];
         }
     }

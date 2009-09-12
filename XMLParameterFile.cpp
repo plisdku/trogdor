@@ -710,7 +710,7 @@ loadTFSFSources(const TiXmlElement* parent, const set<string> & allGridNames)
             throw(Exception(sErr("TFSFSource needs either a formula or file"
                 " attribute.", elem)));
         
-		sGetMandatoryAttribute(elem, "field", field);
+		sGetMandatoryAttribute(elem, "fields", field);
         if (sTryGetAttribute(elem, "polarization", polarization))
             srcFields = SourceFields(field, polarization);
         else

@@ -113,6 +113,10 @@ private:
     static const int FORMULATYPE = 1;
     int mType;
     
+    // Buffers for time data.
+    Vector3f mCurrentValueE;
+    Vector3f mCurrentValueH;
+    
     float mCurrentValue;
     long mMaskIndex;
 };

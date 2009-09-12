@@ -429,9 +429,9 @@ tfsfSource(const TiXmlElement* old)
     // files all around with this problem.  I'll do the same thing as T4 and
     // just assume it's "electric".
     if (oldParamsAttribs.count("field"))
-        newAttribs["field"] = oldParamsAttribs["field"];
+        newAttribs["fields"] = oldParamsAttribs["field"];
     else
-        newAttribs["field"] = "electric";
+        newAttribs["fields"] = "electric";
     
     if (oldParamsAttribs.count("formula"))
         newAttribs["formula"] = oldParamsAttribs["formula"];

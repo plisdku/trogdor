@@ -69,13 +69,14 @@ BufferedFieldInput(CurrentSourceDescPtr sourceDescription)
     if (sourceDescription->sourceCurrents().usesPolarization())
     {
         assert(!sourceDescription->isSpaceVarying());
+        assert(!"Error: buffered input doesn't support polarization (?).");
 //        mPolarizationFactor =
 //            sourceDescription->sourceCurrents().polarization();
     }
     
     // Initialize memory buffers.  The total size can be found from the list of
     // regions, and is the same for all (used) J and K.  (This is a peculiarity
-    // of the current source.)
+    // of the current source; for other BufferedFieldInputs, see other ctors.)
     
     // Find total number of Yee cells.
     long numYee = 0;
@@ -163,6 +164,7 @@ pointerMaskH(int fieldDirection, long offset) const
 void BufferedFieldInput::
 startHalfTimestep(int timestep, float time)
 {
+    LOG << "TODO: Split into E and H.\n";
     if (mType == FORMULATYPE)
     {
         mCalculator.set("n", timestep);
@@ -177,6 +179,10 @@ startHalfTimestep(int timestep, float time)
         //  Otherwise we can read the value here and cache it.
         if (mFieldValueType == kTimeVaryingField)
         {
+            LOG << "TODO: read the right number of components depending on"
+                " whether it's a polarization source (never will be?).\n";
+            LOG << "Although each field is buffered separately, they may all"
+                " read out of one stream, right?\n";
             if (mFile.good())
                 mFile.read((char*)&mCurrentValue,
                     (std::streamsize)sizeof(float));
