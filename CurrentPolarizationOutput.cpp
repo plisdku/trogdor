@@ -34,6 +34,7 @@ public:
     CPRunlineEncoder()
     {
         setMaterialContinuity(kMaterialContinuityRequired);
+        setLineContinuity(kLineContinuityRequired);
     }
     
     virtual void endRunline(const VoxelizedPartition & vp,
@@ -51,6 +52,8 @@ endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
     rl.startingIndex = vp.indices()(firstHalfCell());
     rl.startingField = vp.lattice().pointer(firstHalfCell());
     rl.materialID = vp.setupMaterials()[vp.voxels()(firstHalfCell())]->id();
+    
+    LOG << "from " << firstHalfCell() << " length " << rl.length << "\n";
     
     int oct = YeeUtilities::octant(firstHalfCell());
     if (isE(oct))
