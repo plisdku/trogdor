@@ -159,8 +159,6 @@ pointerMaskH(int fieldDirection, long offset) const
     return BufferPointer(mMaskBufferH[fieldDirection], offset);
 }
 
-
-
 void BufferedFieldInput::
 startHalfTimestep(int timestep, float time)
 {

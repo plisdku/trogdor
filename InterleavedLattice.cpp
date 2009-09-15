@@ -291,14 +291,14 @@ getInterpolatedE(int direction, const Vector3f & position) const
         dy(x[1]-floor(x[1])),
         dz(x[2]-floor(x[2]));
     
-    return dx*dy*dz*getE(direction, Vector3i(ihigh, jhigh, khigh)) +
-        (1.0f-dx)*dy*dz*getE(direction, Vector3i(ilow, jhigh, khigh)) +
-        dx*(1.0f-dy)*dz*getE(direction, Vector3i(ihigh, jlow, khigh)) +
-        (1.0f-dx)*(1.0f-dy)*dz*getE(direction, Vector3i(ilow, jlow, khigh)) +
-        dx*dy*(1.0f-dz)*getE(direction, Vector3i(ihigh, jhigh, klow)) +
-        (1.0f-dx)*dy*(1.0f-dz)*getE(direction, Vector3i(ilow, jhigh, klow)) +
-        dx*(1.0f-dy)*(1.0f-dz)*getE(direction, Vector3i(ihigh, jlow, klow)) +
-        (1.0f-dx)*(1.0f-dy)*(1.0f-dz)*getE(direction, Vector3i(ilow, jlow, klow)
+    return dx*dy*dz*getWrappedE(direction, Vector3i(ihigh, jhigh, khigh)) +
+        (1.0f-dx)*dy*dz*getWrappedE(direction, Vector3i(ilow, jhigh, khigh)) +
+        dx*(1.0f-dy)*dz*getWrappedE(direction, Vector3i(ihigh, jlow, khigh)) +
+        (1.0f-dx)*(1.0f-dy)*dz*getWrappedE(direction, Vector3i(ilow, jlow, khigh)) +
+        dx*dy*(1.0f-dz)*getWrappedE(direction, Vector3i(ihigh, jhigh, klow)) +
+        (1.0f-dx)*dy*(1.0f-dz)*getWrappedE(direction, Vector3i(ilow, jhigh, klow)) +
+        dx*(1.0f-dy)*(1.0f-dz)*getWrappedE(direction, Vector3i(ihigh, jlow, klow)) +
+        (1.0f-dx)*(1.0f-dy)*(1.0f-dz)*getWrappedE(direction, Vector3i(ilow, jlow, klow)
         );
 }
 
@@ -312,14 +312,14 @@ getInterpolatedH(int direction, const Vector3f & position) const
         dy(x[1]-floor(x[1])),
         dz(x[2]-floor(x[2]));
     
-    return dx*dy*dz*getH(direction, Vector3i(ihigh, jhigh, khigh)) +
-        (1.0f-dx)*dy*dz*getH(direction, Vector3i(ilow, jhigh, khigh)) +
-        dx*(1.0f-dy)*dz*getH(direction, Vector3i(ihigh, jlow, khigh)) +
-        (1.0f-dx)*(1.0f-dy)*dz*getH(direction, Vector3i(ilow, jlow, khigh)) +
-        dx*dy*(1.0f-dz)*getH(direction, Vector3i(ihigh, jhigh, klow)) +
-        (1.0f-dx)*dy*(1.0f-dz)*getH(direction, Vector3i(ilow, jhigh, klow)) +
-        dx*(1.0f-dy)*(1.0f-dz)*getH(direction, Vector3i(ihigh, jlow, klow)) +
-        (1.0f-dx)*(1.0f-dy)*(1.0f-dz)*getH(direction, Vector3i(ilow, jlow, klow)
+    return dx*dy*dz*getWrappedH(direction, Vector3i(ihigh, jhigh, khigh)) +
+        (1.0f-dx)*dy*dz*getWrappedH(direction, Vector3i(ilow, jhigh, khigh)) +
+        dx*(1.0f-dy)*dz*getWrappedH(direction, Vector3i(ihigh, jlow, khigh)) +
+        (1.0f-dx)*(1.0f-dy)*dz*getWrappedH(direction, Vector3i(ilow, jlow, khigh)) +
+        dx*dy*(1.0f-dz)*getWrappedH(direction, Vector3i(ihigh, jhigh, klow)) +
+        (1.0f-dx)*dy*(1.0f-dz)*getWrappedH(direction, Vector3i(ilow, jhigh, klow)) +
+        dx*(1.0f-dy)*(1.0f-dz)*getWrappedH(direction, Vector3i(ihigh, jlow, klow)) +
+        (1.0f-dx)*(1.0f-dy)*(1.0f-dz)*getWrappedH(direction, Vector3i(ilow, jlow, klow)
         );
 }
 
