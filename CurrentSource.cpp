@@ -28,7 +28,6 @@ SetupCurrentSource(const CurrentSourceDescPtr & description,
     LOG << "Constructor!\n";
     
     initInputRunlines(vp);
-    initBuffers();
 }
 
 SetupCurrentSource::
@@ -147,71 +146,6 @@ initInputRunlines(const VoxelizedPartition & vp)
     }
 }
 
-// Called by the constructor.
-void SetupCurrentSource::
-initBuffers()
-{
-    /*
-    mCurrentBuffers.resize(mScheduledInputRegions.size());
-    for (int nn = 0; nn < mScheduledInputRegions.size(); nn++)
-    {
-        const InputRunlineList & irl = mScheduledInputRegions[nn];
-        mCurrentBuffers[nn] = Pointer<CurrentBuffers>(new CurrentBuffers);
-        CurrentBuffers & cb = *mCurrentBuffers[nn];
-        
-        cb.material = irl.material;
-        //LOG << "Material is " << hex << cb.material << dec << endl;
-        for (int direction = 0; direction < 3; direction++)
-        {
-            // J and K buffers
-            if (mDescription->sourceCurrents().whichJ()[direction])
-            {
-                if (mDescription->isSpaceVarying())
-                {
-                    cb.buffersJ[direction] = MemoryBuffer(string("J") +
-                        char('x'+direction), irl.numCellsE(direction));
-                }
-                else
-                {
-                    cb.buffersJ[direction] = MemoryBuffer(string("J") +
-                        char('x'+direction), 1);
-                }
-            }
-            if (mDescription->sourceCurrents().whichK()[direction])
-            {
-                if (mDescription->isSpaceVarying())
-                {
-                    cb.buffersK[direction] = MemoryBuffer(string("K") +
-                        char('x'+direction), irl.numCellsH(direction));
-                }
-                else
-                {
-                    cb.buffersK[direction] = MemoryBuffer(string("K") +
-                        char('x'+direction), 1);
-                }
-            }
-            
-            // J and K mask buffers
-            if (mDescription->hasMask())
-            {
-                if (mDescription->sourceCurrents().whichJ()[direction] &&
-                    mDescription->hasMask())
-                {
-                    cb.maskJ[direction] = MemoryBuffer(string("Mask J") +
-                        char('x'+direction), irl.numCellsE(direction));
-                }
-                if (mDescription->sourceCurrents().whichK()[direction] &&
-                    mDescription->hasMask())
-                {
-                    cb.maskK[direction] = MemoryBuffer(string("Mask K") +
-                        char('x'+direction), irl.numCellsH(direction));
-                }
-            }
-        } // for x, y, z
-    } // foreach material (essentially)
-    */
-}
-
 Pointer<CurrentSource> SetupCurrentSource::
 makeCurrentSource(const VoxelizedPartition & vp,
     const CalculationPartition & cp) const
@@ -226,7 +160,8 @@ CurrentSource(const CurrentSourceDescPtr & description,
     const vector<Vector3i> & numCellsK) :
     mDescription(description),
     mFieldInput(description),
-    mMaterialIDs(materialIDs)
+    mMaterialIDs(materialIDs),
+    mCurrentSampleInterval(0)
 {
     // We'll allocate things later.  For now, let's make maps of offsets
     // for each material.
@@ -288,11 +223,47 @@ pointerMaskK(int xyz, int materialID)
 void CurrentSource::
 prepareJ(long timestep, float time)
 {
-    mFieldInput.startHalfTimestep(timestep, time);
+    if (mCurrentSampleInterval >= mDescription->durations().size())
+    {
+        mFieldInput.zeroBuffersE();
+        return;
+    }
+    while (timestep > mDescription->durations()[mCurrentSampleInterval].last())
+    {
+        mCurrentSampleInterval++;
+        if (mCurrentSampleInterval >= mDescription->durations().size())
+        {
+            mFieldInput.zeroBuffersE();
+            return;
+        }
+    }
+    
+    if (timestep >= mDescription->durations()[mCurrentSampleInterval].first())
+        mFieldInput.startHalfTimestepE(timestep, time);
+    else
+        mFieldInput.zeroBuffersE();
 }
 
 void CurrentSource::
 prepareK(long timestep, float time)
 {
-    mFieldInput.startHalfTimestep(timestep, time);
+    if (mCurrentSampleInterval >= mDescription->durations().size())
+    {
+        mFieldInput.zeroBuffersH();
+        return;
+    }
+    while (timestep > mDescription->durations()[mCurrentSampleInterval].last())
+    {
+        mCurrentSampleInterval++;
+        if (mCurrentSampleInterval >= mDescription->durations().size())
+        {
+            mFieldInput.zeroBuffersH();
+            return;
+        }
+    }
+    
+    if (timestep >= mDescription->durations()[mCurrentSampleInterval].first())
+        mFieldInput.startHalfTimestepH(timestep, time);
+    else
+        mFieldInput.zeroBuffersH();
 }

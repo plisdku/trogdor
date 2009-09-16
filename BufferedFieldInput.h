@@ -57,7 +57,15 @@ public:
      *  @param time         the actual time in seconds (should be n*dt for E,
      *                      and (n+1/2)*dt for H)
      */
-    void startHalfTimestep(int timestep, float time);
+    void startHalfTimestepE(int timestep, float time);
+    void startHalfTimestepH(int timestep, float time);
+    
+    /**
+     *  Set the contents of the field buffers to zero.  This is useful when an
+     *  input file only provides fields for a certain number of timesteps.
+     */
+    void zeroBuffersE();
+    void zeroBuffersH();
 
 private:
     /**

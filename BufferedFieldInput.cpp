@@ -160,9 +160,8 @@ pointerMaskH(int fieldDirection, long offset) const
 }
 
 void BufferedFieldInput::
-startHalfTimestep(int timestep, float time)
+startHalfTimestepE(int timestep, float time)
 {
-    LOG << "TODO: Split into E and H.\n";
     if (mType == FORMULATYPE)
     {
         mCalculator.set("n", timestep);
@@ -187,8 +186,83 @@ startHalfTimestep(int timestep, float time)
             else
                 throw(Exception("Cannot read further from file."));
         }
+        else if (mFieldValueType == kSpaceTimeVaryingField)
+        {
+            // It should all be in order, right?  Read it in.
+            for (int fieldDirection = 0; fieldDirection < 3; fieldDirection++)
+            if (mFile.good())
+            {
+                if (mBufferE[fieldDirection].length() > 0)
+                {
+                    mFile.read((char*)mBufferE[fieldDirection].headPointer(),
+                        (std::streamsize)(mBufferE[fieldDirection].length() *
+                        sizeof(float)));
+                }
+            }
+            else
+                throw(Exception("Cannot read further from file."));
+        }
     }
 }
+void BufferedFieldInput::
+startHalfTimestepH(int timestep, float time)
+{
+    if (mType == FORMULATYPE)
+    {
+        mCalculator.set("n", timestep);
+        mCalculator.set("t", time);
+        mCalculator.parse(mFormula);
+        
+        mCurrentValue = mCalculator.get_value();
+    }
+    else //if (mType == FILETYPE)
+    {
+        //  Space-varying sources read from the file on calls to getField().
+        //  Otherwise we can read the value here and cache it.
+        if (mFieldValueType == kTimeVaryingField)
+        {
+            LOG << "TODO: read the right number of components depending on"
+                " whether it's a polarization source (never will be?).\n";
+            LOG << "Although each field is buffered separately, they may all"
+                " read out of one stream, right?\n";
+            if (mFile.good())
+                mFile.read((char*)&mCurrentValue,
+                    (std::streamsize)sizeof(float));
+            else
+                throw(Exception("Cannot read further from file."));
+        }
+        else if (mFieldValueType == kSpaceTimeVaryingField)
+        {
+            // It should all be in order, right?  Read it in.
+            for (int fieldDirection = 0; fieldDirection < 3; fieldDirection++)
+            if (mFile.good())
+            {
+                if (mBufferH[fieldDirection].length() > 0)
+                    mFile.read((char*)mBufferH[fieldDirection].headPointer(),
+                        (std::streamsize)(mBufferH[fieldDirection].length() *
+                        sizeof(float)));
+            }
+            else
+                throw(Exception("Cannot read further from file."));
+        }
+    }
+}
+
+void BufferedFieldInput::
+zeroBuffersE()
+{
+    for (int direction = 0; direction < 3; direction++)
+        fill(mDataE[direction].begin(), mDataE[direction].end(), 0.0f);
+}
+
+void BufferedFieldInput::
+zeroBuffersH()
+{
+    for (int direction = 0; direction < 3; direction++)
+        fill(mDataE[direction].begin(), mDataE[direction].end(), 0.0f);
+}
+
+
 
 void BufferedFieldInput::
 loadMask(CurrentSourceDescPtr source)

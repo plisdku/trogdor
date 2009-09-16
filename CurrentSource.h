@@ -104,8 +104,7 @@ private:
 };
 typedef Pointer<SetupCurrentSource> SetupCurrentSourcePtr;
 
-// All we need going in is an ordered list of materials and buffer sizes.
-// The data request aspects are completely handled already.
+
 class CurrentSource
 {
 public:
@@ -151,6 +150,8 @@ private:
     BufferedFieldInput mFieldInput;
     
     std::vector<int> mMaterialIDs;
+    
+    long mCurrentSampleInterval;
     
     Map<int, long> mOffsetsJ[3];
     Map<int, long> mOffsetsK[3];
