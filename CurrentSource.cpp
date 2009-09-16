@@ -172,16 +172,14 @@ CurrentSource(const CurrentSourceDescPtr & description,
         
         for (int nn = 0; nn < numCellsJ.size(); nn++)
         {
-            mOffsetsJ[xyz][nn] = offset;
+            mOffsetsJ[xyz][mMaterialIDs[nn]] = offset;
             offset += numCellsJ[nn][xyz];
-            LOG << "j " << xyz << " " << nn << ": " << mOffsetsJ[xyz][nn] << endl;
         }
         offset = 0;
         for (int nn = 0; nn < numCellsK.size(); nn++)
         {
-            mOffsetsK[xyz][nn] = offset;
+            mOffsetsK[xyz][mMaterialIDs[nn]] = offset;
             offset += numCellsK[nn][xyz];
-            LOG << "k " << xyz << " " << nn << ": " << mOffsetsK[xyz][nn] << endl;
         }
     }
 }
