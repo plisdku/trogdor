@@ -248,7 +248,7 @@ writeDataRequests() const
         // if this current source will require scheduled data from a file
         
         ostringstream str;
-        str << "currentreq_" << nn;
+        str << "currentreq_" << nn << ".m";
         IODescriptionFile::write(
             str.str(),
             mSetupCurrentSources[nn]->description(),
@@ -261,7 +261,7 @@ writeDataRequests() const
     if (mHuygensSurfaces[nn]->description()->type() == kCustomTFSFSource)
     {
         ostringstream str;
-        str << "tfsfreq_" << nn;
+        str << "tfsfreq_" << nn << ".m";
         IODescriptionFile::write(
             str.str(),
             mHuygensSurfaces[nn]->description(),
