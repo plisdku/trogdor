@@ -166,6 +166,8 @@ CurrentSource(const CurrentSourceDescPtr & description,
     // We'll allocate things later.  For now, let's make maps of offsets
     // for each material.
     
+    for (int mm = 0; mm < mMaterialIDs.size(); mm++)
+        LOG << mMaterialIDs[mm] << endl;
     for (int xyz = 0; xyz < 3; xyz++)
     {
         long offset = 0;
