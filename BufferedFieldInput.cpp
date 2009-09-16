@@ -135,6 +135,7 @@ BufferPointer BufferedFieldInput::
 pointerE(int fieldDirection, long offset) const
 {
     assert(fieldDirection >= 0 && fieldDirection < 3);
+    LOG << offset << "\n";
     return BufferPointer(mBufferE[fieldDirection], offset);
 }
 
