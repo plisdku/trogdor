@@ -162,7 +162,7 @@ write(std::string fileName, CurrentSourceDescPtr description,
         for (int nn = 0; nn < rectsJ[direction].size(); nn++)
         {
             r = rectsJ[direction][nn] - vp.gridDescription()->originYee();
-            LOG << "Requesting " << r << endl;
+            //LOG << "Requesting " << r << endl;
             for (x[d2] = r.p1[d2]; x[d2] <= r.p2[d2]; x[d2] ++)
             for (x[d1] = r.p1[d1]; x[d1] <= r.p2[d1]; x[d1] ++)
             for (x[d0] = r.p1[d0]; x[d0] <= r.p2[d0]; x[d0] ++)
