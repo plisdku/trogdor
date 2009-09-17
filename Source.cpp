@@ -111,7 +111,7 @@ doSourceE(CalculationPartition & cp, int timestep)
     float val;
     InterleavedLattice& lattice(cp.lattice());
     
-    mFieldInput.startHalfTimestep(timestep, cp.dt()*timestep);
+    mFieldInput.startHalfTimestepE(timestep, cp.dt()*timestep);
     
     for (int xyz = 0; xyz < 3; xyz++)
     {
@@ -154,7 +154,7 @@ doSourceH(CalculationPartition & cp, int timestep)
     float val;
     InterleavedLattice& lattice(cp.lattice());
     
-    mFieldInput.startHalfTimestep(timestep, cp.dt()*timestep);
+    mFieldInput.startHalfTimestepH(timestep, cp.dt()*timestep);
     
     for (int xyz = 0; xyz < 3; xyz++)
     {

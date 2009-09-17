@@ -206,13 +206,14 @@ createHuygensSurfaces(const GridDescPtr & gridDescription,
     paintFromHuygensSurfaces(*gridDescription);
 }
 
-
 void VoxelizedPartition::
 calculateRunlines()
 {
     // Make a table of runline encoders
     
     Map<Paint*, RunlineEncoder*> encoders;
+    
+    //cout << mVoxels << "\n";
     
     map<Paint*, Pointer<SetupUpdateEquation> >::iterator itr;
     for (itr = mSetupUpdateEquations.begin(); itr != mSetupUpdateEquations.end(); itr++)

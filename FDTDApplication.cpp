@@ -407,6 +407,10 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 	// If both sides are omitted, then the behavior is really quite arbitrary.
 	// This is probably a rare case; still, for this reason, I'll print a
 	// warning to the user here...
+    
+    // UPDATE: no warning printed because it prints warnings for internal
+    // and correct behavior too (arg)
+    /*
 	for (nn = 0; nn < 3; nn++)
 	if (bigDimensions[nn] != 0) // only applicable to nontrivial dimensions
 	if (omittedSides.count(cardinal(nn*2)) &&
@@ -414,6 +418,7 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
 		cerr << "Warning: Huygens surface facing sides (e.g. +x and -x) are "
 			"both omitted.  This results in arbitrary and possibly incorrect "
 			"behavior.\n";
+    */
     //LOG << "What is omitted?\n";
     //LOGMORE << omittedSides << endl;
 	
@@ -558,6 +563,9 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 	// If both sides are omitted, then the behavior is really quite arbitrary.
 	// This is probably a rare case; still, for this reason, I'll print a
 	// warning to the user here...
+    // UPDATE: no warning printed because it prints warnings for internal
+    // and correct behavior too (arg)
+    /*
 	for (nn = 0; nn < 3; nn++)
 	if (bigDimensions[nn] == 0) // only applicable to nontrivial dimensions
 	if (omittedSides.count(YeeUtilities::cardinal(nn*2)) &&
@@ -565,7 +573,7 @@ makeSourceGridDescription(GridDescPtr parentGrid,
 		cerr << "Warning: Huygens surface facing sides (e.g. +x and -x) are "
 			"both omitted.  This results in arbitrary and possibly incorrect "
 			"behavior.\n";
-	
+	*/
 	Rect3i copyFrom(huygensSurface->halfCells());
 	for (nn = 0; nn < 3; nn++)
 	if (omittedSides.count(YeeUtilities::cardinal(nn*2)))

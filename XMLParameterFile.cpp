@@ -1195,6 +1195,11 @@ loadARegion(const TiXmlElement* elem) const
     Vector3i stride;
     sGetMandatoryAttribute(elem, "yeeCells", yeeCells);
     sGetOptionalAttribute(elem, "stride", stride, Vector3i(1,1,1));
+    
+    if (!vec_ge(yeeCells.p1, 0))
+        throw(Exception("Region includes negative Yee cells"));
+    // there's no way here to check for cells that are too big.
+    
     return Region(yeeCells, stride);
 }
 

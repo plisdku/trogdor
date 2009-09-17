@@ -334,6 +334,8 @@ calcE(int fieldDirection)
     //mPML.initLocalE(pmlData);
     mCurrent.initLocalE(currentData, dir0);
     
+    //LOG << "Update id " << UpdateEquation::id() << "\n";
+    
     for (int nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);

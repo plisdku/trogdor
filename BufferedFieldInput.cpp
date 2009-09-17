@@ -198,6 +198,11 @@ startHalfTimestepE(int timestep, float time)
                     mFile.read((char*)mBufferE[fieldDirection].headPointer(),
                         (std::streamsize)(mBufferE[fieldDirection].length() *
                         sizeof(float)));
+                    
+                    for (int ll = 0; ll < mBufferE[fieldDirection].length(); ll++)
+                    {
+                        LOG << "read " << mDataE[fieldDirection][ll] << "\n";
+                    }
                 }
             }
             else

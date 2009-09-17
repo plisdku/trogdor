@@ -221,6 +221,8 @@ OutputDescription(std::string fields, std::string file,
     mDurations(vector<Duration>(1,duration))
 {
     determineWhichFields(fields);
+    if (!vec_ge(region.yeeCells().p1, 0))
+        throw(Exception("Region out of bounds"));
 }
 
 OutputDescription::
@@ -234,6 +236,10 @@ OutputDescription(std::string fields, std::string file,
     mDurations(durations)
 {
     determineWhichFields(fields);
+    
+    for (int nn = 0; nn < regions.size(); nn++)
+    if (!vec_ge(regions[nn].yeeCells().p1, 0))
+        throw(Exception("Region out of bounds"));
 }
 
 OutputDescription::
@@ -760,7 +766,7 @@ MaterialDescription(int ID, string name, string inModelName,
 	mParams(inParams),
     mPMLParams(inPMLParams)
 {
-	cerr << "Warning: MaterialDescription does not validate model name.\n";
+	//cerr << "Warning: MaterialDescription does not validate model name.\n";
     
     string errorString;
     bool validParams;
@@ -864,7 +870,7 @@ Block(Rect3i halfCellRect, string material) throw(Exception) :
 	mStyle(kHalfCellStyle),
 	mMaterialName(material)
 {
-	cerr << "Warning: minimal validation done for Block().\n";
+	//cerr << "Warning: minimal validation done for Block().\n";
 	if (!vec_ge(mFillRect.size(), 0))
 		throw(Exception("Some fill rect dimensions are negative."));
 }
@@ -876,7 +882,7 @@ Block(Rect3i yeeCellRect, FillStyle style, string material) throw(Exception) :
 	mStyle(style),
 	mMaterialName(material)
 {
-	cerr << "Warning: minimal validation done for Block().\n";
+	//cerr << "Warning: minimal validation done for Block().\n";
 	assert(mStyle != kHalfCellStyle);
 	
 	if (!vec_ge(mFillRect.size(), 0))
@@ -913,7 +919,7 @@ KeyImage(Rect3i yeeCellRect, string imageFileName, Vector3i rowDirection,
 	mImageFileName(imageFileName),
 	mKeys(keys)
 {
-	cerr << "Warning: minimal validation done for KeyImage().\n";
+	//cerr << "Warning: minimal validation done for KeyImage().\n";
 	
 	if (!vec_ge(mYeeRect.size(), 0))
 		throw(Exception("Some fill rect dimensions are negative."));
@@ -949,7 +955,7 @@ HeightMap(Rect3i yeeCellRect, FillStyle style, string material,
 	mCol(colDirection),
 	mUp(upDirection)
 {
-	cerr << "Warning: minimal validation done for HeightMap().\n";
+	//cerr << "Warning: minimal validation done for HeightMap().\n";
 	
 	assert(style != kHalfCellStyle); // HeightMap uses one pixel per cell
 	
@@ -982,7 +988,7 @@ Ellipsoid(Rect3i halfCellRect, string material) throw(Exception) :
 	mStyle(kHalfCellStyle),
 	mMaterialName(material)
 {
-	cerr << "Warning: minimal validation done for Ellipsoid().\n";
+	//cerr << "Warning: minimal validation done for Ellipsoid().\n";
 	if (!vec_ge(mFillRect.size(), 0))
 		throw(Exception("Some fill rect dimensions are negative"));
 }
@@ -995,7 +1001,7 @@ Ellipsoid(Rect3i yeeCellRect, FillStyle style, string material)
 	mStyle(style),
 	mMaterialName(material)
 {
-	cerr << "Warning: minimal validation done for Ellipsoid().\n";
+	//cerr << "Warning: minimal validation done for Ellipsoid().\n";
 	assert(mStyle != kHalfCellStyle);
 	if (!vec_ge(mFillRect.size(), 0))
 		throw(Exception("Some fill rect dimensions are negative"));
@@ -1029,7 +1035,7 @@ CopyFrom(Rect3i halfCellSourceRegion, Rect3i halfCellDestRegion,
 	mDestRect(halfCellDestRegion),
 	mGridName(gridName)
 {
-	cerr << "Warning: minimal validation done for CopyFrom().\n";
+	//cerr << "Warning: minimal validation done for CopyFrom().\n";
 	// Easy validation: no inside-out rects
 	if (!vec_ge(mSourceRect.size(), 0))
 		throw(Exception("Some source rect dimensions are negative"));

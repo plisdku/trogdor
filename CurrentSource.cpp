@@ -60,6 +60,9 @@ public:
             Paint* p = vp.voxels()(lastHalfCell)->withoutCurlBuffers();
             mRects[p].push_back(newRect);
             mPaints.insert(p);
+            
+            LOG << "Encoded mat " << p->fullName() << " rect " << newRect
+                << "\n";
         }
     }
     
@@ -87,7 +90,17 @@ initInputRunlines(const VoxelizedPartition & vp)
         vp.runLengthEncode(encoder, halfToYee(vp.calcHalfCells(), oct), oct);
         
         if (isE(oct))
+        {
             rectsJ[xyz(oct)] = encoder.rects();
+            
+            map<Paint*, vector<Rect3i> >::iterator itr;
+            for (itr = rectsJ[xyz(oct)].begin(); itr != rectsJ[xyz(oct)].end();
+                itr++)
+            {
+                LOG << "dir " << xyz(oct) << " paint " << itr->first->fullName()
+                    << " num rects " << itr->second.size() << "\n";
+            }
+        }
         else
             rectsK[xyz(oct)] = encoder.rects();
         
@@ -124,8 +137,11 @@ initInputRunlines(const VoxelizedPartition & vp)
         // (1) above: set the ordering of materials in the current buffer.
         mMaterialIDs.push_back(vp.setupMaterials()[*paint]->id());
         
+        LOG << "ID " << mMaterialIDs[mMaterialIDs.size()-1] << "\n";
         for (int xyz = 0; xyz < 3; xyz++)
         {
+            LOG << "dir " << xyz << " paint " << (*paint)->fullName()
+                << " num rects " << rectsJ[xyz][*paint].size() << "\n";
             // (2) above: specify order of current storage in memory
             copy(rectsJ[xyz][*paint].begin(), rectsJ[xyz][*paint].end(),
                 back_inserter(mRectsJ[xyz]));
@@ -176,6 +192,7 @@ CurrentSource(const CurrentSourceDescPtr & description,
         for (int nn = 0; nn < numCellsJ.size(); nn++)
         {
             mOffsetsJ[xyz][mMaterialIDs[nn]] = offset;
+            LOG << "Offset " << offset << " size " << numCellsJ[nn][xyz] << "\n";
             offset += numCellsJ[nn][xyz];
         }
         offset = 0;

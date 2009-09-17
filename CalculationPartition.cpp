@@ -166,6 +166,8 @@ outputE(int timestep)
     for (nn = 0; nn < mOutputs.size(); nn++)
         mOutputs[nn]->outputEPhase(*this, timestep);
     
+    //printFields(cout, octantE(0), 1.0);
+    //printFields(cout, octantE(1), 1.0);
     //printFields(cout, octantE(2), 1.0);
 }
 

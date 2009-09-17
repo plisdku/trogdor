@@ -11,9 +11,9 @@
 
 const int TROGDOR_MAJOR_VERSION = 5;
 const int TROGDOR_MINOR_VERSION = 0;
-const int TROGDOR_PATCH_VERSION = 0;
+const int TROGDOR_PATCH_VERSION = 1;
 
-#define TROGDOR_VERSION_TEXT "5.0.0"
+#define TROGDOR_VERSION_TEXT "5.0.1"
 
 #ifdef __MINGW32__
 #define TROGDOR_OS "MinGW 32"

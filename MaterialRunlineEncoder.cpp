@@ -27,6 +27,7 @@ endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
 //    LOG << "Ending runline from " << firstHalfCell() << " length " << length()
 //        << endl;
     
+    Paint* paint = vp.voxels()(firstHalfCell());
     int oct = octant(firstHalfCell());
     int dir0 = xyz(oct);    // this is the field direction, "i"
     int dir1 = (dir0+1)%3;   // first transverse direction, "j"
@@ -46,10 +47,30 @@ endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
     // The non-trivial piece here is that the neighbor in direction j is a
     // field that points along k.  I've screwed this up several times!
     
-    rl->f_j[0] = vp.lattice().wrappedPointer(firstHalfCell()+cardinal(2*dir2));
-    rl->f_j[1] = vp.lattice().wrappedPointer(firstHalfCell()+cardinal(2*dir2+1));
-    rl->f_k[0] = vp.lattice().wrappedPointer(firstHalfCell()+cardinal(2*dir1));
-    rl->f_k[1] = vp.lattice().wrappedPointer(firstHalfCell()+cardinal(2*dir1+1));
+    if (paint->hasCurlBuffer(2*dir2))
+        rl->f_j[0] = paint->curlBuffer(2*dir2)->lattice()->wrappedPointer(
+            firstHalfCell()+cardinal(2*dir2));
+    else
+        rl->f_j[0] = vp.lattice().wrappedPointer(
+            firstHalfCell()+cardinal(2*dir2));
+    if (paint->hasCurlBuffer(2*dir2+1))
+        rl->f_j[1] = paint->curlBuffer(2*dir2+1)->lattice()->wrappedPointer(
+            firstHalfCell()+cardinal(2*dir2+1));
+    else
+        rl->f_j[1] = vp.lattice().wrappedPointer(
+            firstHalfCell()+cardinal(2*dir2+1));
+    if (paint->hasCurlBuffer(2*dir1))
+        rl->f_k[0] = paint->curlBuffer(2*dir1)->lattice()->wrappedPointer(
+            firstHalfCell()+cardinal(2*dir1));
+    else
+        rl->f_k[0] = vp.lattice().wrappedPointer(
+            firstHalfCell()+cardinal(2*dir1));
+    if (paint->hasCurlBuffer(2*dir1+1))
+        rl->f_k[1] = paint->curlBuffer(2*dir1+1)->lattice()->wrappedPointer(
+            firstHalfCell()+cardinal(2*dir1+1));
+    else
+        rl->f_k[1] = vp.lattice().wrappedPointer(
+            firstHalfCell()+cardinal(2*dir1+1));
     
     if (isE(oct))
         mRunlinesE[dir0].push_back(SBMRunlinePtr(rl));
@@ -67,6 +88,7 @@ BulkPMLRLE()
 void BulkPMLRLE::
 endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
 {
+    Paint* paint = vp.voxels()(firstHalfCell());
     int oct = octant(firstHalfCell());
     int dir0 = xyz(oct);    // this is the field direction, "i"
     int dir1 = (dir0+1)%3;   // first transverse direction, "j"
@@ -86,10 +108,30 @@ endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
     // The non-trivial piece here is that the neighbor in direction j is a
     // field that points along k.  I've screwed this up several times!
     
-    rl->f_j[0] = vp.lattice().wrappedPointer(firstHalfCell()+cardinal(2*dir2));
-    rl->f_j[1] = vp.lattice().wrappedPointer(firstHalfCell()+cardinal(2*dir2+1));
-    rl->f_k[0] = vp.lattice().wrappedPointer(firstHalfCell()+cardinal(2*dir1));
-    rl->f_k[1] = vp.lattice().wrappedPointer(firstHalfCell()+cardinal(2*dir1+1));
+    if (paint->hasCurlBuffer(2*dir2))
+        rl->f_j[0] = paint->curlBuffer(2*dir2)->lattice()->wrappedPointer(
+            firstHalfCell()+cardinal(2*dir2));
+    else
+        rl->f_j[0] = vp.lattice().wrappedPointer(
+            firstHalfCell()+cardinal(2*dir2));
+    if (paint->hasCurlBuffer(2*dir2+1))
+        rl->f_j[1] = paint->curlBuffer(2*dir2+1)->lattice()->wrappedPointer(
+            firstHalfCell()+cardinal(2*dir2+1));
+    else
+        rl->f_j[1] = vp.lattice().wrappedPointer(
+            firstHalfCell()+cardinal(2*dir2+1));
+    if (paint->hasCurlBuffer(2*dir1))
+        rl->f_k[0] = paint->curlBuffer(2*dir1)->lattice()->wrappedPointer(
+            firstHalfCell()+cardinal(2*dir1));
+    else
+        rl->f_k[0] = vp.lattice().wrappedPointer(
+            firstHalfCell()+cardinal(2*dir1));
+    if (paint->hasCurlBuffer(2*dir1+1))
+        rl->f_k[1] = paint->curlBuffer(2*dir1+1)->lattice()->wrappedPointer(
+            firstHalfCell()+cardinal(2*dir1+1));
+    else
+        rl->f_k[1] = vp.lattice().wrappedPointer(
+            firstHalfCell()+cardinal(2*dir1+1));
     
     // PML aux stuff
     // The start point of the runline *may* be outside the grid, *if* we are

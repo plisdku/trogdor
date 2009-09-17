@@ -14,7 +14,10 @@ using namespace std;
 
 StreamedFieldInput::
 StreamedFieldInput(SourceDescPtr sourceDescription) :
-    mPolarizationFactor(1,1,1)
+    mUsesPolarization(0),
+    mPolarizationFactor(1,1,1),
+    mWhichE(1,1,1),
+    mWhichH(1,1,1)
 {
     if (sourceDescription->formula() != "")
     {
@@ -69,6 +72,12 @@ StreamedFieldInput(SourceDescPtr sourceDescription) :
     {
         assert(!sourceDescription->isSpaceVarying());
         mPolarizationFactor = sourceDescription->sourceFields().polarization();
+        mUsesPolarization = 1;
+    }
+    else
+    {
+        mWhichE = sourceDescription->sourceFields().whichE();
+        mWhichH = sourceDescription->sourceFields().whichH();
     }
 }
 
@@ -79,16 +88,17 @@ StreamedFieldInput::
 }
 
 void StreamedFieldInput::
-startHalfTimestep(int timestep, float time)
+startHalfTimestepE(int timestep, float time)
 {
-    LOG << "TODO: split this for E and H so it can read to the right buffer.\n";
+    //LOG << "TODO: split this for E and H so it can read to the right buffer.\n";
     if (mType == FORMULATYPE)
     {
         mCalculator.set("n", timestep);
         mCalculator.set("t", time);
         mCalculator.parse(mFormula);
         
-        mCurrentValue = mCalculator.get_value();
+        float val = mCalculator.get_value();
+        mCurrentValueVec = mPolarizationFactor * val;
     }
     else //if (mType == FILETYPE)
     {
@@ -96,14 +106,80 @@ startHalfTimestep(int timestep, float time)
         //  Otherwise we can read the value here and cache it.
         if (mFieldValueType == kTimeVaryingField)
         {
-            LOG << "TODO: Read 1 value if using polarization; read N values "
-                "if not using polarization and using N fields.\n";
+            //LOG << "TODO: Read 1 value if using polarization; read N values "
+            //    "if not using polarization and using N fields.\n";
             
-            if (mFile.good())
-                mFile.read((char*)&mCurrentValue,
-                    (std::streamsize)sizeof(float));
+            if (mUsesPolarization)
+            {
+                float val;
+                if (mFile.good())
+                    mFile.read((char*)&val,
+                        (std::streamsize)sizeof(float));
+                else
+                    throw(Exception("Cannot read further from file."));
+                mCurrentValueVec = mPolarizationFactor * val;
+            }
             else
-                throw(Exception("Cannot read further from file."));
+            {
+                for (int direction = 0; direction < 3; direction++)
+                if (mWhichE[direction])
+                {
+                    if (mFile.good())
+                        mFile.read((char*)&mCurrentValueVec[direction],
+                            (std::streamsize)sizeof(float));
+                    else
+                        throw(Exception("Cannot read further from file."));
+                }
+                
+            }
+        }
+    }
+}
+
+void StreamedFieldInput::
+startHalfTimestepH(int timestep, float time)
+{
+    //LOG << "TODO: split this for E and H so it can read to the right buffer.\n";
+    if (mType == FORMULATYPE)
+    {
+        mCalculator.set("n", timestep);
+        mCalculator.set("t", time);
+        mCalculator.parse(mFormula);
+        
+        float val = mCalculator.get_value();
+        mCurrentValueVec = mPolarizationFactor * val;
+    }
+    else //if (mType == FILETYPE)
+    {
+        //  Space-varying sources read from the file on calls to getField().
+        //  Otherwise we can read the value here and cache it.
+        if (mFieldValueType == kTimeVaryingField)
+        {
+            //LOG << "TODO: Read 1 value if using polarization; read N values "
+            //    "if not using polarization and using N fields.\n";
+            
+            if (mUsesPolarization)
+            {
+                float val;
+                if (mFile.good())
+                    mFile.read((char*)&val,
+                        (std::streamsize)sizeof(float));
+                else
+                    throw(Exception("Cannot read further from file."));
+                mCurrentValueVec = mPolarizationFactor * val;
+            }
+            else
+            {
+                for (int direction = 0; direction < 3; direction++)
+                if (mWhichH[direction])
+                {
+                    if (mFile.good())
+                        mFile.read((char*)&mCurrentValueVec[direction],
+                            (std::streamsize)sizeof(float));
+                    else
+                        throw(Exception("Cannot read further from file."));
+                }
+            }
         }
     }
 }
@@ -129,14 +205,18 @@ getFieldE(int direction)
         {
             assert(mMaskIndex >= 0 &&
                 mMaskIndex < mDataMaskE[direction].size());
-            fieldValue = mCurrentValue * mDataMaskE[direction][mMaskIndex];
+            fieldValue = mCurrentValueVec[direction] *
+                mDataMaskE[direction][mMaskIndex];
             mMaskIndex++;
         }
         else
         {
+            /*
             LOG << "TODO: If using polarization, use polarization.  If not,"
                 " read from the right E field buffer component.\n";
-            fieldValue = mCurrentValue * mPolarizationFactor[direction];
+            */
+            //fieldValue = mCurrentValue * mPolarizationFactor[direction];
+            fieldValue = mCurrentValueVec[direction];
         }
     }
     return fieldValue;
@@ -157,14 +237,18 @@ getFieldH(int direction)
         {
             assert(mMaskIndex >= 0 &&
                 mMaskIndex < mDataMaskH[direction].size());
-            fieldValue = mCurrentValue * mDataMaskH[direction][mMaskIndex];
+            fieldValue = mCurrentValueVec[direction] *
+                mDataMaskH[direction][mMaskIndex];
             mMaskIndex++;
         }
         else
         {
+            /*
             LOG << "TODO: If using polarization, use polarization.  If not,"
                 " read from the right H field buffer component.\n";
-            fieldValue = mCurrentValue * mPolarizationFactor[direction];
+            */
+            //fieldValue = mCurrentValue * mPolarizationFactor[direction];
+            fieldValue = mCurrentValueVec[direction];
         }
     }
     return fieldValue;

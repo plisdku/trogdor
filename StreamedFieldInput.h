@@ -47,7 +47,8 @@ public:
      *  @param time         the actual time in seconds (should be n*dt for E,
      *                      and (n+1/2)*dt for H)
      */
-    void startHalfTimestep(int timestep, float time);
+    void startHalfTimestepE(int timestep, float time);
+    void startHalfTimestepH(int timestep, float time);
     
     /**
      *  For sources that store a mask in a buffer, reset the pointer to the
@@ -107,17 +108,19 @@ private:
     FieldValueType mFieldValueType;
     bool mHasMask;
     
+    bool mUsesPolarization;
     Vector3f mPolarizationFactor;
     
     static const int FILETYPE = 0;
     static const int FORMULATYPE = 1;
     int mType;
     
-    // Buffers for time data.
-    Vector3f mCurrentValueE;
-    Vector3f mCurrentValueH;
+    // Buffers for time data
+    Vector3i mWhichE;
+    Vector3i mWhichH;
+    Vector3f mCurrentValueVec;
     
-    float mCurrentValue;
+    //float mCurrentValue;
     long mMaskIndex;
 };
 

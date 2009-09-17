@@ -161,8 +161,11 @@ neighborFieldContinuityOK(const VoxelizedPartition & vp,
     for (int side = 0; side < 6; side++)
     if (mUsedNeighborFields[side])
     {
+        if (newPaint->curlBuffer(side) != mFirstPaint->curlBuffer(side))
+            return 0;
         neighbor = vp.lattice().wrappedPointer(newHalfCell+cardinal(side));
-        if (neighbor.buffer() != mFirstNeighborFields[side].buffer())
+        
+        if (newPaint->curlBuffer(side) != mFirstPaint->curlBuffer(side))
             return 0;
         if (mFirstNeighborFields[side].offset() + mLength != neighbor.offset())
             return 0;
@@ -178,7 +181,7 @@ neighborAuxContinuityOK(const VoxelizedPartition & vp,
 {
     if (mAuxContinuity == kNeighborAuxiliaryNone)
         return 1;
-    
+    //TODO: figure out what this does for neighbor aux fields (eeew)
     long neighbor;
     for (int side = 0; side < 6; side++)
     if (mUsedNeighborAuxIndices[side])

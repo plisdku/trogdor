@@ -53,7 +53,7 @@ endRunline(const VoxelizedPartition & vp, const Vector3i & lastHalfCell)
     rl.startingField = vp.lattice().pointer(firstHalfCell());
     rl.materialID = vp.setupMaterials()[vp.voxels()(firstHalfCell())]->id();
     
-    LOG << "from " << firstHalfCell() << " length " << rl.length << "\n";
+    //LOG << "from " << firstHalfCell() << " length " << rl.length << "\n";
     
     int oct = YeeUtilities::octant(firstHalfCell());
     if (isE(oct))
