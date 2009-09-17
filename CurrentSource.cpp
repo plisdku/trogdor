@@ -25,7 +25,7 @@ SetupCurrentSource(const CurrentSourceDescPtr & description,
     mRectsJ(3),
     mRectsK(3)
 {
-    LOG << "Constructor!\n";
+    //LOG << "Constructor!\n";
     
     initInputRunlines(vp);
 }
