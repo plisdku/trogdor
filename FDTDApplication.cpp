@@ -89,6 +89,8 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     }
     else
         throw(Exception("Bad fastaxis direction (should be x, y or z)."));
+    if (prefs.numTimestepsOverride != -1)
+        mNumT = prefs.numTimestepsOverride;
     
     // this step includes making setup runlines
 	voxelizeGrids(sim, voxelizedGrids, runlineDirection);
