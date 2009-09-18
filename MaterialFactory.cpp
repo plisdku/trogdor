@@ -125,7 +125,7 @@ defaultPMLParams()
     allDirectionsDefault["sigma"] =
         "(d^3)*0.8*4/(((mu0/eps0)^0.5)*dx)";
     allDirectionsDefault["alpha"] =
-        "d*3e8*eps0/(50*dx)";
+        "(1-d)*3e8*eps0/(50*dx)";
     allDirectionsDefault["kappa"] =
         "1 + (5-1)*(d^3)";
     /*
