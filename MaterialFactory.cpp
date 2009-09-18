@@ -105,7 +105,7 @@ newSetupUpdateEquation(
                         gridPMLParams[dir][itr->first];
             }
         }
-        //LOG << "PML is " << pmlParams << "\n";
+        LOGF << "PML is " << pmlParams << "\n";
     }
     
     setupMat = newMaterialCurrentPML(parentPaint, numCellsE, numCellsH,
@@ -121,6 +121,8 @@ defaultPMLParams()
 {
     Map<string, string> allDirectionsDefault;
     Map<Vector3i, Map<string, string> > params;
+    
+    LOGF << "Setting default PML parameters." << endl;
     
     allDirectionsDefault["sigma"] =
         "(d^3)*0.8*4/(((mu0/eps0)^0.5)*dx)";

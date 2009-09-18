@@ -67,7 +67,9 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     Map<string, CalculationPartitionPtr> calculationGrids;
 	
     t0 = timeInMicroseconds();
+    LOGF << "Loading simulation..." << endl;
 	SimulationDescPtr sim = loadSimulation(parameterFile);
+    LOGF << "Loading simulation done." << endl;
     mNumT = sim->numTimesteps();
     t1 = timeInMicroseconds();
     mPerformance.setReadDescriptionMicroseconds(t1-t0);
@@ -93,15 +95,22 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
         mNumT = prefs.numTimestepsOverride;
     
     // this step includes making setup runlines
+    LOGF << "Voxelizing grids..." << endl;
 	voxelizeGrids(sim, voxelizedGrids, runlineDirection);
-	
+	LOGF << "Voxelizing grids done." << endl;
+    
 	// in here: do any setup that requires the voxelized grids
 	// extract all information that will be needed after the setup grid is gone
 	t1 = timeInMicroseconds();
     mPerformance.setVoxelizeMicroseconds(t1-t0);
     
+    LOGF << "Writing reports..." << endl;
     writeReports(voxelizedGrids, prefs);
+    LOGF << "Writing reports done." << endl;
+    
+    LOGF << "Writing data requests..." << endl;
     writeDataRequests(voxelizedGrids, prefs);
+    LOGF << "Writing data requests done." << endl;
     
     if (prefs.runSim == 0)
     {
@@ -110,10 +119,21 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     }
     
     t0 = timeInMicroseconds();
+    LOGF << "Trimming voxelized grids..." << endl;
     trimVoxelizedGrids(voxelizedGrids); // delete VoxelGrid & PartitionCellCount
+    LOGF << "Trimming voxelized grids done." << endl;
+    
+    LOGF << "Making calculation grids..." << endl;
     makeCalculationGrids(sim, calculationGrids, voxelizedGrids);
+    LOGF << "Making calculation grids done." << endl;
+    
+    LOGF << "Clearing voxelized grids..." << endl;
 	voxelizedGrids.clear();  // this will delete the setup objects
+    LOGF << "Clearing voxelized grids done." << endl;
+    
+    LOGF << "Allocating aux buffers..." << endl;
     allocateAuxBuffers(calculationGrids);
+    LOGF << "Allocating aux buffers done." << endl;
     t1 = timeInMicroseconds();
     mPerformance.setSetupCalculationMicroseconds(t1-t0);
 	
@@ -146,7 +166,9 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     
     if (prefs.savePerformanceInfo)
     {
+        LOGF << "Reporting performance..." << endl;
         reportPerformance(calculationGrids);
+        LOGF << "Reporting performance done." << endl;
     }
     
     LOGF << "Done with simulation.\n";
