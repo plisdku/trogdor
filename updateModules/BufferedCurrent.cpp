@@ -48,12 +48,13 @@ setCurrentSource(CurrentSource* sourceOfData, int myMaterialID)
                 mPointerMaskK[xyz] = sourceOfData->pointerMaskK(
                     xyz, myMaterialID);
         }
-        
+        /*
         LOG << "Pointers are:\n";
         LOGMORE << mPointerJ[xyz] << "\n"
             << mPointerK[xyz] << "\n"
             << mPointerMaskJ[xyz] << "\n"
             << mPointerMaskK[xyz] << "\n";
+        */
     }
     
     if (sourceOfData->description()->hasMask())
