@@ -82,7 +82,7 @@ BufferedFieldInput(CurrentSourceDescPtr sourceDescription)
     long numYee = 0;
     for (int nn = 0; nn < sourceDescription->regions().size(); nn++)
         numYee += sourceDescription->regions()[nn].yeeCells().count();
-    LOG << "Num yee cells = " << numYee << "\n";
+    //LOG << "Num yee cells = " << numYee << "\n";
     
     for (int xyz = 0; xyz < 3; xyz++)
     {
@@ -135,7 +135,7 @@ BufferPointer BufferedFieldInput::
 pointerE(int fieldDirection, long offset) const
 {
     assert(fieldDirection >= 0 && fieldDirection < 3);
-    LOG << offset << "\n";
+    //LOG << offset << "\n";
     return BufferPointer(mBufferE[fieldDirection], offset);
 }
 

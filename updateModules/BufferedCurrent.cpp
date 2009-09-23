@@ -26,7 +26,7 @@ BufferedCurrent(std::vector<int> numCellsE, std::vector<int> numCellsH) :
 void BufferedCurrent::
 setCurrentSource(CurrentSource* sourceOfData, int myMaterialID)
 {
-    LOG << "Right here!  ID " << myMaterialID << "\n";
+    //LOG << "Right here!  ID " << myMaterialID << "\n";
     mSourceOfData = sourceOfData;
     
     mHasMask = sourceOfData->description()->hasMask();
