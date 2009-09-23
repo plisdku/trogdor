@@ -59,7 +59,11 @@ public:
             Rect3i newRect(halfToYee(Rect3i(firstHalfCell(), lastHalfCell)));
             Paint* p = vp.voxels()(lastHalfCell)->withoutCurlBuffers();
             mRects[p].push_back(newRect);
-            mPaints.insert(p);
+            //mPaints.insert(p);
+            
+            // slow but preserves ordering as on the grid
+            if (mPaints.end() == find(mPaints.begin(), mPaints.end(), p))
+                mPaints.push_back(p);
             
             //LOG << "Encoded mat " << p->fullName() << " rect " << newRect
             //    << "\n";
@@ -67,11 +71,13 @@ public:
     }
     
     const Map<Paint*, vector<Rect3i> > & rects() const { return mRects; }
-    const set<Paint*> & paints() const { return mPaints; }
+    //const set<Paint*> & paints() const { return mPaints; }
+    const vector<Paint*> & paints() const { return mPaints; }
 private:
     CurrentSourceDescPtr mSrc;
     Map<Paint*, vector<Rect3i> > mRects;
-    set<Paint*> mPaints;
+    vector<Paint*> mPaints;
+    //set<Paint*> mPaints;
 };
 
 
@@ -79,7 +85,8 @@ private:
 void SetupCurrentSource::
 initInputRunlines(const VoxelizedPartition & vp)
 {
-    set<Paint*> allPaints;
+    //set<Paint*> allPaints;
+    vector<Paint*> allPaints;
     Map<Paint*, vector<Rect3i> > rectsJ[3]; // bulk material ID -> runlines
     Map<Paint*, vector<Rect3i> > rectsK[3];
     
@@ -105,8 +112,12 @@ initInputRunlines(const VoxelizedPartition & vp)
         else
             rectsK[xyz(oct)] = encoder.rects();
         
-        const set<Paint*> & s = encoder.paints();
-        allPaints.insert(s.begin(), s.end());
+        const vector<Paint*> & s = encoder.paints();
+        
+        for (int nn = 0; nn < s.size(); nn++)
+        if (allPaints.end() == find(allPaints.begin(), allPaints.end(), s[nn]))
+            allPaints.push_back(s[nn]);
+        //allPaints.insert(s.begin(), s.end());
     }
     
     // Iterate over allPaints, which establishes the order in the file
@@ -131,7 +142,8 @@ initInputRunlines(const VoxelizedPartition & vp)
     
     mNumCellsJ.resize(allPaints.size());
     mNumCellsK.resize(allPaints.size());
-    for (set<Paint*>::const_iterator paint = allPaints.begin();
+    //for (set<Paint*>::const_iterator paint = allPaints.begin();
+    for (vector<Paint*>::const_iterator paint = allPaints.begin();
         paint != allPaints.end();
         paint++)
     {
