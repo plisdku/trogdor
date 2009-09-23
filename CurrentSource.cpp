@@ -158,6 +158,11 @@ initInputRunlines(const VoxelizedPartition & vp)
             
             mNumCellsJ.at(nn)[xyz] = accumulate(numJ.begin(), numJ.end(), 0);
             mNumCellsK.at(nn)[xyz] = accumulate(numK.begin(), numK.end(), 0);
+            
+            LOGF << "Mat " << mMaterialIDs[nn] << " J" << char('x'+xyz) <<
+                " num " << mNumCellsJ.at(nn)[xyz] << "\n";
+            LOGF << "Mat " << mMaterialIDs[nn] << " K" << char('x'+xyz) <<
+                " num " << mNumCellsK.at(nn)[xyz] << "\n";
         }
         nn++;
     }
