@@ -184,7 +184,7 @@ CurrentSource(const CurrentSourceDescPtr & description,
     // for each material.
     
     for (int mm = 0; mm < mMaterialIDs.size(); mm++)
-        LOG << mMaterialIDs[mm] << endl;
+        LOGF << mMaterialIDs[mm] << endl;
     
     for (int xyz = 0; xyz < 3; xyz++)
     {
@@ -193,13 +193,16 @@ CurrentSource(const CurrentSourceDescPtr & description,
         for (int nn = 0; nn < numCellsJ.size(); nn++)
         {
             mOffsetsJ[xyz][mMaterialIDs[nn]] = offset;
-            //LOG << "Offset " << offset << " size " << numCellsJ[nn][xyz] << "\n";
+            LOGF << "Mat " << mMaterialIDs[nn] << " J" << char('x'+xyz) <<
+                " offset " << offset << " size " << numCellsJ[nn][xyz] << "\n";
             offset += numCellsJ[nn][xyz];
         }
         offset = 0;
         for (int nn = 0; nn < numCellsK.size(); nn++)
         {
             mOffsetsK[xyz][mMaterialIDs[nn]] = offset;
+            LOGF << "Mat " << mMaterialIDs[nn] << " K" << char('x'+xyz) <<
+                " offset " << offset << " size " << numCellsJ[nn][xyz] << "\n";
             offset += numCellsK[nn][xyz];
         }
     }
