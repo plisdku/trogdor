@@ -120,6 +120,7 @@ int main (int argc, char * const argv[])
     FDTDApplication& app = FDTDApplication::instance();
 	app.runNew(paramFileName, prefs);
     
+    LOGF << "End of main()." << endl;
     return 0;
 }
 

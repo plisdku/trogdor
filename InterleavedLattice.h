@@ -129,6 +129,10 @@ public:
     BufferPointer wrappedPointerH(int fieldDirection, const Vector3i & yeeCell)
         const;
     
+    /**
+     * Returns the integer value to add to a pointer to access the next field
+     * in the x, y and z directions.
+     */
     Vector3i fieldStride() const { return mMemStride; }
     int runlineDirection() const { return mRunlineDirection; }
     

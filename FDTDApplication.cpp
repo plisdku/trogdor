@@ -158,9 +158,17 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     
     t0 = timeInMicroseconds();
     if (prefs.savePerformanceInfo)
+    {
+        LOGF << "Running with benchmarking on..." << endl;
         runTimed(calculationGrids);
+        LOGF << "Running done." << endl;
+    }
     else
+    {
+        LOGF << "Running..." << endl;
         runUntimed(calculationGrids);
+        LOGF << "Running done." << endl;
+    }
     t1 = timeInMicroseconds();
     mPerformance.setRunCalculationMicroseconds(t1-t0);
     
@@ -171,8 +179,9 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
         LOGF << "Reporting performance done." << endl;
     }
     
-    LOGF << "Done with simulation.\n";
+    LOGF << "Clearing palette..." << endl;
 	Paint::clearPalette(); // avert embarassing segfaults at the end
+    LOGF << "Clearing palette done." << endl;
 }
 
 SimulationDescPtr FDTDApplication::
@@ -919,9 +928,6 @@ reportPerformance(Map<string, CalculationPartitionPtr> & calculationGrids)
         itr->second->printPerformanceForMatlab(runlog, prefix.str());
         gridN++;
     }
-    
-    
-    
     runlog.close();
 }
 
