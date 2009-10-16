@@ -817,7 +817,7 @@ createSetupUpdateEquations(const GridDescription & gridDesc)
 	for (int nn = 0; nn < sortedPaints.size(); nn++)
 	{
 		Paint* p = sortedPaints[nn];
-        vector<int> numCellsE(3), numCellsH(3);
+        vector<long> numCellsE(3), numCellsH(3);
         
         int fieldDir;
         for (fieldDir = 0; fieldDir < 3; fieldDir++)

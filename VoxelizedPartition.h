@@ -182,9 +182,9 @@ private:
     
     // END OF GRID DENIZEN ZONE
     
-	int m_nx, m_ny, m_nz;
-    int m_nnx, m_nny, m_nnz;
-    int m_nnx0, m_nny0, m_nnz0; // equal to mFieldAllocHalfCells.p1
+	long m_nx, m_ny, m_nz;
+    long m_nnx, m_nny, m_nnz;
+    long m_nnx0, m_nny0, m_nnz0; // equal to mFieldAllocHalfCells.p1
     Vector3i mNumAllocHalfCells;
 	Rect3i mGridHalfCells;
 	Rect3i mFieldAllocHalfCells; // must be full Yee cells!

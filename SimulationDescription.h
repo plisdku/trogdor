@@ -56,7 +56,7 @@ private:
 	
 	float m_dt;
 	Vector3f m_dxyz;
-	int mNumTimesteps;
+	long mNumTimesteps;
 };
 
 class GridDescription
@@ -154,18 +154,18 @@ public:
         return Duration(0, INT_MAX, period);
     }
     
-    int first() const { return mFirst; }
-    int last() const { return mLast; }
-    int period() const { return mPeriod; }
+    long first() const { return mFirst; }
+    long last() const { return mLast; }
+    long period() const { return mPeriod; }
     
     void setFirst(int first) { mFirst = first; }
     void setLast(int last) { mLast = last; }
     void setPeriod(int period) { mPeriod = period; }
     
 private:
-    int mFirst;
-    int mLast;
-    int mPeriod;
+    long mFirst;
+    long mLast;
+    long mPeriod;
 };
 //std::ostream & operator<<(std::ostream & str, const Duration & dur);
 
@@ -672,7 +672,6 @@ public:
 	
 	void setPointers(const Map<std::string, MaterialDescPtr> & materialMap);
 	
-	//const Rect3i & fillRect() const { return mFillRect; }
 	const Rect3i & yeeRect() const;
 	const Rect3i & halfRect() const;
 	FillStyle fillStyle() const { return mStyle; }

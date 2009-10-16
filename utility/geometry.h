@@ -76,7 +76,7 @@ public:
 	Vector3<T> p2; // must be indexwise < p1.
 };
 
-typedef Rect<int> Rect3i;
+typedef Rect<long> Rect3i;
 typedef Rect<double> Rect3d;
 
 template<typename T>
@@ -153,7 +153,7 @@ struct OrientedRect
 	Rect<T> rect;
 	Vector3<T> normal;
 };
-typedef OrientedRect<int> OrientedRect3i;
+typedef OrientedRect<long> OrientedRect3i;
 typedef OrientedRect<double> OrientedRect3d;
 
 template<typename T>

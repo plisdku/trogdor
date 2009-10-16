@@ -19,7 +19,7 @@ using namespace std;
 StaticLossyDielectric::
 StaticLossyDielectric(
         const MaterialDescription & descrip,
-        std::vector<int> numCellsE, std::vector<int> numCellsH,
+        std::vector<long> numCellsE, std::vector<long> numCellsH,
         Vector3f dxyz, float dt) :
     Material(),
     m_epsr(1.0),

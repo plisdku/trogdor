@@ -19,14 +19,14 @@
 
 template<typename T>
 class Vector3;
-typedef Vector3<int> Vector3i;
+typedef Vector3<long> Vector3i;
 typedef Vector3<double> Vector3d;
 typedef Vector3<float> Vector3f;
 typedef Vector3<bool> Vector3b;
 
 template<typename T>
 class Matrix3;
-typedef Matrix3<int> Matrix3i;
+typedef Matrix3<long> Matrix3i;
 typedef Matrix3<double> Matrix3d;
 typedef Matrix3<float> Matrix3f;
 typedef Matrix3<bool> Matrix3b;

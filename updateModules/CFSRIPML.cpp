@@ -69,8 +69,8 @@ calcC_PhiJ(const vector<float> & kappa,
 #pragma mark *** CFSRIPMLBase ***
 
 CFSRIPMLBase::
-CFSRIPMLBase(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+CFSRIPMLBase(Paint* parentPaint, std::vector<long> numCellsE,
+        std::vector<long> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection ) :
     mPMLParams(pmlParams),

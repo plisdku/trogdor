@@ -18,7 +18,7 @@
 class BufferedCurrent
 {
 public:
-    BufferedCurrent(std::vector<int> numCellsE, std::vector<int> numCellsH);
+    BufferedCurrent(std::vector<long> numCellsE, std::vector<long> numCellsH);
     
     struct LocalDataE {
         float* J;

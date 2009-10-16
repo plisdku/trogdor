@@ -93,12 +93,12 @@ private:
 	Rect3i mGridHalfCells;
 	Rect3i mNonPMLRegion;
 	
-	int m_nnx;
-	int m_nny;
-	int m_nnz;
-	int m_nx;
-	int m_ny;
-	int m_nz;
+	long m_nnx;
+	long m_nny;
+	long m_nnz;
+	long m_nx;
+	long m_ny;
+	long m_nz;
 };
 typedef Pointer<VoxelGrid> VoxelGridPtr;
 

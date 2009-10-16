@@ -212,7 +212,7 @@ Vector3i yeeToHalf(const Vector3i & yeeCell, int octant)
 // returns smallest Yee rect containing all points in halfRect
 Rect3i halfToYee(const Rect3i & halfRect)
 {
-	return halfRect/2;
+	return halfRect/2L;
 }
 
 // returns smallest Yee rect containing all points at given octant
@@ -256,14 +256,14 @@ Rect3i halfToYee(const Rect3i & halfRect, const Vector3i & halfCellOffset)
 // at given octant
 Rect3i yeeToHalf(const Rect3i & yeeRect, int octant)
 {
-	return Rect3i(2*yeeRect + halfCellOffset(octant));
+	return Rect3i(2L*yeeRect + halfCellOffset(octant));
 }
 
 // returns smallest half cell rect containing all points in given Yee rect
 // at given half cell offset
 Rect3i yeeToHalf(const Rect3i & yeeRect, const Vector3i & halfCellOffset)
 {
-	return Rect3i(2*yeeRect + halfCellOffset);
+	return Rect3i(2L*yeeRect + halfCellOffset);
 }
 
 // returns smallest Yee rect containing all points in given Yee rect

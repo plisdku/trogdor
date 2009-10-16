@@ -42,17 +42,17 @@ public:
         const CalculationPartition & cp);
     virtual ~Source();
     
-    void sourceEPhase(CalculationPartition & cp, int timestep);
-    void sourceHPhase(CalculationPartition & cp, int timestep);
+    void sourceEPhase(CalculationPartition & cp, long timestep);
+    void sourceHPhase(CalculationPartition & cp, long timestep);
 private:
-    void doSourceE(CalculationPartition & cp, int timestep);
-    void doSourceH(CalculationPartition & cp, int timestep);
+    void doSourceE(CalculationPartition & cp, long timestep);
+    void doSourceH(CalculationPartition & cp, long timestep);
     
     SourceDescPtr mDescription;
     StreamedFieldInput mFieldInput;
     
     bool mIsSoft;
-    int mCurrentDuration;
+    long mCurrentDuration;
     SourceFields mFields;
     std::vector<Region> mRegions;
     std::vector<Duration> mDurations;

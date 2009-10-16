@@ -132,7 +132,7 @@ allocateAuxBuffers()
 }
 
 void CalculationPartition::
-updateE(int timestep)
+updateE(long timestep)
 {
     unsigned int nn;
     
@@ -148,7 +148,7 @@ updateE(int timestep)
 }
 
 void CalculationPartition::
-sourceE(int timestep)
+sourceE(long timestep)
 {
     //LOG << "Source E " << timestep << "\n";
     int nn;
@@ -159,7 +159,7 @@ sourceE(int timestep)
 }
 
 void CalculationPartition::
-outputE(int timestep)
+outputE(long timestep)
 {
     //LOG << "Output E " << timestep << "\n";
     int nn;
@@ -172,7 +172,7 @@ outputE(int timestep)
 }
 
 void CalculationPartition::
-updateH(int timestep)
+updateH(long timestep)
 {
     //LOG << "Update H " << timestep << "\n";
     unsigned int nn;
@@ -190,7 +190,7 @@ updateH(int timestep)
 }
 
 void CalculationPartition::
-sourceH(int timestep)
+sourceH(long timestep)
 {
     //LOG << "Source H " << timestep << "\n";
     int nn;
@@ -201,7 +201,7 @@ sourceH(int timestep)
 }
 
 void CalculationPartition::
-outputH(int timestep)
+outputH(long timestep)
 {
     //LOG << "Output H " << timestep << "\n";
     int nn;
@@ -210,7 +210,7 @@ outputH(int timestep)
 }
 
 void CalculationPartition::
-timedUpdateE(int timestep)
+timedUpdateE(long timestep)
 {
     unsigned int nn;
     double t1, t2;
@@ -245,7 +245,7 @@ timedUpdateE(int timestep)
 }
 
 void CalculationPartition::
-timedSourceE(int timestep)
+timedSourceE(long timestep)
 {
     //LOG << "Source E " << timestep << "\n";
     int nn;
@@ -267,7 +267,7 @@ timedSourceE(int timestep)
 }
 
 void CalculationPartition::
-timedOutputE(int timestep)
+timedOutputE(long timestep)
 {
     //LOG << "Timed output E " << timestep << "\n";
     int nn;
@@ -289,7 +289,7 @@ timedOutputE(int timestep)
 }
 
 void CalculationPartition::
-timedUpdateH(int timestep)
+timedUpdateH(long timestep)
 {
     //LOG << "Update H " << timestep << "\n";
     unsigned int nn;
@@ -324,7 +324,7 @@ timedUpdateH(int timestep)
 }
 
 void CalculationPartition::
-timedSourceH(int timestep)
+timedSourceH(long timestep)
 {
     //LOG << "Source H " << timestep << "\n";
     int nn;
@@ -346,7 +346,7 @@ timedSourceH(int timestep)
 }
 
 void CalculationPartition::
-timedOutputH(int timestep)
+timedOutputH(long timestep)
 {
     //LOG << "Output H " << timestep << "\n";
     int nn;

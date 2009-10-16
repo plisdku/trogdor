@@ -53,19 +53,19 @@ public:
     // returns        number of timesteps in simulation, including initial cond.
     long duration() const { return m_numT; }
     
-    void updateE(int timestep);
-    void sourceE(int timestep);
-    void outputE(int timestep);
-    void updateH(int timestep);
-    void sourceH(int timestep);
-    void outputH(int timestep);
+    void updateE(long timestep);
+    void sourceE(long timestep);
+    void outputE(long timestep);
+    void updateH(long timestep);
+    void sourceH(long timestep);
+    void outputH(long timestep);
     
-    void timedUpdateE(int timestep);
-    void timedSourceE(int timestep);
-    void timedOutputE(int timestep);
-    void timedUpdateH(int timestep);
-    void timedSourceH(int timestep);
-    void timedOutputH(int timestep);
+    void timedUpdateE(long timestep);
+    void timedSourceE(long timestep);
+    void timedOutputE(long timestep);
+    void timedUpdateH(long timestep);
+    void timedSourceH(long timestep);
+    void timedOutputH(long timestep);
     
     void printFields(std::ostream & str, int octant, float scale);
     

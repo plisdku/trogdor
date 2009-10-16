@@ -12,7 +12,7 @@
 using namespace std;
 
 BufferedCurrent::
-BufferedCurrent(std::vector<int> numCellsE, std::vector<int> numCellsH) :
+BufferedCurrent(std::vector<long> numCellsE, std::vector<long> numCellsH) :
     mSourceOfData(0L)
 {
     

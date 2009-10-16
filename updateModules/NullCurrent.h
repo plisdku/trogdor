@@ -15,11 +15,11 @@ class CurrentSource;
 class NullCurrent
 {
 public:
-    NullCurrent(std::vector<int> numCellsE, std::vector<int> numCellsH) {}
+    NullCurrent(std::vector<long> numCellsE, std::vector<long> numCellsH) {}
     struct LocalDataE {};
     struct LocalDataH {};   
     
-    void setCurrentSource(CurrentSource* source, int materialID) {}
+    void setCurrentSource(CurrentSource* source, long materialID) {}
     void allocateAuxBuffers() {}
     
     void initLocalE(LocalDataE & data, int dir0) {}

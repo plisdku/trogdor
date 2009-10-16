@@ -21,7 +21,7 @@ class StaticLossyDielectric : public Material
 public:
     StaticLossyDielectric(
         const MaterialDescription & descrip,
-        std::vector<int> numCellsE, std::vector<int> numCellsH,
+        std::vector<long> numCellsE, std::vector<long> numCellsH,
         Vector3f dxyz, float dt);
     
     std::string modelName() const;

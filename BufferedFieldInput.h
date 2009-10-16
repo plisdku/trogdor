@@ -57,8 +57,8 @@ public:
      *  @param time         the actual time in seconds (should be n*dt for E,
      *                      and (n+1/2)*dt for H)
      */
-    void startHalfTimestepE(int timestep, float time);
-    void startHalfTimestepH(int timestep, float time);
+    void startHalfTimestepE(long timestep, float time);
+    void startHalfTimestepH(long timestep, float time);
     
     /**
      *  Set the contents of the field buffers to zero.  This is useful when an

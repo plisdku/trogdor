@@ -44,7 +44,7 @@ public:
     SimulationPreferences();
     
     int numThreads;
-    int numTimestepsOverride;
+    long numTimestepsOverride;
     bool output3D;
     bool output2D;
     bool dumpGrid;
@@ -129,30 +129,30 @@ private:
         & calcs);
     
     void updateE(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
     void sourceE(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
     void outputE(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
     void updateH(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
     void sourceH(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
     void outputH(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
     
     void updateETimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
     void sourceETimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
     void outputETimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
     void updateHTimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
     void sourceHTimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
     void outputHTimed(Map<std::string, CalculationPartitionPtr> & calcGrids,
-        int timestep);
+        long timestep);
         
     void runUntimed(
         Map<std::string, CalculationPartitionPtr> & calculationGrids);

@@ -28,8 +28,8 @@ public:
 	static SetupUpdateEquationPtr newSetupUpdateEquation(
         const GridDescription & gridDesc,
 		Paint* parentPaint,
-        std::vector<int> numCellsE,
-        std::vector<int> numCellsH,
+        std::vector<long> numCellsE,
+        std::vector<long> numCellsH,
         std::vector<Rect3i> pmlRects,
         int runlineDirection );
     

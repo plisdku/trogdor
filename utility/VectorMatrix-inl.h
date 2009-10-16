@@ -596,9 +596,9 @@ Matrix3<T> Matrix3<T>::
 diagonal(const Vector3<T2> & d)
 {
     return Matrix3<T>(
-        d[0], 0,    0,
-        0,    d[1], 0,
-        0,    0,    d[2]);
+        d[0], 0L,    0L,
+        0L,    d[1], 0L,
+        0L,    0L,    d[2]);
 }
 
 template<typename T>

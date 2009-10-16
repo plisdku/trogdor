@@ -86,7 +86,7 @@ SimpleEHOutput::
 
 
 void SimpleEHOutput::
-outputEPhase(const CalculationPartition & cp, int timestep)
+outputEPhase(const CalculationPartition & cp, long timestep)
 {
     if (norm2(description()->whichE()) == 0)
         return;
@@ -107,7 +107,7 @@ outputEPhase(const CalculationPartition & cp, int timestep)
 }
 
 void SimpleEHOutput::
-outputHPhase(const CalculationPartition & cp, int timestep)
+outputHPhase(const CalculationPartition & cp, long timestep)
 {
     if (norm2(description()->whichH()) == 0)
         return;

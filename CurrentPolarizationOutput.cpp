@@ -212,7 +212,7 @@ setRunlinesH(int direction, const CalculationPartition & cp,
 }
 
 void CurrentPolarizationOutput::
-outputEPhase(const CalculationPartition & cp, int timestep)
+outputEPhase(const CalculationPartition & cp, long timestep)
 {
     if (norm2(mWhichJ) == 0)
         return;
@@ -233,7 +233,7 @@ outputEPhase(const CalculationPartition & cp, int timestep)
 }
 
 void CurrentPolarizationOutput::
-outputHPhase(const CalculationPartition & cp, int timestep)
+outputHPhase(const CalculationPartition & cp, long timestep)
 {
     if (norm2(mWhichK) == 0)
         return;

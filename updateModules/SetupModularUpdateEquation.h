@@ -27,8 +27,8 @@ template<class MaterialClass, class RunlineT, class CurrentT>
 class SetupModularUpdateEquation : public BulkSetupUpdateEquation
 {
 public:
-    SetupModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, Vector3f dxyz, float dt);
+    SetupModularUpdateEquation(Paint* parentPaint, std::vector<long> numCellsE,
+        std::vector<long> numCellsH, Vector3f dxyz, float dt);
     
     // This returns a material harness with a null PML, a null current and
     // the specified MaterialClass for the update equation.
@@ -37,8 +37,8 @@ public:
     
 private:
     Paint* mParentPaint;
-    std::vector<int> mNumCellsE;
-    std::vector<int> mNumCellsH;
+    std::vector<long> mNumCellsE;
+    std::vector<long> mNumCellsH;
     Vector3f mDxyz;
     float mDt;
 };
@@ -49,8 +49,8 @@ template<class MaterialClass, class RunlineT, class CurrentT, class PMLT>
 class SimpleSetupPML : public BulkPMLSetupUpdateEquation
 {
 public:
-    SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+    SimpleSetupPML(Paint* parentPaint, std::vector<long> numCellsE,
+        std::vector<long> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt);
     
@@ -60,8 +60,8 @@ public:
         const CalculationPartition & cp) const;
 private:
     Paint* mParentPaint;
-    std::vector<int> mNumCellsE;
-    std::vector<int> mNumCellsH;
+    std::vector<long> mNumCellsE;
+    std::vector<long> mNumCellsH;
     std::vector<Rect3i> mPMLHalfCells;
     Map<Vector3i, Map<std::string,std::string> > mPMLParams;
     Vector3f mDxyz;

@@ -221,7 +221,7 @@ voxelizeGrids(const SimulationDescPtr sim,
 		LOG << "Voxelizing per current grid's partition size.\n";
 		
 		myPartition = Rect3i(0,0,0,0,0,0); 
-		myCalcRegion = inset(myPartition, 1,1,1,1,1,1);
+		myCalcRegion = inset(myPartition, 1L,1L,1L,1L,1L,1L);
 		assert(!"Can't go further.");
 		//voxelizeGridRecursor(voxelizedGrids, sim->grids()[0], myPartition,
 		//	myCalcRegion);
@@ -765,7 +765,7 @@ allocateAuxBuffers(Map<string, CalculationPartitionPtr> & calcs)
 
 
 void FDTDApplication::
-updateE(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+updateE(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
@@ -773,7 +773,7 @@ updateE(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 }
 
 void FDTDApplication::
-sourceE(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+sourceE(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
@@ -781,7 +781,7 @@ sourceE(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 }
 
 void FDTDApplication::
-outputE(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+outputE(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
@@ -789,7 +789,7 @@ outputE(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 }
 
 void FDTDApplication::
-updateH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+updateH(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
@@ -797,7 +797,7 @@ updateH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 }
 
 void FDTDApplication::
-sourceH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+sourceH(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
@@ -805,7 +805,7 @@ sourceH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 }
 
 void FDTDApplication::
-outputH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+outputH(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
@@ -813,7 +813,7 @@ outputH(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 }
 
 void FDTDApplication::
-updateETimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+updateETimed(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
@@ -823,7 +823,7 @@ updateETimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 }
 
 void FDTDApplication::
-sourceETimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+sourceETimed(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
@@ -831,7 +831,7 @@ sourceETimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 }
 
 void FDTDApplication::
-outputETimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+outputETimed(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
@@ -839,7 +839,7 @@ outputETimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 }
 
 void FDTDApplication::
-updateHTimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+updateHTimed(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
@@ -847,7 +847,7 @@ updateHTimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 }
 
 void FDTDApplication::
-sourceHTimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+sourceHTimed(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)
@@ -855,7 +855,7 @@ sourceHTimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
 }
 
 void FDTDApplication::
-outputHTimed(Map<string, CalculationPartitionPtr> & calcGrids, int timestep)
+outputHTimed(Map<string, CalculationPartitionPtr> & calcGrids, long timestep)
 {
     map<string, CalculationPartitionPtr>::iterator itr;
     for (itr = calcGrids.begin(); itr != calcGrids.end(); itr++)

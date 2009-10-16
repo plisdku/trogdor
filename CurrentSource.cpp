@@ -190,7 +190,7 @@ makeCurrentSource(const VoxelizedPartition & vp,
 
 CurrentSource::
 CurrentSource(const CurrentSourceDescPtr & description,
-    const vector<int> & materialIDs, const vector<Vector3i> & numCellsJ,
+    const vector<long> & materialIDs, const vector<Vector3i> & numCellsJ,
     const vector<Vector3i> & numCellsK) :
     mDescription(description),
     mFieldInput(description),
@@ -238,25 +238,25 @@ allocateAuxBuffers()
 }
 
 BufferPointer CurrentSource::
-pointerJ(int xyz, int materialID)
+pointerJ(int xyz, long materialID)
 {
     return mFieldInput.pointerE(xyz, mOffsetsJ[xyz][materialID]);
 }
 
 BufferPointer CurrentSource::
-pointerK(int xyz, int materialID)
+pointerK(int xyz, long materialID)
 {
     return mFieldInput.pointerH(xyz, mOffsetsK[xyz][materialID]);
 }
 
 BufferPointer CurrentSource::
-pointerMaskJ(int xyz, int materialID)
+pointerMaskJ(int xyz, long materialID)
 {
     return mFieldInput.pointerMaskE(xyz, mOffsetsJ[xyz][materialID]);
 }
 
 BufferPointer CurrentSource::
-pointerMaskK(int xyz, int materialID)
+pointerMaskK(int xyz, long materialID)
 {
     return mFieldInput.pointerMaskH(xyz, mOffsetsK[xyz][materialID]);
 }

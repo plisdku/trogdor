@@ -88,7 +88,7 @@ StreamedFieldInput::
 }
 
 void StreamedFieldInput::
-startHalfTimestepE(int timestep, float time)
+startHalfTimestepE(long timestep, float time)
 {
     //LOG << "TODO: split this for E and H so it can read to the right buffer.\n";
     if (mType == FORMULATYPE)
@@ -137,7 +137,7 @@ startHalfTimestepE(int timestep, float time)
 }
 
 void StreamedFieldInput::
-startHalfTimestepH(int timestep, float time)
+startHalfTimestepH(long timestep, float time)
 {
     //LOG << "TODO: split this for E and H so it can read to the right buffer.\n";
     if (mType == FORMULATYPE)

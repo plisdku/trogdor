@@ -45,8 +45,8 @@ template<class MaterialClass>
 class ModularUpdateEquation_Material : virtual public UpdateEquation
 {
 public:
-    ModularUpdateEquation_Material(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, Vector3f dxyz, float dt);
+    ModularUpdateEquation_Material(Paint* parentPaint, std::vector<long> numCellsE,
+        std::vector<long> numCellsH, Vector3f dxyz, float dt);
         
     virtual void writeJ(int direction, std::ostream & binaryStream,
         long startingIndex, const float* startingField, long length) const;
@@ -75,7 +75,7 @@ void ModularUpdateEquation_Runline<RunlineClass>::
 setRunlinesE(int direction, const std::vector<SBMRunlinePtr> & rls)
 {
     mRunlinesE[direction].resize(rls.size());
-    for (int nn = 0; nn < rls.size(); nn++)
+    for (long nn = 0; nn < rls.size(); nn++)
         mRunlinesE[direction][nn] = RunlineClass(*rls[nn]);
 }
 
@@ -84,7 +84,7 @@ void ModularUpdateEquation_Runline<RunlineClass>::
 setRunlinesH(int direction, const std::vector<SBMRunlinePtr> & rls)
 {
     mRunlinesH[direction].resize(rls.size());
-    for (int nn = 0; nn < rls.size(); nn++)
+    for (long nn = 0; nn < rls.size(); nn++)
         mRunlinesH[direction][nn] = RunlineClass(*rls[nn]);
 }
 
@@ -93,7 +93,7 @@ void ModularUpdateEquation_Runline<RunlineClass>::
 setRunlinesE(int direction, const std::vector<SBPMRunlinePtr> & rls)
 {
     mRunlinesE[direction].resize(rls.size());
-    for (int nn = 0; nn < rls.size(); nn++)
+    for (long nn = 0; nn < rls.size(); nn++)
         mRunlinesE[direction][nn] = RunlineClass(*rls[nn]);
 }
 
@@ -102,7 +102,7 @@ void ModularUpdateEquation_Runline<RunlineClass>::
 setRunlinesH(int direction, const std::vector<SBPMRunlinePtr> & rls)
 {
     mRunlinesH[direction].resize(rls.size());
-    for (int nn = 0; nn < rls.size(); nn++)
+    for (long nn = 0; nn < rls.size(); nn++)
         mRunlinesH[direction][nn] = RunlineClass(*rls[nn]);
 }
 
@@ -132,7 +132,7 @@ numHalfCellsE() const
 {
     long total = 0;
     for (int xyz = 0; xyz < 3; xyz++)
-    for (int nn = 0; nn < mRunlinesE[xyz].size(); nn++)
+    for (long nn = 0; nn < mRunlinesE[xyz].size(); nn++)
         total += mRunlinesE[xyz][nn].length;
     return total;
 }
@@ -143,7 +143,7 @@ numHalfCellsH() const
 {
     long total = 0;
     for (int xyz = 0; xyz < 3; xyz++)
-    for (int nn = 0; nn < mRunlinesH[xyz].size(); nn++)
+    for (long nn = 0; nn < mRunlinesH[xyz].size(); nn++)
         total += mRunlinesH[xyz][nn].length;
     return total;
 }
@@ -152,8 +152,8 @@ numHalfCellsH() const
 
 template<class MaterialT>
 ModularUpdateEquation_Material<MaterialT>::
-ModularUpdateEquation_Material(Paint* parentPaint, std::vector<int> numCellsE,
-    std::vector<int> numCellsH, Vector3f dxyz, float dt) :
+ModularUpdateEquation_Material(Paint* parentPaint, std::vector<long> numCellsE,
+    std::vector<long> numCellsH, Vector3f dxyz, float dt) :
     UpdateEquation(),
     mMaterial(*parentPaint->bulkMaterial(), numCellsE, numCellsH, dxyz, dt)
 {
@@ -207,8 +207,8 @@ modelName() const
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
-ModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, Vector3f dxyz, float dt,
+ModularUpdateEquation(Paint* parentPaint, std::vector<long> numCellsE,
+        std::vector<long> numCellsH, Vector3f dxyz, float dt,
         int runlineDirection ) :
     ModularUpdateEquation_Material<MaterialT>(parentPaint, numCellsE, numCellsH,
         dxyz, dt),
@@ -224,8 +224,8 @@ ModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
 
 template<class MaterialT, class RunlineT, class PMLT, class CurrentT>
 ModularUpdateEquation<MaterialT, RunlineT, PMLT, CurrentT>::
-ModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+ModularUpdateEquation(Paint* parentPaint, std::vector<long> numCellsE,
+        std::vector<long> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection) :
     ModularUpdateEquation_Material<MaterialT>(parentPaint, numCellsE, numCellsH,
@@ -336,7 +336,7 @@ calcE(int fieldDirection)
     
     //LOG << "Update id " << UpdateEquation::id() << "\n";
     
-    for (int nRL = 0; nRL < runlines.size(); nRL++)
+    for (long nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
         float* __restrict__ fi(rl.fi);               // e.g. Ex
@@ -410,7 +410,7 @@ calcH(int fieldDirection)
     //mPML.initLocalH(pmlData);
     mCurrent.initLocalH(currentData, dir0);
     
-    for (int nRL = 0; nRL < runlines.size(); nRL++)
+    for (long nRL = 0; nRL < runlines.size(); nRL++)
     {
         RunlineT & rl(runlines[nRL]);
         float* __restrict__ fi(rl.fi);               // e.g. Ex

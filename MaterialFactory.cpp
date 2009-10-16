@@ -35,20 +35,20 @@ using namespace YeeUtilities;
 // These three functions successively determine the material, current and
 // PML for a SetupUpdateEquation.
 static SetupUpdateEquationPtr newMaterialCurrentPML(Paint* parentPaint,
-    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+    vector<long> numCellsE, vector<long> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
 
 template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT>
 static SetupUpdateEquationPtr newCurrentPML(Paint* parentPaint,
-    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+    vector<long> numCellsE, vector<long> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
         
 template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT,
     class CurrentT>
 static SetupUpdateEquationPtr newPML(Paint* parentPaint,
-    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+    vector<long> numCellsE, vector<long> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
 
@@ -59,8 +59,8 @@ SetupUpdateEquationPtr MaterialFactory::
 newSetupUpdateEquation(
     const GridDescription & gridDesc,
 	Paint* parentPaint,
-    std::vector<int> numCellsE,
-    std::vector<int> numCellsH,
+    std::vector<long> numCellsE,
+    std::vector<long> numCellsH,
     std::vector<Rect3i> pmlRects,
     int runlineDirection )
 {
@@ -147,7 +147,7 @@ defaultPMLParams()
 
 
 static SetupUpdateEquationPtr newMaterialCurrentPML(Paint* parentPaint,
-    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlRects,
+    vector<long> numCellsE, vector<long> numCellsH, vector<Rect3i> pmlRects,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
 {
@@ -191,7 +191,7 @@ static SetupUpdateEquationPtr newMaterialCurrentPML(Paint* parentPaint,
 
 template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT>
 static SetupUpdateEquationPtr newCurrentPML(Paint* parentPaint,
-    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+    vector<long> numCellsE, vector<long> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
 {
@@ -220,7 +220,7 @@ static SetupUpdateEquationPtr newCurrentPML(Paint* parentPaint,
 template<class MaterialT, class NonPMLRunlineT, class PMLRunlineT,
     class CurrentT>
 static SetupUpdateEquationPtr newPML(Paint* parentPaint,
-    vector<int> numCellsE, vector<int> numCellsH, vector<Rect3i> pmlHalfCells,
+    vector<long> numCellsE, vector<long> numCellsH, vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<string, string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection )
 {

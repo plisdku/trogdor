@@ -50,12 +50,12 @@ class ModularUpdateEquation :
     public ModularUpdateEquation_Runline<RunlineT>
 {
 public:
-    ModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, Vector3f dxyz, float dt,
+    ModularUpdateEquation(Paint* parentPaint, std::vector<long> numCellsE,
+        std::vector<long> numCellsH, Vector3f dxyz, float dt,
         int runlineDirection );
     
-    ModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+    ModularUpdateEquation(Paint* parentPaint, std::vector<long> numCellsE,
+        std::vector<long> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
     

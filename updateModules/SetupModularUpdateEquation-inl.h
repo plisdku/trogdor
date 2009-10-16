@@ -28,8 +28,8 @@
 
 template<class MaterialClass, class RunlineT, class CurrentT>
 SetupModularUpdateEquation<MaterialClass, RunlineT, CurrentT>::
-SetupModularUpdateEquation(Paint* parentPaint, std::vector<int> numCellsE,
-    std::vector<int> numCellsH, Vector3f dxyz, float dt) :
+SetupModularUpdateEquation(Paint* parentPaint, std::vector<long> numCellsE,
+    std::vector<long> numCellsH, Vector3f dxyz, float dt) :
     BulkSetupUpdateEquation(MaterialDescPtr(parentPaint->bulkMaterial())),
     mParentPaint(parentPaint),
     mNumCellsE(numCellsE),
@@ -67,8 +67,8 @@ makeUpdateEquation(const VoxelizedPartition & vp, const CalculationPartition & c
 
 template<class MaterialClass, class RunlineT, class CurrentT, class PMLT>
 SimpleSetupPML<MaterialClass, RunlineT, CurrentT, PMLT>::
-SimpleSetupPML(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+SimpleSetupPML(Paint* parentPaint, std::vector<long> numCellsE,
+        std::vector<long> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt) :
     BulkPMLSetupUpdateEquation(MaterialDescPtr(parentPaint->bulkMaterial())),

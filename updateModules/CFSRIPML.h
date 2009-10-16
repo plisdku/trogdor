@@ -28,8 +28,8 @@ class CFSRIPMLBase
 {
 public:
     CFSRIPMLBase() { assert(!"This may compile but shouldn't be called."); }
-    CFSRIPMLBase(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+    CFSRIPMLBase(Paint* parentPaint, std::vector<long> numCellsE,
+        std::vector<long> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
     virtual ~CFSRIPMLBase() {}
@@ -86,8 +86,8 @@ class CFSRIPML : public CFSRIPMLBase
 {
 public:
     CFSRIPML() { assert(!"This may compile but shouldn't be called."); }
-    CFSRIPML(Paint* parentPaint, std::vector<int> numCellsE,
-        std::vector<int> numCellsH, std::vector<Rect3i> pmlHalfCells,
+    CFSRIPML(Paint* parentPaint, std::vector<long> numCellsE,
+        std::vector<long> numCellsH, std::vector<Rect3i> pmlHalfCells,
         Map<Vector3i, Map<std::string,std::string> > pmlParams, Vector3f dxyz,
         float dt, int runlineDirection );
     

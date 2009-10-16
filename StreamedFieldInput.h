@@ -47,8 +47,8 @@ public:
      *  @param time         the actual time in seconds (should be n*dt for E,
      *                      and (n+1/2)*dt for H)
      */
-    void startHalfTimestepE(int timestep, float time);
-    void startHalfTimestepH(int timestep, float time);
+    void startHalfTimestepE(long timestep, float time);
+    void startHalfTimestepH(long timestep, float time);
     
     /**
      *  For sources that store a mask in a buffer, reset the pointer to the

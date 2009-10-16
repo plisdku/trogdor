@@ -40,8 +40,8 @@ public:
         const CalculationPartition & cp);
     virtual ~SimpleEHOutput();
     
-    virtual void outputEPhase(const CalculationPartition & cp, int timestep);
-    virtual void outputHPhase(const CalculationPartition & cp, int timestep);
+    virtual void outputEPhase(const CalculationPartition & cp, long timestep);
+    virtual void outputHPhase(const CalculationPartition & cp, long timestep);
     
 private:
     void writeE(const CalculationPartition & cp);

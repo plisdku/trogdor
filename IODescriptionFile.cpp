@@ -324,7 +324,7 @@ write(std::string fileName, HuygensSurfaceDescPtr huygensSurface,
     // Determine all the materials in this chunk of grid.
     Map<int, int> tagToParent;
     Map<int, int> parentToIndex;
-    vector<int> materials;
+    vector<long> materials;
     for (kk = sampleRect.p1[2]; kk <= sampleRect.p2[2]; kk++)
     for (jj = sampleRect.p1[1]; jj <= sampleRect.p2[1]; jj++)
     for (ii = sampleRect.p1[0]; ii <= sampleRect.p2[0]; ii++)

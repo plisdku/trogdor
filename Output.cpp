@@ -54,13 +54,13 @@ Output::
 }
 
 void Output::
-outputEPhase(const CalculationPartition & cp, int timestep)
+outputEPhase(const CalculationPartition & cp, long timestep)
 {
     //LOG << "Output E timestep " << timestep << "\n";
 }
 
 void Output::
-outputHPhase(const CalculationPartition & cp, int timestep)
+outputHPhase(const CalculationPartition & cp, long timestep)
 {
     //LOG << "Output H timestep " << timestep << "\n";
 }

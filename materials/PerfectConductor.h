@@ -39,10 +39,10 @@ public:
     virtual long numHalfCellsH() const { return mNumHalfCellsH; }
 
 private:
-    int mNumRunlinesE;
-    int mNumRunlinesH;
-    int mNumHalfCellsE;
-    int mNumHalfCellsH;
+    long mNumRunlinesE;
+    long mNumRunlinesH;
+    long mNumHalfCellsE;
+    long mNumHalfCellsH;
 };
 
 

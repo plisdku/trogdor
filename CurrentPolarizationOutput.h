@@ -24,10 +24,10 @@ class CalculationPartition;
 
 struct SetupCPOutputRunline
 {
-    int materialID;
-    int startingIndex;
+    long materialID;
+    long startingIndex;
     BufferPointer startingField;
-    int length;
+    long length;
 };
 
 class CurrentPolarizationSetupOutput : public SetupOutput
@@ -47,9 +47,9 @@ private:
 struct CPOutputRunline
 {
     UpdateEquation* material;
-    int startingIndex;
+    long startingIndex;
     float* startingField;
-    int length;
+    long length;
 };
 
 class CurrentPolarizationOutput : public Output
@@ -65,8 +65,8 @@ public:
     void setRunlinesH(int direction, const CalculationPartition & cp,
         const std::vector<SetupCPOutputRunline> & setupRunlines);
     
-    virtual void outputEPhase(const CalculationPartition & cp, int timestep);
-    virtual void outputHPhase(const CalculationPartition & cp, int timestep);
+    virtual void outputEPhase(const CalculationPartition & cp, long timestep);
+    virtual void outputHPhase(const CalculationPartition & cp, long timestep);
     
 private:
     void writeJ(const CalculationPartition & cp);

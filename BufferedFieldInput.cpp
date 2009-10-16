@@ -161,7 +161,7 @@ pointerMaskH(int fieldDirection, long offset) const
 }
 
 void BufferedFieldInput::
-startHalfTimestepE(int timestep, float time)
+startHalfTimestepE(long timestep, float time)
 {
     if (mType == FORMULATYPE)
     {
@@ -212,7 +212,7 @@ startHalfTimestepE(int timestep, float time)
     }
 }
 void BufferedFieldInput::
-startHalfTimestepH(int timestep, float time)
+startHalfTimestepH(long timestep, float time)
 {
     if (mType == FORMULATYPE)
     {

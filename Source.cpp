@@ -63,7 +63,7 @@ Source::
 
 
 void Source::
-sourceEPhase(CalculationPartition & cp, int timestep)
+sourceEPhase(CalculationPartition & cp, long timestep)
 {
     if (norm2(mFields.whichE()) == 0)
         return;
@@ -84,7 +84,7 @@ sourceEPhase(CalculationPartition & cp, int timestep)
 }
 
 void Source::
-sourceHPhase(CalculationPartition & cp, int timestep)
+sourceHPhase(CalculationPartition & cp, long timestep)
 {
     if (norm2(mFields.whichH()) == 0)
         return;
@@ -106,7 +106,7 @@ sourceHPhase(CalculationPartition & cp, int timestep)
 
 
 void Source::
-doSourceE(CalculationPartition & cp, int timestep)
+doSourceE(CalculationPartition & cp, long timestep)
 {
     float val;
     InterleavedLattice& lattice(cp.lattice());
@@ -149,7 +149,7 @@ doSourceE(CalculationPartition & cp, int timestep)
 }
 
 void Source::
-doSourceH(CalculationPartition & cp, int timestep)
+doSourceH(CalculationPartition & cp, long timestep)
 {
     float val;
     InterleavedLattice& lattice(cp.lattice());

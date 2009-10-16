@@ -66,7 +66,7 @@ public:
      *  Return a list of all material IDs that update using this source.  The
      *  ordering of the list is the internal ordering of the current buffer.
      */
-    const std::vector<int> & materialIDs() const { return mMaterialIDs; }
+    const std::vector<long> & materialIDs() const { return mMaterialIDs; }
     
     /**
      *  Return the number of buffered current components for each material.
@@ -98,7 +98,7 @@ private:
     std::vector<std::vector<Rect3i> > mRectsJ;
     std::vector<std::vector<Rect3i> > mRectsK;
     
-    std::vector<int> mMaterialIDs;
+    std::vector<long> mMaterialIDs;
     std::vector<Vector3i> mNumCellsJ;
     std::vector<Vector3i> mNumCellsK;
 };
@@ -124,7 +124,7 @@ public:
      *                      Ky and Kz; must be the same length as materialIDs
      */
     CurrentSource(const CurrentSourceDescPtr & description,
-        const std::vector<int> & materialIDs,
+        const std::vector<long> & materialIDs,
         const std::vector<Vector3i> & numCellsJ,
         const std::vector<Vector3i> & numCellsK);
     virtual ~CurrentSource();
@@ -138,10 +138,10 @@ public:
     void allocateAuxBuffers();
     
     CurrentSourceDescPtr description() const { return mDescription; }
-    BufferPointer pointerJ(int direction, int materialID);
-    BufferPointer pointerK(int direction, int materialID);
-    BufferPointer pointerMaskJ(int direction, int materialID);
-    BufferPointer pointerMaskK(int direction, int materialID);
+    BufferPointer pointerJ(int direction, long materialID);
+    BufferPointer pointerK(int direction, long materialID);
+    BufferPointer pointerMaskJ(int direction, long materialID);
+    BufferPointer pointerMaskK(int direction, long materialID);
     
     void prepareJ(long timestep, float time);
     void prepareK(long timestep, float time);
@@ -149,12 +149,12 @@ private:
     CurrentSourceDescPtr mDescription;
     BufferedFieldInput mFieldInput;
     
-    std::vector<int> mMaterialIDs;
+    std::vector<long> mMaterialIDs;
     
     long mCurrentSampleInterval;
     
-    Map<int, long> mOffsetsJ[3];
-    Map<int, long> mOffsetsK[3];
+    Map<long, long> mOffsetsJ[3]; // from material ID to offset
+    Map<long, long> mOffsetsK[3]; // from material ID to offset
 };
 typedef Pointer<CurrentSource> CurrentSourcePtr;
 

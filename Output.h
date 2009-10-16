@@ -61,8 +61,8 @@ public:
     // A chance to do runlines...
     //virtual void setupFromGrid(const VoxelizedPartition & vp);
     
-    virtual void outputEPhase(const CalculationPartition & cp, int timestep);
-    virtual void outputHPhase(const CalculationPartition & cp, int timestep);
+    virtual void outputEPhase(const CalculationPartition & cp, long timestep);
+    virtual void outputHPhase(const CalculationPartition & cp, long timestep);
     
     virtual void allocateAuxBuffers();
     
