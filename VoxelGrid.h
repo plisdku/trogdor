@@ -53,16 +53,15 @@ public:
 	void paintExtrude(const GridDescription & gridDesc,
 		const Extrude & instruction);
 	
-	//void overlayHuygensSurface(const HuygensSurfaceDescription & surf);
-	void overlayHuygensSurface(const HuygensSurface & surf);
+    void overlayHuygensSurface(const HuygensSurface & surf);
 	void overlayCurrentSource(const CurrentSourceDescPtr & current);
 	void overlayPML();
 	
-    // ii,jj,kk          global coordinates; will wrap around globally
+    // ii,jj,kk          global coordinates; will wrap around in the partition
 	Paint* & operator() (int ii, int jj, int kk);
 	Paint* operator() (int ii, int jj, int kk) const;
     
-    // pp                global coordinate; will wrap around globally
+    // pp                global coordinate; will wrap around in the partition
 	Paint* & operator() (const Vector3i & pp);
 	Paint* operator() (const Vector3i & pp) const;
     

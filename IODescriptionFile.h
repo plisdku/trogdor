@@ -45,8 +45,9 @@ public:
      *  Write the data request for a custom TFSF source.  The data request file
      *  will be an m-file with a function that returns a useful data structure.
      */
-    static void write(std::string fileName, HuygensSurfaceDescPtr description,
-        const VoxelizedPartition & vp);
+    static void write(std::string fileName,
+        HuygensSurfaceDescPtr huygensSurface,
+        const VoxelizedPartition & vp, Vector3i huygensSurfaceSymmetries);
     
     /**
      *  Write the spec file for a GridReport.

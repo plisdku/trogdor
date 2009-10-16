@@ -93,9 +93,9 @@ private:
 	std::vector<Map<Paint*, long> > mNumCells;
 	std::vector<long> mMaterialIndexHalfCells;
 	Rect3i mHalfCellBounds;
-	int m_nnx;
-	int m_nny;
-	int m_nnz;
+	long long m_nnx;
+	long long m_nny;
+	long long m_nnz;
 	
 	friend std::ostream & operator<< (std::ostream & out,
 		const PartitionCellCount & grid);

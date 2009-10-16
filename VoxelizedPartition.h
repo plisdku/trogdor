@@ -119,8 +119,8 @@ public:
      */
     void calculateRunlines();
     
-    void writeDataRequest(const HuygensSurfaceDescPtr surf,
-        const GridDescPtr gridDescription) const;
+    //void writeDataRequest(const HuygensSurfaceDescPtr surf,
+    //    const GridDescPtr gridDescription) const;
     
     void writeDataRequests() const;
 	

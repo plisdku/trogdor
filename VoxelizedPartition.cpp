@@ -266,10 +266,11 @@ writeDataRequests() const
         IODescriptionFile::write(
             str.str(),
             mHuygensSurfaces[nn]->description(),
-            *this);
+            *this,
+            mHuygensRegionSymmetries[nn]);
     }
 }
-
+/*
 void VoxelizedPartition::
 writeDataRequest(const HuygensSurfaceDescPtr surf,
     const GridDescPtr gridDescription) const
@@ -283,9 +284,8 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     ostringstream fileNameStream;
     fileNameStream << surf->file() << ".m";
     
-    IODescriptionFile::write(fileNameStream.str(), surf, *this);
+    //IODescriptionFile::write(fileNameStream.str(), surf, *this);
     
-    /*
     ofstream file;
     file.open(fileNameStream.str().c_str());
     
@@ -478,10 +478,8 @@ writeDataRequest(const HuygensSurfaceDescPtr surf,
     file << "% end auto-generated file \n";
     
     file.close();
-    */
 }
-
-
+*/
 
 
 void VoxelizedPartition::
@@ -650,8 +648,6 @@ paintFromHuygensSurfaces(const GridDescription & gridDesc)
 	{
 		mVoxels.overlayHuygensSurface(*mHuygensSurfaces[nn]);
 	}
-    
-    
 }
 
 void VoxelizedPartition::

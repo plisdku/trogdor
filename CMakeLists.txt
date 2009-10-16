@@ -134,7 +134,8 @@ YeeUtilities.cpp
 YeeUtilities.h
 )
 
-#set_target_properties(trogdor PROPERTIES COMPILE_FLAGS -Winline)
+# Look for 64-bit conversion problems.  Important!
+set_target_properties(trogdor PROPERTIES COMPILE_FLAGS -Wshorten-64-to-32)
 
 # MaterialFactory.cpp is the file that includes, ultimately, all the templated
 # update equations.  For this reason I like to dump the optimized gimple and

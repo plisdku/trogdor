@@ -360,10 +360,9 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
                 auxGridDescription, numNodes, thisNode, auxPartitionWallsHalf,
                 runlineDirection);
 		}
-		else if (currentGrid->numDimensions() == 1)
-		{
-            assert(surfs[nn]->type() != kLink); // how could this happen?
-            
+		else if (currentGrid->numDimensions() == 1 &&
+            surfs[nn]->type() == kTFSFSource )
+		{   
 			//LOG << "Need to create last aux grid.\n";
 			ostringstream srcGridName;
 			srcGridName << currentGrid->name() << "_autosrc";
@@ -386,8 +385,9 @@ voxelizeGridRecursor(Map<GridDescPtr, VoxelizedPartitionPtr> & voxelizedGrids,
         else
         {
             assert(surfs[nn]->type() == kCustomTFSFSource);
-            voxelizedGrids[currentGrid]->writeDataRequest(surfs[nn],
-                currentGrid);
+            LOGF << "Detected custom TFSF source." << endl;
+//            voxelizedGrids[currentGrid]->writeDataRequest(surfs[nn],
+//                currentGrid);
         }
 	}
 }
@@ -494,7 +494,6 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
                     huygensSurface->formula(),
                     huygensSurface->direction(),
                     tfHalfCells,
-                    ///huygensSurface->halfCells(),
                     newSourceOmittedSides,
                     huygensSurface->isTotalField()));
         else
@@ -503,7 +502,6 @@ makeAuxGridDescription(Vector3i collapsible, GridDescPtr parentGrid,
                     huygensSurface->timeFile(),
                     huygensSurface->direction(),
                     tfHalfCells,
-                    //huygensSurface->halfCells(),
                     newSourceOmittedSides,
                     huygensSurface->isTotalField()));
     }

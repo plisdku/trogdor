@@ -26,7 +26,7 @@ PartitionCellCount(const VoxelGrid & grid, Rect3i halfCellBounds,
 	m_nny(halfCellBounds.size(1)+1),
 	m_nnz(halfCellBounds.size(2)+1)
 {
-    long allocSize = m_nnx*m_nny*m_nnz;
+    long long allocSize = m_nnx*m_nny*m_nnz;
     if (mMaterialIndexHalfCells.max_size() < allocSize)
     {
         cerr << "Warning: PartitionCellCount is going to attempt to allocate a "

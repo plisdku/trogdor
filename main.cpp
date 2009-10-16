@@ -236,6 +236,13 @@ handleArguments(int argc, char* const argv[])
 	
 	if (variablesMap.count("numerics"))
 	{
+        vector<int*> v;
+        cout << "sizeof(int) = " << sizeof(int) << endl;
+        cout << "sizeof(long) = " << sizeof(long) << endl;
+        cout << "sizeof(long long) = " << sizeof(long long) << endl;
+        cout << "sizeof(int*) = " << sizeof(int*) << endl;
+        cout << "sizeof(size_t) = " << sizeof(size_t) << endl;
+        cout << "vector<int*>::max_size() = " << v.max_size() << endl;
 		typedef numeric_limits<float> f;
 		cout << "Values from std::limits:\n";
 		cout << "digits = " << f::digits << endl;
