@@ -120,7 +120,7 @@ int main (int argc, char * const argv[])
     FDTDApplication& app = FDTDApplication::instance();
 	app.runNew(paramFileName, prefs);
     
-    LOGF << "End of main()." << endl;
+    LOGF << "End of main().  End of logfile." << endl;
     return 0;
 }
 

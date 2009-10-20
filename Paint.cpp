@@ -24,7 +24,7 @@ Paint(PaintType inType) :
 	mBaseUpdatePaint(this),
 	mType(inType),
 	mPMLDirections(0,0,0),
-	mCurlBuffers(6),
+    mCurlBuffers(6),
 	mCurrentSource(0L),
 	mBulkMaterial(0L)
 {
@@ -44,6 +44,8 @@ Paint(const Paint & copyMe)
 	mBaseUpdatePaint = copyMe.mBaseUpdatePaint;
 	mType = copyMe.mType;
 	mPMLDirections = copyMe.mPMLDirections;
+//    for (int nn = 0; nn < 6; nn++)
+//        mCurlBuffers[nn] = copyMe.mCurlBuffers[nn];
 	mCurlBuffers = copyMe.mCurlBuffers;
 	mCurrentSource = copyMe.mCurrentSource;
 	mBulkMaterial = copyMe.mBulkMaterial;
@@ -61,6 +63,8 @@ Paint(const MaterialDescPtr & material) :
 	mBulkMaterial(material)
 {
 	assert(material != 0L);
+//    for (int nn = 0; nn < 6; nn++)
+//        mCurlBuffers[nn] = 0L;
 }
 
 string Paint::

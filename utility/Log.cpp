@@ -18,7 +18,6 @@
 std::ofstream TrogLog::sLogfile("log.out.txt");
 StreamTee TrogLog::sTee(std::cout, TrogLog::sLogfile);
 
-
 std::string TrogLog::
 stripArgs(const std::string & str)
 {

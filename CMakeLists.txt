@@ -53,6 +53,8 @@ CurrentSource.cpp
 CurrentSource.h
 FDTDApplication.cpp
 FDTDApplication.h
+HuygensCustomSource.cpp
+HuygensCustomSource.h
 HuygensLink.cpp
 HuygensLink.h
 HuygensSurface.cpp

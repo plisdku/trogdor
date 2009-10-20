@@ -926,6 +926,8 @@ reportPerformance(Map<string, CalculationPartitionPtr> & calculationGrids)
         itr->second->printPerformanceForMatlab(runlog, prefix.str());
         gridN++;
     }
+    
+    runlog << "% End of runlog.\n";
     runlog.close();
 }
 

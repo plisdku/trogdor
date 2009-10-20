@@ -99,6 +99,7 @@ private:
 	PaintType mType;
 	Vector3i mPMLDirections;
     std::vector<const NeighborBuffer*> mCurlBuffers;
+    //const NeighborBuffer* mCurlBuffers[6];
 	CurrentSourceDescPtr mCurrentSource;
 	
 	// for BulkPaint

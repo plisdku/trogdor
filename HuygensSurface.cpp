@@ -15,6 +15,8 @@
 #include "STLOutput.h"
 
 #include "HuygensLink.h"
+#include "HuygensCustomSource.h"
+
 #include <sstream>
 using namespace std;
 using namespace YeeUtilities;
@@ -51,8 +53,9 @@ HuygensSurface(string namePrefix, const VoxelizedPartition & vp,
     static const Rect3i UNUSED_SOURCE_RECT_ARGUMENT(0,0,0,0,0,0);
     Rect3i sourceHalfCells(UNUSED_SOURCE_RECT_ARGUMENT);
     
-    if (surfaceDescription->sourceGrid() != 0L)
+    if (surfaceDescription->type() == kLink)
     {
+        assert(surfaceDescription->sourceGrid() != 0L);
         mSourceLattice =  grids[surfaceDescription->sourceGrid()]->
             getLattice();
         sourceHalfCells = surfaceDescription->fromHalfCells();

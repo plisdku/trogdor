@@ -12,6 +12,7 @@
 #include "StreamTee.h"
 
 #include <boost/current_function.hpp>
+#include "TimeWrapper.h"
 
 #include <string>
 #include <fstream>
@@ -39,9 +40,9 @@ private:
 };
 
 
-#define LOGF (TrogLog::logf() << "[" << TrogLog::stripArgs((BOOST_CURRENT_FUNCTION)) << ", " << __LINE__ << "]: ")
+#define LOGF (TrogLog::logf() << timestamp() << " [" << TrogLog::stripArgs((BOOST_CURRENT_FUNCTION)) << ", " << __LINE__ << "]: ")
 #define LOGFMORE TrogLog::logf()
-#define LOG (TrogLog::tee() << "[" << TrogLog::stripArgs((BOOST_CURRENT_FUNCTION)) << ", " << __LINE__ << "]: ")
+#define LOG (TrogLog::tee() << timestamp() << " [" << TrogLog::stripArgs((BOOST_CURRENT_FUNCTION)) << ", " << __LINE__ << "]: ")
 #define LOGMORE TrogLog::tee()
 
 #endif

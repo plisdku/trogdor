@@ -16,6 +16,9 @@
 #ifndef _TIMEWRAPPER_
 #define _TIMEWRAPPER_
 
+#include <string>
+
 double timeInMicroseconds();
+std::string timestamp();
 
 #endif

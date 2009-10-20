@@ -20,6 +20,9 @@
 #ifndef __MINGW32__
 
 #include <sys/time.h>
+//#include <iostream>
+
+using namespace std;
 
 double timeInMicroseconds()
 {
@@ -31,11 +34,30 @@ double timeInMicroseconds()
     return ((double)tv.tv_usec + 1e6*tv.tv_sec);
 }
 
+string timestamp()
+{
+    time_t rawtime;
+    struct tm * timeinfo;
+    char buffer [80];
+    
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+    strftime(buffer, 80, "%y.%m.%d %X", timeinfo);
+    //cout << buffer << endl;
+    
+    return string(buffer);
+}
+
 #else
 
 double timeInMicroseconds()
 {
     return 1.0;
+}
+
+std::string timestamp()
+{
+    return "";
 }
 
 
