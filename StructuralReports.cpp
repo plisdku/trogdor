@@ -373,9 +373,6 @@ saveGridReports(const GridDescription & grid, const VoxelizedPartition & vp)
     }
     code[0L] = 0;
     
-    LOGF << "Question: why doesn't this function use IODescriptionFile "
-        "to write the output spec file?\n";
-    
     for (int nn = 0; nn < reports.size(); nn++)
     {
         ostringstream txtFileName;

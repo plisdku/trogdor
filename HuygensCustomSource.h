@@ -10,8 +10,8 @@
 #ifndef _HUYGENSCUSTOMSOURCE_
 #define _HUYGENSCUSTOMSOURCE_
 
-
 #include "HuygensSurface.h"
+#include "StreamedFieldInput.h"
 #include "geometry.h"
 #include <vector>
 
@@ -26,8 +26,15 @@ class HuygensCustomSource : public HuygensUpdate
 public:
     HuygensCustomSource(const HuygensSurface & hs);
     
-    virtual void updateE(HuygensSurface & hs);
-    virtual void updateH(HuygensSurface & hs);
+    virtual void updateE(HuygensSurface & hs, CalculationPartition & cp,
+        long timestep);
+    virtual void updateH(HuygensSurface & hs, CalculationPartition & cp,
+        long timestep);
+    
+private:
+    HuygensSurfaceDescPtr mDescription;
+    StreamedFieldInput mFieldInput;
+    Duration mDuration;
 };
 
 

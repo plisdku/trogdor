@@ -25,8 +25,10 @@ class HuygensLink : public HuygensUpdate
 public:
     HuygensLink(const HuygensSurface & hs);
     
-    virtual void updateE(HuygensSurface & hs);
-    virtual void updateH(HuygensSurface & hs);
+    virtual void updateE(HuygensSurface & hs, CalculationPartition & cp,
+        long timestep);
+    virtual void updateH(HuygensSurface & hs, CalculationPartition & cp,
+        long timestep);
 };
 
 #endif

@@ -20,10 +20,10 @@
 
 /**
  *  Unified source of E and H field data for hard sources, soft sources,
- *  and custom TFSF sources (as for example
- *  for loading waveguide modes, doing analytical field propagation, whatnot).
- *  Fields may be time or time-space varying, and fields with separable time
- *  and space dependencies can be specified in two parts to use less memory.
+ *  and custom TFSF sources (as for example for loading waveguide modes, doing
+ *  analytical field propagation, whatnot).  Fields may be time or time-space
+ *  varying, and fields with separable time and space dependencies can be
+ *  specified in two parts to use less memory.
  */
 class StreamedFieldInput
 {
@@ -34,6 +34,12 @@ public:
      *  a mask is requested it will be stored in memory.
      */
     StreamedFieldInput(SourceDescPtr sourceDescription);
+    
+    /**
+     *  Initialize a field input for a custom TFSF source.  The data will always
+     *  be read from a file.
+     */
+    StreamedFieldInput(HuygensSurfaceDescPtr huygensSurfaceDescription);
     
     virtual ~StreamedFieldInput();
     

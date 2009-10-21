@@ -153,6 +153,18 @@ private:
 	void calculateMaterialIndices();
 	
 	void calculateHuygensSurfaceSymmetries(const GridDescription & gridDesc);
+    
+    /**
+     *  Determine the symmetry of the materials in the grid within the Huygens
+     *  surface (the total-field region).  The TF region is assumed to be
+     *  symmetrical; symmetry in x is broken if the material at (x0, y, z) is
+     *  not the same as the material at (x1, y, z) for any y or z on the +/- x
+     *  faces, or if the material is not constant along (x, y_side, z_side), 
+     *  the +/- y and +/- z faces of the TF box.  However, symmetry is only
+     *  determined for non-omitted sides (so if the TF region is not symmetrical
+     *  it may be possible to omit some of the sides of the Huygens surface to
+     *  obtain a "symmetrical" TF region).
+     */
 	Vector3i huygensSymmetry(const HuygensSurfaceDescription & surf);
 	
 	void createSetupUpdateEquations(const GridDescription & gridDesc);

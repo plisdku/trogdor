@@ -242,6 +242,8 @@ writeDataRequests() const
     // 1.  Current sources
     // 2.  Custom TFSF sources (HuygensSurfaces)
     
+    LOG << "Writing data requests." << endl;
+    
     for (int nn = 0; nn < mSetupCurrentSources.size(); nn++)
     if (mSetupCurrentSources[nn]->description()->hasMask() ||
         mSetupCurrentSources[nn]->description()->isSpaceVarying())
@@ -265,7 +267,7 @@ writeDataRequests() const
         str << "tfsfreq_" << nn << ".m";
         IODescriptionFile::write(
             str.str(),
-            mHuygensSurfaces[nn]->description(),
+            *mHuygensSurfaces[nn],
             *this,
             mHuygensRegionSymmetries[nn]);
     }

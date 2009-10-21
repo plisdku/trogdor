@@ -35,6 +35,11 @@ newHuygensSurface(string namePrefix,
         update = HuygensUpdatePtr(new HuygensLink(*hs));
         hs->setUpdater(update);
     }
+    else if (desc->type() == kCustomTFSFSource)
+    {
+        update = HuygensUpdatePtr(new HuygensCustomSource(*hs));
+        hs->setUpdater(update);
+    }
     else
         throw(Exception("Unknown HuygensSurface type!"));
     
@@ -93,17 +98,17 @@ allocate()
 }
 
 void HuygensSurface::
-updateE()
+updateE(CalculationPartition & cp, long timestep)
 {
     assert(mUpdate != 0L);
-    mUpdate->updateE(*this);
+    mUpdate->updateE(*this, cp, timestep);
 }
 
 void HuygensSurface::
-updateH()
+updateH(CalculationPartition & cp, long timestep)
 {
     assert(mUpdate != 0L);
-    mUpdate->updateH(*this);
+    mUpdate->updateH(*this, cp, timestep);
 }
 
 NeighborBuffer::

@@ -9,6 +9,7 @@
 
 #include "HuygensLink.h"
 #include "VoxelizedPartition.h"
+#include "CalculationPartition.h"
 #include "SimulationDescription.h"
 #include "YeeUtilities.h"
 #include "Log.h"
@@ -22,7 +23,7 @@ HuygensLink(const HuygensSurface & hs)
 }
 
 void HuygensLink::
-updateE(HuygensSurface & hs)
+updateE(HuygensSurface & hs, CalculationPartition & cp, long timestep)
 {
     //LOG << "Update E.\n";
     const std::vector<NeighborBufferPtr> & nbs(hs.neighborBuffers());
@@ -165,7 +166,7 @@ updateE(HuygensSurface & hs)
 }
 
 void HuygensLink::
-updateH(HuygensSurface & hs)
+updateH(HuygensSurface & hs, CalculationPartition & cp, long timestep)
 {
     //LOG << "Update H.\n";
     const std::vector<NeighborBufferPtr> & nbs(hs.neighborBuffers());

@@ -12,6 +12,7 @@
 
 #include "SimulationDescription.h"
 #include "Exception.h"
+#include "HuygensSurface.h"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -46,8 +47,8 @@ public:
      *  will be an m-file with a function that returns a useful data structure.
      */
     static void write(std::string fileName,
-        HuygensSurfaceDescPtr huygensSurface,
-        const VoxelizedPartition & vp, Vector3i huygensSurfaceSymmetries);
+        const HuygensSurface & huygensSurface,
+        const VoxelizedPartition & vp, Vector3i materialSymmetries);
     
     /**
      *  Write the spec file for a GridReport.

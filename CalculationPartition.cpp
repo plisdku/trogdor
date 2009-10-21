@@ -137,7 +137,7 @@ updateE(long timestep)
     unsigned int nn;
     
     for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
-        mHuygensSurfaces[nn]->updateH(); // sum H fields before updating E.
+        mHuygensSurfaces[nn]->updateH(*this, timestep); // sum H before E.
     
     for (nn = 0; nn < mCurrentSources.size(); nn++)
         mCurrentSources[nn]->prepareJ(timestep, timestep*m_dt);
@@ -179,7 +179,7 @@ updateH(long timestep)
     
     // Update E fields in Huygens surfaces
     for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
-        mHuygensSurfaces[nn]->updateE(); // sum E fields before updating H
+        mHuygensSurfaces[nn]->updateE(*this, timestep); // sum E before H
         
     for (nn = 0; nn < mCurrentSources.size(); nn++)
         mCurrentSources[nn]->prepareK(timestep, (timestep+0.5)*m_dt);
@@ -218,7 +218,7 @@ timedUpdateE(long timestep)
     for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
     {
         t1 = timeInMicroseconds();
-        mHuygensSurfaces[nn]->updateH(); // need to update H here before E.
+        mHuygensSurfaces[nn]->updateH(*this, timestep); // H before E.
         t2 = timeInMicroseconds();
         mStatistics.addHuygensSurfaceMicroseconds(nn, t2-t1);
     }
@@ -299,7 +299,7 @@ timedUpdateH(long timestep)
     for (nn = 0; nn < mHuygensSurfaces.size(); nn++)
     {
         t1 = timeInMicroseconds();
-        mHuygensSurfaces[nn]->updateE(); // need to update E here before H.
+        mHuygensSurfaces[nn]->updateE(*this, timestep); // E before H
         t2 = timeInMicroseconds();
         mStatistics.addHuygensSurfaceMicroseconds(nn, t2-t1);
     }

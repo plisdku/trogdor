@@ -29,6 +29,8 @@ typedef Pointer<NeighborBuffer> NeighborBufferPtr;
 class HuygensUpdate;
 typedef Pointer<HuygensUpdate> HuygensUpdatePtr;
 
+class CalculationPartition;
+
 /**
  * Factory for HuygensSurface.  Constructs a HuygensSurface and a HuygensUpdate
  * and calls huygensSurface->setUpdater(huygensUpdate).
@@ -105,13 +107,13 @@ public:
      * If setUpdater() has provided the object to generate E and H fields on
      * the boundary, this function calls updater->updateE().
      */
-    void updateE();
+    void updateE(CalculationPartition & cp, long timestep);
     
     /**
      * If setUpdater() has provided the object to generate E and H fields on
      * the boundary, this function calls updater->updateH().
      */
-    void updateH();
+    void updateH(CalculationPartition & cp, long timestep);
 private:
     HuygensSurfaceDescPtr mDescription;
     Rect3i mHalfCells;
@@ -140,14 +142,16 @@ public:
      * E fields to the H update equations around the total-field scattered-field
      * boundary.
      */
-    virtual void updateE(HuygensSurface & hs) {}
+    virtual void updateE(HuygensSurface & hs, CalculationPartition & cp,
+        long timestep) {}
     
     /**
      * Called once per timestep, before the E fields are updated, to provide
      * H fields to the H update equations around the total-field scattered-field
      * boundary.
      */
-    virtual void updateH(HuygensSurface & hs) {}
+    virtual void updateH(HuygensSurface & hs, CalculationPartition & cp,
+        long timestep) {}
 };
 
 /**

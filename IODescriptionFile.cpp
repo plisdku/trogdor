@@ -250,8 +250,8 @@ write(std::string fileName, CurrentSourceDescPtr description,
 }
 
 void IODescriptionFile::
-write(std::string fileName, HuygensSurfaceDescPtr huygensSurface,
-    const VoxelizedPartition & vp, Vector3i huygensSurfaceSymmetries)
+write(std::string fileName, const HuygensSurface & huygensSurface,
+    const VoxelizedPartition & vp, Vector3i materialSymmetries)
 {
     cerr << "Warning: NOT writing request file for HuygensSurface.\n";
     ofstream file(fileName.c_str());
@@ -263,146 +263,135 @@ write(std::string fileName, HuygensSurfaceDescPtr huygensSurface,
         << vp.simulationDescription()->dxyz()[2]
         << "];\n";
     
-    int numT = huygensSurface->duration().last() -
-        huygensSurface->duration().first() + 1;
+    int numT = huygensSurface.description()->duration().last() -
+        huygensSurface.description()->duration().first() + 1;
     file << "afp.numT = [" << numT << "];\n";
     
-    file << "afp.halfCells = " << huygensSurface->halfCells() << ";\n";
+    file << "afp.halfCells = [";
+    for (int mm = 0; mm < 3; mm++)
+        file << huygensSurface.halfCells().p1[mm] << " ";
+    for (int mm = 0; mm < 3; mm++)
+        file << huygensSurface.halfCells().p2[mm] << " ";
+    file << "];\n";
     file << "afp.tfRect = afp.halfCells;\n";
-    file << "afp.inputFile = '" << huygensSurface->file() << "';\n";
+    file << "afp.inputFile = '" << huygensSurface.description()->file()
+        << "';\n";
     
     // These lines could stand to feature better names.
     // huygensSurfaceSymmetries stores the directions in which the structure
     //  in the main grid is symmetrical around the TFSF boundary.
     // huygensSurface->symmetries() returns the directions along which the
     //  source waveform is symmetrical.
-    LOG << "Grid symmetries " << huygensSurfaceSymmetries << endl;
-    LOG << "Source symmetries " << huygensSurface->symmetries() << endl;
-    
-    
+    LOG << "Grid symmetries " << materialSymmetries << endl;
+    LOG << "Source symmetries " << huygensSurface.description()->symmetries()
+        << endl;
     
     /*
-    // Now write the materials and their parameters.
-    int ii, jj, kk;
-    int numMaterials = 0;
-    Rect3i sampleRect = ss->tiFRect();
-    const vmlib::SMat<3,bool> & gridSymmetries =
-        ss->cachedGridSymmetries();
-    Vector3b sourceSymmetries = ss->symmetries();
-    Vector3b periodicDimensions = periodicDimensions(sampleRect);
-    Vector3b combinedSymmetries(0,0,0);
-    
-    LOGF << "Grid symmetries are " << gridSymmetries << endl;
-    LOGF << "Source symmetries are " << sourceSymmetries << endl;
-    LOGF << "Periodic dimensions are " << periodicDimensions << endl;
-    
-    for (int nSym = 0; nSym < 3; nSym++)
-    {
-        // There are two conditions under which a dimension can be dropped.
-        //	 1.  If the sourceRect has full X symmetry (which means that
-        //		gridSymmetries(nSym,:) == 1) then the X direction collapses.
-        //	 2.  If the sourceRect has X symmetry on some faces, but
-        //      the remaining faces don't need TFSF correction, then that
-        //		is good enough.  That condition is usually the same as
-        //		having a periodic dimension.  (Warning: this is a kludge.)
+        There are only two jobs left, and they're simple to state:
         
-        Vector3b symmetryOrPeriodicity(
-            periodicDimensions[0] || gridSymmetries(nSym,0),
-            periodicDimensions[1] || gridSymmetries(nSym,1),
-            periodicDimensions[2] || gridSymmetries(nSym,2) );
+        1.  Provide the material in each half-cell of the grid.  If the grid
+            is symmetrical in some direction, the samples may be collapsed.
+        2.  Provide Yee cell coordinates and locations in meters of all E and H
+            fields, in the right order.  This will mean every single boundary
+            half cell.
         
-        if (minval(symmetryOrPeriodicity) == 1) // if vector == (1 1 1)
-            combinedSymmetries[nSym] = 1;
-    }
+        I'll do these in order.
+    */
     
-    LOGF << "Combined symmetries are " << combinedSymmetries << endl;
+    // Choose the rectangle of materials to print.
+    // At most, the entire TF region will be presented.  However, if the grid
+    // is symmetrical in some direction, then one edge will be enough.  (Pick
+    // an edge that is not omitted.)
     
-    for (int xyz = 0; xyz < 3; xyz++)
-    if (combinedSymmetries[nn])
-        sampleRect.p2[nn] = sampleRect.p1[nn];
-    
-    // Determine all the materials in this chunk of grid.
-    Map<int, int> tagToParent;
-    Map<int, int> parentToIndex;
-    vector<long> materials;
-    for (kk = sampleRect.p1[2]; kk <= sampleRect.p2[2]; kk++)
-    for (jj = sampleRect.p1[1]; jj <= sampleRect.p2[1]; jj++)
-    for (ii = sampleRect.p1[0]; ii <= sampleRect.p2[0]; ii++)
+    Rect3i sampleHalfCells = huygensSurface.halfCells();
+    for (int direction = 0; direction < 3; direction++)
+    if (materialSymmetries[direction])
     {
-        Paint* mat = mVoxels(ii,jj,kk);
-        int parentTag;
-        //cout << mat << "\n";
-        if (tagToParent.count(mat) == 0)
+        Vector3i face0 = cardinal(2*direction);
+        Vector3i face1 = -face0;
+        
+        // Try to save materials on a non-omitted side of the TF box.  If
+        // this is not possible, print a warning and pick arbitrarily.
+        if (huygensSurface.hasBuffer(2*direction+1) &&
+            !huygensSurface.hasBuffer(2*direction))
         {
-            const MaterialType & matType =
-                mStructureGrid->materialType(mat);
-            if (matType.isTFSF())
-                parentTag = mStructureGrid->materialIndex(
-                    matType.name());
-            else
-                parentTag = mat;
-            
-            tagToParent[mat] = parentTag;
+            sampleHalfCells.p1[direction] = sampleHalfCells.p2[direction];
         }
-        
-        parentTag = tagToParent[mat];
-        if (parentToIndex.count(parentTag) == 0)
+        else if (huygensSurface.hasBuffer(2*direction) &&
+            !huygensSurface.hasBuffer(2*direction+1))
         {
-            parentToIndex[parentTag] = numMaterials;
-            materials.push_back(parentTag);
-            numMaterials++;
+            sampleHalfCells.p2[direction] = sampleHalfCells.p1[direction];
+        }
+        else if (huygensSurface.hasBuffer(2*direction))
+            sampleHalfCells.p2[direction] = sampleHalfCells.p1[direction];
+        else
+        {
+            cerr << "Warning: it's not obvious which sides of the TFSF region"
+                " need to have materials saved to file.  The choice here is"
+                " arbitrary." << endl;
+            sampleHalfCells.p2[direction] = sampleHalfCells.p1[direction];
         }
     }
-    // Write the material descriptions
-    for (int mm = 0; mm < numMaterials; mm++)
+    
+    file << "afp.sampleHalfCells = [";
+    for (int mm = 0; mm < 3; mm++)
+        file << sampleHalfCells.p1[mm] << " ";
+    for (int mm = 0; mm < 3; mm++)
+        file << sampleHalfCells.p2[mm] << " ";
+    file << "];\n";
+    LOG << "Sample half cells: " << sampleHalfCells << endl;
+    
+    // ----------------
+    // COPIED at first from StructuralReports.  This is so silly!
+    
+    // Following VoxelGrid::operator<<, we'll establish a mapping from Paint*
+    // to unsigned ints.
+    Map<Paint*, unsigned int> code;
+    vector<string> fullNames;
+    fullNames.push_back("Empty");
+    unsigned int curInt = 1;
+    Map<Paint,PaintPtr>::const_iterator itr;
+    for (itr = Paint::palette().begin(); itr != Paint::palette().end(); itr++)
     {
-        const MaterialType & matType = mStructureGrid->materialType(
-            materials[mm]);
-        const SetupUpdateEquationPtr setupMat = mMaterials[matType.name()];
-        file << "afp.materials{" << mm+1 << "}.class = '" << 
-            setupMat->getClass() << "';\n";
-        file << "afp.materials{" << mm+1 << "}.name = '" <<
-            setupMat->name() << "';\n";
-        
-        const Map<string, string> & params = setupMat->parameters();
-        Map<string, string>::const_iterator itr;
-        for (itr = params.begin(); itr != params.end(); itr++)
-        {
-            file << "afp.materials{" << mm+1 << "}." << itr->first
-                << " = " << itr->second << ";\n";
-        }
+        code[itr->second] = curInt;
+        fullNames.push_back(itr->first.fullName());
+        file << "afp.materials{" << curInt << "} = '" << itr->first.fullName()
+            << "';\n";
+        curInt++;
     }
-    // Write the grid
-    file << "afp.sampleBounds = " << sampleRect << ";\n";
-    file << "afp.grid = [";
-    for (kk = sampleRect.p1[2]; kk <= sampleRect.p2[2]; kk++)
+    code[0L] = 0;
+    
+    //string binaryName = fileName + "_binary";
+    //ofstream binaryFile(binaryName.c_str(), ofstream::binary);
+    file << "afp.grid = [...\n";
+    Vector3i x;
+    for (x[2] = sampleHalfCells.p1[2]; x[2] <= sampleHalfCells.p2[2]; x[2]++)
+    for (x[1] = sampleHalfCells.p1[1]; x[1] <= sampleHalfCells.p2[1]; x[1]++)
+    for (x[0] = sampleHalfCells.p1[0]; x[0] <= sampleHalfCells.p2[0]; x[0]++)
     {
-        file << "...\n";
-        for (jj = sampleRect.p1[1]; jj <= sampleRect.p2[1]; jj++)
-        {
-            file << "\t";
-            for (ii = sampleRect.p1[0]; ii <= sampleRect.p2[0]; ii++)
-            {
-                Paint* mat = mVoxels(ii,jj,kk);
-                //int matInd = parentToIndex[tagToParent[mat]];
-                //file << matInd+1 << " ";
-            }
-            file << "...\n";
-        }
+        unsigned int codeVal = code[vp.voxels()(x)];
+        file << "\t" << codeVal << " ...\n";
+        //binaryFile.write((char*)(&codeVal),
+        //    (std::streamsize)(sizeof(codeVal)));
     }
     file << "];\n";
+    file << "afp.grid = reshape(afp.grid, afp.sampleHalfCells(4:6) - "
+        "afp.sampleHalfCells(1:3) + 1);\n";
     
-    // Write the buffer points required, first in half cells, then in meters
-    SetupTFSFBufferSet temporaryBuffer(*ss, mActiveRegion);
+    // END COPIED STUFF
+    // ----------------
     
-    // Make a list of parities of Ex, Ey, Ez, Hx, Hy and Hz
-    vector<Vector3i> fieldParities;
-    fieldParities.push_back(Vector3i(1,0,0));
-    fieldParities.push_back(Vector3i(0,1,0));
-    fieldParities.push_back(Vector3i(0,0,1));
-    fieldParities.push_back(Vector3i(0,1,1));
-    fieldParities.push_back(Vector3i(1,0,1));
-    fieldParities.push_back(Vector3i(1,1,0));
+    // Write the field positions.  The order will be
+    //  Ex Ey Ez Hx Hy Hz
+    
+    // Make a list of offsets of Ex, Ey, Ez, Hx, Hy and Hz
+    vector<Vector3i> fieldOffsets;
+    fieldOffsets.push_back(eFieldOffset(0));
+    fieldOffsets.push_back(eFieldOffset(1));
+    fieldOffsets.push_back(eFieldOffset(2));
+    fieldOffsets.push_back(hFieldOffset(0));
+    fieldOffsets.push_back(hFieldOffset(1));
+    fieldOffsets.push_back(hFieldOffset(2));
     vector<string> fieldNames;
     fieldNames.push_back("Ex");
     fieldNames.push_back("Ey");
@@ -411,46 +400,52 @@ write(std::string fileName, HuygensSurfaceDescPtr huygensSurface,
     fieldNames.push_back("Hy");
     fieldNames.push_back("Hz");
     
-    int ff, gg;
-    for (ff = 0; ff < 6; ff++)
+    for (int field = 0; field < 6; field++)
     {
-        file << "afp.yee"+fieldNames[ff] << " = [ ...\n";
+        file << "afp.yee" + fieldNames[field] << " = [ ...\n";
         
-        for (gg = 0; gg < 6; gg++)  // iterate over sides (-x, +x, etc)
-        if (!temporaryBuffer.omits(gg))
+        for (int faceNum = 0; faceNum < 6; faceNum++)
+        if (huygensSurface.hasBuffer(faceNum))
         {
-            Rect3i yeeBounds = temporaryBuffer.yeeBufferRect(gg,
-                fieldParities[ff]);
-            for (kk = yeeBounds.p1[2]; kk <= yeeBounds.p2[2]; kk++)
-            for (jj = yeeBounds.p1[1]; jj <= yeeBounds.p2[1]; jj++)
-            for (ii = yeeBounds.p1[0]; ii <= yeeBounds.p2[0]; ii++)
-                file << "\t[" << ii << ", " << jj << ", " << kk << "]; ...\n";
+            Rect3i yee;
+            yee = halfToYee(huygensSurface.buffer(faceNum)->destHalfCells(),
+                octant(fieldOffsets[field]));
+            for (int kk = yee.p1[2]; kk <= yee.p2[2]; kk++)
+            for (int jj = yee.p1[1]; jj <= yee.p2[1]; jj++)
+            for (int ii = yee.p1[0]; ii <= yee.p2[0]; ii++)
+                file << "\t[" << ii << ", " << jj << " , " << kk << "];...\n";
         }
         file << "];\n";
     }
     
-    for (ff = 0; ff < 6; ff++)
+    Vector3f dxyz = vp.simulationDescription()->dxyz();
+    for (int field = 0; field < 6; field++)
     {
-        file << "afp.pos"+fieldNames[ff] << " = [ ...\n";
+        file << "afp.pos" + fieldNames[field] << " = [ ...\n";
         
-        for (gg = 0; gg < 6; gg++)  // iterate over sides (-x, +x, etc)
-        if (!temporaryBuffer.omits(gg))
+        for (int faceNum = 0; faceNum < 6; faceNum++)
+        if (huygensSurface.hasBuffer(faceNum))
         {
-            Rect3i yeeBounds = temporaryBuffer.yeeBufferRect(gg,
-                fieldParities[ff]);
-            for (kk = yeeBounds.p1[2]; kk <= yeeBounds.p2[2]; kk++)
-            for (jj = yeeBounds.p1[1]; jj <= yeeBounds.p2[1]; jj++)
-            for (ii = yeeBounds.p1[0]; ii <= yeeBounds.p2[0]; ii++)
+            Rect3i yee;
+            yee = halfToYee(huygensSurface.buffer(faceNum)->destHalfCells(),
+                octant(fieldOffsets[field]));
+            Vector3f theOffset(0.5*fieldOffsets[field][0],
+                0.5*fieldOffsets[field][1],
+                0.5*fieldOffsets[field][2]);
+            for (int kk = yee.p1[2]; kk <= yee.p2[2]; kk++)
+            for (int jj = yee.p1[1]; jj <= yee.p2[1]; jj++)
+            for (int ii = yee.p1[0]; ii <= yee.p2[0]; ii++)
             {
-                file << "\t[" << dx*(ii+0.5*fieldParities[ff][0]) << ", "
-                    << dy*(jj+0.5*fieldParities[ff][1]) << ", "
-                    << dz*(kk+0.5*fieldParities[ff][2]) << "]; ...\n";
+                file << "\t["
+                    << dxyz[0]*(theOffset[0]+ii) << " , "
+                    << dxyz[1]*(theOffset[1]+jj) << " , "
+                    << dxyz[2]*(theOffset[2]+kk) << "]; ...\n";
             }
         }
         file << "];\n";
     }
-    file << "% end auto-generated file \n";
-    */
+    file << "% End auto-generated file.\n";
+    
     file.close();
 }
 

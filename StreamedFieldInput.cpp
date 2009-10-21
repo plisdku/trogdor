@@ -81,6 +81,26 @@ StreamedFieldInput(SourceDescPtr sourceDescription) :
     }
 }
 
+StreamedFieldInput::
+StreamedFieldInput(HuygensSurfaceDescPtr huygensSurfaceDescription) :
+    mFieldValueType(kSpaceTimeVaryingField),
+    mHasMask(0),
+    mUsesPolarization(0),
+    mPolarizationFactor(1,1,1),
+    mType(FILETYPE),
+    mWhichE(1,1,1),
+    mWhichH(1,1,1)
+{
+    string fname = huygensSurfaceDescription->file();
+    mFile.open(fname.c_str(), ios::binary);
+    if (mFile.good())
+        LOGF << "Opened binary file " << fname << ".\n";
+    else
+        LOG << "Could not open binary file " << fname << ".\n";
+    //cerr << "Warning: could not open binary file " << fname << endl;
+    //throw(Exception(string("Could not open binary file ") + fname));
+}
+
 
 StreamedFieldInput::
 ~StreamedFieldInput()
@@ -90,7 +110,6 @@ StreamedFieldInput::
 void StreamedFieldInput::
 startHalfTimestepE(long timestep, float time)
 {
-    //LOG << "TODO: split this for E and H so it can read to the right buffer.\n";
     if (mType == FORMULATYPE)
     {
         mCalculator.set("n", timestep);
@@ -139,7 +158,6 @@ startHalfTimestepE(long timestep, float time)
 void StreamedFieldInput::
 startHalfTimestepH(long timestep, float time)
 {
-    //LOG << "TODO: split this for E and H so it can read to the right buffer.\n";
     if (mType == FORMULATYPE)
     {
         mCalculator.set("n", timestep);

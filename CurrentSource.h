@@ -27,6 +27,12 @@ class SetupUpdateEquation;
 //  an ordered list of regions (Ex, ..., Hz) for data requests
 // What this uses on calls to makeCurentSource():
 //  an ordered list of material IDs and the sizes of each buffer (Ex, ..., Hz)
+
+/**
+ *  Worker class to run length encode a current source.  It determines a list of
+ *  materials that need free currents in their update equations, then encodes
+ *  the location of that material in runlines.
+ */
 class SetupCurrentSource
 {
 public:
