@@ -242,7 +242,7 @@ writeDataRequests() const
     // 1.  Current sources
     // 2.  Custom TFSF sources (HuygensSurfaces)
     
-    LOG << "Writing data requests." << endl;
+    //LOG << "Writing data requests." << endl;
     
     for (int nn = 0; nn < mSetupCurrentSources.size(); nn++)
     if (mSetupCurrentSources[nn]->description()->hasMask() ||

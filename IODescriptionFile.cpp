@@ -282,9 +282,9 @@ write(std::string fileName, const HuygensSurface & huygensSurface,
     //  in the main grid is symmetrical around the TFSF boundary.
     // huygensSurface->symmetries() returns the directions along which the
     //  source waveform is symmetrical.
-    LOG << "Grid symmetries " << materialSymmetries << endl;
-    LOG << "Source symmetries " << huygensSurface.description()->symmetries()
-        << endl;
+    //LOG << "Grid symmetries " << materialSymmetries << endl;
+//    LOG << "Source symmetries " << huygensSurface.description()->symmetries()
+//        << endl;
     
     /*
         There are only two jobs left, and they're simple to state:
@@ -339,7 +339,7 @@ write(std::string fileName, const HuygensSurface & huygensSurface,
     for (int mm = 0; mm < 3; mm++)
         file << sampleHalfCells.p2[mm] << " ";
     file << "];\n";
-    LOG << "Sample half cells: " << sampleHalfCells << endl;
+    //LOG << "Sample half cells: " << sampleHalfCells << endl;
     
     // ----------------
     // COPIED at first from StructuralReports.  This is so silly!

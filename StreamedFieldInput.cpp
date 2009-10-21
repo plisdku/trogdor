@@ -96,7 +96,7 @@ StreamedFieldInput(HuygensSurfaceDescPtr huygensSurfaceDescription) :
     if (mFile.good())
         LOGF << "Opened binary file " << fname << ".\n";
     else
-        LOG << "Could not open binary file " << fname << ".\n";
+        LOGF << "Could not open binary file " << fname << ".\n";
     //cerr << "Warning: could not open binary file " << fname << endl;
     //throw(Exception(string("Could not open binary file ") + fname));
 }

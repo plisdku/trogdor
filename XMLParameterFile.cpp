@@ -1208,7 +1208,11 @@ loadAnOmitSide(const TiXmlElement* elem) const
 {
     Vector3i omitSide;
     Vector3i omitSideDominantComponent;
-    elem->GetText() >> omitSide;
+    istringstream str(elem->GetText());
+    //elem->GetText() >> omitSide;
+    str >> omitSide;
+    if (!str.good())
+        throw(Exception(sErr("Can't read OmitSide", elem)));
     omitSideDominantComponent = dominantComponent(omitSide);
     
     if (omitSide != omitSideDominantComponent ||
