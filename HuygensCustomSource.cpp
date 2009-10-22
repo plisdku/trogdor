@@ -28,7 +28,7 @@ HuygensCustomSource(const HuygensSurface & hs) :
 void HuygensCustomSource::
 updateE(HuygensSurface & hs, CalculationPartition & cp, long timestep)
 {
-    LOG << "Update E.\n";
+    //LOG << "Update E.\n";
     
     mFieldInput.startHalfTimestepE(timestep, cp.dt()*timestep);
     
@@ -99,7 +99,7 @@ updateE(HuygensSurface & hs, CalculationPartition & cp, long timestep)
 void HuygensCustomSource::
 updateH(HuygensSurface & hs, CalculationPartition & cp, long timestep)
 {
-    LOG << "Update H.\n";
+    //LOG << "Update H.\n";
     
     mFieldInput.startHalfTimestepH(timestep, cp.dt()*(timestep+0.5));
     

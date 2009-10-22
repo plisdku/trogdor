@@ -253,9 +253,11 @@ void IODescriptionFile::
 write(std::string fileName, const HuygensSurface & huygensSurface,
     const VoxelizedPartition & vp, Vector3i materialSymmetries)
 {
-    cerr << "Warning: NOT writing request file for HuygensSurface.\n";
     ofstream file(fileName.c_str());
     
+    file << "% Auto-generated TFSF source request file.\n";
+    file << "% Please provide fields in this order:\n";
+    file << "% Hx Hy Hz Ex Ey Ez\n";
     file << "clear afp;\n";
     
     file << "afp.dxdydzdt = [" << vp.simulationDescription()->dxyz()[0] << " "

@@ -97,7 +97,7 @@ int main (int argc, char * const argv[])
 	//prefs.numThreads = variablesMap["numthreads"].as<int>();
 	if (variablesMap.count("timesteps"))
 	{
-		prefs.numTimestepsOverride = variablesMap["timesteps"].as<long>();
+		prefs.numTimestepsOverride = variablesMap["timesteps"].as<int>();
 		cout << "Running with timestep override " << prefs.numTimestepsOverride;
 		cout << endl;
 		LOGF << "Running with timestep override " << prefs.numTimestepsOverride;
