@@ -260,10 +260,11 @@ write(std::string fileName, const HuygensSurface & huygensSurface,
     file << "% Hx Hy Hz Ex Ey Ez\n";
     file << "clear afp;\n";
     
-    file << "afp.dxdydzdt = [" << vp.simulationDescription()->dxyz()[0] << " "
+    file << "afp.dxyz = [" << vp.simulationDescription()->dxyz()[0] << " "
         << vp.simulationDescription()->dxyz()[1] << " "
         << vp.simulationDescription()->dxyz()[2]
         << "];\n";
+    file << "afp.dt = " << vp.simulationDescription()->dt() << ";\n";
     
     int numT = huygensSurface.description()->duration().last() -
         huygensSurface.description()->duration().first() + 1;
