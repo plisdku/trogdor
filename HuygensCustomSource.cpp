@@ -30,6 +30,9 @@ updateE(HuygensSurface & hs, CalculationPartition & cp, long timestep)
 {
     //LOG << "Update E.\n";
     
+    if (timestep < mDuration.first() || timestep > mDuration.last())
+        return;
+    
     mFieldInput.startHalfTimestepE(timestep, cp.dt()*timestep);
     
     const std::vector<NeighborBufferPtr> & nbs(hs.neighborBuffers());
@@ -100,6 +103,9 @@ void HuygensCustomSource::
 updateH(HuygensSurface & hs, CalculationPartition & cp, long timestep)
 {
     //LOG << "Update H.\n";
+    
+    if (timestep < mDuration.first() || timestep > mDuration.last())
+        return;
     
     mFieldInput.startHalfTimestepH(timestep, cp.dt()*(timestep+0.5));
     

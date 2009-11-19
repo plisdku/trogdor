@@ -51,7 +51,8 @@ inline float BufferedCurrent::
 updateJ(LocalDataE & data, float Ei, float dHj, float dHk,
     int dir0, int dir1, int dir2)
 {
-    //LOG << "J" << char(dir0 + 'x') << " = " << *data.J << "\n";
+    if (*data.J != 0)
+        LOG << "J" << char(dir0 + 'x') << " = " << *data.J << "\n";
     return data.polarizationFactor * (*data.J) * (*data.mask);
 }
 

@@ -279,7 +279,8 @@ prepareJ(long timestep, float time)
         }
     }
     
-    if (timestep >= mDescription->durations()[mCurrentSampleInterval].first())
+    if (timestep >= mDescription->durations()[mCurrentSampleInterval].first()
+        && timestep <= mDescription->durations()[mCurrentSampleInterval].last())
         mFieldInput.startHalfTimestepE(timestep, time);
     else
         mFieldInput.zeroBuffersE();
@@ -303,7 +304,8 @@ prepareK(long timestep, float time)
         }
     }
     
-    if (timestep >= mDescription->durations()[mCurrentSampleInterval].first())
+    if (timestep >= mDescription->durations()[mCurrentSampleInterval].first()
+        && timestep <= mDescription->durations()[mCurrentSampleInterval].last())
         mFieldInput.startHalfTimestepH(timestep, time);
     else
         mFieldInput.zeroBuffersH();
