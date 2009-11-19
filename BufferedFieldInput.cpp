@@ -185,7 +185,8 @@ startHalfTimestepE(long timestep, float time)
                 mFile.read((char*)&mCurrentValue,
                     (std::streamsize)sizeof(float));
             else
-                throw(Exception("Cannot read further from file."));
+                throw(Exception("Buffered E cannot read further from file"
+                    " (time-varying field)."));
         }
         else if (mFieldValueType == kSpaceTimeVaryingField)
         {
@@ -207,7 +208,8 @@ startHalfTimestepE(long timestep, float time)
                 }
             }
             else
-                throw(Exception("Cannot read further from file."));
+                throw(Exception("Buffered E cannot read further from file"
+                    " (space-time-varying field)."));
         }
     }
 }
@@ -236,7 +238,8 @@ startHalfTimestepH(long timestep, float time)
                 mFile.read((char*)&mCurrentValue,
                     (std::streamsize)sizeof(float));
             else
-                throw(Exception("Cannot read further from file."));
+                throw(Exception("Buffered H cannot read further from file"
+                    " (time-varying field)."));
         }
         else if (mFieldValueType == kSpaceTimeVaryingField)
         {
@@ -250,7 +253,8 @@ startHalfTimestepH(long timestep, float time)
                         sizeof(float)));
             }
             else
-                throw(Exception("Cannot read further from file."));
+                throw(Exception("Buffered H cannot read further from file"
+                    " (space-time-varying field)."));
         }
     }
 }
