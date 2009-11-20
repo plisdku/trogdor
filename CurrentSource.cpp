@@ -279,10 +279,11 @@ prepareJ(long timestep, float time)
         }
     }
     
+    /*
     LOGF << "Timestep " << timestep << " in duration " <<
         mDescription->durations()[mCurrentSampleInterval].first() << " to "
         << mDescription->durations()[mCurrentSampleInterval].last() << ".\n";
-    
+    */
     if (timestep >= mDescription->durations()[mCurrentSampleInterval].first()
         && timestep <= mDescription->durations()[mCurrentSampleInterval].last())
         mFieldInput.startHalfTimestepE(timestep, time);
@@ -307,10 +308,11 @@ prepareK(long timestep, float time)
             return;
         }
     }
-    
+    /*
     LOGF << "Timestep " << timestep << " in duration " <<
         mDescription->durations()[mCurrentSampleInterval].first() << " to "
         << mDescription->durations()[mCurrentSampleInterval].last() << ".\n";
+    */
     if (timestep >= mDescription->durations()[mCurrentSampleInterval].first()
         && timestep <= mDescription->durations()[mCurrentSampleInterval].last())
         mFieldInput.startHalfTimestepH(timestep, time);
