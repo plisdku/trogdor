@@ -81,7 +81,7 @@ VoxelizedPartition(SimulationDescPtr simDesc, GridDescPtr gridDesc,
 	
 	calculateMaterialIndices();
 	createSetupUpdateEquations(*gridDesc);
-	loadSpaceVaryingData(); // * grid-scale wraparound
+	loadSpaceVaryingData(*gridDesc); // * grid-scale wraparound
 	
     createSetupOutputs(gridDesc->outputs());
     createSetupSources(gridDesc->sources());
@@ -844,7 +844,7 @@ createSetupUpdateEquations(const GridDescription & gridDesc)
 }
 
 void VoxelizedPartition::
-loadSpaceVaryingData()
+loadSpaceVaryingData(const GridDescription & gridDesc)
 {
 //	LOG << "Setup materials need to provide temporary space!\n";
 //	LOGMORE << "Not loading anything yet.\n";
@@ -855,6 +855,86 @@ loadSpaceVaryingData()
     // -- effective material constants at boundaries: do local calculation and
     //    put contants into aux arrays
     // Y'know.  All that.
+    
+	const vector<InstructionPtr> & instructions = gridDesc.assembly()->
+		instructions();
+    
+    //  Plan for boundaries:
+    //  The assembly will be handled already as a big bunch of polyhedra.
+    //  Now I need to get the fill factors.
+    //
+    //  In the ideal world, I would have access to the fill factors for each
+    //  material, in order along the x-axis (say), as a result of raytracing.
+    //
+    // WHAT TO DO:
+    //  
+    //  For all boundary cells, set them to the most-inclusive material (which
+    //  will be my Drude model, most likely, although this won't handle the
+    //  static conductors at present).
+    //  
+    //  
+    
+    /*
+        If I were meep:
+        
+        - define permittivity by a vector of coefficients
+        - maintain a grid of high-dimensional permittivity data
+        - at boundaries, use fractional fillings in each cell to paint in the
+          permittivity (easy enough)
+        
+        So why can't I do this?  Well shoot, maybe no reason at all.  Perhaps
+        this is tailor-made for my RLE data structure.  I'll want to give it
+        a speedy iterator for access to adjacent elements (grid traversal).
+        
+        Yeah, this would make a lot of things a lot easier.
+        
+        In terms of update equations, the world does get a bit simpler.
+        Every update equation will carry a vector of update coefficients.
+        Runlines will provide a stride, either 1 or 0, for the update
+        coefficients.  It will be marginally slower, but pretty simple.
+        There will be no such thing as "gold-air" boundary, but rather some
+        cells of Drude model will take on intermediate values between gold and
+        air.  Fine as well.
+        
+        I need to branch this project.
+    */
+	
+	for (unsigned int nn = 0; nn < instructions.size(); nn++)
+	{
+		switch(instructions[nn]->type())
+		{
+			case kBlockType:
+				//mVoxels.paintBlock(gridDesc, 
+				//	(const Block&)*instructions[nn]);
+				break;
+			case kKeyImageType:
+				//mVoxels.paintKeyImage(gridDesc,
+				//	(const KeyImage&)*instructions[nn]);
+				break;
+			case kHeightMapType:
+				//mVoxels.paintHeightMap(gridDesc,
+				//	(const HeightMap&)*instructions[nn]);
+				break;
+			case kEllipsoidType:
+				//mVoxels.paintEllipsoid(gridDesc,
+				//	(const Ellipsoid&)*instructions[nn]);
+				break;
+			case kCopyFromType:
+				//mVoxels.paintCopyFrom(gridDesc,
+				//	(const CopyFrom&)*instructions[nn],
+				//	voxelizedGrids[((const CopyFrom&)*instructions[nn])
+				//		.grid()]->mVoxels);
+				break;
+			case kExtrudeType:
+				//mVoxels.paintExtrude(gridDesc,
+				//	(const Extrude&)*instructions[nn]);
+				break;
+			default:
+				throw(Exception("Unknown instruction type."));
+				break;
+		}
+	}
+    
 }
 
 void VoxelizedPartition::

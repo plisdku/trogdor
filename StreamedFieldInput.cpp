@@ -14,6 +14,7 @@ using namespace std;
 
 StreamedFieldInput::
 StreamedFieldInput(SourceDescPtr sourceDescription) :
+    mHasMask(0),
     mUsesPolarization(0),
     mPolarizationFactor(1,1,1),
     mWhichE(1,1,1),

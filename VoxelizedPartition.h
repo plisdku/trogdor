@@ -168,7 +168,7 @@ private:
 	Vector3i huygensSymmetry(const HuygensSurfaceDescription & surf);
 	
 	void createSetupUpdateEquations(const GridDescription & gridDesc);
-	void loadSpaceVaryingData();
+	void loadSpaceVaryingData(const GridDescription & gridDesc);
     
     void createSetupOutputs(const std::vector<OutputDescPtr> & outputs);
     void createSetupSources(const std::vector<SourceDescPtr> & sources);

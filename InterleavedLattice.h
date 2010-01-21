@@ -159,7 +159,7 @@ private:
     Vector3i mNonZeroDimensions;
     Vector3i mNumYeeCells;
     Vector3i mNumHalfCells; // == 2*mNumYeeCells
-    Vector3i mOriginYeeE[3]; // cached halfToYee(mHalfCells.p1, octant)
+    Vector3i mOriginYeeE[3]; //cached result of halfToYee(mHalfCells.p1, octant)
     Vector3i mOriginYeeH[3];
     
     std::vector<MemoryBufferPtr> mBuffersE; // 3
