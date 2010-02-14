@@ -26,15 +26,13 @@ include_directories(
 	${TROGDOR_SOURCE_DIR}/materials
 	${TROGDOR_SOURCE_DIR}/updateModules
 	${magIncDirs}
-	/usr/local/include/
-	/sw/include)
+	/usr/local/include/)
 
 link_directories(
 ${TROGDOR_BINARY_DIR}/utility
 ${TROGDOR_BINARY_DIR}/tinyxml
 ${magLibDirs}
-/usr/local/lib
-/sw/lib)
+/usr/local/lib)
 
 source_group("Main Group" FILES main.cpp)
 
@@ -146,13 +144,8 @@ YeeUtilities.h
 set_source_files_properties(MaterialFactory.cpp PROPERTIES COMPILE_FLAGS
     "-fdump-tree-optimized -Winline -fdump-tree-vect")
 
-set(CMAKE_INCLUDE_PATH /sw/include)
-set(CMAKE_LIBRARY_PATH /sw/lib)
-
-find_package( Boost )
-if (NOT Boost_FOUND)
-	set(ENV{BOOST_ROOT} /sw)
-endif(NOT Boost_FOUND)
+#set(CMAKE_INCLUDE_PATH /sw/include)
+#set(CMAKE_LIBRARY_PATH /sw/lib)
 
 find_package( Boost )
 if (NOT Boost_FOUND)

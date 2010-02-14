@@ -115,6 +115,12 @@ runNew(string parameterFile, const SimulationPreferences & prefs)
     if (prefs.runSim == 0)
     {
         cout << "Not running simulation.\n";
+        if (prefs.savePerformanceInfo)
+        {
+            LOGF << "Reporting performance..." << endl;
+            reportPerformance(calculationGrids);
+            LOGF << "Reporting performance done." << endl;
+        }
         return;
     }
     
@@ -703,7 +709,7 @@ writeReports(Map<GridDescPtr, VoxelizedPartitionPtr> & vgs,
         LOGF << "Reporting geometry\n";
         for (itr = vgs.begin(); itr != vgs.end(); itr++)
         {
-            StructuralReports::saveMaterialBoundariesBeta(*itr->first,
+            StructuralReports::saveMaterialBoundariesBeta_2(*itr->first,
                 *itr->second);
         }
     }

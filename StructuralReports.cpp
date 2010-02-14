@@ -352,6 +352,217 @@ saveMaterialBoundariesBeta(const GridDescription & grid,
 	fout.close();
 }
 
+void StructuralReports::
+saveMaterialBoundariesBeta_2(const GridDescription & grid,
+    const VoxelizedPartition & vp)
+{
+	ObjFile objFile;
+	int ii,jj,kk;
+    
+	ostringstream foutname;
+	foutname << grid.name() << "_faces.obj";
+	ofstream fout(foutname.str().c_str());
+	
+    const Map<Paint*, SetupUpdateEquationPtr> materials(vp.setupMaterials());
+    map<Paint*, SetupUpdateEquationPtr>::const_iterator itr;
+    
+    const VoxelGrid & vg(vp.voxels());
+	//const StructureGrid& grid = *mStructureGrid;
+	
+	// We'll write the materials one at a time.
+	for (itr = materials.begin(); itr != materials.end(); itr++)
+    if ( (*itr).first == (*itr).first->withoutModifications())
+	{
+		Paint* paint = (*itr).first;
+		SetupUpdateEquationPtr mat = (*itr).second;
+        string name = paint->fullName();
+        Rect3i roi = grid.nonPMLHalfCells();
+		Paint* lastMat;
+        Paint* curMat;
+		
+		LOGF << "Considering material " << name << endl;
+		
+		//fout << name << endl;
+		
+		vector<OrientedRect3i> xFaces;
+		vector<OrientedRect3i> yFaces;
+		vector<OrientedRect3i> zFaces;
+		
+		// Do all the face determination stuff
+		{
+		// X-normal faces
+		//	a.  Top layer
+		ii = roi.p1[0];
+		for (kk = roi.p1[2]; kk <= roi.p2[2]; kk++)
+		for (jj = roi.p1[1]; jj <= roi.p2[1]; jj++)
+		{
+			curMat = vg(ii, jj, kk);
+			if (curMat == paint)
+			{
+				xFaces.push_back( OrientedRect3i(
+					Rect3i(ii,jj,kk,ii,jj+1,kk+1),
+					Vector3i(-1, 0, 0)) );
+			}
+		} 
+		//	b.  Bottom layer
+		ii = roi.p2[0];
+		for (kk = roi.p1[2]; kk <= roi.p2[2]; kk++)
+		for (jj = roi.p1[1]; jj <= roi.p2[1]; jj++)
+		{
+			curMat = vg(ii, jj, kk);
+			if (curMat == paint)
+			{
+				xFaces.push_back( OrientedRect3i(
+					Rect3i(ii+1,jj,kk,ii+1,jj+1,kk+1),
+					Vector3i(1,0,0) ));
+			}
+		}
+		//	c.  Middle (careful about X direction for-loop limits)
+		for (ii = roi.p1[0]+1; ii <= roi.p2[0]; ii++)
+		for (kk = roi.p1[2]; kk <= roi.p2[2]; kk++)
+		for (jj = roi.p1[1]; jj <= roi.p2[1]; jj++)
+		{
+			lastMat = vg(ii-1, jj, kk);
+			curMat = vg(ii, jj, kk);
+			
+			if (lastMat == paint && curMat != paint)
+			{
+				xFaces.push_back( OrientedRect3i(
+					Rect3i(ii,jj,kk,ii,jj+1,kk+1),
+					Vector3i(1, 0, 0)) );
+			}
+			else if (lastMat != paint && curMat == paint)
+			{
+				xFaces.push_back( OrientedRect3i(
+					Rect3i(ii,jj,kk,ii,jj+1,kk+1),
+					Vector3i(-1,0,0) ));
+			}
+		}
+		
+		// Y-normal faces
+		//	a.  Top layer
+		jj = roi.p1[1];
+		for (ii = roi.p1[0]; ii <= roi.p2[0]; ii++)
+		for (kk = roi.p1[2]; kk <= roi.p2[2]; kk++)
+		{
+			curMat = vg(ii, jj, kk);
+			if (curMat == paint)
+			{
+				yFaces.push_back( OrientedRect3i(
+					Rect3i(ii,jj,kk,ii+1,jj,kk+1),
+					Vector3i(0, -1, 0) ));
+			}
+		} 
+		//	b.  Bottom layer
+		jj = roi.p2[1];
+		for (ii = roi.p1[0]; ii <= roi.p2[0]; ii++)
+		for (kk = roi.p1[2]; kk <= roi.p2[2]; kk++)
+		{
+			curMat = vg(ii, jj, kk);
+			if (curMat == paint)
+			{
+				yFaces.push_back( OrientedRect3i(
+					Rect3i(ii,jj+1,kk,ii+1,jj+1,kk+1),
+					Vector3i(0, 1, 0) ));
+			}
+		}
+		//	c.  Middle (careful about X direction for-loop limits)
+		for (jj = roi.p1[1]+1; jj <= roi.p2[1]; jj++)
+		for (ii = roi.p1[0]; ii <= roi.p2[0]; ii++)
+		for (kk = roi.p1[2]; kk <= roi.p2[2]; kk++)
+		{
+			lastMat = vg(ii, jj-1, kk);
+			curMat = vg(ii, jj, kk);
+			
+			if (lastMat == paint && curMat != paint)
+			{
+				yFaces.push_back( OrientedRect3i(
+					Rect3i(ii,jj,kk,ii+1,jj,kk+1),
+					Vector3i(0, 1, 0) ));
+			}
+			else if (lastMat != paint && curMat == paint)
+			{
+				yFaces.push_back( OrientedRect3i(
+					Rect3i(ii,jj,kk,ii+1,jj,kk+1),
+					Vector3i(0, -1, 0) ));
+			}
+		}
+		
+		// Z-normal faces
+		//	a.  Top layer
+		kk = roi.p1[2];
+		for (jj = roi.p1[1]; jj <= roi.p2[1]; jj++)
+		for (ii = roi.p1[0]; ii <= roi.p2[0]; ii++)
+		{
+			curMat = vg(ii, jj, kk);
+			if (curMat == paint)
+			{
+				zFaces.push_back( OrientedRect3i(
+					Rect3i(ii,jj,kk,ii+1,jj+1,kk),
+					Vector3i(0, 0, -1) ));
+			}
+		} 
+		//	b.  Bottom layer
+		kk = roi.p2[2];
+		for (jj = roi.p1[1]; jj <= roi.p2[1]; jj++)
+		for (ii = roi.p1[0]; ii <= roi.p2[0]; ii++)
+		{
+			curMat = vg(ii, jj, kk);
+			if (curMat == paint)
+			{
+				zFaces.push_back( OrientedRect3i(
+					Rect3i(ii,jj,kk+1,ii+1,jj+1,kk+1),
+					Vector3i(0, 0, 1) ));
+			}
+		}
+		//	c.  Middle (careful about X direction for-loop limits)
+		for (kk = roi.p1[2]+1; kk <= roi.p2[2]; kk++)
+		for (jj = roi.p1[1]; jj <= roi.p2[1]; jj++)
+		for (ii = roi.p1[0]; ii <= roi.p2[0]; ii++)
+		{
+			lastMat = vg(ii, jj, kk-1);
+			curMat = vg(ii, jj, kk);
+			
+			if (lastMat == paint && curMat != paint)
+			{
+				zFaces.push_back( OrientedRect3i(
+					Rect3i(ii,jj,kk,ii+1,jj+1,kk),
+					Vector3i(0, 0, 1) ));
+			}
+			else if (lastMat != paint && curMat == paint)
+			{
+				zFaces.push_back( OrientedRect3i(
+					Rect3i(ii,jj,kk,ii+1,jj+1,kk),
+					Vector3i(0, 0, -1) ));
+			}
+		}
+		}
+        
+		// Now try to consolidate a little bit.		
+		list<OrientedRect3i> xCompressed;
+		list<OrientedRect3i> yCompressed;
+		list<OrientedRect3i> zCompressed;
+		
+		consolidateRects(xFaces, xCompressed, 0);
+		consolidateRects(yFaces, yCompressed, 1);
+		consolidateRects(zFaces, zCompressed, 2);
+		
+		/*
+		ostream_iterator<OrientedRect3i> fout_itr(fout, "\n");
+		copy(xCompressed.begin(), xCompressed.end(), fout_itr);
+		copy(yCompressed.begin(), yCompressed.end(), fout_itr);
+		copy(zCompressed.begin(), zCompressed.end(), fout_itr);
+		*/
+        
+		objFile.appendGroup(name, xCompressed);
+		objFile.appendGroup(name, yCompressed);
+		objFile.appendGroup(name, zCompressed);
+	}
+	
+	objFile.write(fout, 0.5);  // The scale factor 0.5 undoes half-cells.
+	fout.close();
+}
+
 
 void StructuralReports::
 saveGridReports(const GridDescription & grid, const VoxelizedPartition & vp)
