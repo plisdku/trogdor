@@ -207,7 +207,7 @@ operator - (const Vector3<T> & lhs, const Rect<T> & rhs)
 
 template<typename T>
 Rect<T>
-inset( const Rect<T> & inRect, T dx0, T dx1, T dy0, T dy1, T dz0, T dz1 )
+inset( const Rect<T> & inRect, T dx0, T dy0, T dz0, T dx1, T dy1, T dz1)
 {
     Rect<T> out(inRect);
     out.p1[0] += dx0;
