@@ -160,7 +160,7 @@ doSourceH(CalculationPartition & cp, long timestep)
     {
         mFieldInput.restartMaskPointer(xyz);
         
-        if (mFields.whichE()[xyz] != 0)
+        if (mFields.whichH()[xyz] != 0)
         for (unsigned int rr = 0; rr < mRegions.size(); rr++)
         {
             Rect3i rect = mRegions[rr].yeeCells();

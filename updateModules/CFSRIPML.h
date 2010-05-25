@@ -37,7 +37,7 @@ public:
     std::string modelName() const;
     
     virtual void allocateAuxBuffers();
-        
+    
     Vector3i pmlDirection() const { return mPMLDirection; }
     
 protected:
