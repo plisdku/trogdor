@@ -71,6 +71,10 @@ public:
     void paintHalfCell(Paint* paint, const Vector3i & pp);
     
     // paint             the material including PML, TFSF and current sources
+    // iYee,jYee,kYee    Yee cell to fill in
+    void paintYeeCell(Paint* paint, int iYee, int jYee, int kYee);
+    
+    // paint             the material including PML, TFSF and current sources
     // iYee,jYee,kYee    Yee cell to fill in, expanded to PEC-like boundaries
 	void paintPEC(Paint* paint, int iYee, int jYee, int kYee);
     

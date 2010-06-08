@@ -76,6 +76,10 @@ paintBlock(const GridDescription & gridDesc,
 		halfCells = yeeToHalf(instruction.yeeRect());
 		halfCells.p1 -= Vector3i(1,1,1);
 	}
+    else if (instruction.fillStyle() == kYeeCellStyle)
+    {
+        halfCells = yeeToHalf(instruction.yeeRect());
+    }
 	else if (instruction.fillStyle() == kHalfCellStyle)
 		halfCells = instruction.halfRect();
 	else
@@ -139,8 +143,10 @@ paintKeyImage(const GridDescription & gridDesc,
 						Vector3i pGrid = p + u3*up;
 						if (style == kPECStyle)
 							paintPEC(paint, pGrid[0], pGrid[1], pGrid[2]);
-						else
+						else if (style == kPMCStyle)
 							paintPMC(paint, pGrid[0], pGrid[1], pGrid[2]);
+                        else
+                            paintYeeCell(paint, pGrid[0], pGrid[1], pGrid[2]);
 					} 
 				}
 			}
@@ -215,7 +221,8 @@ paintEllipsoid(const GridDescription & gridDesc,
 	Paint* paint = Paint::paint(instruction.material());
 	
 	if (instruction.fillStyle() == kPECStyle ||
-		instruction.fillStyle() == kPMCStyle)
+		instruction.fillStyle() == kPMCStyle ||
+        instruction.fillStyle() == kYeeCellStyle)
 	{
 		//halfCells = instruction.yeeRect();
 		//halfCells.p2 += Vector3i(1,1,1);
@@ -246,6 +253,8 @@ paintEllipsoid(const GridDescription & gridDesc,
 				paintPEC(paint, iYee, jYee, kYee);
 			else
 				paintPEC(paint, iYee, jYee, kYee);
+            else
+                paintYeeCell(paint, iYee, jYee, kYee);
 		}
 	}
 	else if (instruction.fillStyle() == kHalfCellStyle)
@@ -611,7 +620,7 @@ paintHalfCell(Paint* paint, const Vector3i & pp)
 }
 
 void VoxelGrid::
-paintPEC(Paint* paint, int iYee, int jYee, int kYee)
+paintYeeCell(Paint* paint, int iYee, int jYee, int kYee)
 {
 	for (int kk = 0; kk < 2; kk++)
 	for (int jj = 0; jj < 2; jj++)
@@ -619,12 +628,23 @@ paintPEC(Paint* paint, int iYee, int jYee, int kYee)
 		paintHalfCell(paint, 2*iYee+ii, 2*jYee+jj, 2*kYee+kk);
 }
 
+// FIXME: this doesn't do a PEC cell.
+void VoxelGrid::
+paintPEC(Paint* paint, int iYee, int jYee, int kYee)
+{
+	for (int kk = 0; kk <= 2; kk++)
+	for (int jj = 0; jj <= 2; jj++)
+	for (int ii = 0; ii <= 2; ii++)
+		paintHalfCell(paint, 2*iYee+ii, 2*jYee+jj, 2*kYee+kk);
+}
+
+// FIXME: this doesn't do a PMC cell.
 void VoxelGrid::
 paintPMC(Paint* paint, int iYee, int jYee, int kYee)
 {
-	for (int kk = 0; kk < 2; kk++)
-	for (int jj = 0; jj < 2; jj++)
-	for (int ii = 0; ii < 2; ii++)
+	for (int kk = 0; kk <= 2; kk++)
+	for (int jj = 0; jj <= 2; jj++)
+	for (int ii = 0; ii <= 2; ii++)
 		paintHalfCell(paint, 2*iYee-ii, 2*jYee-jj, 2*kYee-kk);
 }
 

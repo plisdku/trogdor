@@ -905,7 +905,7 @@ loadABlock(const TiXmlElement* elem, const set<string> & allMaterialNames) const
 	if (sTryGetAttribute(elem, "yeeCells", rect))
 	{
 		sGetOptionalAttribute(elem, "fillStyle", fillStyleStr,
-			string("PECStyle"));
+			string("YeeCellStyle"));
 		try {
 			style = sFillStyleFromString(fillStyleStr); // may fail
 		} catch (const Exception & e) {
@@ -1013,7 +1013,7 @@ loadAColorKeys(const TiXmlElement* parent, const set<string> & allMaterialNames)
 			throw(Exception(sErr("Unknown material for Tag", elem)));
 		sGetMandatoryAttribute(elem, "color", colorStr);
 		sGetOptionalAttribute(elem, "fillStyle", fillStyleStr,
-			string("PECStyle"));
+			string("YeeCellStyle"));
 		
 		try {
 			style = sFillStyleFromString(fillStyleStr);
@@ -1054,7 +1054,7 @@ loadAHeightMap(const TiXmlElement* elem, const set<string> & allMaterialNames)
 	sGetMandatoryAttribute(elem, "row", rowDirStr);
 	sGetMandatoryAttribute(elem, "column", colDirStr);
 	sGetMandatoryAttribute(elem, "up", upDirStr);
-	sGetOptionalAttribute(elem, "fillStyle", styleStr, string("PECStyle"));
+	sGetOptionalAttribute(elem, "fillStyle", styleStr, string("YeeCellStyle"));
 	
 	try {
 		style = sFillStyleFromString(styleStr);
@@ -1091,7 +1091,7 @@ loadAEllipsoid(const TiXmlElement* elem, const set<string> & allMaterialNames)
 	
 	if (sTryGetAttribute(elem, "yeeCells", rect))
 	{
-		sGetOptionalAttribute(elem, "fillStyle", styleStr, string("PECStyle"));
+		sGetOptionalAttribute(elem, "fillStyle", styleStr, string("YeeCellStyle"));
 		
 		try {
 			style = sFillStyleFromString(styleStr);
@@ -1232,6 +1232,8 @@ static FillStyle sFillStyleFromString(const string & str) throw(Exception)
 		return kPMCStyle;
 	else if (str == "PECStyle")
 		return kPECStyle;
+    else if (str == "YeeCellStyle")
+        return kYeeCellStyle;
 	throw(Exception("Invalid fill style"));
 }
 
