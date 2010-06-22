@@ -264,6 +264,9 @@ pointerMaskK(int xyz, long materialID)
 void CurrentSource::
 prepareJ(long timestep, float time)
 {
+    if (norm2(mDescription->sourceCurrents().whichJ()) == 0)
+        return;
+    
     if (mCurrentSampleInterval >= mDescription->durations().size())
     {
         mFieldInput.zeroBuffersE();
@@ -294,6 +297,9 @@ prepareJ(long timestep, float time)
 void CurrentSource::
 prepareK(long timestep, float time)
 {
+    if (norm2(mDescription->sourceCurrents().whichK()) == 0)
+        return;
+    
     if (mCurrentSampleInterval >= mDescription->durations().size())
     {
         mFieldInput.zeroBuffersH();
