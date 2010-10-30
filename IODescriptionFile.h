@@ -57,21 +57,6 @@ public:
         const VoxelizedPartition & vp, std::vector<Rect3i> halfCells,
         std::vector<std::string> materialNames);
     
-    /*
-    IODescriptionFile(const VoxelizedPartition & vp);
-    
-    void setRegions(const std::vector<Region> & regions);
-    void setDurations(const std::vector<Duration> & durations);
-    
-    const std::vector<Region> & regions() const { return mRegions; }
-    const std::vector<Duration> & durations() const { return mDurations; }
-    
-    void write(std::string fileName, OutputDescPtr description) const;
-    
-    void write(std::string fileName, CurrentSourceDescPtr description) const;
-    
-    void read(std::string descriptionFileName);
-    */
 private:
     static void writeOutputHeader(std::ostream & file,
         const VoxelizedPartition & vp,
@@ -82,21 +67,6 @@ private:
     static void writeOutputDurations(std::ostream & file,
         const VoxelizedPartition & vp,
         const std::vector<Duration> & durations);
-    /*
-    int mRunlineDirection;
-    Vector3i mOriginYee;
-    Vector3f m_dxyz;
-    float m_dt;
-    
-    OutputDescPtr mOutputDescription;
-    CurrentSourceDescPtr mCurrentSourceDescription;
-    SourceDescPtr mSourceDescription;
-    
-    std::vector<Region> mRegions;
-    std::vector<Duration> mDurations;
-    
-    std::vector<std::string> mFieldNames; // e.g. "ex" or "e" or "h" etc.
-    */
 };
 
 

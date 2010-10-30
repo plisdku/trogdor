@@ -23,6 +23,7 @@
 class Constants
 {
 public:
+    static const float pi;
     static const float vp;            //  speed of light
     static const float eps0;        //  permittivity of free space
     static const float mu0;      //  permeability of free space

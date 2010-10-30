@@ -395,10 +395,12 @@ printE(std::ostream & str, int fieldDirection, float scale) const
                     str << ".";
                 else if (field < dotMax)
                     str << "o";
+#ifndef _WIN32 || _WIN64
                 else if (isinf(field))
                     str << "∞";
                 else if (isnan(field))
                     str << "N";
+#endif
                 else
                     str << "O";
             }
@@ -452,10 +454,12 @@ printH(std::ostream & str, int fieldDirection, float scale) const
                     str << ".";
                 else if (field < dotMax)
                     str << "o";
+#ifndef _WIN32 || _WIN64
                 else if (isinf(field))
                     str << "∞";
                 else if (isnan(field))
                     str << "N";
+#endif
                 else
                     str << "O";
             }

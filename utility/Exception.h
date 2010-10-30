@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _EXCEPTION_
-#define _EXCEPTION_
+#ifndef _PCH_EXCEPTION_
+#define _PCH_EXCEPTION_
 
 #include <exception>
 #include <string>

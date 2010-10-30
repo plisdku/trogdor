@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef _MAP_
-#define _MAP_
+#ifndef _SUPERMAP_
+#define _SUPERMAP_
 
 #include <map>
 #include <cassert>
