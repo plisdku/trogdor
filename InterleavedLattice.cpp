@@ -11,6 +11,8 @@
 #include "YeeUtilities.h"
 #include "Exception.h"
 
+#include <limits>
+
 using namespace std;
 using namespace YeeUtilities;
 
