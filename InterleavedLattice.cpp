@@ -395,6 +395,10 @@ printE(std::ostream & str, int fieldDirection, float scale) const
                     str << ".";
                 else if (field < dotMax)
                     str << "o";
+                else if (field > std::numeric_limits<double>::max())
+                    str << "∞";
+                else if (field != field)
+                    str << "N";
 #ifndef _WIN32 || _WIN64
                 else if (isinf(field))
                     str << "∞";

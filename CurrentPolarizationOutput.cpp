@@ -161,7 +161,7 @@ CurrentPolarizationOutput(OutputDescPtr description,
     IODescriptionFile::write(specfile, description, vp, mRegions, mDurations);
     //writeDescriptionFile(vp, cp, specfile, datafile, materialfile);
     
-    mDatafile.open(datafile.c_str());
+    mDatafile.open(datafile.c_str(), ios::out | ios::binary);
 }
 
 CurrentPolarizationOutput::

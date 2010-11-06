@@ -53,6 +53,7 @@ private:
         const;
     */
     std::ofstream mDatafile;
+//    std::ofstream mShadowFile;
     long mCurrentSampleInterval;
     
     std::vector<Region> mRegions;

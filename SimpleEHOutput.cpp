@@ -47,6 +47,7 @@ SimpleEHOutput(OutputDescPtr description,
     const CalculationPartition & cp) :
     Output(description),
     mDatafile(),
+//    mShadowFile(),
     mCurrentSampleInterval(0),
     mDurations(description->durations())
 {
@@ -71,11 +72,13 @@ SimpleEHOutput(OutputDescPtr description,
     string specfile(description->file() + string(".txt"));
     string datafile(description->file());
     string materialfile(description->file() + string(".mat"));
+//    string shadowfile(description->file() + string("_shadow.txt"));
     
     IODescriptionFile::write(specfile, description, vp, mRegions, mDurations);
     //writeDescriptionFile(vp, cp, specfile, datafile, materialfile);
     
-    mDatafile.open(datafile.c_str());
+    mDatafile.open(datafile.c_str(), ios::out | ios::binary);
+//    mShadowFile.open(shadowfile.c_str());
 }
 
 SimpleEHOutput::
@@ -157,6 +160,7 @@ writeE(const CalculationPartition & cp)
                         float val = lattice.getE(outDir, p);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));
+//                        mShadowFile << val << "\n";
                     }
                 }
                 else
@@ -172,6 +176,7 @@ writeE(const CalculationPartition & cp)
                             outDir, Vector3f(p)+interpPoint);
                         mDatafile.write((char*)(&val),
                             (std::streamsize)sizeof(float));
+//                        mShadowFile << val << "\n";
                     }
                 }
             }
@@ -231,91 +236,4 @@ writeH(const CalculationPartition & cp)
     }
     mDatafile << flush;
 }
-
-/*
-void SimpleEHOutput::
-writeDescriptionFile(const VoxelizedPartition & vp,
-    const CalculationPartition & cp, string specfile,
-    string datafile, string materialfile) const
-{
-    int nn;
-        
-    ofstream descFile(specfile.c_str());
-    
-    //date today = day_clock::local_day();
-    //date todayUTC = day_clock::universal_day();
-    ptime now(second_clock::local_time());
-    
-    descFile << "trogdor5output\n";
-    descFile << "trogdorMajorVersion " << TROGDOR_MAJOR_VERSION << "\n";
-    descFile << "trogdorSVNVersion NOTUSED\n";
-    descFile << "trogdorBuildDate " << __DATE__ << "\n";
-    descFile << "specfile " << specfile << "\n";
-    descFile << "datafile " << datafile << "\n";
-    //descFile << "date " << to_iso_extended_string(today) << " "
-    descFile << "date " << to_iso_extended_string(now) << "\n";
-    descFile << "dxyz " << cp.dxyz() << "\n";
-    descFile << "dt " << cp.dt() << "\n";
-    
-    if (!description()->isInterpolated())
-    {
-        // E fields
-        for (nn = 0; nn < 3; nn++)
-        if (description()->whichE()[nn])
-        {
-            descFile << "field e" << char('x' + nn) << " "
-                << eFieldPosition(nn) << " 0.0 \n";
-        }
-        
-        // H fields
-        for (nn = 0; nn < 3; nn++)
-        if (description()->whichH()[nn])
-        {
-            descFile << "field h" << char('x' + nn) << " "
-                << hFieldPosition(nn) << " 0.5\n";
-        }
-    }
-    else
-    {
-        // E fields
-        for (nn = 0; nn < 3; nn++)
-        if (description()->whichE()[nn])
-        {
-            descFile << "field e" << char('x' + nn) << " "
-                << description()->interpolationPoint() << " 0.0 \n";
-        }
-        
-        // H fields
-        for (nn = 0; nn < 3; nn++)
-        if (description()->whichH()[nn])
-        {
-            descFile << "field h" << char('x' + nn) << " "
-                << description()->interpolationPoint() << " 0.5 \n";
-        }
-    }
-    
-    descFile << "unitVector0 " << Vector3i(1,0,0) << "\n"
-        << "unitVector1 " << Vector3i(0,1,0) << "\n"
-        << "unitVector2 " << Vector3i(0,0,1) << "\n";
-    
-    for (nn = 0; nn < mRegions.size(); nn++)
-    {
-        descFile << "region "
-            << mRegions[nn].yeeCells()-vp.originYee()
-            << " stride "
-            << mRegions[nn].stride()
-            << "\n";
-    }
-    
-    for (nn = 0; nn < mDurations.size(); nn++)
-    {
-        descFile << "duration from "
-            << mDurations[nn].first() << " to "
-            << mDurations[nn].last() << " period "
-            << mDurations[nn].period() << "\n";
-    }
-    
-    descFile.close();
-}
-*/
 
