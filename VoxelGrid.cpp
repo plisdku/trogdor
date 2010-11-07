@@ -199,8 +199,10 @@ paintHeightMap(const GridDescription & gridDesc,
 				Vector3i pGrid = p + u3*up;
 				if (style == kPECStyle)
 					paintPEC(paint, pGrid[0], pGrid[1], pGrid[2]);
-				else
+				else if (style == kPMCStyle)
 					paintPMC(paint, pGrid[0], pGrid[1], pGrid[2]);
+                else
+                    paintYeeCell(paint, pGrid[0], pGrid[1], pGrid[2]);
 			}
 		}
 	} catch (Magick::Exception & magExc) {
@@ -249,12 +251,14 @@ paintEllipsoid(const GridDescription & gridDesc,
 			v[2] /= radii[2];
 			
 			if (norm2(v) <= 1.00001) // give it room for error
-			if (instruction.fillStyle() == kPECStyle)
-				paintPEC(paint, iYee, jYee, kYee);
-			else
-				paintPEC(paint, iYee, jYee, kYee);
-            else
-                paintYeeCell(paint, iYee, jYee, kYee);
+            {
+                if (instruction.fillStyle() == kPECStyle)
+                    paintPEC(paint, iYee, jYee, kYee);
+                else if (instruction.fillStyle() == kPMCStyle)
+                    paintPMC(paint, iYee, jYee, kYee);
+                else
+                    paintYeeCell(paint, iYee, jYee, kYee);
+            }
 		}
 	}
 	else if (instruction.fillStyle() == kHalfCellStyle)
