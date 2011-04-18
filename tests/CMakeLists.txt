@@ -6,17 +6,6 @@ add_executable(testInterleavedLattice
     ${TROGDOR_SOURCE_DIR}/YeeUtilities.cpp
 )
 
-#set(Boost_USE_STATIC_LIBS OFF)
-#set(Boost_USE_MULTITHREADED ON)
-#find_package( Boost COMPONENTS unit_test_framework)
-
-#if(Boost_FOUND)
-#	include_directories(${Boost_INCLUDE_DIRS})
-#	message("Boost testing includes are at ${Boost_INCLUDE_DIRS}")
-#	message("Boost testing libraries are ${Boost_LIBRARIES}")
-#endif()
-
-
 target_link_libraries(testInterleavedLattice
     boost_unit_test_framework-xgcc40-mt
 #    ${Boost_LIBRARIES}

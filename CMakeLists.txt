@@ -1,23 +1,11 @@
 project( TROGDOR )
 
-EXECUTE_PROCESS(COMMAND Magick++-config --libs
-	OUTPUT_VARIABLE mlibs)
-EXECUTE_PROCESS(COMMAND Magick++-config --cppflags
-	OUTPUT_VARIABLE mcppflags)
-EXECUTE_PROCESS(COMMAND Magick++-config --ldflags
-	OUTPUT_VARIABLE mldflags)
 
-string(REGEX MATCHALL "[-]l[^ ;\n]+" rawLibs "${mlibs}")
-string(REGEX REPLACE "[-]l([^ ;\n]+)" "\\1" magDepLibs "${rawLibs}")
-message("ImageMagick libraries are ${magDepLibs}")
+# ------------------ Look for ImageMagick (built-in)
 
-string(REGEX MATCHALL "[-]L[^ ;\n]+" rawLibDirs "${mldflags}")
-string(REGEX REPLACE "[-]L([^ ;\n]+)" "\\1" magLibDirs "${rawLibDirs}")
-message("ImageMagick lib directories are ${magLibDirs}")
+find_package(ImageMagick COMPONENTS Magick++)
 
-string(REGEX MATCHALL "[-]I[^ ;\n]+" rawIncdirs "${mcppflags}")
-string(REGEX REPLACE "[-]I([^ ;\n]+)" "\\1" magIncDirs "${rawIncdirs}")
-message("ImageMagick inc directories are ${magIncDirs}")
+
 
 include_directories(
 	${TROGDOR_SOURCE_DIR}
@@ -25,13 +13,12 @@ include_directories(
 	${TROGDOR_SOURCE_DIR}/tinyxml
 	${TROGDOR_SOURCE_DIR}/materials
 	${TROGDOR_SOURCE_DIR}/updateModules
-	${magIncDirs}
+	${ImageMagick_INCLUDE_DIRS}
 	/usr/local/include/)
 
 link_directories(
 ${TROGDOR_BINARY_DIR}/utility
 ${TROGDOR_BINARY_DIR}/tinyxml
-${magLibDirs}
 /usr/local/lib)
 
 source_group("Main Group" FILES main.cpp)
@@ -171,7 +158,7 @@ endif(Boost_FOUND)
 target_link_libraries( trogdor
     tinyxml
     utility
-    ${magDepLibs}
+    ${ImageMagick_LIBRARIES}
 )
 
 # this won't work without a recent boost version with the unit test framework
