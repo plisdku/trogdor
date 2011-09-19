@@ -173,17 +173,17 @@ startHalfTimestepE(long timestep, float time)
     }
     else //if (mType == FILETYPE)
     {
-        //  Space-varying sources read from the file on calls to getField().
-        //  Otherwise we can read the value here and cache it.
         if (mFieldValueType == kTimeVaryingField)
         {
-            LOG << "TODO: read the right number of components depending on"
-                " whether it's a polarization source (never will be?).\n";
-            LOG << "Although each field is buffered separately, they may all"
-                " read out of one stream, right?\n";
+            for (int fieldDirection = 0; fieldDirection < 3; fieldDirection++)
             if (mFile.good())
-                mFile.read((char*)&mCurrentValue,
-                    (std::streamsize)sizeof(float));
+            {
+                if (mBufferE[fieldDirection].length() > 0)
+                {
+                    mFile.read((char*)mBufferE[fieldDirection].headPointer(),
+                        (std::streamsize)sizeof(float));
+                }
+            }
             else
                 throw(Exception("Buffered E cannot read further from file"
                     " (time-varying field)."));
@@ -220,17 +220,17 @@ startHalfTimestepH(long timestep, float time)
     }
     else //if (mType == FILETYPE)
     {
-        //  Space-varying sources read from the file on calls to getField().
-        //  Otherwise we can read the value here and cache it.
         if (mFieldValueType == kTimeVaryingField)
         {
-            LOG << "TODO: read the right number of components depending on"
-                " whether it's a polarization source (never will be?).\n";
-            LOG << "Although each field is buffered separately, they may all"
-                " read out of one stream, right?\n";
+            for (int fieldDirection = 0; fieldDirection < 3; fieldDirection++)
             if (mFile.good())
-                mFile.read((char*)&mCurrentValue,
-                    (std::streamsize)sizeof(float));
+            {
+                if (mBufferH[fieldDirection].length() > 0)
+                {
+                    mFile.read((char*)mBufferH[fieldDirection].headPointer(),
+                        (std::streamsize)sizeof(float));
+                }
+            }
             else
                 throw(Exception("Buffered H cannot read further from file"
                     " (time-varying field)."));
