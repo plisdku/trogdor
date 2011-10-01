@@ -31,7 +31,9 @@ public:
 	void appendGroup(const std::string & name, 
 		const std::list<OrientedRect3i> & faces);
 	
-	void write(std::ostream & stream, float scaleFactor = 1.0) const;
+	//void write(std::ostream & stream, float scaleFactor = 1.0) const;
+    void write(std::ostream & stream, Vector3f addOrigin, Vector3f scaleFactors)
+        const;
 	
 private:
 	struct QuadFace

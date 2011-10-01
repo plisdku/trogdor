@@ -21,8 +21,8 @@ public:
     static void saveOutputCrossSections(const GridDescription & grid,
         const VoxelizedPartition & vp);
     
-    static void saveMaterialBoundariesBeta(const GridDescription & grid,
-        const VoxelizedPartition & vp);
+//    static void saveMaterialBoundariesBeta(const GridDescription & grid,
+//        const VoxelizedPartition & vp);
     
     static void saveMaterialBoundariesBeta_2(const GridDescription & grid,
         const VoxelizedPartition & vp);

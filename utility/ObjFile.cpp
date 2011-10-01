@@ -119,16 +119,61 @@ ObjFile::appendGroup(const string & name, const list<OrientedRect3i> & faces)
 }
 
 
+//void
+//ObjFile::write(ostream & stream, float scaleFactor) const
+//{
+//	int mm,nn;
+//	
+//	for (nn = 0; nn < mVertices.size(); nn++)
+//	{
+//		stream << "v " << scaleFactor*mVertices[nn][0] << " "
+//			<< scaleFactor*mVertices[nn][1] << " "
+//			<< scaleFactor*mVertices[nn][2] << "\n";
+//	}
+//	
+//	for (nn = 0; nn < mNormals.size(); nn++)
+//	{
+//		stream << "vn " << mNormals[nn][0] << " "
+//			<< mNormals[nn][1] << " "
+//			<< mNormals[nn][2] << "\n";
+//	}
+//	
+//	//for (nn = 0; nn < mGroups.size(); nn++)
+//	for (map<string, Group>::const_iterator itr = mGroups.begin();
+//		itr != mGroups.end(); itr++)
+//	{
+//		const Group & g = itr->second;
+//		string groupName = itr->first;
+//		string matName = groupName;
+//		
+//		for (int jj = 0; jj < matName.length(); jj++)
+//			if (matName[jj] == ' ')
+//				matName[jj] = '_';
+//		
+//		stream << "g " << itr->first << "\n";
+//		stream << "usemtl " << matName << "\n";
+//		
+//		for (mm = 0; mm < g.faces.size(); mm++)
+//		{
+//			const QuadFace & face = g.faces[mm];
+//			stream << "f " << face.vertices[0] << "//" << face.normal << " "
+//				<< face.vertices[1] << "//" << face.normal << " "
+//				<< face.vertices[2] << "//" << face.normal << " "
+//				<< face.vertices[3] << "//" << face.normal << "\n";
+//		}
+//	}
+//}
+
 void
-ObjFile::write(ostream & stream, float scaleFactor) const
+ObjFile::write(ostream & stream, Vector3f addOrigin, Vector3f scaleFactor) const
 {
 	int mm,nn;
 	
 	for (nn = 0; nn < mVertices.size(); nn++)
 	{
-		stream << "v " << scaleFactor*mVertices[nn][0] << " "
-			<< scaleFactor*mVertices[nn][1] << " "
-			<< scaleFactor*mVertices[nn][2] << "\n";
+		stream << "v " << addOrigin[0] + scaleFactor[0]*mVertices[nn][0] << " "
+			<< addOrigin[1] + scaleFactor[0]*mVertices[nn][1] << " "
+			<< addOrigin[2] + scaleFactor[0]*mVertices[nn][2] << "\n";
 	}
 	
 	for (nn = 0; nn < mNormals.size(); nn++)

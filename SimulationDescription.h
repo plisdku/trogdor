@@ -96,6 +96,7 @@ public:
     const Map<Vector3i, Map<std::string, std::string> > & pmlParams() const
         { return mPMLParams; }
 	Vector3i originYee() const { return mOriginYee; }
+    Vector3f origin() const { return dxyz()*originYee(); }
 	int numDimensions() const;
     Vector3f dxyz() const { return mDxyz; }
     float dt() const { return mDt; }
