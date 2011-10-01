@@ -172,8 +172,8 @@ ObjFile::write(ostream & stream, Vector3f addOrigin, Vector3f scaleFactor) const
 	for (nn = 0; nn < mVertices.size(); nn++)
 	{
 		stream << "v " << addOrigin[0] + scaleFactor[0]*mVertices[nn][0] << " "
-			<< addOrigin[1] + scaleFactor[0]*mVertices[nn][1] << " "
-			<< addOrigin[2] + scaleFactor[0]*mVertices[nn][2] << "\n";
+			<< addOrigin[1] + scaleFactor[1]*mVertices[nn][1] << " "
+			<< addOrigin[2] + scaleFactor[2]*mVertices[nn][2] << "\n";
 	}
 	
 	for (nn = 0; nn < mNormals.size(); nn++)
