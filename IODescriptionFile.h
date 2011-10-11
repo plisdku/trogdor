@@ -37,7 +37,7 @@ public:
      *  Write the data request file for a current source.  The data request file
      *  will be an m-file with a function that returns a useful data structure.
      */
-    static void write(std::string fileName, CurrentSourceDescPtr description,
+    static void write(std::string funcName, CurrentSourceDescPtr description,
         const VoxelizedPartition & vp,
         const std::vector< std::vector<Rect3i> > & rectsJ,
         const std::vector< std::vector<Rect3i> > & rectsK);

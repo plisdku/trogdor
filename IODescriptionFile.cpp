@@ -110,14 +110,16 @@ write(std::string fileName, OutputDescPtr description,
 }
 
 void IODescriptionFile::
-write(std::string fileName, CurrentSourceDescPtr description,
+write(std::string funcName, CurrentSourceDescPtr description,
     const VoxelizedPartition & vp,
     const vector<vector<Rect3i> > & rectsJ,
     const vector<vector<Rect3i> > & rectsK)
 {
-    ofstream file(fileName.c_str());
+    ostringstream fileName;
+    fileName << funcName << ".m";
+    ofstream file(fileName.str().c_str());
     
-    file << "clear A;\n";
+    file << "function A = " << funcName << "()\n";
     file << "A.trogdorMajorVersion = '" << TROGDOR_MAJOR_VERSION << "';\n";
     file << "A.trogdorBuildDate = '" << __DATE__ << "';\n";
     file << "A.dxdydzdt = ["
