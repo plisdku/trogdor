@@ -219,7 +219,7 @@ paintEllipsoid(const GridDescription & gridDesc,
 	const Ellipsoid & instruction)
 {
 	int ii, jj, kk, iYee, jYee, kYee;
-	LOG << "Warning: this probably has bugs in it.\n";
+//	LOG << "Warning: this probably has bugs in it.\n";
 	Paint* paint = Paint::paint(instruction.material());
 	
 	if (instruction.fillStyle() == kPECStyle ||
