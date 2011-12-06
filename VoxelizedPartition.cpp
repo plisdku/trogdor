@@ -428,6 +428,9 @@ paintFromAssembly(const GridDescription & gridDesc,
 				break;
 		}
 	}
+    
+    if (false == mVoxels.regionIsFilled(mVoxels.nonPMLRegion()))
+        throw(Exception("Some Yee cells have undefined materials!"));
 }
 
 void VoxelizedPartition::

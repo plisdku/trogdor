@@ -86,6 +86,8 @@ public:
     // pp                global coordinate (half cell) to modify as PML
 	void paintPML(Vector3i pmlDir, Vector3i pp);
     
+    bool regionIsFilled(Rect3i bounds) const; // false if any null Paint*
+    
     // deletes the grid of material half cells; retains dimensions
     void clear();
 	

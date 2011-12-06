@@ -672,6 +672,19 @@ paintPML(Vector3i pmlDir, Vector3i pp)
 	}
 }
 
+bool VoxelGrid::
+regionIsFilled(Rect3i bounds) const
+{
+    for (int kk = bounds.p1[2]; kk <= bounds.p2[2]; kk++)
+    for (int jj = bounds.p1[1]; jj <= bounds.p2[1]; jj++)
+    for (int ii = bounds.p1[0]; ii <= bounds.p2[0]; ii++)
+    {
+        if ((*this)(ii,jj,kk) == 0L)
+            return false;
+    }
+    return true;
+}
+
 void VoxelGrid::
 clear()
 {
