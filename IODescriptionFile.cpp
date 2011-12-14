@@ -338,12 +338,26 @@ write(std::string fileName, const HuygensSurface & huygensSurface,
         }
     }
     
+    file << "% Half cell bounds of the region of the grid provided in afp.grid\n"
+        "% in internal Trogdor coordinates.\n";
     file << "afp.sampleHalfCells = [";
     for (int mm = 0; mm < 3; mm++)
         file << sampleHalfCells.p1[mm] << " ";
     for (int mm = 0; mm < 3; mm++)
         file << sampleHalfCells.p2[mm] << " ";
     file << "];\n";
+    
+    file << "% The position of each permittivity sample in user coordinates\n";
+    file << "afp.sampleBounds = [";
+    
+    Rect3i userHalfCells = sampleHalfCells - 2*vp.gridDescription()->originYee();
+    Vector3f dxyz = vp.simulationDescription()->dxyz();
+    for (int mm = 0; mm < 3; mm++)
+        file << userHalfCells.p1[mm]*dxyz[mm]*0.5 << " ";
+    for (int mm = 0; mm < 3; mm++)
+        file << userHalfCells.p2[mm]*dxyz[mm]*0.5 << " ";
+    file << "];\n";
+    
     //LOG << "Sample half cells: " << sampleHalfCells << endl;
     
     // ----------------
@@ -405,6 +419,7 @@ write(std::string fileName, const HuygensSurface & huygensSurface,
     fieldNames.push_back("Hy");
     fieldNames.push_back("Hz");
     
+    file << "% Yee cell position of desired outputs in internal Trogdor coords\n";
     for (int field = 0; field < 6; field++)
     {
         file << "afp.yee" + fieldNames[field] << " = [ ...\n";
@@ -423,7 +438,8 @@ write(std::string fileName, const HuygensSurface & huygensSurface,
         file << "];\n";
     }
     
-    Vector3f dxyz = vp.simulationDescription()->dxyz();
+    file << "% Positions of each desired field sample in real user coords\n";
+    
     for (int field = 0; field < 6; field++)
     {
         file << "afp.pos" + fieldNames[field] << " = [ ...\n";
@@ -433,7 +449,8 @@ write(std::string fileName, const HuygensSurface & huygensSurface,
         {
             Rect3i yee;
             yee = halfToYee(huygensSurface.buffer(faceNum)->destHalfCells(),
-                octant(fieldOffsets[field]));
+                octant(fieldOffsets[field])) -
+                vp.gridDescription()->originYee();
             Vector3f theOffset(0.5*fieldOffsets[field][0],
                 0.5*fieldOffsets[field][1],
                 0.5*fieldOffsets[field][2]);
