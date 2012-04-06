@@ -607,7 +607,7 @@ saveGridReports(const GridDescription & grid, const VoxelizedPartition & vp)
             for (x[1] = halfCells.p1[1]; x[1] <= halfCells.p2[1]; x[1]++)
             for (x[0] = halfCells.p1[0]; x[0] <= halfCells.p2[0]; x[0]++)
             {
-                unsigned int codeVal = code[vp.voxels()(x)];
+                float codeVal = code[vp.voxels()(x)];
                 binaryFile.write((char*)(&codeVal),
                     (std::streamsize)(sizeof(codeVal)));
             }
