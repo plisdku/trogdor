@@ -3,7 +3,7 @@ project( TROGDOR )
 
 # ------------------ Look for ImageMagick (built-in)
 
-find_package(ImageMagick COMPONENTS Magick++)
+find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
 
 
 

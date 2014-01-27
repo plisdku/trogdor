@@ -76,8 +76,8 @@ template <typename Key2>
 const Value& Map<Key, Value>::
 operator[] (const Key2& key) const
 {
-    assert( count(Key(key)) != 0 );
-    return (* find(Key(key))).second;
+    assert( this->count(Key(key)) != 0 );
+    return (* this->find(Key(key))).second;
 }
 
 template <typename Key, typename Value>
