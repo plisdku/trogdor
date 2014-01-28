@@ -718,7 +718,7 @@ namespace calc_defs {
   template <typename T_type>
   void
   Calculator<T_type>::parse_file(char const name[],
-                                 bool const show_err=false) {
+                                 bool const show_err) {
     string        line ;
     unsigned long nline = 0 ;
     ifstream      in(name) ;
